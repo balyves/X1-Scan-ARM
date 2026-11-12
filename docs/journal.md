@@ -2,7 +2,7 @@
 
 ## 2026-11-12: first contact with a real X1
 
-Setup: Flextight X1, Intel Mac Pro on macOS 10.14 Mojave, FlexColor 4.8.13.
+Setup: Flextight X1, Intel Mac on macOS 10.14 Mojave, FlexColor 4.8.13.
 
 1. **Enumeration**: the X1 appears in IOKit as a standard SBP-2 SCSI scanner
    (type 6), `Imacon` / `Flextight X1` / `R185`, open to SCSITaskUserClient.

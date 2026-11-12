@@ -30,6 +30,6 @@ ASFireWire.
 
 ## Reference setup used for captures
 
-Intel Mac Pro running macOS 10.14 Mojave with FlexColor 4.8.13, X1 connected
+Intel Mac running macOS 10.14 Mojave with FlexColor 4.8.13, X1 connected
 through the Thunderbolt to FireWire adapter. FlexColor is a 32-bit
 Carbon/QuickTime application: it cannot run on macOS 10.15 or later.
