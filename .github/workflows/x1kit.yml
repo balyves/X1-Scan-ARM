@@ -1,19 +1,42 @@
-# Builds X1Kit and runs its tests (against the simulator only) on every push
-# and pull request.
+# Checks the commits (same rules as the git hooks) and builds and tests X1Kit
+# (against the simulator only).
 name: X1Kit
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 permissions:
   contents: read
 
 concurrency:
-  group: x1kit-${{ github.ref }}
-  cancel-in-progress: true
+  # Pull requests share a group, so a new push to the pull request replaces the
+  # running check (base..head covers every commit). Pushes to main get one
+  # group per run: a cancelled or replaced push run would leave its commits
+  # unchecked, since the next push only checks from its own `before`.
+  group: x1kit-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  safeguards:
+    # tools/git-hooks/x1-check on every commit of the push or pull request:
+    # serial numbers, scan / raw / firmware files, size, commit messages.
+    # The hooks are optional and can be bypassed with --no-verify; this cannot.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check commits
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+        run: tools/git-hooks/x1-check --range "$BASE" "$HEAD_SHA"
+
   test:
     # Latest GitHub-hosted macOS image (macOS 26, arm64). The package requires macOS 26.
     runs-on: macos-26
@@ -22,8 +45,11 @@ jobs:
       run:
         working-directory: X1Kit
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
+        with:
+          persist-credentials: false
 
+      # Xcode is not pinned: the image's default is used, and its version is logged here.
       - name: Toolchain
         run: |
           sw_vers

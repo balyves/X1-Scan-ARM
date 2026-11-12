@@ -76,13 +76,18 @@ int32_t cx1_open(cx1_device **out_device, char *description, size_t description_
             continue;
         }
 
-        // In Apple's published source (IOSCSIArchitectureModelFamily,
-        // UserClientLib/SCSITaskDeviceClass.cpp), exclusive access is taken when
-        // the connection opens (Start), and ObtainExclusiveAccess then simply
-        // returns success. A second program therefore fails earlier, in
-        // IOCreatePlugInInterfaceForService, with 0xE00002BE (kIOReturnNoResources),
-        // reported as TransportError.deviceBusy. A failure here is not expected
-        // and stays a generic IOKit error.
+        // Apple's source, IOSCSIArchitectureModelFamily-139.0.2
+        // (github.com/apple-oss-distributions, 2021),
+        // UserClientLib/SCSITaskDeviceClass.cpp:
+        //   - Start() sets fHasExclusiveAccess = true right after IOServiceOpen;
+        //   - ObtainExclusiveAccess() says the call is only needed when the
+        //     services layer is involved; otherwise it is handled in Start.
+        // So a second program fails earlier, in IOCreatePlugInInterfaceForService,
+        // with 0xE00002BE (kIOReturnNoResources), reported as
+        // TransportError.deviceBusy. The versions shipped with Mojave and Tahoe may
+        // differ, but the behaviour observed on the X1 (failure at open with
+        // 0xE00002BE) agrees. A failure here is not expected and stays a generic
+        // IOKit error.
         result = (*interface)->ObtainExclusiveAccess(interface);
         if (result != kIOReturnSuccess) {
             (*interface)->Release(interface);

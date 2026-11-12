@@ -32,8 +32,20 @@ Scope: **Flextight X1 only**. Other Flextight / Imacon models are out of scope.
    (notably eigenshell/flextight-shenanigans). Their documentation can be
    read as a reference; the code must be our own.
 4. **Scanner safety**:
-   - Read-only commands (those FlexColor sends at start-up, listed in
-     `tools/x1probe/x1probe.c`) may be used freely.
+   - Read-only commands may be used freely. They are exactly those of
+     `CommandPolicy.readOnlyCommands`
+     (`X1Kit/Sources/X1Transport/CommandPolicy.swift`), each a read with a
+     maximum length, or without data:
+     - 0x00 TEST UNIT READY (no data);
+     - 0x03 REQUEST SENSE (18);
+     - 0x12 INQUIRY (96);
+     - 0x4D LOG SENSE (52);
+     - 0x5A MODE SENSE (100);
+     - 0xD3 status / sensors (2);
+     - 0xDF scanner state (2);
+     - 0xEE register (1).
+
+     `tools/x1probe` sends the same reads except 0xDF.
    - **Any command that moves the scanner or changes its state** (0x24, 0xF0,
      0xE4, 0x1B, 0xDB, 0xCF, 0xD2, 0xE0, 0x55, 0x3B, or anything not seen in a
      capture) requires the user's **explicit approval before running**, must
@@ -76,9 +88,11 @@ available; ask.
 - `X1Kit/`: Swift package (transport, protocol, preview sequence, image);
   `swift test` runs against the simulator, never against a real scanner.
 - `app/`: future macOS application.
-- `tools/git-hooks/`: pre-commit hook (serial numbers, scan and firmware files, size).
+- `tools/git-hooks/`: `x1-check` (serial numbers, scan and firmware files, size,
+  commit messages), run by the pre-commit and commit-msg hooks and by the CI.
 - `.claude/agents/x1-reviewer.md`: pre-commit review subagent.
-- `.github/workflows/x1kit.yml`: CI, builds X1Kit and runs its tests.
+- `.github/workflows/x1kit.yml`: CI, runs `x1-check` on every pushed commit, builds
+  X1Kit and runs its tests.
 
 Captures and raw files stay outside the repository (see `.gitignore`).
 

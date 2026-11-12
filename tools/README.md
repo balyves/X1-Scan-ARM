@@ -5,15 +5,47 @@ scanner at a time.
 
 ## git-hooks/
 
-`pre-commit` blocks a commit whose staged files contain a serial number
-(`FX1` + 7 digits, as text or as hex bytes on one line), scan / raw /
-firmware files (`.fff`, `.3f`, `.raw`, `.bit`, `MICROCOD*`, `oscode*`), or a
-file larger than 2 MiB. It does not detect hex bytes split across two lines
-or UTF-16 text, and it also blocks decimal byte lists that look like the
-hex form (`46, 58, 31, ...`). Submodules are skipped. If a check cannot run, the commit is blocked. Install it
-once per clone, from the repository root:
+`x1-check` blocks:
+
+- a scanner serial number (`FX1` + 7 digits, any case), as text or as hex
+  bytes on one line, in file contents, file names and commit messages;
+- scan, image, raw or Hasselblad files, in any case: `.fff`, `.3f`, `.3fr`,
+  `.raw`, `.tif`, `.tiff`, `.bit`, `.dtp`, `.a3`, `MICROCOD*`, `oscode*`,
+  `osloader*`;
+- files larger than 2 MiB.
+
+Limits:
+
+- not detected: hex bytes split across two lines, UTF-16 text, hex glued
+  to a preceding letter or digit;
+- known false positive: decimal byte lists that look like the hex form
+  (`46, 58, 31, ...`);
+- submodules are skipped;
+- the `commit-msg` hook also reads git's editor template (not the diff of
+  `git commit -v`), so committing the removal of a file whose name holds a
+  serial number is blocked: use `git commit -m` for that commit;
+- the `commit-msg` hook ignores what follows git's scissors line and its
+  "Do not modify or remove the line above." warning (the diff added by
+  `git commit -v`). A message that copies both lines by hand gets past the
+  hook, but not past the CI, which checks recorded messages in full.
+
+If a check cannot run, the result is a failure.
+
+It runs in three places:
+
+- the `pre-commit` hook, on staged files;
+- the `commit-msg` hook, on the message;
+- the CI (`.github/workflows/x1kit.yml`), on every commit of a push to
+  `main` or of a pull request. The CI cannot be bypassed with
+  `--no-verify`, and it also catches a file added in one commit and removed
+  in the next.
+
+Install the hooks once per clone, from the repository root:
 
     git config core.hooksPath tools/git-hooks
+
+Check by hand: `tools/git-hooks/x1-check --staged`, `--commit SHA` or
+`--range BASE HEAD`.
 
 ## x1probe/ (read-only)
 

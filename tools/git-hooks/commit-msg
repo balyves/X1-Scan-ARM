@@ -1,0 +1,5 @@
+#!/bin/bash
+# SPDX-License-Identifier: MIT
+# X1-Scan-ARM commit-msg hook: checks the commit message (see x1-check).
+# Install once per clone:  git config core.hooksPath tools/git-hooks
+exec "$(dirname "$0")/x1-check" --message "$1"
