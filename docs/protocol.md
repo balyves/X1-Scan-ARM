@@ -76,7 +76,7 @@ and page length.
 | 0x20 | 22 | **Scan status**, see below. Read before every image block. |
 | 0x21 | 80 | Many 16-bit values around 0x17xx: calibration table (focus / optics / CCD positions?). **[hypothesis]** |
 | 0x23 | 49 | Twelve LE32 values, often round (980 000, 816 000, 514 000…): motor positions or travel lengths. **[hypothesis]** |
-| 0x25 | 12 | Contains `01 23` and `0f 0a 03`: firmware version 1.23 and date 2015-10-03? **[hypothesis]** |
+| 0x25 | 12 | **Not static.** Byte 21 of the response changes over time: 0x1b then 0x1c a few minutes apart, and 0x1c / 0x1d alternating within one preview, going back and forth. **[confirmed]** A value that goes down again points to a sensor reading (temperature?) rather than a clock; it is not a firmware date. **[hypothesis]** Bytes 12-16 (`01 23 0f 0a 03`) stay constant; their meaning is unknown. |
 | 0x26 | 44 | **Identity**: 10-byte field (dashes when unset), then the serial number in ASCII (`FX1…`). This is where FlexColor gets the serial number. **[confirmed]** |
 | 0x27 | 9 | Unknown. |
 | 0x29 | 1 | Unknown (`07`). |

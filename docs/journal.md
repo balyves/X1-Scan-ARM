@@ -25,3 +25,12 @@ Lesson: FlexColor's alert "Impossible de terminer votre requête à cause de ."
 means another program already has the scanner open.
 
 Next: capture a full-resolution scan; replay a preview from our own code.
+
+## 2026-11-12: preview fixtures
+
+Added `tests/fixtures/`: the 766 SCSI exchanges of one preview
+(serial number anonymised, no image data) and the per-column white / dark
+calibration levels. They will drive a simulator and a conformance test.
+Correction: vendor page 0x25 is not static. Byte 21 changes over time
+(0x1c / 0x1d back and forth within one preview), so it is a live reading,
+probably a sensor, not a firmware date.
