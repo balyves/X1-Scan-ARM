@@ -1,0 +1,70 @@
+# ---------------------------------------------------------------
+# NEVER COMMIT HASSELBLAD MATERIAL OR SCANS
+# ---------------------------------------------------------------
+# Firmware / FPGA bitstreams (read from the user's FlexColor install)
+*.bit
+*.BIT
+*.dtp
+*.a3
+MICROCOD*
+Microcod*
+microcod*
+oscode*
+OSCode*
+osloader*
+/firmware/
+FlexColor.app/
+*.pkg
+*.dmg
+
+# FlexColor film setups / profiles (keep them in local/)
+/local/
+**/flexcolor-setups/
+**/Film\ Setups/
+
+# Scan files
+*.fff
+*.FFF
+*.3f
+*.3F
+*.tif
+*.tiff
+*.TIF
+*.TIFF
+
+# Raw captures (may contain firmware bytes or image data)
+/captures/
+*.pcap
+*.trace
+
+# ---------------------------------------------------------------
+# macOS
+# ---------------------------------------------------------------
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Xcode / Swift
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+.swiftpm/
+.build/
+
+# Rust
+target/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Editors
+.vscode/
+.idea/
+*.swp
