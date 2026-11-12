@@ -87,12 +87,15 @@ available; ask.
 - `tools/decode/`: preview decoder (Python, numpy, Pillow).
 - `X1Kit/`: Swift package (transport, protocol, preview sequence, image);
   `swift test` runs against the simulator, never against a real scanner.
-- `app/`: future macOS application.
+- `app/`: macOS application. `X1Scan.xcodeproj` and `X1Scan/` (AppKit
+  shell, SwiftUI palettes, String Catalog), `X1ScanCore/` (models and view
+  models, `swift test`). The preview only runs on the virtual X1; the real X1
+  is only read.
 - `tools/git-hooks/`: `x1-check` (serial numbers, scan and firmware files, size,
   commit messages), run by the pre-commit and commit-msg hooks and by the CI.
 - `.claude/agents/x1-reviewer.md`: pre-commit review subagent.
 - `.github/workflows/x1kit.yml`: CI, runs `x1-check` on every pushed commit, builds
-  X1Kit and runs its tests.
+  X1Kit and runs its tests, tests X1ScanCore and builds the app.
 
 Captures and raw files stay outside the repository (see `.gitignore`).
 

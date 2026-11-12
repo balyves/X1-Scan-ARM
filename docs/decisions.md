@@ -10,13 +10,9 @@ why.
 
 ## Application
 
-- **SwiftUI inside an AppKit shell.** Planned for later:
-  - palettes docked on the right, collapsible to an icon bar, detachable as
-    floating windows;
-  - tool bar on the left;
-  - full screen;
-  - light and dark modes, Liquid Glass;
-  - display colour managed by ColorSync.
+- **SwiftUI inside an AppKit shell.** Liquid Glass through the standard
+  components, light and dark modes, full screen. Step 2 is described below
+  ("Application, step 2").
 - **Bilingual interface, English and French**, following the system
   language (String Catalog).
 
@@ -46,6 +42,85 @@ Swift package in `X1Kit/`:
 | `X1Protocol` | CDB construction and response parsing: INQUIRY, pages 0x20 and 0x26, 0xDF state, log page 0x30. |
 | `X1Preview` | FlexColor 4.8.13's preview sequence and the runner that executes it. |
 | `X1Image` | Flat field, line gap, 16-bit TIFF writer. |
+
+## Application, step 2 (shell on the virtual X1)
+
+Recorded on 2026-11-12.
+
+### Structure
+
+- `app/X1Scan.xcodeproj` and `app/X1Scan/`: the application target, a thin
+  layer (AppKit window, toolbar, menus, canvas; SwiftUI palettes). It holds
+  the only String Catalog (`Localization/Localizable.xcstrings`).
+- `app/X1ScanCore/`: Swift package with every model and view model, no
+  interface and no user-facing text (typed states, translated by the app).
+  Tested with `swift test`, in the CI too.
+- The Xcode project uses synchronised folders and is written by hand; it is
+  checked with `xcodebuild` in the CI. No sandbox; hardened runtime on.
+  The fixtures in `tests/fixtures` are copied into the bundle for the
+  virtual X1.
+
+### Scanner access from the app
+
+- **The preview runs only on the virtual X1.** `PreviewSession.start(on:)`
+  takes a `VirtualScanner`, which can only be built from capture fixtures.
+  Preview is disabled with the real X1, with the reason shown.
+- **Real X1: reads only.** `ScannerInspector` opens an
+  `IOKitTransport(policy: .readOnly)`, checks each command against
+  `CommandPolicy.readOnly` itself as well, sends INQUIRY, MODE SENSE 0x26,
+  LOG SENSE 0x30 and 0xDF, then closes the device at once so that FlexColor
+  can open it. It stops after INQUIRY if the device is not a Flextight X1.
+  Reading only happens when the user clicks "Read Scanner".
+  The CI (`app` job) fails if a tracked file of `app/` contains
+  `unrestricted`, `allowsStateChangingCommands`, `CommandPolicy(`,
+  `CX1IOKit` or `cx1_`. This is a text check, not a proof; like every
+  workflow step, a pull request that edits the workflow can remove it.
+- **Stop**: the toolbar's Stop, ⌘. and Esc cancel the run; `PreviewRunner`
+  then applies the rules of "Scanner safety" below. The session stays
+  "stopping" until the stop sequence is over, and quitting waits for it.
+- `SimulatedX1` accepts a `DB` stop received after SCAN but before its
+  captured place, and then replays the 0xDF states recorded after
+  FlexColor's own end-of-scan stop, so that stopping can be tried on the
+  virtual X1. **[hypothesis]** No capture shows how a real X1 answers a `DB`
+  sent while lines are still being read: a clean stop on the virtual X1
+  proves nothing for the real scanner.
+
+### Display
+
+- The image builds up as lines arrive: `PreviewRunner.run(progress:)` reports
+  each step and each READ, and `IncrementalPreviewDecoder` gives exactly the
+  result of `PreviewDecoding` block by block.
+- **Pacing of the virtual X1** (`Pacing.display`, about 4 s): a delay added
+  only to see the image build up. **Not a measurement** of the real X1.
+- **Colour [hypothesis]**: the corrected 16-bit values (the exported ones)
+  are tagged **linear sRGB** and colour-matched to the display by
+  ColorSync / Core Animation. The X1's primaries are unknown; this is a
+  provisional choice, to be replaced by a scanner profile.
+- **Pixel aspect [hypothesis]**: preview pixels are drawn 3 times taller than
+  wide. The factor is one documented parameter,
+  `X1Image.PreviewGeometry.pixelAspectRatio`, to be adjusted with captures of
+  real scans. It is display only: decoded and exported images keep the
+  scanner's pixels.
+- The Info palette shows the corrected values (as exported) in large and the
+  raw CCD samples behind the same pixel in small.
+
+### Layout, ready for later steps
+
+- `PaletteRegistry` lists the palettes; `PaletteLayout` (Codable, versioned)
+  keeps order, folded palettes, column mode (expanded or icon bar), column
+  width, each palette's placement (`docked` or `floating(frame)`) and the
+  tool bar placement (`floating` capsule or `dockedColumn`). Saved in
+  UserDefaults and reconciled with the registry on load.
+- `Workspace` (a named layout) and the store exist as models.
+- **Not done yet**: floating palette windows, docked tool column, workspace
+  menu, drag-and-drop reordering (the header menu moves palettes up and down).
+
+### Debug builds
+
+Launch arguments, Debug only, for checking the window without screen
+recording: `-X1ScanSnapshot <file.png>` (renders the window and the palettes,
+then quits), `-X1ScanAutoPreview YES` (preview on the virtual X1 at launch),
+`-X1ScanIconBar YES`.
 
 ## Scanner safety
 
@@ -100,7 +175,8 @@ explicitly. It is only for runs the user has approved (CLAUDE.md, rule 4).
 ### Tests
 
 - `SimulatedX1` replays tests/fixtures/preview-sequence.json:
-  - commands must arrive in the captured order;
+  - commands must arrive in the captured order; the only exception is an
+    early `DB` after SCAN (see "Scanner access from the app");
   - polled values are replayed in order;
   - image data is synthesised from preview-calibration-profile.json.
 - **Conformance**: against the simulator, our preview sends the same CDB,

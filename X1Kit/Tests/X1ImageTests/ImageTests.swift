@@ -86,3 +86,41 @@ struct PreviewDecodeTests {
         #expect(decoded.width == 2004 && decoded.height == 817 && decoded.bitsPerComponent == 16)
     }
 }
+
+struct IncrementalDecodeTests {
+    /// Block by block, the decoder gives exactly the batch result.
+    @Test func incrementalDecodingEqualsBatchDecoding() async throws {
+        let simulator = try Fixtures.simulator()
+        let capture = try await PreviewRunner(transport: simulator, configuration: .simulator).run()
+        let width = PreviewScript.previewPixelsPerLine
+        let batch = try PreviewDecoding.decode(white: capture.whiteReference, dark: capture.darkReference,
+                                               image: capture.image, width: width)
+
+        var decoder = try IncrementalPreviewDecoder(white: capture.whiteReference, dark: capture.darkReference,
+                                                    width: width)
+        var completed = 0
+        for block in capture.image {
+            let rows = try decoder.append(block)
+            #expect(rows.lowerBound == completed)
+            completed = rows.upperBound
+        }
+        #expect(decoder.image == batch)
+
+        // Raw samples go through the same realignment, before the flat field.
+        let raw = try RGB16Image(littleEndianBlocks: capture.image, width: width)
+        let row = 100, column = 700
+        let stride = width * 3
+        #expect(decoder.rawSamples[row * stride + column * 3] == raw.samples[(row + 2) * stride + column * 3])
+        #expect(decoder.rawSamples[row * stride + column * 3 + 1] == raw.samples[(row + 1) * stride + column * 3 + 1])
+        #expect(decoder.rawSamples[row * stride + column * 3 + 2] == raw.samples[row * stride + column * 3 + 2])
+    }
+
+    @Test func firstRowsWaitForTheLineGap() throws {
+        let line = [UInt8](repeating: 0x10, count: 4 * 6)
+        var decoder = try IncrementalPreviewDecoder(white: [line], dark: [[UInt8](repeating: 0, count: 4 * 6)], width: 4)
+        #expect(try decoder.append(line).isEmpty)
+        #expect(try decoder.append(line).isEmpty)
+        #expect(try decoder.append(line) == 0..<1)
+        #expect(throws: ImageError.self) { try decoder.append([0, 1, 2]) }
+    }
+}

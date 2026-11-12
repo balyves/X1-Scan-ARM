@@ -67,7 +67,12 @@ public struct LinearImage: Sendable, Equatable {
 
     /// Linear 16-bit encoding: 0 → 0, 1 → 65 535. No gamma, no profile.
     public func toRGB16() -> RGB16Image {
-        RGB16Image(width: width, height: height,
-                   samples: values.map { UInt16((min(max($0, 0), 1) * 65_535).rounded()) })
+        RGB16Image(width: width, height: height, samples: values.map(Self.sample16))
+    }
+
+    /// The 16-bit sample `toRGB16` writes for one value.
+    @inlinable
+    public static func sample16(_ value: Float) -> UInt16 {
+        UInt16((min(max(value, 0), 1) * 65_535).rounded())
     }
 }

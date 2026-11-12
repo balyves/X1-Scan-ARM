@@ -14,6 +14,13 @@ import Foundation
 ///   calibration profile, image lines from `SyntheticFilm` with the CCD line
 ///   gap applied, and a constant level for full-width calibration lines
 ///   (the capture has no reference for those).
+/// - A stop (`DB 00 00 00 00 00`) received after SCAN but before its captured
+///   place (an emergency stop) is accepted: the replay jumps to the captured
+///   `DB`, so the following 0xDF polls get the states FlexColor saw after its
+///   own **end-of-scan** stop. **Not captured**: how a real X1 answers a `DB`
+///   sent while lines are still being read is unknown, so a clean stop on the
+///   simulator proves nothing for the real scanner. Before SCAN, an early `DB`
+///   is refused like any other command.
 public actor SimulatedX1: SCSITransport {
     public static let pollingOpcodes: Set<UInt8> = [0xEE, 0xD3, 0xDF]
 
@@ -94,7 +101,11 @@ public actor SimulatedX1: SCSITransport {
         guard next < nonPolling.count else {
             throw SimulatorError.endOfCapture(received: command.description)
         }
-        let expected = exchanges[nonPolling[next]]
+        var expected = exchanges[nonPolling[next]]
+        if !matches(command, expected), let stop = earlyStopTarget(for: command) {
+            next = stop
+            expected = exchanges[nonPolling[next]]
+        }
         guard matches(command, expected) else {
             throw SimulatorError.unexpectedCommand(seq: expected.seq, expected: expected.summary,
                                                    received: command.description)
@@ -109,6 +120,17 @@ public actor SimulatedX1: SCSITransport {
             throw SimulatorError.noRecordedResponse(received: command.description)
         }
         return SCSIResult(status: expected.status, data: data)
+    }
+
+    private static let stopCDB: [UInt8] = [0xDB, 0, 0, 0, 0, 0]
+    private static let scanOpcode: UInt8 = 0x1B
+
+    /// Index in `nonPolling` of the captured stop, if `command` is an early
+    /// stop after SCAN has been replayed.
+    private func earlyStopTarget(for command: SCSICommand) -> Int? {
+        guard command.cdb == Self.stopCDB,
+              nonPolling[..<next].contains(where: { exchanges[$0].cdb.first == Self.scanOpcode }) else { return nil }
+        return (next..<nonPolling.count).first { exchanges[nonPolling[$0]].cdb == Self.stopCDB }
     }
 
     private func matches(_ command: SCSICommand, _ expected: Recorded) -> Bool {

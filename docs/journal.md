@@ -50,3 +50,30 @@ Found while writing the sequence:
   soon as it reads `00 01`.
 - White and dark references are read after `F0 01 01 00 01` and
   `F0 01 00 00 01`: they differ in flag B, not C (protocol.md §8 corrected).
+
+## 2026-11-12: application, step 2 (shell on the virtual X1)
+
+The macOS application `X1 Scan` (`app/`): AppKit window with toolbar
+(Preview, Scan disabled, Stop, Export), a floating glass tool capsule (hand,
+zoom, crop rectangle without effect), the image area (fit, zoom, pan, 3:1
+aspect at display only) and a palette column (Scanner, Histogram, Info,
+Export) that folds into an icon bar. English and French.
+
+The preview runs on the virtual X1 only and the image builds up line by
+line. The real X1 is only read (identity, state, counters), on request, and
+closed right after. Nothing has run on a real scanner.
+
+X1Kit changes:
+- `PreviewRunner.run(progress:)` reports steps, phases, page 0x20 reads and
+  READ data; the command sequence is unchanged (tested).
+- `IncrementalPreviewDecoder` decodes block by block, identical to the batch
+  decoding (tested).
+- `SimulatedX1` accepts an early `DB` after SCAN (emergency stop) and replays
+  the 0xDF states captured after FlexColor's end-of-scan stop. How a real X1
+  answers a `DB` sent mid-scan is not captured **[hypothesis]**: a clean stop
+  on the virtual X1 proves nothing for the real scanner.
+- `PreviewGeometry.pixelAspectRatio` (3, hypothesis) is the only place the
+  aspect factor is set.
+
+Open: colour space for display (linear sRGB, provisional), aspect factor,
+floating palettes and workspaces (modelled only).

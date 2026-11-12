@@ -41,24 +41,41 @@ public struct PreviewRunner: Sendable {
         self.script = script
     }
 
-    public func run() async throws(PreviewError) -> PreviewCapture {
+    /// Runs the script. `progress`, if given, receives a `PreviewEvent` for
+    /// every step, accepted page 0x20 and accepted READ; it never changes what
+    /// is sent. Cancelling the task is handled like an anomaly
+    /// (`PreviewAnomaly.cancelled`): nothing more before SCAN, the stop
+    /// sequence after it.
+    public func run(progress: PreviewEventHandler? = nil) async throws(PreviewError) -> PreviewCapture {
         var capture = PreviewCapture()
         var scanSent = false
         var lastLineCount: Int?
+        let phases = PreviewPhase.phases(for: script)
 
         for (index, step) in script.enumerated() {
             do {
                 if Task.isCancelled { throw PreviewAnomaly.cancelled }
+                progress?(.step(index: index, count: script.count, phase: phases[index]))
                 if step.kind == .scan { scanSent = true }  // set before sending: the scanner may have started
                 let result = try await transport.execute(step.command)
                 try verify(result, of: step.command)
-                try handle(result, of: step, scanSent: scanSent, lastLineCount: &lastLineCount, capture: &capture)
+                try handle(result, of: step, scanSent: scanSent, lastLineCount: &lastLineCount,
+                           capture: &capture, progress: progress)
                 if let state = step.waitUntil {
                     try await waitForState(state, honouringCancellation: true)
                 }
             } catch {
-                let anomaly = error as? PreviewAnomaly ?? .transport(String(describing: error))
-                let stop = scanSent ? await emergencyStop() : nil
+                // A cancelled Task.sleep (0xDF wait, or a transport delay) is a cancellation too.
+                let anomaly: PreviewAnomaly = switch error {
+                case let anomaly as PreviewAnomaly: anomaly
+                case is CancellationError: .cancelled
+                default: .transport(String(describing: error))
+                }
+                var stop: EmergencyStopOutcome?
+                if scanSent {
+                    progress?(.stopping)
+                    stop = await emergencyStop()
+                }
                 throw PreviewError(stepIndex: index, command: step.command, anomaly: anomaly, emergencyStop: stop)
             }
         }
@@ -77,7 +94,8 @@ public struct PreviewRunner: Sendable {
     }
 
     private func handle(_ result: SCSIResult, of step: PreviewStep, scanSent: Bool,
-                        lastLineCount: inout Int?, capture: inout PreviewCapture) throws {
+                        lastLineCount: inout Int?, capture: inout PreviewCapture,
+                        progress: PreviewEventHandler?) throws {
         switch step.kind {
         case .command:
             break
@@ -101,8 +119,10 @@ public struct PreviewRunner: Sendable {
                 lastLineCount = status.linesAcquired
             }
             capture.scanStatuses.append(status)
+            progress?(.scanStatus(status))
         case .read(let purpose):
             capture.append(result.data, for: purpose)
+            progress?(.data(result.data, purpose: purpose))
         }
     }
 

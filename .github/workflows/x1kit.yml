@@ -1,5 +1,5 @@
-# Checks the commits (same rules as the git hooks) and builds and tests X1Kit
-# (against the simulator only).
+# Checks the commits (same rules as the git hooks), builds and tests X1Kit and
+# the application's X1ScanCore (against the simulator only), and builds the app.
 name: X1Kit
 
 on:
@@ -72,3 +72,34 @@ jobs:
 
       - name: Test
         run: swift test
+
+  app:
+    # The application: X1ScanCore tests (simulator only), read-only guard, app build.
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
+        with:
+          persist-credentials: false
+
+      - name: Read-only guard
+        # The app reaches the real X1 only through IOKitTransport(policy: .readOnly).
+        # Tracked files of app/ may neither ask for another policy nor call the
+        # C layer directly (which would bypass the policy). A text check, not a proof.
+        run: |
+          if git grep -nE 'unrestricted|allowsStateChangingCommands|CommandPolicy\(|CX1IOKit|cx1_' -- app/; then
+            echo "app/ must not create a command policy other than .readOnly or use CX1IOKit" >&2
+            exit 1
+          fi
+
+      - name: Test X1ScanCore
+        working-directory: app/X1ScanCore
+        run: swift test
+
+      - name: Build the app (Debug and Release)
+        working-directory: app
+        run: |
+          for configuration in Debug Release; do
+            xcodebuild -project X1Scan.xcodeproj -scheme X1Scan -configuration "$configuration" \
+              -derivedDataPath "$RUNNER_TEMP/dd" CODE_SIGNING_ALLOWED=NO build
+          done

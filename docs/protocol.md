@@ -159,7 +159,8 @@ Corrections the host must apply **[confirmed on a preview]**:
 2. **Line gaps**: the three CCD rows are physically offset. At preview
    resolution, red leads green by one line and blue trails by one line.
 3. **Aspect**: preview lines are about 3 times coarser along the drum than
-   across it.
+   across it. A factor of 3 reproduces FlexColor's preview geometry; the
+   exact physical ratio is **[hypothesis]** (§9).
 
 `tools/decode/decode_preview.py` applies these steps and reproduces
 FlexColor's preview geometry exactly (colour profile not applied).

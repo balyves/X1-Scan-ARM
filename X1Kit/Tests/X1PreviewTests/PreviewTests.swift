@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+import Foundation
 import Testing
 import X1Preview
 import X1Protocol
@@ -140,5 +141,182 @@ struct PreviewStopTests {
         // Two captures differed by 64 on the first measurement.
         let (_, result) = try await run(faultAt: Self.positioningIndex, .shiftMeasuredPosition(by: 64))
         if case .failure(let error) = result { Issue.record("unexpected stop: \(error)") }
+    }
+}
+
+struct PreviewEventTests {
+    private final class Recorder: @unchecked Sendable {
+        private let lock = NSLock()
+        private var stored: [PreviewEvent] = []
+        func record(_ event: PreviewEvent) { lock.withLock { stored.append(event) } }
+        var events: [PreviewEvent] { lock.withLock { stored } }
+    }
+
+    /// Events do not change what is sent: the conformance test runs without
+    /// them, this one checks the same command log with them.
+    @Test func eventsDoNotChangeTheCommandsSent() async throws {
+        let plain = try Fixtures.simulator()
+        _ = try await PreviewRunner(transport: plain, configuration: .simulator).run()
+        let observed = try Fixtures.simulator()
+        let recorder = Recorder()
+        _ = try await PreviewRunner(transport: observed, configuration: .simulator).run { recorder.record($0) }
+        #expect(await plain.log == observed.log)
+    }
+
+    @Test func eventsFollowTheScriptAndItsPhases() async throws {
+        let recorder = Recorder()
+        let capture = try await PreviewRunner(transport: try Fixtures.simulator(), configuration: .simulator)
+            .run { recorder.record($0) }
+        let script = PreviewScript.flexColor4813
+        var steps: [Int] = []
+        var phases: [PreviewPhase] = []
+        var imageBlocks: [[UInt8]] = []
+        var statuses = 0
+        for event in recorder.events {
+            switch event {
+            case .step(let index, let count, let phase):
+                #expect(count == script.count)
+                steps.append(index)
+                if phases.last != phase { phases.append(phase) }
+            case .data(let bytes, .image): imageBlocks.append(bytes)
+            case .data: break
+            case .scanStatus: statuses += 1
+            case .stopping: Issue.record("no stop expected")
+            }
+        }
+        #expect(steps == Array(script.indices))
+        #expect(phases == PreviewPhase.allCases)
+        #expect(imageBlocks == capture.image)
+        #expect(statuses == capture.scanStatuses.count)
+    }
+
+    @Test func phasesStartWhereTheProtocolSays() {
+        let script = PreviewScript.flexColor4813
+        let phases = PreviewPhase.phases(for: script)
+        let firstOf = { (phase: PreviewPhase) in phases.firstIndex(of: phase)! }
+        #expect(script[firstOf(.calibration)].command == X1Command.session(.start))
+        #expect(script[firstOf(.references)].kind == .read(.whiteReference))
+        #expect(script[firstOf(.scanning)].kind == .scan)
+        #expect(script[firstOf(.finishing)].command == X1Command.stop())
+    }
+
+    /// Cancelling after SCAN reports `.stopping`, sends only DB and waits for 00 00.
+    @Test func cancellingAfterScanRunsTheStopSequence() async throws {
+        let simulatorTransport = try Fixtures.simulator()
+        let transport = CancellingTransport(inner: simulatorTransport, cancelAfterImageReads: 5)
+        let recorder = Recorder()
+        let task = Task {
+            try await PreviewRunner(transport: transport, configuration: .simulator).run { recorder.record($0) }
+        }
+        await transport.setTask(task)
+        let result = await task.result
+        guard case .failure(let error as PreviewError) = result else {
+            Issue.record("the preview should have stopped")
+            return
+        }
+        #expect(error.anomaly == .cancelled)
+        #expect(error.emergencyStop == .stoppedAndReady)
+        #expect(recorder.events.contains { if case .stopping = $0 { true } else { false } })
+        let after = await transport.commandsAfterCancel
+        #expect(after.first == X1Command.stop())
+        #expect(after.dropFirst().allSatisfy { $0 == X1Command.scannerState() })
+    }
+
+    @Test func cancellingBeforeScanSendsNothingMore() async throws {
+        let transport = CancellingTransport(inner: try Fixtures.simulator(), cancelAfterNonPolling: 30)
+        let task = Task { try await PreviewRunner(transport: transport, configuration: .simulator).run() }
+        await transport.setTask(task)
+        guard case .failure(let error as PreviewError) = await task.result else {
+            Issue.record("the preview should have stopped")
+            return
+        }
+        #expect(error.anomaly == .cancelled)
+        #expect(error.emergencyStop == nil)
+        #expect(await transport.commandsAfterCancel.isEmpty)
+    }
+}
+
+/// Cancels the running preview task from inside the transport, at a chosen
+/// point, and records what is sent afterwards.
+private actor CancellingTransport: SCSITransport {
+    private let inner: any SCSITransport
+    private let imageReadsBeforeCancel: Int?
+    private let nonPollingBeforeCancel: Int?
+    private var task: Task<PreviewCapture, any Error>?
+    private var imageReads = 0
+    private var nonPolling = 0
+    private var cancelled = false
+    private(set) var commandsAfterCancel: [SCSICommand] = []
+
+    init(inner: any SCSITransport, cancelAfterImageReads count: Int) {
+        self.inner = inner
+        imageReadsBeforeCancel = count
+        nonPollingBeforeCancel = nil
+    }
+
+    init(inner: any SCSITransport, cancelAfterNonPolling count: Int) {
+        self.inner = inner
+        imageReadsBeforeCancel = nil
+        nonPollingBeforeCancel = count
+    }
+
+    func setTask(_ task: Task<PreviewCapture, any Error>) { self.task = task }
+
+    func execute(_ command: SCSICommand) async throws -> SCSIResult {
+        if cancelled { commandsAfterCancel.append(command) }
+        let result = try await inner.execute(command)
+        guard !cancelled else { return result }
+        if command.opcode == 0x28 && command.cdb[5] == 0x00 { imageReads += 1 }
+        if !SimulatedX1.pollingOpcodes.contains(command.opcode) { nonPolling += 1 }
+        if imageReads == imageReadsBeforeCancel || nonPolling == nonPollingBeforeCancel {
+            // Wait until the test has handed over the task, then cancel it.
+            while task == nil { await Task.yield() }
+            cancelled = true
+            task?.cancel()
+        }
+        return result
+    }
+}
+
+/// Cancels the task when 0xDF first reports a busy state, so that the
+/// cancellation lands in the runner's wait (Task.sleep), as with a real scanner.
+private actor CancelOnBusyTransport: SCSITransport {
+    private let inner: any SCSITransport
+    private var task: Task<PreviewCapture, any Error>?
+    private var cancelled = false
+    private(set) var commandsAfterCancel: [SCSICommand] = []
+
+    init(inner: any SCSITransport) { self.inner = inner }
+
+    func setTask(_ task: Task<PreviewCapture, any Error>) { self.task = task }
+
+    func execute(_ command: SCSICommand) async throws -> SCSIResult {
+        if cancelled { commandsAfterCancel.append(command) }
+        let result = try await inner.execute(command)
+        if !cancelled, command.opcode == 0xDF, result.data == [0x08, 0x01] || result.data == [0x08, 0x40] {
+            while task == nil { await Task.yield() }
+            cancelled = true
+            task?.cancel()
+        }
+        return result
+    }
+}
+
+struct PreviewCancelDuringWaitTests {
+    /// With a non-zero poll interval (the real scanner's configuration), a
+    /// cancellation during a 0xDF wait is reported as `.cancelled`, not as a
+    /// transport error.
+    @Test func cancellingDuringAStateWaitIsACancellation() async throws {
+        let transport = CancelOnBusyTransport(inner: try Fixtures.simulator())
+        let configuration = PreviewConfiguration(pollInterval: .milliseconds(20), stateTimeout: .seconds(5))
+        let task = Task { try await PreviewRunner(transport: transport, configuration: configuration).run() }
+        await transport.setTask(task)
+        guard case .failure(let error as PreviewError) = await task.result else {
+            Issue.record("the preview should have stopped")
+            return
+        }
+        #expect(error.anomaly == .cancelled)
+        #expect(error.emergencyStop == nil, "first busy state is before SCAN")
+        #expect(await transport.commandsAfterCancel.isEmpty)
     }
 }
