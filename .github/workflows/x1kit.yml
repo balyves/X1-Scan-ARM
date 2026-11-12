@@ -1,0 +1,37 @@
+# Builds X1Kit and runs its tests (against the simulator only) on every push
+# and pull request.
+name: X1Kit
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: x1kit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    # Latest GitHub-hosted macOS image (macOS 26, arm64). The package requires macOS 26.
+    runs-on: macos-26
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: X1Kit
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Toolchain
+        run: |
+          sw_vers
+          xcodebuild -version
+          swift --version
+
+      - name: Build
+        run: swift build --build-tests
+
+      - name: Test
+        run: swift test

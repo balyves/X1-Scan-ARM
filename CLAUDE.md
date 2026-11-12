@@ -45,6 +45,13 @@ Scope: **Flextight X1 only**. Other Flextight / Imacon models are out of scope.
    (open / closed)**. Only one program can open the scanner at a time.
 6. **Git**: show `git status` and a summary of the diff, and wait for the
    user's approval before `git push`. Never force-push.
+7. **Review before every commit**: run the `x1-reviewer` subagent
+   (`.claude/agents/x1-reviewer.md`) on the changes, and show the user its
+   full report together with `git status` and the diff summary. Fix or
+   discuss every "Bloquant" item before committing. The pre-commit hook
+   (`tools/git-hooks`, install with `git config core.hooksPath
+   tools/git-hooks`) and the X1Kit CI workflow are additional checks, not a
+   substitute.
 
 ## Machines
 
@@ -69,6 +76,9 @@ available; ask.
 - `X1Kit/`: Swift package (transport, protocol, preview sequence, image);
   `swift test` runs against the simulator, never against a real scanner.
 - `app/`: future macOS application.
+- `tools/git-hooks/`: pre-commit hook (serial numbers, scan and firmware files, size).
+- `.claude/agents/x1-reviewer.md`: pre-commit review subagent.
+- `.github/workflows/x1kit.yml`: CI, builds X1Kit and runs its tests.
 
 Captures and raw files stay outside the repository (see `.gitignore`).
 

@@ -3,6 +3,18 @@
 All tools run on macOS. Quit FlexColor first: only one program can open the
 scanner at a time.
 
+## git-hooks/
+
+`pre-commit` blocks a commit whose staged files contain a serial number
+(`FX1` + 7 digits, as text or as hex bytes on one line), scan / raw /
+firmware files (`.fff`, `.3f`, `.raw`, `.bit`, `MICROCOD*`, `oscode*`), or a
+file larger than 2 MiB. It does not detect hex bytes split across two lines
+or UTF-16 text, and it also blocks decimal byte lists that look like the
+hex form (`46, 58, 31, ...`). Submodules are skipped. If a check cannot run, the commit is blocked. Install it
+once per clone, from the repository root:
+
+    git config core.hooksPath tools/git-hooks
+
 ## x1probe/ (read-only)
 
 `diag.sh` reports how macOS sees the scanner (FireWire, IOKit, drivers)
