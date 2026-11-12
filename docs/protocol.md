@@ -107,18 +107,19 @@ increase with time (operating or lamp hours?). **[hypothesis]**
 | `00 00` | ready |
 | `08 01` | busy (after F0, SCAN, stop): mechanical movement **[hypothesis]** |
 | `08 40` | busy, other phase, often follows `08 01` |
-| `00 01` | seen once right after SCAN |
+| `00 01` | seen once right after SCAN; FlexColor starts reading image lines on this value **[confirmed]** |
 
-FlexColor polls 0xDF after every action and waits for `00 00` before the next
-step. **[confirmed]**
+FlexColor polls 0xDF after most actions and waits for `00 00` before the next
+step, except after SCAN, where it goes on as soon as it reads `00 01`.
+**[confirmed]**
 
 ## 8. Mode command 0xF0
 
 Four flags A B C D in the CDB. Sequence seen during a preview:
 `00 00 01 01`, `00 01 01 01`, `00 00 00 01`, `00 02 00 01`, `01 01 01 01`,
 `01 01 00 01`, `01 00 00 01`. White calibration lines are read after
-`01 01 00 01`, dark lines after `01 00 00 01`: **C = 0** seems to close the
-light path (shutter or lamp). **[hypothesis]**
+`01 01 00 01`, dark lines after `01 00 00 01`. The two differ only in **B**:
+B = 0 seems to close the light path (shutter or lamp). **[hypothesis]**
 
 ## 9. SET WINDOW (0x24), 68 bytes
 

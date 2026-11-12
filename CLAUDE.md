@@ -66,6 +66,8 @@ available; ask.
 - `tools/x1probe/`: read-only probe (C, IOKit SCSITaskUserClient).
 - `tools/capture/`: lldb capture script for FlexColor on Mojave.
 - `tools/decode/`: preview decoder (Python, numpy, Pillow).
+- `X1Kit/`: Swift package (transport, protocol, preview sequence, image);
+  `swift test` runs against the simulator, never against a real scanner.
 - `app/`: future macOS application.
 
 Captures and raw files stay outside the repository (see `.gitignore`).
