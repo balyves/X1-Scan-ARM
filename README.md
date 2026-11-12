@@ -2,9 +2,10 @@
 
 **Open-source scanning software for the Hasselblad Flextight X1 on modern macOS (Apple Silicon).**
 
-> **Status: early research.** Nothing here can drive a scanner yet. Do not use
-> anything in this repository on a real scanner unless a tool explicitly says it
-> is read-only.
+> **Status: research.** The X1 protocol is being decoded from captures of
+> FlexColor. Our tools can identify the scanner and decode a captured preview,
+> but cannot drive a scan yet. Do not use anything in this repository on a real
+> scanner unless a tool explicitly says it is read-only.
 
 ## Why
 
@@ -27,11 +28,12 @@ X1-Scan-ARM aims to let the X1 scan again from a current Mac.
   **macOS 26 Tahoe** removed it; the open-source
   [ASFireWire](https://github.com/mrmidi/ASFireWire) DriverKit driver is
   expected to provide the same SCSI device there (to be validated with the X1).
-- The scanner needs its firmware uploaded at every power-up. **This firmware is
-  Hasselblad property and is not distributed here.** The software will read it
-  from the user's own FlexColor installation.
+- Unlike older SCSI Flextights, the X1 **boots on firmware stored in its own
+  flash memory**: no firmware upload is needed from the host for a preview.
+  No Hasselblad firmware is distributed here.
 
-See [`docs/`](docs/) for protocol and file-format notes.
+See [`docs/`](docs/) for the protocol, the hardware chain and the project
+journal, and [`tools/`](tools/) for the probe, capture and decode tools.
 
 ## Scope
 
@@ -41,12 +43,15 @@ See [`docs/`](docs/) for protocol and file-format notes.
 
 ## Roadmap
 
-1. Read-only first contact: enumerate the device, INQUIRY, TEST UNIT READY,
-   status and serial number.
-2. Capture the real command sequence from FlexColor on a Mojave Mac.
-3. Firmware upload, calibration, preview.
-4. Full scan, 3F/TIFF output.
-5. Positive rendering matching FlexColor (film curves, highlight/shadow).
+1. ~~Read-only first contact: enumerate the device, INQUIRY, TEST UNIT READY,
+   status and serial number.~~ Done (2026-11-12).
+2. ~~Capture the real command sequence from FlexColor on a Mojave Mac.~~
+   Initialisation and preview done (2026-11-12).
+3. ~~Decode preview image data.~~ Done (2026-11-12).
+4. Capture a full-resolution scan.
+5. Preview driven by our own code.
+6. Full scan, 3F/TIFF output.
+7. Colour: input profile from an IT8 target, film rendering.
 
 ## Related projects
 
