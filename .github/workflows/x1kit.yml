@@ -33,9 +33,20 @@ jobs:
 
       - name: Check commits
         env:
+          EVENT: ${{ github.event_name }}
           BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
           HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
-        run: tools/git-hooks/x1-check --range "$BASE" "$HEAD_SHA"
+        run: |
+          # For a pull request, run x1-check as it is on the base branch (main), not
+          # the pull request's own copy, which could weaken the check that verifies it.
+          if [ "$EVENT" = pull_request ]; then
+            git show "$BASE:tools/git-hooks/x1-check" > "$RUNNER_TEMP/x1-check" \
+              || { echo "x1-check not found at $BASE" >&2; exit 1; }
+            checker="$RUNNER_TEMP/x1-check"
+          else
+            checker=tools/git-hooks/x1-check
+          fi
+          bash "$checker" --range "$BASE" "$HEAD_SHA"
 
   test:
     # Latest GitHub-hosted macOS image (macOS 26, arm64). The package requires macOS 26.

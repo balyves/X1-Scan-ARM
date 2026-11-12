@@ -27,7 +27,13 @@ Limits:
 - the `commit-msg` hook ignores what follows git's scissors line and its
   "Do not modify or remove the line above." warning (the diff added by
   `git commit -v`). A message that copies both lines by hand gets past the
-  hook, but not past the CI, which checks recorded messages in full.
+  hook, but not past the CI, which checks recorded messages in full;
+- the `commit-msg` hook recognises git's warning line in English only. With
+  a translated git (e.g. Homebrew's, in a French locale) the diff of
+  `git commit -v` is checked too, and a commit that removes a serial number
+  is blocked (safe side): use `git commit -m` for it;
+- there is no `pre-merge-commit` hook: a local merge without conflicts is
+  not checked by the hooks. Its commits are, and the CI checks the merge.
 
 If a check cannot run, the result is a failure.
 
@@ -38,7 +44,11 @@ It runs in three places:
 - the CI (`.github/workflows/x1kit.yml`), on every commit of a push to
   `main` or of a pull request. The CI cannot be bypassed with
   `--no-verify`, and it also catches a file added in one commit and removed
-  in the next.
+  in the next. For a pull request it runs the `x1-check` of the base branch,
+  so a change to the rules only applies once it is merged. This does not
+  protect against a pull request that edits the workflow itself (GitHub runs
+  the pull request's version of `.github/workflows/`): any change to
+  `.github/workflows/` or `tools/git-hooks/` must be reviewed before merging.
 
 Install the hooks once per clone, from the repository root:
 
