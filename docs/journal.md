@@ -101,3 +101,9 @@ serial masking, appearance, background, startup zoom and source, export);
 Stop red only during a preview; square-root histogram; real next export
 name. Nothing sent to a scanner changed; the app still only reads the real
 X1, on request.
+
+## 2026-11-14: future ideas and candidate building blocks
+
+README roadmap gains future ideas (linear DNG, ICC profiles, densitometer,
+3F re-opening, strip batch scanning, metadata palette); decisions.md lists
+candidate building blocks and their licences, to check again before use.

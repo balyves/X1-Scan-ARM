@@ -30,6 +30,24 @@ Recorded on 2026-11-14.
 - **20More** (commercial, closed source) is a source of **feature ideas
   only**. We do not reuse, disassemble or otherwise analyse its software.
 
+## Candidate building blocks (not chosen yet)
+
+Recorded on 2026-11-14, for the future ideas of the README (DNG export, ICC
+profiles, metadata). Nothing here is a dependency yet. **Check each licence
+again before any use**: the project is MIT (CLAUDE.md, rule 3).
+
+- **ImageIO** (Apple, system framework): TIFF writing, IPTC/XMP metadata,
+  ICC profile embedding.
+- **Little CMS** (lcms2, MIT): colour management, applying and building ICC
+  profiles.
+- **Adobe DNG SDK**, or **our own DNG encoder**: linear DNG export. The SDK's
+  licence must be checked against MIT before linking it.
+- **colour-science** (Python, BSD-3-Clause, to verify): prototyping only (profiles, densities), in
+  tools outside the app.
+- **ArgyllCMS** (AGPL): **only as an external tool** the user runs (for
+  example to build a profile from an IT8 target), **never linked** into the
+  app, bundled with it, or copied into the repository.
+
 ## Scope of version 1
 
 - Scan and **export a raw 16-bit TIFF**: linear RGB, with only the

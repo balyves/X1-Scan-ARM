@@ -60,8 +60,10 @@ journal, and [`tools/`](tools/) for the probe, capture and decode tools.
 7. Full scan, 3F/TIFF output.
 8. Colour: input profile from an IT8 target, film rendering.
 
-Future ideas, not scheduled. Each depends on sequences captured from
-FlexColor:
+Future ideas, not scheduled, in no particular order. Those that drive the
+scanner (holder detection, HDR, averaging, all openings, guided calibration,
+Image Capture and Photoshop integration, strip thumbnails and batch
+scanning) depend on sequences captured from FlexColor:
 
 - Holder detection.
 - HDR: a second, long-exposure pass.
@@ -69,6 +71,16 @@ FlexColor:
 - Scan all openings of a holder.
 - Guided calibration.
 - Image Capture and Photoshop integration.
+- Linear DNG export, for raw, non-destructive editing in Lightroom.
+- Input ICC profile built from an IT8.7/1 target, and ICC profile embedded
+  at export (Adobe RGB, ProPhoto, sRGB, Display P3).
+- Densitometer in the Info palette (log10 densities next to RGB values).
+- Re-open existing 3F files with their FlexColor settings and export them to
+  DNG/TIFF.
+- Thumbnails and batch scanning of all frames of a strip.
+- Metadata palette (IPTC/XMP via ImageIO): credit, copyright, title,
+  keywords; reusable templates applied at export; batch editing of
+  already-scanned files, with a preview before writing.
 
 ## Related projects
 
