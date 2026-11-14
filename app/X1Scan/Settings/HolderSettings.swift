@@ -8,6 +8,7 @@ import X1ScanCore
 struct HolderSettings: View {
     @Bindable var model: AppModel
     @State private var editing: HolderDraft?
+    @State private var deleting: Holder?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -33,6 +34,20 @@ struct HolderSettings: View {
         }
         .padding(16)
         .controlSize(.small)
+        .confirmationDialog(
+            deleting.map { String(localized: "Delete the holder “\(Strings.holderName($0))”?", comment: "Confirmation title") } ?? "",
+            isPresented: Binding { deleting != nil } set: { if !$0 { deleting = nil } },
+            presenting: deleting
+        ) { holder in
+            // The holder is passed in: deleting does not depend on the order in which
+            // SwiftUI resets the presentation and runs the button's action.
+            Button(String(localized: "Delete", comment: "Settings > Holders button"), role: .destructive) {
+                model.holders.deleteCustom(holder.id)
+            }
+            Button(String(localized: "Cancel", comment: "Button"), role: .cancel) {}
+        } message: { _ in
+            Text("This cannot be undone.", comment: "Confirmation message")
+        }
         .sheet(item: $editing) { draft in
             HolderEditor(draft: draft) { result in
                 if let result { save(result) }
@@ -62,7 +77,7 @@ struct HolderSettings: View {
                     editing = HolderDraft(holder)
                 }
                 Button(role: .destructive) {
-                    model.holders.deleteCustom(holder.id)
+                    deleting = holder
                 } label: {
                     Text("Delete", comment: "Settings > Holders button")
                 }

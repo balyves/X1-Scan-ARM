@@ -151,11 +151,13 @@ enum Strings {
         }
     }
 
-    /// "6×7", or "Mounted slides 35 mm".
+    /// "6×7", or "Mounted slides 35 mm". Default formats use the decimal
+    /// separator of the user's number format ("6×4,5" in French); custom names stay as typed.
     static func holderName(_ holder: Holder) -> String {
-        holder.mountedSlides
-            ? String(localized: "Mounted slides \(holder.format)", comment: "Holder for mounted slides; %@ is the slide size")
-            : holder.format
+        let format = holder.isCustom ? holder.format : Holder.localizedDecimals(holder.format)
+        return holder.mountedSlides
+            ? String(localized: "Mounted slides \(format)", comment: "Holder for mounted slides; %@ is the slide size")
+            : format
     }
 
     /// Panel menu: "6×7 (50200403)".

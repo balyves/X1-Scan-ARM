@@ -76,6 +76,23 @@ public struct Holder: Sendable, Hashable, Codable, Identifiable {
     }
 
     public var isCustom: Bool { series == .custom }
+
+    /// "4.5×6" → "4,5×6" where the locale's decimal separator is a comma: only
+    /// a dot between two digits is replaced.
+    public static func localizedDecimals(_ text: String, locale: Locale = .current) -> String {
+        let separator = locale.decimalSeparator ?? "."
+        guard separator != "." else { return text }
+        let characters = Array(text)
+        var result = ""
+        for (i, c) in characters.enumerated() {
+            if c == ".", i > 0, i + 1 < characters.count, characters[i - 1].isNumber, characters[i + 1].isNumber {
+                result += separator
+            } else {
+                result.append(c)
+            }
+        }
+        return result
+    }
 }
 
 /// The default holders, from the versioned data file.

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import Foundation
+import X1Image
 
 /// The film in the scanner.
 public enum FilmType: String, Sendable, Hashable, CaseIterable, Codable {
@@ -58,16 +59,20 @@ public struct ScanSettings: Sendable, Hashable, Codable {
 
 /// How RGB values are shown in the bottom bar.
 public enum RGBUnit: String, Sendable, Hashable, CaseIterable {
-    /// 0-255. Default.
+    /// 0-255, sRGB-encoded as in an 8-bit export and in Photoshop (middle grey ≈ 118). Default.
     case eightBit
+    /// Linear values, in percent.
     case percent
-    /// 0-65535, the stored values.
+    /// 0-65535, the linear values stored and exported in 16 bits.
     case sixteenBit
 
-    /// `value` (0-65535) in this unit.
+    /// True when the unit shows sRGB-encoded values rather than linear ones.
+    public var isSRGBEncoded: Bool { self == .eightBit }
+
+    /// The linear corrected `sample` (0-65535) in this unit.
     public func value(_ sample: UInt16) -> Double {
         switch self {
-        case .eightBit: (Double(sample) * 255 / 65_535).rounded()
+        case .eightBit: (ExportConversion.srgbEncoded(Double(sample) / 65_535) * 255).rounded()
         case .percent: Double(sample) * 100 / 65_535
         case .sixteenBit: Double(sample)
         }

@@ -66,7 +66,12 @@ struct ScanSettingsTests {
 
     @Test func rgbUnits() {
         #expect(RGBUnit.eightBit.value(65_535) == 255 && RGBUnit.eightBit.value(0) == 0)
-        #expect(RGBUnit.eightBit.value(32_896) == 128)
+        #expect(RGBUnit.eightBit.value(11_796) == 118, "middle grey (18 %), sRGB-encoded as in Photoshop")
+        let exported = ExportConversion.samples(of: RGB16Image(width: 1, height: 1, samples: [11_796, 11_796, 11_796]),
+                                                as: .rgb8)
+        #expect(RGBUnit.eightBit.value(11_796) == Double(exported[0]), "as in an 8-bit export")
+        #expect(RGBUnit.eightBit.isSRGBEncoded && !RGBUnit.percent.isSRGBEncoded && !RGBUnit.sixteenBit.isSRGBEncoded)
+        #expect(abs(RGBUnit.percent.value(11_796) - 18) < 0.01, "percent stays linear")
         #expect(RGBUnit.percent.value(65_535) == 100)
         #expect(RGBUnit.sixteenBit.value(1_234) == 1_234)
     }
@@ -156,6 +161,11 @@ struct HolderTests {
         #expect(all.first { $0.reference == "50200428" }?.apertures.count == 2)
         #expect(all.first { $0.reference == "50200416" }?.frames == 6)
         #expect(all.filter(\.mountedSlides).map(\.reference) == ["50200100", "1005377"])
+        #expect(all.first { $0.reference == "50200417" }?.apertures == [HolderAperture(width: 24, height: 65)])
+        #expect(all.first { $0.reference == "50200418" }?.apertures == [HolderAperture(width: 57, height: 88)])
+        let withoutOpening = all.filter { $0.apertures.isEmpty }
+        let onlySlides = withoutOpening.allSatisfy { $0.mountedSlides }
+        #expect(onlySlides && withoutOpening.count == 2, "only mounted slides have no opening")
     }
 
     @Test func ownedCustomAndPersistence() {
@@ -205,5 +215,16 @@ struct HolderTests {
             again.scanSettings.holderID = nil
             #expect(again.selectedHolder == nil)
         }
+    }
+}
+
+struct HolderDecimalsTests {
+    @Test func dotsBetweenDigitsFollowTheLocale() {
+        let fr = Locale(identifier: "fr_FR"), en = Locale(identifier: "en_US")
+        #expect(Holder.localizedDecimals("6×6 / 6×4.5", locale: fr) == "6×6 / 6×4,5")
+        #expect(Holder.localizedDecimals("4.5×6", locale: fr) == "4,5×6")
+        #expect(Holder.localizedDecimals("4.5×6", locale: en) == "4.5×6")
+        #expect(Holder.localizedDecimals(".5 x 5.", locale: fr) == ".5 x 5.", "a dot not between digits stays")
+        #expect(Holder.localizedDecimals("Reflex 4×6″", locale: fr) == "Reflex 4×6″")
     }
 }

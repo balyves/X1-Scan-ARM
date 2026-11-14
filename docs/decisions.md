@@ -349,9 +349,10 @@ Recorded on 2026-11-14. Nothing here changes what is sent to a scanner.
 - Bottom bar: scanner state, estimated size of the exported file
   (uncompressed), R G B under the pointer in the unit of Settings > Display
   (0-255 by default, percent, 16-bit; raw sensor values in the tooltip),
-  zoom menu. The RGB values are the linear corrected values (as in a 16-bit
-  export), scaled to the unit: an 8-bit export holds sRGB-encoded values
-  (middle grey: 46 shown, 118 in the file).
+  zoom menu. In 0-255 the values are sRGB-encoded, as in an 8-bit export
+  and in Photoshop (18 % linear grey ≈ 118; the neutral grey background is
+  119, L* 50 being 18.4 %); in percent and 16-bit they are the
+  linear corrected values (as exported in 16 bits). The tooltip says which.
 - The panel can be hidden only through the model (⌥⌘P): dragging the
   divider cannot collapse it.
 
@@ -413,6 +414,10 @@ Recorded on 2026-11-14.
   format, opening in mm, number of frames, series, from Hasselblad's holder
   compatibility table. **Factual data only**: no Hasselblad image or
   document in the repository.
+- Default formats are shown with the decimal separator of the user's
+  number format (locale: "6×4,5" with French formats); the data file keeps
+  a dot.
+- Deleting a custom holder asks for confirmation.
 - Settings > Holders: tick the holders owned; only those appear in the
   panel's menu, after "Not specified" (always first). The three holders
   supplied with the X1/X5 are ticked at first. Custom holders (name,

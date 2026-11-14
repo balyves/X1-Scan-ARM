@@ -2062,23 +2062,6 @@
         }
       }
     },
-    "x %lld, y %lld. Linear corrected values (as exported in 16 bits). Raw sensor values: %u, %u, %u": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "x %1$lld, y %2$lld. Valeurs corrigées linéaires (comme dans un export 16 bits). Valeurs brutes du capteur : %3$u, %4$u, %5$u"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "x %1$lld, y %2$lld. Linear corrected values (as exported in 16 bits). Raw sensor values: %3$u, %4$u, %5$u"
-          }
-        }
-      }
-    },
     "Not available yet": {
       "extractionState": "manual",
       "localizations": {
@@ -2251,6 +2234,67 @@
           "stringUnit": {
             "state": "translated",
             "value": "Vues : %lld"
+          }
+        }
+      }
+    },
+    "Values encoded in sRGB, as in an 8-bit export.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valeurs encodées en sRVB, comme dans un export 8 bits."
+          }
+        }
+      }
+    },
+    "Linear corrected values, as exported in 16 bits.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valeurs corrigées linéaires, comme dans un export 16 bits."
+          }
+        }
+      }
+    },
+    "x %lld, y %lld. %@ Raw sensor values: %u, %u, %u": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "x %1$lld, y %2$lld. %3$@ Valeurs brutes du capteur : %4$u, %5$u, %6$u"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "x %1$lld, y %2$lld. %3$@ Raw sensor values: %4$u, %5$u, %6$u"
+          }
+        }
+      }
+    },
+    "Delete the holder “%@”?": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer le porte-film « %@ » ?"
+          }
+        }
+      }
+    },
+    "This cannot be undone.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette action est irréversible."
           }
         }
       }

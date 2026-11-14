@@ -73,8 +73,11 @@ private struct RGBReadout: View {
             }
         }
         .help(model.pixelReading.map {
-            String(localized: "x \($0.coordinate.x), y \($0.coordinate.y). Linear corrected values (as exported in 16 bits). Raw sensor values: \($0.raw[0]), \($0.raw[1]), \($0.raw[2])",
-                   comment: "Tooltip of the RGB values")
+            let shown = unit.isSRGBEncoded
+                ? String(localized: "Values encoded in sRGB, as in an 8-bit export.", comment: "Tooltip of the RGB values")
+                : String(localized: "Linear corrected values, as exported in 16 bits.", comment: "Tooltip of the RGB values")
+            return String(localized: "x \($0.coordinate.x), y \($0.coordinate.y). \(shown) Raw sensor values: \($0.raw[0]), \($0.raw[1]), \($0.raw[2])",
+                          comment: "Tooltip of the RGB values; %@ says which values are shown")
         } ?? "")
     }
 }
