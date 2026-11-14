@@ -107,3 +107,10 @@ X1, on request.
 README roadmap gains future ideas (linear DNG, ICC profiles, densitometer,
 3F re-opening, strip batch scanning, metadata palette); decisions.md lists
 candidate building blocks and their licences, to check again before use.
+
+## 2026-11-14: colour, licences and 3F precautions
+
+IT8.7/1 profiling stays in roadmap step 8; the future idea keeps only the
+ICC profile embedded at export. decisions.md adds licence details (lcms2
+core only, DNG SDK and DNG patent licence to check, output profiles never
+committed) and the rules for existing 3F files.

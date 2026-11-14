@@ -38,15 +38,39 @@ again before any use**: the project is MIT (CLAUDE.md, rule 3).
 
 - **ImageIO** (Apple, system framework): TIFF writing, IPTC/XMP metadata,
   ICC profile embedding.
-- **Little CMS** (lcms2, MIT): colour management, applying and building ICC
-  profiles.
-- **Adobe DNG SDK**, or **our own DNG encoder**: linear DNG export. The SDK's
-  licence must be checked against MIT before linking it.
-- **colour-science** (Python, BSD-3-Clause, to verify): prototyping only (profiles, densities), in
-  tools outside the app.
+- **Little CMS**: colour management, applying and building ICC profiles.
+  **lcms2 core only** (MIT); not the fast-float plugin, which is GPLv3 or
+  commercial.
+- **Adobe DNG SDK**, or **our own DNG encoder**: linear DNG export. To check
+  before use: the SDK's licence, the licences of the libraries it bundles,
+  and Adobe's DNG patent licence, which also applies to our own encoder.
+- **colour-science** (Python, BSD-3-Clause, to verify): prototyping only
+  (profiles, densities), in tools outside the app.
 - **ArgyllCMS** (AGPL): **only as an external tool** the user runs (for
   example to build a profile from an IT8 target), **never linked** into the
   app, bundled with it, or copied into the repository.
+- **Output profiles** (Adobe RGB, ProPhoto, sRGB, Display P3): generated
+  with lcms2 or taken from ColorSync at run time; **never committed** as
+  `.icc` files.
+
+## Existing 3F files (future idea)
+
+Recorded on 2026-11-14.
+
+- 3F files are read from **our own format notes** (`docs/format-3f.md`),
+  with no Hasselblad code and no code from other 3F readers. **No film
+  profile is shipped.**
+- The app may read the profiles of the user's own FlexColor installation,
+  in place, at run time, on their machine, if there is one. They are never
+  copied into the repository, the app bundle or the app's own data, and
+  never used as test fixtures. Without them, a setting that needs a
+  Hasselblad profile is **reported, never emulated**.
+- Precautions (the first two follow CLAUDE.md, rules 1 and 2):
+  - the serial number stored in a 3F is masked at export (tag 46279 and any
+    metadata copied from it);
+  - a real 3F file is **never** used as a test fixture;
+  - batch edits (metadata) are written to **copies, or with a backup**, never
+    in place without one.
 
 ## Scope of version 1
 
