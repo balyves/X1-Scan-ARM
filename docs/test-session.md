@@ -257,7 +257,9 @@ of C2, with the `N` given here), on the reference Mac.
 
 For every capture, note:
 
-- the **holder** used (type, as written on it), and the frame position;
+- the **holder** used: type and **reference number** (the number
+  written on it, e.g. 50200403), and the frame position; the reference may
+  show up in the scanner's responses (docs/protocol.md §4);
 - FlexColor's settings: resolution (ppi), output size, scan area, film type
   (positive / negative, 16-bit), sharpening, gradation, colour settings,
   and anything else changed from the defaults;

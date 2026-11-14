@@ -1,0 +1,26 @@
+{
+  "description": "Film holders for the Flextight X1: factual data (reference, format, opening in mm, number of frames) from Hasselblad's holder compatibility table, as listed by the user on 2026-11-14. No Hasselblad image or document is included. Openings are width x height in mm; null when not given.",
+  "holders": [
+    { "reference": "50200401", "format": "36×24 / 24×36", "apertures": [[24, 35]], "frames": 1, "series": "standard" },
+    { "reference": "50200402", "format": "4×5″", "apertures": [[94, 119]], "frames": 1, "series": "standard" },
+    { "reference": "50200428", "format": "6×6 / 6×4.5", "apertures": [[57, 57], [57, 42.5]], "frames": 1, "series": "standard" },
+    { "reference": "50200403", "format": "6×7", "apertures": [[57, 70]], "frames": 1, "series": "common" },
+    { "reference": "50200404", "format": "6×6×2", "apertures": [[57, 57]], "frames": 2, "series": "common" },
+    { "reference": "50200405", "format": "6×9", "apertures": [[57, 90]], "frames": 1, "series": "common" },
+    { "reference": "50200406", "format": "6×8", "apertures": [[57, 78]], "frames": 1, "series": "common" },
+    { "reference": "50200407", "format": "4.5×6", "apertures": [[42.5, 57]], "frames": 1, "series": "common" },
+    { "reference": "50200408", "format": "9×12", "apertures": [[83, 113]], "frames": 1, "series": "common" },
+    { "reference": "50200409", "format": "13×18", "apertures": [[120, 172]], "frames": 1, "series": "common" },
+    { "reference": "50200410", "format": "36×24×5", "apertures": [[35, 24]], "frames": 5, "series": "common" },
+    { "reference": "50200411", "format": "24×36×4", "apertures": [[24, 149]], "frames": 4, "series": "common" },
+    { "reference": "50200412", "format": "6×17", "apertures": [[57, 171]], "frames": 1, "series": "common" },
+    { "reference": "50200413", "format": "6×12", "apertures": [[57, 120]], "frames": 1, "series": "common" },
+    { "reference": "50200414", "format": "Reflex 4×6″", "apertures": [[94, 147]], "frames": 1, "series": "common" },
+    { "reference": "50200415", "format": "6×6×3", "apertures": [[57, 182]], "frames": 3, "series": "common" },
+    { "reference": "50200416", "format": "24×36×6", "apertures": [[24, 226]], "frames": 6, "series": "common" },
+    { "reference": "50200417", "format": "24×65", "apertures": [], "frames": 1, "series": "common" },
+    { "reference": "50200418", "format": "57×88", "apertures": [], "frames": 1, "series": "common" },
+    { "reference": "50200100", "format": "35 mm", "apertures": [], "frames": 1, "series": "common", "mountedSlides": true },
+    { "reference": "1005377", "format": "6×6", "apertures": [], "frames": 1, "series": "common", "mountedSlides": true }
+  ]
+}

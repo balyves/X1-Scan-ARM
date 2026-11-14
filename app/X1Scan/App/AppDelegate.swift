@@ -58,6 +58,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         settingsController?.show(.export)
     }
 
+    /// Settings > Holders, from the panel's holder button.
+    @objc func showHolderSettings(_ sender: Any?) {
+        guard let model else { return }
+        if settingsController == nil {
+            settingsController = SettingsWindowController(model: model)
+            settingsController?.window?.center()
+        }
+        settingsController?.show(.holders)
+    }
+
     @objc func showScannerInformation(_ sender: Any?) {
         guard let model else { return }
         if scannerInfoController == nil { scannerInfoController = ScannerInfoWindowController(model: model) }

@@ -126,9 +126,24 @@ private struct OriginalSection: View {
                 .labelsHidden()
             }
             PanelRow(label: String(localized: "Holder", comment: "Panel label: film holder")) {
-                TextField(String(localized: "Not specified", comment: "Holder placeholder"),
-                          text: $model.scanSettings.holder)
-                    .textFieldStyle(.roundedBorder)
+                HStack(spacing: 4) {
+                    Picker(String(localized: "Holder", comment: "Panel label: film holder"),
+                           selection: Binding { model.selectedHolder?.id } set: { model.scanSettings.holderID = $0 }) {
+                        Text("Not specified", comment: "Holder placeholder").tag(String?.none)
+                        if !model.holders.ownedHolders.isEmpty { Divider() }
+                        ForEach(model.holders.ownedHolders) { holder in
+                            Text(Strings.holderMenuTitle(holder)).tag(Optional(holder.id))
+                        }
+                    }
+                    .labelsHidden()
+                    Button {
+                        NSApp.sendAction(#selector(AppDelegate.showHolderSettings(_:)), to: nil, from: nil)
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                    }
+                    .buttonStyle(.borderless)
+                    .help(Text("Choose the holders shown here (Settings > Holders)", comment: "Tooltip"))
+                }
             }
             NotYetNote()
         }

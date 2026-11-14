@@ -330,7 +330,8 @@ Recorded on 2026-11-14. Nothing here changes what is sent to a scanner.
   and hide together with one command, View > Hide Settings Panel (⌥⌘P).
   Small controls everywhere (`controlSize(.small)`).
 - Panel, top to bottom: **Scanner** (source, state, Read Identity,
-  Information…); **Original** (film type, holder: saved in `ScanSettings`,
+  Information…); **Original** (film type, holder chosen among those ticked in Settings >
+  Holders: saved in `ScanSettings`,
   not sent to the scanner yet); **Main / Advanced** tabs (Main: resolution,
   input and output size in preview pixels, scale, foldable histogram;
   Advanced: empty, with a sentence: only settings that work go there);
@@ -402,6 +403,25 @@ Recorded on 2026-11-14. Nothing here changes what is sent to a scanner.
   | RGB 8-bit | 4.9 MB | 109 KB | 85 KB |
   | Grey 16-bit | 3.3 MB | 353 KB | 387 KB |
   | Grey 8-bit | 1.6 MB | 25 KB | 26 KB |
+
+## Film holders (step 3)
+
+Recorded on 2026-11-14.
+
+- The default list is a versioned data file,
+  `app/X1ScanCore/Sources/X1ScanCore/Resources/holders.json`: reference,
+  format, opening in mm, number of frames, series, from Hasselblad's holder
+  compatibility table. **Factual data only**: no Hasselblad image or
+  document in the repository.
+- Settings > Holders: tick the holders owned; only those appear in the
+  panel's menu, after "Not specified" (always first). The three holders
+  supplied with the X1/X5 are ticked at first. Custom holders (name,
+  optional reference, opening, frames) can be added, edited and deleted;
+  default holders can only be unticked (hidden), never deleted or changed.
+- The panel saves the chosen holder (`ScanSettings.holderID`); a holder no
+  longer ticked shows as "Not specified". Nothing is sent to the scanner.
+  The free-text holder of the first step 3 build is converted once into a
+  custom holder.
 
 ## Scanner safety
 

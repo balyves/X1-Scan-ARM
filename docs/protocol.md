@@ -73,6 +73,14 @@ shows it on the X1 in particular). No dedicated command seen; 0xD3, page
 with different holders inserted (read-only, `tools/x1probe`). The holder type
 used during the captures of 2026-11-12 was not recorded. **[hypothesis]**
 
+Holder reference: the X1 might report the **reference number** of the
+inserted holder: 20More displays "6×7 [50200420]" (an 8-digit Hasselblad
+reference; the 6×7 holder of the compatibility table is 50200403, so the
+number shown may belong to another variant). To check at the next session:
+note the reference written on the holder used, and look for it (decimal,
+hex or BCD) in the read-only responses (0xD3, page 0x27, 0xEE registers)
+and in the captures. **[hypothesis]**
+
 ## 5. Vendor mode pages
 
 Standard MODE SENSE(10) header (8 bytes, no block descriptor), then page code

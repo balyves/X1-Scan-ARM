@@ -14,7 +14,8 @@ let package = Package(
         .package(path: "../../X1Kit"),
     ],
     targets: [
-        .target(name: "X1ScanCore", dependencies: [.product(name: "X1Kit", package: "X1Kit")]),
+        .target(name: "X1ScanCore", dependencies: [.product(name: "X1Kit", package: "X1Kit")],
+                resources: [.process("Resources")]),
         .testTarget(name: "X1ScanCoreTests", dependencies: ["X1ScanCore"]),
     ]
 )

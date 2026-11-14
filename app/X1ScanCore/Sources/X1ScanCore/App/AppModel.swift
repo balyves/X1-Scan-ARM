@@ -62,6 +62,8 @@ public final class AppModel {
 
     /// The settings panel on the right.
     public let panel: PanelController
+    /// Settings > Holders: the holders owned (shown in the panel) and the custom ones.
+    public let holders: HolderLibrary
     /// Original and scan settings of the panel (saved, not sent to the scanner yet).
     public var scanSettings: ScanSettings {
         didSet { if let data = try? JSONEncoder().encode(scanSettings) { defaults.set(data, forKey: Keys.scanSettings) } }
@@ -107,8 +109,17 @@ public final class AppModel {
         }
         session = PreviewSession()
         panel = PanelController(defaults: defaults)
-        scanSettings = defaults.data(forKey: Keys.scanSettings)
+        holders = HolderLibrary(store: defaults)
+        var scan = defaults.data(forKey: Keys.scanSettings)
             .flatMap { try? JSONDecoder().decode(ScanSettings.self, from: $0) } ?? ScanSettings()
+        // Step 3 typed the holder as free text: keep it as a custom holder, chosen.
+        let migratedHolder = scan.legacyHolderName != nil
+        if let name = scan.legacyHolderName {
+            let holder = holders.addCustom(reference: nil, format: name, aperture: nil, frames: 1)
+            scan.holderID = holder.id
+            scan.clearLegacyHolder()
+        }
+        scanSettings = scan
         let settings = AppSettings(defaults: defaults)
         self.settings = settings
         switch settings.startupSource {
@@ -120,6 +131,9 @@ public final class AppModel {
         exportSettings = defaults.data(forKey: Keys.exportSettings)
             .flatMap { try? JSONDecoder().decode(ExportSettings.self, from: $0) } ?? ExportSettings()
         defaults.set(source.rawValue, forKey: Keys.source)  // "last used" is this session's source
+        if migratedHolder, let data = try? JSONEncoder().encode(scanSettings) {
+            defaults.set(data, forKey: Keys.scanSettings)  // converted once, not at every launch
+        }
     }
 
     // MARK: Derived state
@@ -202,6 +216,12 @@ public final class AppModel {
         while realStatus == .reading {
             try? await Task.sleep(for: .milliseconds(50))
         }
+    }
+
+    /// The holder shown in the panel: the chosen one if it is still owned, else none.
+    public var selectedHolder: Holder? {
+        guard let holder = holders.holder(id: scanSettings.holderID), holders.isOwned(holder.id) else { return nil }
+        return holder
     }
 
     /// Uncompressed size of the file an export would write now (bottom bar).

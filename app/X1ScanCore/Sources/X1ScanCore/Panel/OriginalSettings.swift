@@ -15,8 +15,10 @@ public struct ScanSettings: Sendable, Hashable, Codable {
     public static let scaleRange = 1...1_000
 
     public var filmType: FilmType = .positive
-    /// Free text; empty means "not specified".
-    public var holder: String = ""
+    /// The holder chosen in the panel (`Holder.id`); nil: not specified.
+    public var holderID: String?
+    /// Step 3 saved the holder as free text; converted to a custom holder by AppModel.
+    public private(set) var legacyHolderName: String?
     /// Pixels per inch, for the scan (stored only).
     public var resolution: Int = 2_000 {
         didSet { resolution = min(max(resolution, Self.resolutionRange.lowerBound), Self.resolutionRange.upperBound) }
@@ -28,12 +30,17 @@ public struct ScanSettings: Sendable, Hashable, Codable {
 
     public init() {}
 
-    private enum CodingKeys: String, CodingKey { case filmType, holder, resolution, scalePercent }
+    /// The free-text holder of step 3 has been converted.
+    public mutating func clearLegacyHolder() { legacyHolderName = nil }
+
+    private enum CodingKeys: String, CodingKey { case filmType, holderID, holder, resolution, scalePercent }
 
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         filmType = (try container.decodeIfPresent(String.self, forKey: .filmType)).flatMap(FilmType.init(rawValue:)) ?? .positive
-        holder = try container.decodeIfPresent(String.self, forKey: .holder) ?? ""
+        holderID = try container.decodeIfPresent(String.self, forKey: .holderID)
+        let legacy = try container.decodeIfPresent(String.self, forKey: .holder)?.trimmingCharacters(in: .whitespacesAndNewlines)
+        legacyHolderName = (legacy?.isEmpty ?? true) ? nil : legacy
         let resolution = try container.decodeIfPresent(Int.self, forKey: .resolution) ?? 2_000
         let scale = try container.decodeIfPresent(Int.self, forKey: .scalePercent) ?? 100
         self.resolution = min(max(resolution, Self.resolutionRange.lowerBound), Self.resolutionRange.upperBound)
@@ -43,7 +50,7 @@ public struct ScanSettings: Sendable, Hashable, Codable {
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(filmType.rawValue, forKey: .filmType)
-        try container.encode(holder, forKey: .holder)
+        try container.encodeIfPresent(holderID, forKey: .holderID)
         try container.encode(resolution, forKey: .resolution)
         try container.encode(scalePercent, forKey: .scalePercent)
     }

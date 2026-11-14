@@ -3,6 +3,7 @@ import Foundation
 import ImageIO
 import Testing
 import X1Image
+import X1Transport
 @testable import X1ScanCore
 
 struct InspectorLayoutTests {
@@ -51,13 +52,13 @@ struct InspectorLayoutTests {
 struct ScanSettingsTests {
     @Test func storedAndBounded() throws {
         var settings = ScanSettings()
-        #expect(settings.filmType == .positive && settings.holder.isEmpty)
+        #expect(settings.filmType == .positive && settings.holderID == nil)
         settings.resolution = 1
         #expect(settings.resolution == ScanSettings.resolutionRange.lowerBound)
         settings.scalePercent = 0
         #expect(settings.scalePercent == 1)
         settings.filmType = .colorNegative
-        settings.holder = "35 mm strip"
+        settings.holderID = "50200401"
         #expect(try JSONDecoder().decode(ScanSettings.self, from: JSONEncoder().encode(settings)) == settings)
         let odd = try JSONDecoder().decode(ScanSettings.self, from: Data(#"{"filmType":"slide","resolution":-4}"#.utf8))
         #expect(odd.filmType == .positive && odd.resolution == ScanSettings.resolutionRange.lowerBound)
@@ -138,6 +139,71 @@ struct ExportFormatTests {
             #expect(decoded.width == 4 && decoded.height == 3 && decoded.bitsPerComponent == format.bitsPerSample)
             #expect((decoded.colorSpace?.model == .monochrome) == format.isGray)
             #expect(ExportService.estimatedBytes(for: image, settings: settings) == format.pixelBytes(width: 4, height: 3))
+        }
+    }
+}
+
+@MainActor
+struct HolderTests {
+    @Test func defaultListFromTheDataFile() {
+        let all = DefaultHolders.all
+        #expect(all.count == 21)
+        #expect(Set(all.map(\.id)).count == all.count, "unique references")
+        #expect(all.allSatisfy { $0.id == $0.reference })
+        #expect(DefaultHolders.standardIDs == ["50200401", "50200402", "50200428"])
+        let sixBySeven = try? #require(all.first { $0.reference == "50200403" })
+        #expect(sixBySeven?.format == "6×7" && sixBySeven?.apertures == [HolderAperture(width: 57, height: 70)])
+        #expect(all.first { $0.reference == "50200428" }?.apertures.count == 2)
+        #expect(all.first { $0.reference == "50200416" }?.frames == 6)
+        #expect(all.filter(\.mountedSlides).map(\.reference) == ["50200100", "1005377"])
+    }
+
+    @Test func ownedCustomAndPersistence() {
+        withTemporaryDefaults { store in
+            let library = HolderLibrary(store: store)
+            #expect(library.ownedHolders.map(\.id) == ["50200401", "50200402", "50200428"], "standard set owned at first")
+            library.setOwned("50200403", true)
+            library.setOwned("50200401", false)
+            let custom = library.addCustom(reference: "  ", format: " Glass 6×6 ", aperture: HolderAperture(width: 56, height: 56),
+                                           frames: 0)
+            #expect(custom.reference == nil && custom.format == "Glass 6×6" && custom.frames == 1 && custom.isCustom)
+            #expect(library.ownedHolders.map(\.id) == ["50200402", "50200428", "50200403", custom.id], "defaults, then custom")
+            library.updateCustom(custom.id, reference: "X-1", format: "Glass", aperture: nil, frames: 2)
+            library.updateCustom("50200403", reference: "Z", format: "Z", aperture: nil, frames: 9)
+            #expect(library.holder(id: "50200403")?.format == "6×7", "defaults cannot be changed")
+            let reloaded = HolderLibrary(store: store)
+            #expect(reloaded.ownedHolders.map(\.id) == library.ownedHolders.map(\.id))
+            #expect(reloaded.holder(id: custom.id)?.reference == "X-1" && reloaded.holder(id: custom.id)?.frames == 2)
+            reloaded.deleteCustom("50200402")
+            #expect(reloaded.holder(id: "50200402") != nil, "defaults cannot be deleted")
+            reloaded.deleteCustom(custom.id)
+            #expect(reloaded.holder(id: custom.id) == nil && !reloaded.isOwned(custom.id))
+
+            store.set(Data("garbage".utf8), forKey: "Holders")
+            _ = HolderLibrary(store: store)
+            #expect(store.data(forKey: "Holders.unreadable") == Data("garbage".utf8), "kept aside")
+        }
+    }
+
+    @Test func panelSelectionAndStep3Migration() {
+        withTemporaryDefaults { store in
+            // Step 3 saved the holder as free text.
+            store.set(Data(#"{"filmType":"positive","holder":"My glass carrier","resolution":2000,"scalePercent":100}"#.utf8),
+                      forKey: "ScanSettings")
+            let model = AppModel(virtualScanner: { throw TimeoutError() }, inspector: ScannerInspector {
+                FakeConnection(responses: [:], openError: TransportError.deviceBusy)
+            }, defaults: store)
+            #expect(model.selectedHolder?.format == "My glass carrier" && model.selectedHolder?.isCustom == true)
+            let again = AppModel(virtualScanner: { throw TimeoutError() }, inspector: ScannerInspector {
+                FakeConnection(responses: [:], openError: TransportError.deviceBusy)
+            }, defaults: store)
+            #expect(again.holders.custom.count == 1, "converted once")
+            again.scanSettings.holderID = "50200403"
+            #expect(again.selectedHolder == nil, "not owned: shown as not specified")
+            again.holders.setOwned("50200403", true)
+            #expect(again.selectedHolder?.reference == "50200403")
+            again.scanSettings.holderID = nil
+            #expect(again.selectedHolder == nil)
         }
     }
 }

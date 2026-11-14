@@ -145,3 +145,12 @@ raw) or 8 bits (sRGB curve and profile, provisional), with no compression,
 LZW or ZIP (with the horizontal predictor), written by our TIFF writer and
 read back by ImageIO. Zoom menu applies only confirmed choices (likely
 cause of the 6.25 % report); token buttons insert at the caret.
+
+## 2026-11-14: film holders
+
+Holder menu fed by a data file of the 21 holders of Hasselblad's
+compatibility table (reference, format, opening, frames; data only) and by
+custom holders, managed in Settings > Holders. protocol.md: the X1 might
+report the reference of the inserted holder (20More shows "6×7
+[50200420]") **[hypothesis]**, to check at the next session by noting the
+reference of the holder used.

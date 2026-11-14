@@ -151,6 +151,36 @@ enum Strings {
         }
     }
 
+    /// "6×7", or "Mounted slides 35 mm".
+    static func holderName(_ holder: Holder) -> String {
+        holder.mountedSlides
+            ? String(localized: "Mounted slides \(holder.format)", comment: "Holder for mounted slides; %@ is the slide size")
+            : holder.format
+    }
+
+    /// Panel menu: "6×7 (50200403)".
+    static func holderMenuTitle(_ holder: Holder) -> String {
+        guard let reference = holder.reference else { return holderName(holder) }
+        return "\(holderName(holder)) (\(reference))"
+    }
+
+    /// "57 × 70 mm", "57 × 57 / 57 × 42.5 mm", or "—".
+    static func holderApertures(_ holder: Holder) -> String {
+        guard !holder.apertures.isEmpty else { return "—" }
+        let sizes = holder.apertures.map {
+            "\($0.width.formatted(.number.grouping(.never))) × \($0.height.formatted(.number.grouping(.never)))"
+        }
+        return sizes.joined(separator: " / ") + " mm"
+    }
+
+    static func holderSeries(_ series: Holder.Series) -> String {
+        switch series {
+        case .standard: String(localized: "Supplied with the X1 and X5", comment: "Holder list section")
+        case .common: String(localized: "Common series", comment: "Holder list section")
+        case .custom: String(localized: "Custom", comment: "Holder list section")
+        }
+    }
+
     static func panelSection(_ section: PanelSection) -> String {
         switch section {
         case .scanner: String(localized: "Scanner", comment: "Menu")

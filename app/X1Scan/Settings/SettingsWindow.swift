@@ -4,11 +4,11 @@ import SwiftUI
 import X1ScanCore
 
 /// X1 Scan > Settings… (⌘,): an icon toolbar at the top (General, Display,
-/// Export, Scanner), as in the settings of Mail or Safari. Each pane is a
+/// Export, Holders, Scanner), as in the settings of Mail or Safari. Each pane is a
 /// SwiftUI form; the window takes the height of the pane shown.
 @MainActor
 final class SettingsWindowController: NSWindowController {
-    enum Pane: Int { case general, display, export, scanner }
+    enum Pane: Int { case general, display, export, holders, scanner }
 
     /// Shows the window on `pane`.
     func show(_ pane: Pane) {
@@ -33,6 +33,7 @@ final class SettingsWindowController: NSWindowController {
         pane(String(localized: "General", comment: "Settings tab"), "gearshape", height: 230, GeneralSettings(settings: model.settings))
         pane(String(localized: "Display", comment: "Settings tab"), "display", height: 280, DisplaySettings(settings: model.settings))
         pane(String(localized: "Export", comment: "Palette title"), "square.and.arrow.up", height: 400, ExportSettingsForm(model: model))
+        pane(String(localized: "Holders", comment: "Settings tab"), "film.stack", height: 460, HolderSettings(model: model))
         pane(String(localized: "Scanner", comment: "Menu"), "scanner", height: 150, ScannerSettings(settings: model.settings))
 
         let window = NSWindow(contentViewController: tabs)
