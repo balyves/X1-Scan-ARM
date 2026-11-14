@@ -10,6 +10,8 @@
 - [`decisions.md`](decisions.md): platform, scope, distribution and
   scanner-safety decisions.
 - [`journal.md`](journal.md): what was found, and when.
+- [`test-session.md`](test-session.md): step-by-step procedure for the next
+  session at the scanner (ASFireWire test, capture of a real scan).
 
 Everything here is written from observation and analysis. No Hasselblad
 document or code is reproduced.

@@ -126,3 +126,11 @@ virtual image reads in the tests). Nothing sent to a scanner changed.
 
 To do later: make the stop tests deterministic (the virtual X1 waits for a
 signal from the test instead of a 100 ms delay per image read).
+
+## 2026-11-14: procedure for the next scanner session
+
+`docs/test-session.md`: preparation, read-only ASFireWire test on the
+development Mac, capture of a real scan on the reference Mac, what to keep
+and pass on. `cap3.py` gains `X1CAP_RAW` and `X1CAP_SCAN_MB` (image data
+after each SCAN limited to a contiguous start; calibration reads, CDB
+byte 5 = 01, never skipped).

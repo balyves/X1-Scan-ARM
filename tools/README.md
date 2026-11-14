@@ -82,6 +82,13 @@ image data, using lldb breakpoints in Apple's SCSITaskLib. Mojave Mac only
       "/Applications/FlexColor 4.8.13/FlexColor.app/Contents/MacOS/FlexColor" \
       2>&1 | tee capture.txt
 
+Options, as environment variables before `lldb`: `X1CAP_RAW=<file>` (image
+data file) and `X1CAP_SCAN_MB=<n>` (after each SCAN, write at most n MiB
+of image data; calibration reads, CDB byte 5 = 01, are never skipped;
+skipped reads are logged as `RAW skipped`; a value that is not a number is
+ignored, with a message). A full-resolution scan can take
+several GB without it. See `docs/test-session.md`.
+
 ## decode/
 
 `decode_preview.py` turns a capture into a PNG (Python 3, numpy, Pillow).

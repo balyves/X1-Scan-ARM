@@ -2,9 +2,27 @@
 # X1-Scan-ARM : capture lldb v3 (lecture seule). Commandes, reponses lues
 # au retour de l'execution, statut SCSI, et donnees image enregistrees.
 import lldb, os
-RAW = os.path.expanduser('~/Desktop/x1-apercu.raw')
+# Options, read from the environment of lldb (Python 2 syntax: Mojave's lldb):
+#   X1CAP_RAW      image data file (default ~/Desktop/x1-apercu.raw)
+#   X1CAP_SCAN_MB  after each SCAN (0x1B), write at most this many MiB of
+#                  image data: a contiguous start of the scan. From the
+#                  first READ that does not fit whole, READs are logged as
+#                  "RAW skipped" and not written. Calibration READs (CDB
+#                  byte 5 = 01, docs/protocol.md section 10) are never
+#                  skipped, before or after a SCAN.
+#                  Unset: everything is written (a full-resolution scan can
+#                  take several GB).
+RAW = os.path.expanduser(os.environ.get('X1CAP_RAW', '~/Desktop/x1-apercu.raw'))
+_LIMIT_MB = os.environ.get('X1CAP_SCAN_MB')
+try:
+    SCAN_LIMIT = int(float(_LIMIT_MB) * 1024 * 1024) if _LIMIT_MB else None
+except ValueError:
+    # A bad value must not stop the breakpoints from being set: record everything.
+    print('cap3.py : X1CAP_SCAN_MB=%r is not a number: ignored, all image data is written' % _LIMIT_MB)
+    _LIMIT_MB, SCAN_LIMIT = None, None
 S = {'buf': 0, 'n': 0, 'dir': 0, 'k': 0, 'cdb': '', 'pending': False,
-     'raw_off': 0, 'sync': 0, 'async': 0}
+     'raw_off': 0, 'sync': 0, 'async': 0, 'after_scan': False, 'scan_bytes': 0,
+     'scan_full': False}
 
 def _hex(b):
     return ' '.join('%02x' % x for x in bytearray(b))
@@ -24,8 +42,21 @@ def _dump(p, count, status):
     print(line)
     if S['dir'] == 2 and S['buf'] and count:
         if S['cdb'].startswith('28'):
+            parts = S['cdb'].split()
+            calibration = len(parts) > 5 and parts[5] != '00'
+            if S['after_scan'] and SCAN_LIMIT is not None and not calibration and (
+                    S['scan_full'] or S['scan_bytes'] + count > SCAN_LIMIT):
+                S['scan_full'] = True
+                # Over the X1CAP_SCAN_MB budget: log it, keep only the first bytes on screen.
+                print('   RAW skipped taille=%d' % count)
+                head = _rd(p, S['buf'], min(count, 64))
+                if head is not None:
+                    print('   REP ' + _hex(head))
+                return
             b = _rd(p, S['buf'], count)
             if b is not None:
+                if S['after_scan'] and not calibration:
+                    S['scan_bytes'] += count
                 with open(RAW, 'ab') as f:
                     f.write(b)
                 print('   RAW offset=%d taille=%d' % (S['raw_off'], count))
@@ -47,6 +78,11 @@ def on_cdb(frame, bp_loc, d):
     S['k'] += 1
     S['cdb'] = _hex(b) if b else '?'
     S['dir'] = 0
+    # Image data budget: counted from each SCAN until the stop (DB) or the end of session (CF 00 02).
+    if S['cdb'].startswith('1b'):
+        S['after_scan'], S['scan_bytes'], S['scan_full'] = True, 0, False
+    elif S['cdb'].startswith('db') or S['cdb'].startswith('cf 00 02'):
+        S['after_scan'] = False
     print('%04d CDB %s' % (S['k'], S['cdb']))
     return False
 
@@ -107,3 +143,6 @@ def __lldb_init_module(debugger, d):
         b = t.BreakpointCreateByName(name)
         b.SetScriptCallbackFunction('cap3.' + fn)
     print('cap3.py : points d arret poses, donnees image vers ' + RAW)
+    if SCAN_LIMIT is not None:
+        print('cap3.py : X1CAP_SCAN_MB=%s, at most %d bytes of image data after each SCAN'
+              % (_LIMIT_MB, SCAN_LIMIT))
