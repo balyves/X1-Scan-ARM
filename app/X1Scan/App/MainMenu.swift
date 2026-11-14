@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import AppKit
+import X1ScanCore
 
 /// The menu bar, built in code. Items send their actions to the responder
 /// chain; MainWindowController (the window's delegate) handles them and
@@ -41,6 +42,9 @@ enum MainMenu {
         menu.addItem(item(String(localized: "About \(name)", comment: "Menu item"),
                           #selector(NSApplication.orderFrontStandardAboutPanel(_:))))
         menu.addItem(.separator())
+        menu.addItem(item(String(localized: "Settings…", comment: "Menu item"),
+                          #selector(AppDelegate.showSettings(_:)), ","))
+        menu.addItem(.separator())
         let services = NSMenu(title: String(localized: "Services", comment: "Menu"))
         menu.addItem(submenu(services))
         NSApp.servicesMenu = services
@@ -80,7 +84,9 @@ enum MainMenu {
 
     private static func viewMenu() -> NSMenu {
         let menu = NSMenu(title: String(localized: "View", comment: "Menu"))
-        menu.addItem(item(String(localized: "Zoom to Fit", comment: "Menu item"), #selector(MainWindowController.zoomToFit(_:)), "0"))
+        menu.addItem(item(Strings.zoomMode(.fit), #selector(MainWindowController.zoomToFit(_:)), "0"))
+        menu.addItem(item(Strings.zoomMode(.fill), #selector(MainWindowController.zoomToFill(_:)), "0",
+                          [.command, .option]))
         menu.addItem(item(String(localized: "Actual Size", comment: "Menu item"),
                           #selector(MainWindowController.zoomToActualSize(_:)), "1"))
         menu.addItem(item(String(localized: "Zoom In", comment: "Menu item"), #selector(MainWindowController.zoomIn(_:)), "+"))
@@ -91,6 +97,13 @@ enum MainMenu {
         zoomInAlternate.allowsKeyEquivalentWhenHidden = true
         menu.addItem(zoomInAlternate)
         menu.addItem(item(String(localized: "Zoom Out", comment: "Menu item"), #selector(MainWindowController.zoomOut(_:)), "-"))
+        let steps = NSMenu(title: String(localized: "zoom.steps", defaultValue: "Zoom", comment: "Menu: zoom steps (not the window zoom)"))
+        for step in Viewport.steps {
+            let stepItem = item(Strings.zoom(step), #selector(MainWindowController.zoomToStep(_:)))
+            stepItem.representedObject = step
+            steps.addItem(stepItem)
+        }
+        menu.addItem(submenu(steps))
         menu.addItem(.separator())
         let tools = NSMenu(title: String(localized: "Tools", comment: "Menu"))
         // The single-key shortcuts (H, Z, C, Space) are handled by the canvas, not
@@ -102,8 +115,6 @@ enum MainMenu {
         menu.addItem(.separator())
         menu.addItem(item(String(localized: "Show Palettes as Icons", comment: "Menu item"),
                           #selector(MainWindowController.toggleColumnMode(_:)), "p", [.command, .option]))
-        menu.addItem(item(String(localized: "Reset Palette Layout", comment: "Menu item"),
-                          #selector(MainWindowController.resetPaletteLayout(_:))))
         menu.addItem(.separator())
         // AppKit adds "Enter Full Screen" (⌃⌘F) to the View menu by itself.
         return menu
@@ -116,15 +127,13 @@ enum MainMenu {
         menu.addItem(item(String(localized: "Stop", comment: "Menu item and toolbar button"),
                           #selector(MainWindowController.stopPreview(_:)), "."))
         menu.addItem(.separator())
-        let virtual = item(String(localized: "Virtual X1", comment: "Scanner source"),
-                           #selector(MainWindowController.selectVirtualSource(_:)))
-        let real = item(String(localized: "Real X1", comment: "Scanner source"),
-                        #selector(MainWindowController.selectRealSource(_:)))
-        menu.addItem(virtual)
-        menu.addItem(real)
+        menu.addItem(item(Strings.source(.virtual), #selector(MainWindowController.selectVirtualSource(_:))))
+        menu.addItem(item(Strings.source(.real), #selector(MainWindowController.selectRealSource(_:))))
         menu.addItem(.separator())
-        menu.addItem(item(String(localized: "Read Real X1", comment: "Menu item"),
-                          #selector(MainWindowController.readRealScanner(_:))))
+        menu.addItem(item(String(localized: "Read Identity", comment: "Menu item and button"),
+                          #selector(AppDelegate.readIdentity(_:))))
+        menu.addItem(item(String(localized: "Scanner Information…", comment: "Menu item"),
+                          #selector(AppDelegate.showScannerInformation(_:)), "i"))
         return menu
     }
 
@@ -132,6 +141,20 @@ enum MainMenu {
         let menu = NSMenu(title: String(localized: "Window", comment: "Menu"))
         menu.addItem(item(String(localized: "Minimize", comment: "Menu item"), #selector(NSWindow.performMiniaturize(_:)), "m"))
         menu.addItem(item(String(localized: "Zoom", comment: "Menu item: window zoom"), #selector(NSWindow.performZoom(_:))))
+        menu.addItem(.separator())
+        // Same titles as the palette headers (Strings.paletteTitle).
+        for id in PaletteRegistry.standard.ids {
+            let paletteItem = item(Strings.paletteTitle(id), #selector(MainWindowController.togglePalette(_:)))
+            paletteItem.representedObject = id.rawValue
+            menu.addItem(paletteItem)
+        }
+        // Tab, as in Photoshop. Disabled while a text field is being edited, so
+        // that Tab still moves between fields there (MainWindowController).
+        menu.addItem(item(String(localized: "Show/Hide All Palettes", comment: "Menu item"),
+                          #selector(MainWindowController.toggleAllPalettes(_:)), "\t", []))
+        menu.addItem(item(String(localized: "Reset Palette Layout", comment: "Menu item"),
+                          #selector(MainWindowController.resetPaletteLayout(_:))))
+        menu.addItem(.separator())
         return menu
     }
 }

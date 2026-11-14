@@ -2,14 +2,15 @@
 import SwiftUI
 import X1ScanCore
 
-/// RGB histogram of the corrected values (what is exported), linear.
+/// RGB histogram of the corrected values (what is exported). Square-root
+/// scale by default, logarithmic as an option.
 struct HistogramPaletteView: View {
     @Bindable var model: AppModel
     @AppStorage("HistogramLogarithmic") private var logarithmic = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            let bins = model.histogram.normalized(logarithmic: logarithmic)
+            let bins = model.histogram.normalized(scale: logarithmic ? .logarithmic : .squareRoot)
             Canvas { context, size in
                 context.blendMode = .plusLighter
                 for (channel, color) in [(0, Color.red), (1, Color.green), (2, Color.blue)] {

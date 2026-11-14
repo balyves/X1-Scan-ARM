@@ -77,7 +77,8 @@ Recorded on 2026-11-12.
   `CommandPolicy.readOnly` itself as well, sends INQUIRY, MODE SENSE 0x26,
   LOG SENSE 0x30 and 0xDF, then closes the device at once so that FlexColor
   can open it. It stops after INQUIRY if the device is not a Flextight X1.
-  Reading only happens when the user clicks "Read Scanner".
+  Reading only happens when the user chooses Scanner > Read Identity (or
+  the button in Scanner Information); never at launch (step 2b).
   The CI (`app` job) fails if a tracked file of `app/` contains
   `unrestricted`, `allowsStateChangingCommands`, `CommandPolicy(`,
   `CX1IOKit` or `cx1_`. This is a text check, not a proof; like every
@@ -128,6 +129,76 @@ Launch arguments, Debug only, for checking the window without screen
 recording: `-X1ScanSnapshot <file.png>` (renders the window and the palettes,
 then quits), `-X1ScanAutoPreview YES` (preview on the virtual X1 at launch),
 `-X1ScanIconBar YES`.
+
+## Application, step 2b (menus, zoom, settings)
+
+Recorded on 2026-11-14. Nothing here changes what is sent to a scanner.
+
+### Scanner menu instead of the Scanner palette
+
+- The Scanner palette is gone (`PaletteID.scanner` removed; saved layouts
+  drop it when reconciled). Scanner menu: Preview ⌘R, Stop ⌘., Virtual X1 /
+  Real X1, Read Identity, Scanner Information… ⌘I.
+- **Read Identity** opens Scanner Information and, with the real X1, runs
+  the same read-only `ScannerInspector` read as before. With the virtual X1
+  the identity comes from the fixtures. **Scanner Information** shows the
+  last reading (identity, state, LOG 0x30 counters) and never reads by
+  itself.
+- The bottom bar names the source and its state (`ScannerStatusLine`):
+  "Virtual X1 · Ready", "Real X1 · Not read", "… · Reading…",
+  "… · Identity read", "… · Reading failed".
+
+### Zoom
+
+- `Viewport.mode`: `fit`, `fill` or `fixed`. Steps 6.25, 8.33, 12.5, 16.7,
+  25, 33.3, 50, 66.7, 100, 200, 300, 400, 800, 1600 %.
+- Fit (16-point margin) and Fill (no margin) are recomputed whenever the
+  image area changes size: window, full screen, palettes hidden or shown.
+  A chosen magnification (step, pinch, typed value) is kept.
+- ⌘+ / ⌘− go to the step strictly above or below the current
+  magnification, as Photoshop and Preview, also after a pinch.
+- View menu: Zoom to Fit ⌘0, Fill Window ⌥⌘0, Actual Size ⌘1, Zoom In,
+  Zoom Out, and a Zoom submenu with the steps. The bottom bar's percentage
+  is a combo box with the same choices, where a value can be typed ("150",
+  "12,5 %"); an invalid value puts the current one back.
+
+### Window menu and palettes
+
+- One item per palette, checked when shown, with the same title as the
+  palette header. Show/Hide All Palettes (Tab, as in Photoshop; disabled
+  while a text field is edited, so that Tab still moves between fields),
+  Reset Palette Layout.
+- `PaletteLayout` version 2 adds `hidden`; version 1 layouts decode with
+  nothing hidden. When every palette is hidden the column collapses.
+
+### Settings (⌘,)
+
+`AppSettings`, saved in UserDefaults:
+
+- General: language (System / Français / English), written to the app's
+  `AppleLanguages`, effective at the next launch; hide the serial number
+  (on by default; replaces the unsaved "reveal" toggle of step 2).
+- Display: appearance (System / Light / Dark); background around the
+  image: neutral grey 18 % (middle grey, L* 50, sRGB 119/119/119, default),
+  black or white; zoom when opening (Fit or 100 %).
+- Export: folder and file name template, shared with the Export palette
+  (`ExportSettings.nameTemplate`, default `X1-preview-{date}-{n}`; tokens
+  `{date}`, `{heure}` or `{time}`, `{n}`). Step 2 settings keep their base
+  name (`<base>-{date}-{n}`). The palette shows the real name of the next
+  file.
+- Scanner: source at launch (Virtual X1, Real X1, last used). The real X1
+  is never read at launch.
+
+### Fixes
+
+- Stop is red (prominent) only while a preview runs.
+- Histogram: square-root scale by default, logarithmic as an option.
+
+### Debug builds
+
+New launch arguments: `-X1ScanHideAllPalettes YES`, `-X1ScanZoomFill YES`.
+The snapshot also renders the Settings window and Scanner Information.
+They change the saved layout like a user would.
 
 ## Scanner safety
 

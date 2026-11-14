@@ -19,7 +19,6 @@ public struct PaletteID: RawRepresentable, Hashable, Sendable, Codable, CustomSt
 
     public var description: String { rawValue }
 
-    public static let scanner = PaletteID(rawValue: "scanner")
     public static let histogram = PaletteID(rawValue: "histogram")
     public static let info = PaletteID(rawValue: "info")
     public static let export = PaletteID(rawValue: "export")
@@ -53,7 +52,6 @@ public struct PaletteRegistry: Sendable {
     }
 
     public static let standard = PaletteRegistry([
-        PaletteDescriptor(id: .scanner, symbolName: "scanner"),
         PaletteDescriptor(id: .histogram, symbolName: "chart.bar.xaxis"),
         PaletteDescriptor(id: .info, symbolName: "info.circle"),
         PaletteDescriptor(id: .export, symbolName: "square.and.arrow.up", collapsedByDefault: true),

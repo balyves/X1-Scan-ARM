@@ -34,7 +34,6 @@ final class CanvasViewController: NSViewController {
         scrollView.minMagnification = Viewport.minimumMagnification
         scrollView.maxMagnification = Viewport.maximumMagnification
         scrollView.drawsBackground = true
-        scrollView.backgroundColor = .underPageBackgroundColor
         root.addSubview(scrollView)
 
         let capsule = NSHostingView(rootView: ToolCapsuleView(model: model))
@@ -66,6 +65,11 @@ final class CanvasViewController: NSViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         observers.append(Observing { [weak self] in self?.applyViewport() })
+        observers.append(Observing { [weak self] in
+            guard let self else { return }
+            let level = model.settings.canvasBackground.srgbLevel
+            scrollView.backgroundColor = NSColor(srgbRed: level, green: level, blue: level, alpha: 1)
+        })
         observers.append(Observing { [weak self] in
             guard let self else { return }
             _ = model.session.imageRevision

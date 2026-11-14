@@ -10,7 +10,6 @@ import X1ScanCore
 enum Strings {
     static func paletteTitle(_ id: PaletteID) -> String {
         switch id {
-        case .scanner: String(localized: "Scanner", comment: "Palette title")
         case .histogram: String(localized: "Histogram", comment: "Palette title")
         case .info: String(localized: "Info", comment: "Palette title")
         case .export: String(localized: "Export", comment: "Palette title")
@@ -128,7 +127,69 @@ enum Strings {
         }
     }
 
+    /// "12,5 %", "8,33 %", "1600 %": three significant digits, as in the zoom steps.
     static func zoom(_ magnification: Double) -> String {
-        magnification.formatted(.percent.precision(.fractionLength(0)))
+        magnification.formatted(.percent.precision(.significantDigits(1...3)).grouping(.never))
+    }
+
+    static func zoomMode(_ mode: ZoomMode) -> String {
+        switch mode {
+        case .fit: String(localized: "Zoom to Fit", comment: "Menu item")
+        case .fill: String(localized: "Fill Window", comment: "Menu item")
+        case .fixed: String(localized: "Actual Size", comment: "Menu item")
+        }
+    }
+
+    /// Bottom bar: "Virtual X1 · Ready".
+    @MainActor
+    static func statusLine(_ line: ScannerStatusLine, session: PreviewSession) -> String {
+        let detail: String = switch line.detail {
+        case .session: sessionStatus(session)
+        case .unavailable: String(localized: "Unavailable", comment: "Status: virtual X1 fixtures missing")
+        case .notRead: String(localized: "Not read", comment: "Scanner state")
+        case .reading: String(localized: "Reading…", comment: "Status: reading the real X1")
+        case .read: String(localized: "Identity read", comment: "Status: the real X1 was read")
+        case .failed: String(localized: "Reading failed", comment: "Status: reading the real X1 failed")
+        }
+        return "\(source(line.source)) · \(detail)"
+    }
+
+    static func language(_ language: InterfaceLanguage) -> String {
+        switch language {
+        case .system: String(localized: "System", comment: "Setting: follow the system")
+        case .french: "Français"
+        case .english: "English"
+        }
+    }
+
+    static func appearance(_ appearance: AppearanceSetting) -> String {
+        switch appearance {
+        case .system: String(localized: "System", comment: "Setting: follow the system")
+        case .light: String(localized: "Light", comment: "Appearance")
+        case .dark: String(localized: "Dark", comment: "Appearance")
+        }
+    }
+
+    static func canvasBackground(_ background: CanvasBackground) -> String {
+        switch background {
+        case .neutralGray: String(localized: "Neutral grey 18 %", comment: "Background around the image")
+        case .black: String(localized: "Black", comment: "Background around the image")
+        case .white: String(localized: "White", comment: "Background around the image")
+        }
+    }
+
+    static func startupZoom(_ zoom: StartupZoom) -> String {
+        switch zoom {
+        case .fit: String(localized: "Zoom to Fit", comment: "Menu item")
+        case .actualSize: String(localized: "Actual Size (100 %)", comment: "Setting: zoom at launch")
+        }
+    }
+
+    static func startupSource(_ startup: StartupSource) -> String {
+        switch startup {
+        case .virtual: source(.virtual)
+        case .real: source(.real)
+        case .last: String(localized: "Last used", comment: "Setting: scanner source at launch")
+        }
     }
 }

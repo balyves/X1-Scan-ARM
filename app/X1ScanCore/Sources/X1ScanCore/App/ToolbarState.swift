@@ -22,6 +22,8 @@ public struct ToolbarState: Sendable, Hashable {
     public var canPreview: Bool { previewBlock == nil }
     public var previewBlock: PreviewBlock?
     public var canStop: Bool
+    /// Stop is drawn red only while a preview runs.
+    public var stopIsProminent: Bool { canStop }
     /// True while the stop sequence runs: Stop is shown, but pressing it again does nothing.
     public var isStopping: Bool
     public var canExport: Bool

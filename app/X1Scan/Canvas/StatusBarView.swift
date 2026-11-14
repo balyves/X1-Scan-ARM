@@ -2,7 +2,8 @@
 import SwiftUI
 import X1ScanCore
 
-/// Bottom bar: preview status and progress, image size, zoom.
+/// Bottom bar: source and state ("Virtual X1 · Ready"), preview progress,
+/// image size, zoom menu.
 struct StatusBarView: View {
     @Bindable var model: AppModel
 
@@ -12,7 +13,7 @@ struct StatusBarView: View {
             if session.state == .stopping {
                 ProgressView().controlSize(.small)
             }
-            Text(Strings.sessionStatus(session))
+            Text(Strings.statusLine(model.statusLine, session: session))
                 .lineLimit(1)
                 .foregroundStyle(statusColor(session.state))
             if session.state == .running {
@@ -25,10 +26,8 @@ struct StatusBarView: View {
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
             }
-            Text(Strings.zoom(model.viewport.magnification))
-                .foregroundStyle(.secondary)
-                .monospacedDigit()
-                .frame(minWidth: 44, alignment: .trailing)
+            ZoomComboBox(model: model, magnification: model.viewport.magnification, enabled: session.image != nil)
+                .frame(width: 128)
         }
         .font(.callout)
         .padding(.horizontal, 12)
@@ -37,10 +36,12 @@ struct StatusBarView: View {
     }
 
     private func statusColor(_ state: PreviewSession.State) -> Color {
+        if model.statusLine.detail == .failed || model.statusLine.detail == .unavailable { return .red }
+        guard model.statusLine.detail == .session else { return .primary }
         switch state {
-        case .failed: .red
-        case .stopped(let outcome?) where outcome != .stoppedAndReady: .red
-        default: .primary
+        case .failed: return .red
+        case .stopped(let outcome?) where outcome != .stoppedAndReady: return .red
+        default: return .primary
         }
     }
 }

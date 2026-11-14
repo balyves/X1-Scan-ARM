@@ -91,3 +91,13 @@ during the captures was not recorded.
 `CommandPolicy.readOnly` now compares each CDB with the captured one: only
 the MODE SENSE page and per-page length and the 0xEE address vary, within
 the values seen; a test replays every captured read of the fixture.
+
+## 2026-11-14: application step 2b
+
+Scanner menu and Scanner Information window replace the Scanner palette;
+detailed zoom (steps 6.25-1600 %, Fit, Fill, typed values, recomputed on
+resize); Window menu to show and hide palettes; Settings window (language,
+serial masking, appearance, background, startup zoom and source, export);
+Stop red only during a preview; square-root histogram; real next export
+name. Nothing sent to a scanner changed; the app still only reads the real
+X1, on request.

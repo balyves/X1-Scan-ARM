@@ -31,9 +31,10 @@ real scanner.
 
 - **Virtual X1** (default): replay of the captured preview. Preview, Stop and
   Export work.
-- **Real X1**: only "Read Scanner" (INQUIRY, page 0x26, log page 0x30,
-  0xDF). Before reading: **X1 on, FlexColor closed** (only one program can
-  open the scanner). Preview is disabled.
+- **Real X1**: only Scanner > Read Identity (INQUIRY, page 0x26, log page
+  0x30, 0xDF), shown in Scanner Information (⌘I). Before reading: **X1 on,
+  FlexColor closed** (only one program can open the scanner). Preview is
+  disabled. The real X1 is never read at launch.
 
 ## Shortcuts
 
@@ -42,8 +43,11 @@ real scanner.
 | ⌘R | Preview |
 | ⌘. or Esc | Stop |
 | ⇧⌘E | Export |
-| ⌘0 / ⌘1 | Zoom to fit / actual size |
-| ⌘+ / ⌘− | Zoom in / out |
+| ⌘0 / ⌥⌘0 / ⌘1 | Zoom to fit / fill window / actual size |
+| ⌘+ / ⌘− | Zoom in / out (next step) |
+| ⌘I | Scanner Information |
+| ⌘, | Settings |
+| Tab | Show/hide all palettes |
 | H, Z, C | Hand, zoom, crop tools |
 | Space (held) | Hand, temporarily |
 | Option-click (zoom tool) | Zoom out |

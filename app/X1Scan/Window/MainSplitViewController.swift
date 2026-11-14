@@ -20,6 +20,8 @@ final class MainSplitViewController: NSSplitViewController {
         let column = NSHostingController(rootView: PaletteColumnView(model: model))
         column.sizingOptions = []
         paletteItem = NSSplitViewItem(inspectorWithViewController: column)
+        // Collapsible only while every palette is hidden (applyHiddenPalettes), so that
+        // dragging the divider cannot hide the column behind the model's back.
         paletteItem.canCollapse = false
         paletteItem.holdingPriority = .defaultHigh
         super.init(nibName: nil, bundle: nil)
@@ -34,6 +36,7 @@ final class MainSplitViewController: NSSplitViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         observers.append(Observing { [weak self] in self?.applyColumnMode() })
+        observers.append(Observing { [weak self] in self?.applyHiddenPalettes() })
     }
 
     private func applyColumnMode() {
@@ -52,6 +55,26 @@ final class MainSplitViewController: NSSplitViewController {
         }
     }
 
+    /// Collapses the column when every palette is hidden. The image area then
+    /// grows and Fit or Fill is recomputed (CanvasViewController.viewDidLayout).
+    private func applyHiddenPalettes() {
+        let collapsed = model.layout.layout.allHidden
+        guard paletteItem.isCollapsed != collapsed else { return }
+        if collapsed {
+            paletteItem.canCollapse = true
+            paletteItem.isCollapsed = true
+        } else {
+            paletteItem.isCollapsed = false
+            paletteItem.canCollapse = false
+        }
+        if !collapsed, appliedMode == .expanded {
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                setColumnWidth(model.layout.layout.columnWidth)
+            }
+        }
+    }
+
     private func setColumnWidth(_ width: CGFloat) {
         guard splitView.subviews.count == 2 else { return }
         splitView.layoutSubtreeIfNeeded()
@@ -61,7 +84,7 @@ final class MainSplitViewController: NSSplitViewController {
     override func splitViewDidResizeSubviews(_ notification: Notification) {
         super.splitViewDidResizeSubviews(notification)
         // Remember the width chosen by dragging, in expanded mode only.
-        guard appliedMode == .expanded, splitView.subviews.count == 2, view.window != nil,
+        guard appliedMode == .expanded, !paletteItem.isCollapsed, splitView.subviews.count == 2, view.window != nil,
               notification.userInfo?["NSSplitViewDividerIndex"] != nil else { return }
         model.layout.setColumnWidth(splitView.subviews[1].frame.width)
     }

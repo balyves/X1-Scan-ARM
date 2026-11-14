@@ -34,10 +34,21 @@ public struct Histogram: Sendable, Hashable {
         self.init(bins: [red, green, blue], pixelCount: end / 3)
     }
 
-    /// Bins scaled to 0...1 for drawing, against the largest bin of all
-    /// channels. `logarithmic` compresses tall peaks.
-    public func normalized(logarithmic: Bool = false) -> [[Double]] {
-        let transform: (Int) -> Double = logarithmic ? { log1p(Double($0)) } : { Double($0) }
+    /// Vertical scale of the drawing. Square root by default: a linear scale
+    /// lets the tallest bins flatten everything else.
+    public enum Scale: String, Sendable, Hashable, CaseIterable {
+        case linear
+        case squareRoot
+        case logarithmic
+    }
+
+    /// Bins scaled to 0...1 for drawing, against the largest bin of all channels.
+    public func normalized(scale: Scale = .squareRoot) -> [[Double]] {
+        let transform: (Int) -> Double = switch scale {
+        case .linear: { Double($0) }
+        case .squareRoot: { Double($0).squareRoot() }
+        case .logarithmic: { log1p(Double($0)) }
+        }
         let peak = bins.flatMap { $0 }.map(transform).max() ?? 0
         guard peak > 0 else { return bins.map { $0.map { _ in 0 } } }
         return bins.map { $0.map { transform($0) / peak } }

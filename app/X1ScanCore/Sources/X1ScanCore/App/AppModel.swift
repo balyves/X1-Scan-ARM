@@ -12,6 +12,28 @@ public enum RealScannerStatus: Sendable, Hashable {
     case failed(ScannerInspector.Failure)
 }
 
+/// The bottom bar's reminder of the source and its state ("Virtual X1 · Ready").
+public struct ScannerStatusLine: Sendable, Hashable {
+    public enum Detail: Sendable, Hashable {
+        /// Virtual X1: the preview session's status.
+        case session
+        /// Virtual X1: the fixtures could not be loaded.
+        case unavailable
+        case notRead
+        case reading
+        case read
+        case failed
+    }
+
+    public var source: ScannerSourceKind
+    public var detail: Detail
+
+    public init(source: ScannerSourceKind, detail: Detail) {
+        self.source = source
+        self.detail = detail
+    }
+}
+
 /// Everything the main window shows and does, without any view.
 @MainActor
 @Observable
@@ -30,17 +52,19 @@ public final class AppModel {
     public let virtualScannerError: String?
     public let session: PreviewSession
     public private(set) var realStatus: RealScannerStatus = .notRead
-    /// Serial number shown in full. Not saved: masked again at every launch.
-    public var serialRevealed = false
     private let inspector: ScannerInspector
+
+    // MARK: Settings
+
+    public let settings: AppSettings
 
     // MARK: Layout and viewing
 
     public let layout: LayoutController
     public var tools = ToolState()
-    public private(set) var viewport = Viewport(imageWidth: 0, imageHeight: 0)
+    public private(set) var viewport: Viewport
     /// Size of the visible image area, reported by the canvas.
-    public private(set) var viewSize: CGSize = .zero
+    public var viewSize: CGSize { viewport.viewSize }
     /// Framing rectangle drawn with the crop tool. No effect at this stage.
     public var cropRect: PixelRect?
     /// Pixel under the pointer, reported by the canvas.
@@ -78,9 +102,17 @@ public final class AppModel {
         }
         session = PreviewSession()
         layout = LayoutController(store: layoutStore ?? UserDefaultsLayoutStore(defaults: defaults))
-        source = defaults.string(forKey: Keys.source).flatMap(ScannerSourceKind.init) ?? .virtual
+        let settings = AppSettings(defaults: defaults)
+        self.settings = settings
+        switch settings.startupSource {
+        case .virtual: source = .virtual
+        case .real: source = .real
+        case .last: source = defaults.string(forKey: Keys.source).flatMap(ScannerSourceKind.init) ?? .virtual
+        }
+        viewport = Viewport(imageWidth: 0, imageHeight: 0, mode: settings.startupZoom == .fit ? .fit : .fixed)
         exportSettings = defaults.data(forKey: Keys.exportSettings)
             .flatMap { try? JSONDecoder().decode(ExportSettings.self, from: $0) } ?? ExportSettings()
+        defaults.set(source.rawValue, forKey: Keys.source)  // "last used" is this session's source
     }
 
     // MARK: Derived state
@@ -90,7 +122,21 @@ public final class AppModel {
                      hasImage: (session.image?.height ?? 0) > 0, hasExportFolder: exportSettings.folder != nil)
     }
 
-    /// What the Scanner palette shows for the current source.
+    public var statusLine: ScannerStatusLine {
+        switch source {
+        case .virtual:
+            ScannerStatusLine(source: .virtual, detail: virtualScanner == nil ? .unavailable : .session)
+        case .real:
+            switch realStatus {
+            case .notRead: ScannerStatusLine(source: .real, detail: .notRead)
+            case .reading: ScannerStatusLine(source: .real, detail: .reading)
+            case .read: ScannerStatusLine(source: .real, detail: .read)
+            case .failed: ScannerStatusLine(source: .real, detail: .failed)
+            }
+        }
+    }
+
+    /// What the Scanner Information window shows for the current source.
     public var scannerInfo: ScannerInfo? {
         switch source {
         case .virtual: virtualScanner?.info
@@ -148,17 +194,29 @@ public final class AppModel {
         }
     }
 
-    // MARK: Viewport
-
-    public func viewSizeChanged(_ size: CGSize) {
-        viewSize = size
-        if viewport.fitsWindow { viewport.fit(in: size) }
+    /// The name the next export would get (Export palette).
+    public func nextExportFileName(date: Date = Date()) -> String {
+        ExportService.nextFileName(settings: exportSettings, date: date)
     }
 
-    public func zoomToFit() { viewport.fit(in: viewSize) }
+    // MARK: Viewport
+
+    /// The image area changed size: window, full screen, palettes shown or hidden.
+    public func viewSizeChanged(_ size: CGSize) { viewport.viewSizeChanged(size) }
+
+    public func zoomToFit() { viewport.fit() }
+    public func zoomToFill() { viewport.fill() }
     public func zoomToActualSize() { viewport.actualSize() }
     public func zoomIn() { viewport.zoomIn() }
     public func zoomOut() { viewport.zoomOut() }
+    public func zoom(to magnification: Double) { viewport.setMagnification(magnification) }
+    /// A value typed in the bottom bar. Returns false (nothing changed) if it is not a number.
+    @discardableResult
+    public func zoom(typed text: String) -> Bool {
+        guard let value = Viewport.magnification(fromTyped: text) else { return false }
+        viewport.setMagnification(value)
+        return true
+    }
     /// Pinch or zoom tool: the canvas reports the magnification it applied.
     public func magnificationChanged(_ value: Double) { viewport.setMagnification(value) }
 
@@ -178,10 +236,7 @@ public final class AppModel {
             return
         }
         if viewport.imageWidth != image.width || viewport.imageHeight != image.expectedHeight {
-            let fits = viewport.fitsWindow
-            let magnification = viewport.magnification
-            viewport = Viewport(imageWidth: image.width, imageHeight: image.expectedHeight)
-            if fits { viewport.fit(in: viewSize) } else { viewport.setMagnification(magnification) }
+            viewport.setImageSize(width: image.width, height: image.expectedHeight)
             cropRect = nil
         }
         renderTask?.cancel()

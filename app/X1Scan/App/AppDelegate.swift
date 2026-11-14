@@ -3,9 +3,12 @@ import AppKit
 import X1ScanCore
 
 @MainActor
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     private var model: AppModel?
     private var windowController: MainWindowController?
+    private var settingsController: SettingsWindowController?
+    private var scannerInfoController: ScannerInfoWindowController?
+    private var observers: [Observing] = []
     private var quitting = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -15,6 +18,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return try VirtualScanner.load(fixturesDirectory: resources)
         })
         self.model = model
+        observers.append(Observing {
+            NSApp.appearance = switch model.settings.appearance {
+            case .system: nil
+            case .light: NSAppearance(named: .aqua)
+            case .dark: NSAppearance(named: .darkAqua)
+            }
+        })
         NSApp.mainMenu = MainMenu.make()
         let windowController = MainWindowController(model: model)
         self.windowController = windowController
@@ -26,6 +36,40 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
+
+    // MARK: Menu actions (reached through the responder chain)
+
+    @objc func showSettings(_ sender: Any?) {
+        guard let model else { return }
+        if settingsController == nil {
+            settingsController = SettingsWindowController(model: model)
+            settingsController?.window?.center()
+        }
+        settingsController?.showWindow(nil)
+    }
+
+    @objc func showScannerInformation(_ sender: Any?) {
+        guard let model else { return }
+        if scannerInfoController == nil { scannerInfoController = ScannerInfoWindowController(model: model) }
+        scannerInfoController?.showWindow(nil)
+    }
+
+    /// Real X1: reads identity, state and counters (reads only, device closed
+    /// afterwards). Virtual X1: its identity comes from the fixtures. Either
+    /// way the Scanner Information window shows the result.
+    @objc func readIdentity(_ sender: Any?) {
+        guard let model else { return }
+        showScannerInformation(sender)
+        if model.source == .real { Task { await model.readRealScanner() } }
+    }
+
+    func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        guard let model else { return false }
+        switch menuItem.action {
+        case #selector(readIdentity(_:)): return model.source == .virtual || model.realStatus != .reading
+        default: return true
+        }
+    }
 
     /// A running preview is stopped first. After SCAN the stop sequence (DB,
     /// then 0xDF = 00 00) must complete before the app quits. A read of the

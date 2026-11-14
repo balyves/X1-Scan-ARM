@@ -45,7 +45,8 @@ public enum ToolBarPlacement: String, Sendable, Hashable, Codable {
 /// that the layout stays consistent (each palette of the registry exactly
 /// once in `order`).
 public struct PaletteLayout: Sendable, Hashable, Codable {
-    public static let currentVersion = 1
+    /// 2: `hidden` added (step 2b). Version 1 layouts decode with nothing hidden.
+    public static let currentVersion = 2
     public static let minimumColumnWidth: Double = 220
     public static let maximumColumnWidth: Double = 480
     public static let defaultColumnWidth: Double = 270
@@ -53,11 +54,29 @@ public struct PaletteLayout: Sendable, Hashable, Codable {
     public var version = PaletteLayout.currentVersion
     public private(set) var order: [PaletteID]
     public private(set) var collapsed: Set<PaletteID>
+    /// Palettes hidden from the Window menu; they keep their place in `order`.
+    public private(set) var hidden: Set<PaletteID> = []
     public var columnMode: ColumnMode = .expanded
     public private(set) var columnWidth: Double = PaletteLayout.defaultColumnWidth
     /// Placement of each palette; a missing entry means `.docked`.
     public private(set) var placements: [PaletteID: PalettePlacement] = [:]
     public var toolBarPlacement: ToolBarPlacement = .floating
+
+    private enum CodingKeys: String, CodingKey {
+        case version, order, collapsed, hidden, columnMode, columnWidth, placements, toolBarPlacement
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        version = try container.decode(Int.self, forKey: .version)
+        order = try container.decode([PaletteID].self, forKey: .order)
+        collapsed = try container.decode(Set<PaletteID>.self, forKey: .collapsed)
+        hidden = try container.decodeIfPresent(Set<PaletteID>.self, forKey: .hidden) ?? []
+        columnMode = try container.decode(ColumnMode.self, forKey: .columnMode)
+        columnWidth = try container.decode(Double.self, forKey: .columnWidth)
+        placements = try container.decode([PaletteID: PalettePlacement].self, forKey: .placements)
+        toolBarPlacement = try container.decode(ToolBarPlacement.self, forKey: .toolBarPlacement)
+    }
 
     public init(registry: PaletteRegistry = .standard) {
         order = registry.ids
@@ -70,8 +89,16 @@ public struct PaletteLayout: Sendable, Hashable, Codable {
 
     public func placement(of id: PaletteID) -> PalettePlacement { placements[id] ?? .docked }
 
-    /// Palettes in the column, in order.
+    public func isHidden(_ id: PaletteID) -> Bool { hidden.contains(id) }
+
+    /// Palettes placed in the column, in order, hidden ones included.
     public var dockedPalettes: [PaletteID] { order.filter { placement(of: $0) == .docked } }
+
+    /// Palettes shown in the column, in order.
+    public var visibleDockedPalettes: [PaletteID] { dockedPalettes.filter { !isHidden($0) } }
+
+    /// True when every palette is hidden: the column is collapsed.
+    public var allHidden: Bool { order.allSatisfy(isHidden) }
 
     // MARK: Changes
 
@@ -82,6 +109,20 @@ public struct PaletteLayout: Sendable, Hashable, Codable {
     public mutating func setCollapsed(_ id: PaletteID, _ value: Bool) {
         guard order.contains(id) else { return }
         if value { collapsed.insert(id) } else { collapsed.remove(id) }
+    }
+
+    public mutating func setHidden(_ id: PaletteID, _ value: Bool) {
+        guard order.contains(id) else { return }
+        if value { hidden.insert(id) } else { hidden.remove(id) }
+    }
+
+    public mutating func toggleHidden(_ id: PaletteID) {
+        setHidden(id, !isHidden(id))
+    }
+
+    /// Show/Hide All Palettes: hides them all if any is shown, else shows them all.
+    public mutating func toggleAllHidden() {
+        hidden = allHidden ? [] : Set(order)
     }
 
     /// Moves `id` to `index` in the order (clamped).
@@ -117,6 +158,7 @@ public struct PaletteLayout: Sendable, Hashable, Codable {
             if descriptor.collapsedByDefault { result.collapsed.insert(descriptor.id) }
         }
         result.collapsed = result.collapsed.filter(registry.contains)
+        result.hidden = result.hidden.filter(registry.contains)
         result.placements = result.placements.filter { registry.contains($0.key) }
         result.columnWidth = min(max(columnWidth, Self.minimumColumnWidth), Self.maximumColumnWidth)
         return result

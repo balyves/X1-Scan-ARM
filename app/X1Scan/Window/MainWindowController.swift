@@ -55,6 +55,11 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
         let toolbar = model.toolbar  // read inside the tracking: re-validated on every change
         let state = model.session.state
         window?.toolbar?.validateVisibleItems()
+        if let stop = window?.toolbar?.items.first(where: { $0.itemIdentifier == Item.stop }) {
+            // Red only while a preview runs.
+            stop.style = toolbar.stopIsProminent ? .prominent : .plain
+            stop.backgroundTintColor = toolbar.stopIsProminent ? .systemRed : nil
+        }
         if let item = window?.toolbar?.items.first(where: { $0.itemIdentifier == Item.preview }) {
             item.toolTip = toolbar.previewBlock.map(Strings.previewBlock)
                 ?? String(localized: "Run a preview on the virtual X1 (⌘R)", comment: "Tooltip")
@@ -63,6 +68,13 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
             lastAlertedState = state
             Task { @MainActor in self.alertIfNeeded(for: state) }
         }
+    }
+
+    /// Closing the main window quits, even if Settings or Scanner Information
+    /// is open: there is no way to reopen it. Quitting stops a running preview
+    /// first (AppDelegate.applicationShouldTerminate).
+    func windowWillClose(_ notification: Notification) {
+        DispatchQueue.main.async { NSApp.terminate(nil) }
     }
 
     // MARK: Toolbar
@@ -91,8 +103,6 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
         case Item.stop:
             configure(item, String(localized: "Stop", comment: "Menu item and toolbar button"), "stop.fill",
                       #selector(stopPreview(_:)))
-            item.style = .prominent
-            item.backgroundTintColor = .systemRed
             item.toolTip = String(localized: "Stop the preview (⌘. or Esc)", comment: "Tooltip")
         case Item.export:
             configure(item, String(localized: "Export", comment: "Palette title"), "square.and.arrow.up",
@@ -127,6 +137,15 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
         case #selector(selectHandTool(_:)): menuItem.state = model.tools.selected == .hand ? .on : .off
         case #selector(selectZoomTool(_:)): menuItem.state = model.tools.selected == .zoom ? .on : .off
         case #selector(selectCropTool(_:)): menuItem.state = model.tools.selected == .crop ? .on : .off
+        case #selector(zoomToFit(_:)): menuItem.state = model.viewport.mode == .fit ? .on : .off
+        case #selector(zoomToFill(_:)): menuItem.state = model.viewport.mode == .fill ? .on : .off
+        case #selector(zoomToStep(_:)):
+            menuItem.state = (menuItem.representedObject as? Double) == model.viewport.currentStep ? .on : .off
+        case #selector(togglePalette(_:)):
+            menuItem.state = paletteID(of: menuItem).map { model.layout.layout.isHidden($0) ? .off : .on } ?? .off
+        case #selector(toggleAllPalettes(_:)):
+            // Tab must keep moving between text fields.
+            return !(window?.firstResponder is NSText)
         default: break
         }
         return validate(menuItem.action)
@@ -141,9 +160,10 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
         case #selector(exportImage(_:)): return toolbar.canExport
         case #selector(zoomIn(_:)): return model.session.image != nil && model.viewport.canZoomIn
         case #selector(zoomOut(_:)): return model.session.image != nil && model.viewport.canZoomOut
-        case #selector(zoomToFit(_:)), #selector(zoomToActualSize(_:)): return model.session.image != nil
+        case #selector(zoomToFit(_:)), #selector(zoomToFill(_:)), #selector(zoomToActualSize(_:)),
+             #selector(zoomToStep(_:)):
+            return model.session.image != nil
         case #selector(selectRealSource(_:)), #selector(selectVirtualSource(_:)): return !model.session.isBusy
-        case #selector(readRealScanner(_:)): return model.source == .real && model.realStatus != .reading
         default: return true
         }
     }
@@ -169,6 +189,10 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
     }
 
     @objc func zoomToFit(_ sender: Any?) { model.zoomToFit() }
+    @objc func zoomToFill(_ sender: Any?) { model.zoomToFill() }
+    @objc func zoomToStep(_ sender: Any?) {
+        if let step = (sender as? NSMenuItem)?.representedObject as? Double { model.zoom(to: step) }
+    }
     @objc func zoomToActualSize(_ sender: Any?) { model.zoomToActualSize() }
     @objc func zoomIn(_ sender: Any?) { model.zoomIn() }
     @objc func zoomOut(_ sender: Any?) { model.zoomOut() }
@@ -177,12 +201,16 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
     @objc func selectCropTool(_ sender: Any?) { model.tools.selected = .crop }
     @objc func toggleColumnMode(_ sender: Any?) { model.layout.toggleColumnMode() }
     @objc func resetPaletteLayout(_ sender: Any?) { model.layout.resetToDefault() }
+    @objc func togglePalette(_ sender: Any?) {
+        if let id = (sender as? NSMenuItem).flatMap(paletteID(of:)) { model.layout.toggleHidden(id) }
+    }
+    @objc func toggleAllPalettes(_ sender: Any?) { model.layout.toggleAllHidden() }
+
+    private func paletteID(of item: NSMenuItem) -> PaletteID? {
+        (item.representedObject as? String).map(PaletteID.init(rawValue:))
+    }
     @objc func selectVirtualSource(_ sender: Any?) { model.source = .virtual }
     @objc func selectRealSource(_ sender: Any?) { model.source = .real }
-
-    @objc func readRealScanner(_ sender: Any?) {
-        Task { await model.readRealScanner() }
-    }
 
     // MARK: Alerts
 

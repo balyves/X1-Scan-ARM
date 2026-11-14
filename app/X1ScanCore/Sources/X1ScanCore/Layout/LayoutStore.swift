@@ -93,6 +93,16 @@ public final class LayoutController {
     }
 
     public func toggleCollapsed(_ id: PaletteID) { layout.toggleCollapsed(id) }
+
+    public func toggleHidden(_ id: PaletteID) {
+        layout.toggleHidden(id)
+        if layout.isHidden(id), overlayPalette == id { overlayPalette = nil }
+    }
+
+    public func toggleAllHidden() {
+        layout.toggleAllHidden()
+        if layout.allHidden { overlayPalette = nil }
+    }
     public func move(_ id: PaletteID, to index: Int) { layout.move(id, to: index) }
     public func setColumnWidth(_ width: Double) { layout.setColumnWidth(width) }
 

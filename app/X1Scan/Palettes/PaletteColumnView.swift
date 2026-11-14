@@ -17,7 +17,7 @@ struct PaletteColumnView: View {
     private var expanded: some View {
         ScrollView {
             VStack(spacing: 0) {
-                ForEach(model.layout.layout.dockedPalettes, id: \.self) { id in
+                ForEach(model.layout.layout.visibleDockedPalettes, id: \.self) { id in
                     PaletteSection(model: model, id: id)
                     Divider()
                 }
@@ -28,7 +28,7 @@ struct PaletteColumnView: View {
 
     private var iconBar: some View {
         VStack(spacing: 6) {
-            ForEach(model.layout.layout.dockedPalettes, id: \.self) { id in
+            ForEach(model.layout.layout.visibleDockedPalettes, id: \.self) { id in
                 PaletteIconButton(model: model, id: id)
             }
             Spacer()
@@ -92,6 +92,7 @@ private struct PaletteMenu: View {
             .disabled(index == 0)
         Button(String(localized: "Move Down", comment: "Palette menu")) { model.layout.move(id, to: index + 1) }
             .disabled(index == order.count - 1)
+        Button(String(localized: "Hide", comment: "Palette menu")) { model.layout.toggleHidden(id) }
         Divider()
         // Floating palettes are modelled (PalettePlacement.floating) but come later.
         Button(String(localized: "Open in Separate Window", comment: "Palette menu, not available yet")) {}
@@ -142,7 +143,6 @@ struct PaletteContent: View {
 
     var body: some View {
         switch id {
-        case .scanner: ScannerPaletteView(model: model)
         case .histogram: HistogramPaletteView(model: model)
         case .info: InfoPaletteView(model: model)
         case .export: ExportPaletteView(model: model)

@@ -9,6 +9,10 @@ import X1ScanCore
 ///   -X1ScanSnapshot <path.png>   render the window into a PNG after a few seconds
 ///   -X1ScanAutoPreview YES       start a preview on the virtual X1 at launch
 ///   -X1ScanIconBar YES           show the palettes as icons
+///   -X1ScanHideAllPalettes YES   hide every palette (column collapsed)
+///   -X1ScanZoomFill YES          Fill Window instead of the startup zoom
+/// The snapshot also writes the Settings window (first tab) and Scanner
+/// Information (`<path>-settings.png`, `<path>-info.png`), serial always masked.
 /// Never used against the real scanner: the preview only runs on the virtual X1.
 /// Write the PNGs outside the repository: they show the counters and the
 /// (masked) serial number of the capture.
@@ -19,6 +23,10 @@ enum DebugSnapshot {
         if arguments.bool(forKey: "X1ScanIconBar"), model.layout.layout.columnMode == .expanded {
             model.layout.toggleColumnMode()
         }
+        if arguments.bool(forKey: "X1ScanHideAllPalettes"), !model.layout.layout.allHidden {
+            model.layout.toggleAllHidden()
+        }
+        if arguments.bool(forKey: "X1ScanZoomFill") { model.zoomToFill() }
         if arguments.bool(forKey: "X1ScanAutoPreview") { model.startPreview() }
         guard let path = arguments.string(forKey: "X1ScanSnapshot"), let window else { return }
         Task { @MainActor in
@@ -28,7 +36,7 @@ enum DebugSnapshot {
             FileHandle.standardError.write(Data("""
                 state=\(model.session.state) lines=\(model.session.progress.linesReceived) \
                 image=\(model.displayImage.map { "\($0.width)x\($0.height)" } ?? "nil") \
-                viewport=\(model.viewport.magnification) view=\(model.viewSize) \
+                viewport=\(model.viewport.magnification) mode=\(model.viewport.mode) view=\(model.viewSize) \
                 histogram=\(model.histogram.pixelCount) reading=\(String(describing: model.pixelReading))
 
                 """.utf8))
@@ -63,8 +71,26 @@ enum DebugSnapshot {
                 try? bitmap.representation(using: .png, properties: [:])?
                     .write(to: URL(filePath: path.replacingOccurrences(of: ".png", with: "-palettes.png")))
             }
+            // Settings tabs and Scanner Information, in offscreen windows (AppKit controls included).
+            let tabs: [AnyView] = [AnyView(SettingsView(model: model)), AnyView(ScannerInfoView(model: model, alwaysMasksSerial: true))]
+            for (index, view) in tabs.enumerated() {
+                let suffix = index == 0 ? "-settings.png" : "-info.png"
+                render(view, to: path.replacingOccurrences(of: ".png", with: suffix))
+            }
             NSApp.terminate(nil)
         }
+    }
+
+    private static func render(_ view: AnyView, to path: String) {
+        let hosting = NSHostingView(rootView: view)
+        let size = hosting.fittingSize
+        let window = NSWindow(contentRect: NSRect(origin: .zero, size: size), styleMask: [.titled],
+                              backing: .buffered, defer: false)
+        window.contentView = hosting
+        hosting.layoutSubtreeIfNeeded()
+        guard let rep = hosting.bitmapImageRepForCachingDisplay(in: hosting.bounds) else { return }
+        hosting.cacheDisplay(in: hosting.bounds, to: rep)
+        try? rep.representation(using: .png, properties: [:])?.write(to: URL(filePath: path))
     }
 }
 #endif
