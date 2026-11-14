@@ -23,6 +23,13 @@ why.
 - Distributed directly, **outside the Mac App Store**. Signed and notarised
   later.
 
+## Other Flextight software
+
+Recorded on 2026-11-14.
+
+- **20More** (commercial, closed source) is a source of **feature ideas
+  only**. We do not reuse, disassemble or otherwise analyse its software.
+
 ## Scope of version 1
 
 - Scan and **export a raw 16-bit TIFF**: linear RGB, with only the

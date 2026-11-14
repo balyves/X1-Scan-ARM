@@ -77,3 +77,11 @@ X1Kit changes:
 
 Open: colour space for display (linear sRGB, provisional), aspect factor,
 floating palettes and workspaces (modelled only).
+
+## 2026-11-14: roadmap and related software
+
+Roadmap gains a read-only calibration backup step (read-only commands only,
+kept outside the repository) and future ideas; 20More added to related
+projects (feature ideas only, see decisions.md); holder identification noted
+as a hypothesis in protocol.md, where we also note that the holder type used
+during the captures was not recorded.

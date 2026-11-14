@@ -48,10 +48,27 @@ journal, and [`tools/`](tools/) for the probe, capture and decode tools.
 2. ~~Capture the real command sequence from FlexColor on a Mojave Mac.~~
    Initialisation and preview done (2026-11-12).
 3. ~~Decode preview image data.~~ Done (2026-11-12).
-4. Capture a full-resolution scan.
-5. Preview driven by our own code.
-6. Full scan, 3F/TIFF output.
-7. Colour: input profile from an IT8 target, film rendering.
+4. Read-only calibration backup: read and save everything the scanner
+   reports about itself with the read-only commands (vendor mode pages 0x20,
+   0x21, 0x23, 0x25-0x27 and 0x29, those seen in the captures; log page 0x30;
+   0xEE registers) before any command that changes its state. Whether EEPROM or flash contents can be read on the X1 is
+   unknown; any command outside `CommandPolicy.readOnly` needs a capture and
+   explicit approval. The backup will contain the scanner's serial number and
+   stays outside the repository.
+5. Capture a full-resolution scan.
+6. Preview driven by our own code.
+7. Full scan, 3F/TIFF output.
+8. Colour: input profile from an IT8 target, film rendering.
+
+Future ideas, not scheduled. Each depends on sequences captured from
+FlexColor:
+
+- Holder detection.
+- HDR: a second, long-exposure pass.
+- Multi-pass averaging.
+- Scan all openings of a holder.
+- Guided calibration.
+- Image Capture and Photoshop integration.
 
 ## Related projects
 
@@ -65,6 +82,11 @@ journal, and [`tools/`](tools/) for the probe, capture and decode tools.
   3F editor for Apple Silicon (no scanner control).
 - [mrmidi/ASFireWire](https://github.com/mrmidi/ASFireWire):
   FireWire on macOS 26 via DriverKit.
+- [20More](https://20more.dk): commercial, closed-source software for
+  Flextight scanners, including the X1, on macOS 10.13 to 15, with a web
+  interface served by the scanner Mac, according to its website (checked
+  2026-11-14). No public code or protocol documentation. X1-Scan-ARM
+  targets macOS 26 Tahoe natively and stays open source.
 
 ## What this repository never contains
 

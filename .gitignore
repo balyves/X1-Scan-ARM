@@ -64,6 +64,9 @@ __pycache__/
 .venv/
 venv/
 
+# graphify knowledge-graph output (local tool, never committed)
+graphify-out/
+
 # Editors
 .vscode/
 .idea/

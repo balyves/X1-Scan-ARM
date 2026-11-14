@@ -66,6 +66,13 @@ Not used by FlexColor on the X1 during initialisation and preview: 0xE0
 READ BUFFER with buffer id 0xD8 returns ABORTED COMMAND (sense key 0xB) on the
 X1: it belongs to other models. The firmware drives the motors itself.
 
+Holder identification: the X1 may be able to identify the inserted film
+holder (20More advertises this feature for Flextight scanners; nothing yet
+shows it on the X1 in particular). No dedicated command seen; 0xD3, page
+0x27 and the 0xEE registers, whose meaning is unknown, should be compared
+with different holders inserted (read-only, `tools/x1probe`). The holder type
+used during the captures of 2026-11-12 was not recorded. **[hypothesis]**
+
 ## 5. Vendor mode pages
 
 Standard MODE SENSE(10) header (8 bytes, no block descriptor), then page code
@@ -183,4 +190,4 @@ Polling of 0xEE, 0xD3 and 0xDF omitted, except where the wait matters.
 7. `DB` stop, wait `DF = 00 00`, `CF 00 02 80`.
 
 With and without film in the holder, the sequence and the windows are
-identical.
+identical. The holder type used was not recorded.
