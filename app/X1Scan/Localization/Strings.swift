@@ -46,6 +46,17 @@ enum Strings {
         }
     }
 
+    /// Under the panel's buttons and in their tooltip.
+    static func previewBlockShort(_ block: ToolbarState.PreviewBlock) -> String {
+        switch block {
+        case .realScannerReadOnly:
+            String(localized: "Preview on the real X1 is not available yet: choose the virtual X1 in Settings.",
+                   comment: "Why Preview is disabled, under the panel's buttons")
+        case .virtualScannerUnavailable, .busy:
+            previewBlock(block)
+        }
+    }
+
     /// Status line of the window.
     @MainActor
     static func sessionStatus(_ session: PreviewSession) -> String {
@@ -185,7 +196,6 @@ enum Strings {
 
     static func panelSection(_ section: PanelSection) -> String {
         switch section {
-        case .scanner: String(localized: "Scanner", comment: "Menu")
         case .original: String(localized: "Original", comment: "Panel section: the film")
         case .settings: String(localized: "Settings", comment: "Panel section: Main / Advanced")
         case .histogram: String(localized: "Histogram", comment: "Palette title")

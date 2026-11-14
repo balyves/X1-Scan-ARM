@@ -46,7 +46,8 @@ struct ZoomComboBox: NSViewRepresentable {
     func updateNSView(_ box: NSComboBox, context: Context) {
         context.coordinator.model = model
         box.isEnabled = enabled
-        if box.currentEditor() == nil { context.coordinator.show(Strings.zoom(magnification), in: box) }
+        // No image: no magnification to show ("—"); Fit applies when the preview arrives.
+        if box.currentEditor() == nil { context.coordinator.show(enabled ? Strings.zoom(magnification) : "—", in: box) }
     }
 
     @MainActor

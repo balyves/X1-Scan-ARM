@@ -279,6 +279,11 @@ public final class AppModel {
             return
         }
         if viewport.imageWidth != image.width || viewport.imageHeight != image.expectedHeight {
+            // The first preview after launch: the zoom of Settings > Display (Fit by
+            // default). Later previews keep the zoom the user chose.
+            if viewport.imageWidth == 0 {
+                if settings.startupZoom == .fit { viewport.fit() } else { viewport.actualSize() }
+            }
             viewport.setImageSize(width: image.width, height: image.expectedHeight)
             cropRect = nil
         }

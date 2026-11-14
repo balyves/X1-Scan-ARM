@@ -27,7 +27,7 @@ struct StatusBarView: View {
                     .monospacedDigit()
                     .help(Text("Uncompressed size of the file an export would write now", comment: "Tooltip"))
             }
-            RGBReadout(model: model)
+            if session.image != nil { RGBReadout(model: model) }
             ZoomComboBox(model: model, magnification: model.viewport.magnification, enabled: session.image != nil)
                 .frame(width: 118)
         }

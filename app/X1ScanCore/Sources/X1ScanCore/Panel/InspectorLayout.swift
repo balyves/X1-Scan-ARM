@@ -4,7 +4,6 @@ import Observation
 
 /// A section of the settings panel, folded or not.
 public enum PanelSection: String, Sendable, Hashable, CaseIterable, Codable {
-    case scanner
     case original
     case settings
     case histogram
@@ -21,12 +20,13 @@ public enum PanelTab: String, Sendable, Hashable, CaseIterable, Codable {
 /// folded sections, tab. Replaces the palettes (PaletteLayout) of step 2.
 public struct InspectorLayout: Sendable, Hashable, Codable {
     public static let minimumWidth: Double = 260
-    public static let maximumWidth: Double = 420
+    public static let maximumWidth: Double = 640
     public static let defaultWidth: Double = 300
 
     public private(set) var width: Double = InspectorLayout.defaultWidth
     public var isHidden = false
-    public private(set) var folded: Set<PanelSection> = [.histogram]
+    /// All sections open at first launch; then remembered.
+    public private(set) var folded: Set<PanelSection> = []
     public var tab: PanelTab = .main
 
     public init() {}
@@ -48,7 +48,7 @@ public struct InspectorLayout: Sendable, Hashable, Codable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         setWidth(try container.decodeIfPresent(Double.self, forKey: .width) ?? Self.defaultWidth)
         isHidden = try container.decodeIfPresent(Bool.self, forKey: .isHidden) ?? false
-        let names = try container.decodeIfPresent([String].self, forKey: .folded) ?? [PanelSection.histogram.rawValue]
+        let names = try container.decodeIfPresent([String].self, forKey: .folded) ?? []
         folded = Set(names.compactMap(PanelSection.init(rawValue:)))
         tab = (try container.decodeIfPresent(String.self, forKey: .tab)).flatMap(PanelTab.init(rawValue:)) ?? .main
     }

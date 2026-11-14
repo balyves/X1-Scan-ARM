@@ -10,26 +10,26 @@ struct InspectorLayoutTests {
     @Test func defaultsAndLimits() {
         var layout = InspectorLayout()
         #expect(layout.width == InspectorLayout.defaultWidth && !layout.isHidden && layout.tab == .main)
-        #expect(layout.isFolded(.histogram) && !layout.isFolded(.scanner), "histogram folded by default")
+        #expect(layout.folded.isEmpty, "all sections open at first launch")
         layout.setWidth(10)
         #expect(layout.width == InspectorLayout.minimumWidth)
         layout.setWidth(.infinity)
         #expect(layout.width == InspectorLayout.defaultWidth)
         layout.setWidth(10_000)
-        #expect(layout.width == InspectorLayout.maximumWidth)
+        #expect(layout.width == InspectorLayout.maximumWidth && InspectorLayout.maximumWidth >= 600)
         layout.toggleFolded(.histogram)
         layout.toggleFolded(.output)
-        #expect(!layout.isFolded(.histogram) && layout.isFolded(.output))
+        #expect(layout.isFolded(.histogram) && layout.isFolded(.output))
     }
 
     @Test func decodesUnknownValuesSafely() throws {
-        let json = #"{"width":9999,"isHidden":true,"folded":["output","future"],"tab":"future"}"#
+        let json = #"{"width":9999,"isHidden":true,"folded":["output","scanner","future"],"tab":"future"}"#
         let layout = try JSONDecoder().decode(InspectorLayout.self, from: Data(json.utf8))
         #expect(layout.width == InspectorLayout.maximumWidth && layout.isHidden)
         #expect(layout.folded == [.output] && layout.tab == .main)
         var changed = InspectorLayout()
         changed.tab = .advanced
-        changed.toggleFolded(.scanner)
+        changed.toggleFolded(.original)
         #expect(try JSONDecoder().decode(InspectorLayout.self, from: JSONEncoder().encode(changed)) == changed)
     }
 

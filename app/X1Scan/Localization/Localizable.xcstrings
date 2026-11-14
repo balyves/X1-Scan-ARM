@@ -1853,17 +1853,6 @@
         }
       }
     },
-    "Information…": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Informations…"
-          }
-        }
-      }
-    },
     "Film": {
       "extractionState": "manual",
       "localizations": {
@@ -2295,6 +2284,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cette action est irréversible."
+          }
+        }
+      }
+    },
+    "Preview on the real X1 is not available yet: choose the virtual X1 in Settings.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L'aperçu sur le X1 réel n'est pas encore disponible : choisissez le X1 virtuel dans Réglages."
+          }
+        }
+      }
+    },
+    "Read Identity and Scanner Information (⌘I) are in the Scanner menu; the state is in the bottom bar.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "« Lire l'identité » et « Informations sur le scanner » (⌘I) sont dans le menu Scanner ; l'état est dans la barre du bas."
           }
         }
       }

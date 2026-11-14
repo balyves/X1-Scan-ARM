@@ -283,6 +283,32 @@ final class AppModelTests {
         #expect(model(defaults: defaults).source == .virtual)
     }
 
+    /// Without an image the zoom cannot be chosen in the app; whatever the
+    /// viewport held, the first preview gets the zoom of Settings > Display.
+    @Test func firstPreviewGetsTheStartupZoom() async {
+        let fit = model()
+        fit.viewSizeChanged(CGSize(width: 1032, height: 832))
+        fit.zoomToActualSize()
+        fit.startPreview()
+        await fit.session.waitUntilIdle()
+        fit.refreshImage()
+        #expect(fit.viewport.mode == .fit && abs(fit.viewport.magnification - 800.0 / 2451) < 1e-9)
+        fit.zoom(to: 2)
+        fit.startPreview()
+        await fit.session.waitUntilIdle()
+        fit.refreshImage()
+        #expect(fit.viewport.magnification == 2, "a later preview keeps the zoom chosen")
+
+        let defaults = temporaryDefaults()
+        model(defaults: defaults).settings.startupZoom = .actualSize
+        let actual = model(defaults: defaults)
+        actual.zoomToFit()
+        actual.startPreview()
+        await actual.session.waitUntilIdle()
+        actual.refreshImage()
+        #expect(actual.viewport.mode == .fixed && actual.viewport.magnification == 1)
+    }
+
     @Test func statusLineNamesTheSourceAndItsState() async {
         let model = model()
         #expect(model.statusLine == ScannerStatusLine(source: .virtual, detail: .session))

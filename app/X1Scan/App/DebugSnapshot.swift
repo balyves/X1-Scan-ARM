@@ -11,6 +11,8 @@ import X1ScanCore
 ///   -X1ScanHidePanel YES         hide the settings panel
 ///   -X1ScanZoomFill YES          Fill Window instead of the startup zoom
 ///   -X1ScanOpenHistogram YES     unfold the histogram in the panel
+///   -X1ScanResizeProbe YES       resize the window, move the divider, hide and show the panel,
+///                                print the sizes, put the window frame and panel layout back, quit
 /// The snapshot also writes each Settings pane and Scanner Information
 /// (`<path>-settings-<n>.png`, `<path>-info.png`), serial always masked.
 /// These arguments change the saved panel layout like a user would.
@@ -27,6 +29,47 @@ enum DebugSnapshot {
             model.panel.toggleFolded(.histogram)
         }
         if arguments.bool(forKey: "X1ScanAutoPreview") { model.startPreview() }
+        if arguments.bool(forKey: "X1ScanResizeProbe"), let window {
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1))
+                @MainActor func report(_ label: String) {
+                    let split = (window.contentViewController as? NSSplitViewController)?.splitView
+                    let widths = split?.arrangedSubviews.map { Int($0.frame.width) } ?? []
+                    FileHandle.standardError.write(Data("PROBE \(label): window=\(window.frame.size) min=\(window.minSize) max=\(window.maxSize) contentMin=\(window.contentMinSize) panes=\(widths)\n".utf8))
+                }
+                report("start")
+                let savedFrame = window.frame
+                let savedLayout = model.panel.layout
+                var frame = window.frame
+                frame.size = NSSize(width: frame.width + 300, height: frame.height + 100)
+                window.setFrame(frame, display: true)
+                report("bigger")
+                frame.size = NSSize(width: 900, height: 560)
+                window.setFrame(frame, display: true)
+                report("smaller")
+                if let controller = window.contentViewController as? NSSplitViewController {
+                    let split = controller.splitView
+                    for width in [400.0, 600.0] {
+                        split.setPosition(split.bounds.width - width - split.dividerThickness, ofDividerAt: 0)
+                        try? await Task.sleep(for: .milliseconds(300))
+                        report("divider \(Int(width))")
+                    }
+                }
+                window.layoutIfNeeded()
+                report("after layout")
+                let before = model.panel.layout.width
+                model.panel.toggleHidden()
+                try? await Task.sleep(for: .milliseconds(300))
+                model.panel.toggleHidden()
+                try? await Task.sleep(for: .milliseconds(500))
+                FileHandle.standardError.write(Data("PROBE hide/show: width \(before) -> \(model.panel.layout.width)\n".utf8))
+                report("after hide/show")
+                // Put back what the probe changed (window frame and panel layout are saved).
+                model.panel.layout = savedLayout
+                window.setFrame(savedFrame, display: false)
+                NSApp.terminate(nil)
+            }
+        }
         guard let path = arguments.string(forKey: "X1ScanSnapshot"), let window else { return }
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(arguments.bool(forKey: "X1ScanAutoPreview") ? 7 : 2))

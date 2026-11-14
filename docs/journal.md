@@ -154,3 +154,13 @@ custom holders, managed in Settings > Holders. protocol.md: the X1 might
 report the reference of the inserted holder (20More shows "6×7
 [50200420]") **[hypothesis]**, to check at the next session by noting the
 reference of the holder used.
+
+## 2026-11-14: step 3 fixes after testing
+
+Scanner section removed from the panel (source in Settings > Scanner);
+explanation under the buttons when Preview is unavailable on the real X1;
+all panel sections open at first launch. The panel could not be widened:
+its holding priority (750) was above the divider drag, and the width code
+expected two subviews where macOS 26 also counts the divider; now 260-640
+pt, restored after the first layout. Zoom shows "—" without an image and
+Fit applies when the preview arrives; no R G B without an image.

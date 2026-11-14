@@ -14,9 +14,6 @@ struct SettingsPanelView: View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    PanelSectionView(model: model, section: .scanner, title: Strings.panelSection(.scanner)) {
-                        ScannerSection(model: model)
-                    }
                     PanelSectionView(model: model, section: .original, title: Strings.panelSection(.original)) {
                         OriginalSection(model: model)
                     }
@@ -30,8 +27,17 @@ struct SettingsPanelView: View {
                 .padding(.bottom, 8)
             }
             Divider()
-            ActionButtons(model: model)
-                .padding(10)
+            VStack(spacing: 6) {
+                ActionButtons(model: model)
+                if let block = model.toolbar.previewBlock, block != .busy {
+                    Text(Strings.previewBlockShort(block))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .padding(10)
         }
         .controlSize(.small)
         .font(.callout)
@@ -82,34 +88,6 @@ private struct PanelRow<Control: View>: View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
             Text(label).foregroundStyle(.secondary).frame(width: 78, alignment: .leading)
             control().frame(maxWidth: .infinity, alignment: .leading)
-        }
-    }
-}
-
-private struct ScannerSection: View {
-    @Bindable var model: AppModel
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            PanelRow(label: String(localized: "Source", comment: "Panel label: scanner source")) {
-                Picker(String(localized: "Source", comment: "Panel label: scanner source"), selection: $model.source) {
-                    ForEach(ScannerSourceKind.allCases, id: \.self) { Text(Strings.source($0)).tag($0) }
-                }
-                .labelsHidden()
-                .disabled(model.session.isBusy)
-            }
-            PanelRow(label: String(localized: "State", comment: "Scanner information label")) {
-                Text(Strings.statusDetail(model.statusLine, session: model.session)).lineLimit(2)
-            }
-            HStack {
-                Button(String(localized: "Read Identity", comment: "Menu item and button")) {
-                    NSApp.sendAction(#selector(AppDelegate.readIdentity(_:)), to: nil, from: nil)
-                }
-                .disabled(model.source == .real && model.realStatus == .reading)
-                Button(String(localized: "Information…", comment: "Panel button: opens Scanner Information")) {
-                    NSApp.sendAction(#selector(AppDelegate.showScannerInformation(_:)), to: nil, from: nil)
-                }
-            }
         }
     }
 }
@@ -363,7 +341,7 @@ private struct ActionButtons: View {
                     Text("Preview", comment: "Menu item and toolbar button").frame(maxWidth: .infinity)
                 }
                 .disabled(!toolbar.canPreview)
-                .help(toolbar.previewBlock.map(Strings.previewBlock)
+                .help(toolbar.previewBlock.map(Strings.previewBlockShort)
                       ?? String(localized: "Run a preview on the virtual X1 (⌘R)", comment: "Tooltip"))
             }
             Button {

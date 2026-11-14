@@ -34,7 +34,7 @@ final class SettingsWindowController: NSWindowController {
         pane(String(localized: "Display", comment: "Settings tab"), "display", height: 280, DisplaySettings(settings: model.settings))
         pane(String(localized: "Export", comment: "Palette title"), "square.and.arrow.up", height: 400, ExportSettingsForm(model: model))
         pane(String(localized: "Holders", comment: "Settings tab"), "film.stack", height: 460, HolderSettings(model: model))
-        pane(String(localized: "Scanner", comment: "Menu"), "scanner", height: 150, ScannerSettings(settings: model.settings))
+        pane(String(localized: "Scanner", comment: "Menu"), "scanner", height: 220, ScannerSettings(model: model))
 
         let window = NSWindow(contentViewController: tabs)
         window.styleMask = [.titled, .closable]
@@ -196,10 +196,19 @@ struct ExportSettingsForm: View {
 }
 
 private struct ScannerSettings: View {
-    @Bindable var settings: AppSettings
+    @Bindable var model: AppModel
 
     var body: some View {
+        @Bindable var settings = model.settings
         Form {
+            Picker(String(localized: "Source", comment: "Panel label: scanner source"), selection: $model.source) {
+                ForEach(ScannerSourceKind.allCases, id: \.self) { Text(Strings.source($0)).tag($0) }
+            }
+            .disabled(model.session.isBusy)
+            Text("Read Identity and Scanner Information (⌘I) are in the Scanner menu; the state is in the bottom bar.",
+                 comment: "Settings > Scanner note")
+                .font(.caption)
+                .foregroundStyle(.secondary)
             Picker(String(localized: "Source at launch", comment: "Setting"), selection: $settings.startupSource) {
                 ForEach(StartupSource.allCases, id: \.self) { Text(Strings.startupSource($0)).tag($0) }
             }

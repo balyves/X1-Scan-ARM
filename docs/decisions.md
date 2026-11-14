@@ -326,18 +326,30 @@ Recorded on 2026-11-14. Nothing here changes what is sent to a scanner.
 - No window toolbar. From left to right: the image area; a narrow tool
   column (hand, zoom, crop; rotate, add frame, auto adjust disabled with a
   tooltip until they exist); the **settings panel**. Tool column and panel
-  are one inspector item: they resize together (260-420 pt for the panel)
+  are one split view item: they resize together (260-640 pt for the panel)
   and hide together with one command, View > Hide Settings Panel (⌥⌘P).
+  The item has a holding priority of 260, just above the image area's 250:
+  at 750 it was above the divider drag and froze the panel at its minimum
+  width. On macOS 26 the split view's `subviews` also hold the divider view,
+  so the width code uses `arrangedSubviews` (it expected two subviews and
+  never applied or saved the width). The saved width is
+  applied after the first layout pass and only then saved again. The window
+  resizes freely from 760 × 520.
   Small controls everywhere (`controlSize(.small)`).
-- Panel, top to bottom: **Scanner** (source, state, Read Identity,
-  Information…); **Original** (film type, holder chosen among those ticked in Settings >
+- Panel, top to bottom (all sections open at first launch, then
+  remembered): **Original** (film type, holder chosen among those ticked in Settings >
   Holders: saved in `ScanSettings`,
   not sent to the scanner yet); **Main / Advanced** tabs (Main: resolution,
   input and output size in preview pixels, scale, foldable histogram;
   Advanced: empty, with a sentence: only settings that work go there);
   **Output** (format, compression, name template menu and Edit… to
   Settings > Export, folder, Export Preview); **Preview** (Stop, in red,
-  while a preview runs) and **Scan** (disabled) buttons.
+  while a preview runs) and **Scan** (disabled) buttons. When Preview is
+  disabled because the real X1 is chosen, a sentence under the buttons
+  (and their tooltip) says to choose the virtual X1 in Settings.
+- The source (virtual / real X1) is chosen in Settings > Scanner; the
+  state is in the bottom bar; Read Identity and Scanner Information (⌘I)
+  are in the Scanner menu. First launch: virtual X1.
 - Input size: the crop rectangle, or the whole preview, in pixels.
   Millimetres wait for the preview resolution to be confirmed by a
   capture. Resolution, scale and crop are saved and apply to the scan
@@ -346,6 +358,10 @@ Recorded on 2026-11-14. Nothing here changes what is sent to a scanner.
 - `InspectorLayout` (width, hidden, folded sections, tab) replaces
   `PaletteLayout`; the keys of the palettes (`PaletteLayout`, `Workspaces`)
   are removed from the preferences at launch.
+- Without an image the zoom menu shows "—" and the R G B values are
+  hidden; when the first preview after launch arrives, the zoom of
+  Settings > Display (Fit by default) is applied; later previews keep the
+  zoom chosen.
 - Bottom bar: scanner state, estimated size of the exported file
   (uncompressed), R G B under the pointer in the unit of Settings > Display
   (0-255 by default, percent, 16-bit; raw sensor values in the tooltip),

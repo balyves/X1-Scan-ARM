@@ -31,6 +31,7 @@ real scanner.
 
 - **Virtual X1** (default): replay of the captured preview. Preview, Stop and
   Export work.
+- The source is chosen in Settings > Scanner.
 - **Real X1**: only Scanner > Read Identity (INQUIRY, page 0x26, log page
   0x30, 0xDF), shown in Scanner Information (⌘I). Before reading: **X1 on,
   FlexColor closed** (only one program can open the scanner). Preview is

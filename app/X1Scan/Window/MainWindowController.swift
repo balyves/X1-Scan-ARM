@@ -20,7 +20,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
                               styleMask: [.titled, .closable, .miniaturizable, .resizable],
                               backing: .buffered, defer: false)
         window.title = "X1 Scan"
-        window.minSize = NSSize(width: 820, height: 520)
+        window.minSize = NSSize(width: 760, height: 520)
         window.collectionBehavior.insert(.fullScreenPrimary)
         window.contentViewController = splitController
         window.setContentSize(NSSize(width: 1280, height: 820))
