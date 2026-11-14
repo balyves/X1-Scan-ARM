@@ -30,10 +30,10 @@ public struct ExportSettings: Sendable, Hashable, Codable {
     /// (HH-mm-ss), `{n}` (the first number free in the folder from
     /// `counterStart`, `counterDigits` digits).
     public var nameTemplate: String = ExportSettings.defaultTemplate
-    /// Roll name for `{roll}`. Changing it puts the frame back to 1.
-    public var roll: String = "" {
-        didSet { if roll != oldValue { frame = 1 } }
-    }
+    /// Roll name for `{roll}`, as typed (the preview follows it live).
+    public var roll: String = ""
+    /// The roll name last validated (Return or leaving the field, or an export).
+    public private(set) var validatedRoll: String = ""
     /// Frame number for `{frame}`, 1 to 99 999.
     public var frame: Int = 1 {
         didSet { frame = Self.clamp(frame, Self.frameRange) }
@@ -49,6 +49,31 @@ public struct ExportSettings: Sendable, Hashable, Codable {
         didSet { counterDigits = Self.clamp(counterDigits, Self.counterDigitsRange) }
     }
 
+    /// Return pressed or the roll field left: passing to another roll puts
+    /// the frame back to 1. Typing alone, or validating the same name, does not.
+    public mutating func validateRoll() {
+        guard needsRollValidation else { return }
+        validatedRoll = roll
+        frame = 1
+    }
+
+    /// The roll name was edited and not validated yet.
+    public var needsRollValidation: Bool { roll != validatedRoll }
+
+    /// The frame set by hand (stepper, field): a roll name typed before is
+    /// validated first, so that the frame chosen for it is kept.
+    public mutating func setFrame(_ value: Int) {
+        validateRoll()
+        frame = value
+    }
+
+    /// These settings as an export would use them (roll validated).
+    public var validated: ExportSettings {
+        var copy = self
+        copy.validateRoll()
+        return copy
+    }
+
     static func clamp(_ value: Int, _ range: ClosedRange<Int>) -> Int {
         min(max(value, range.lowerBound), range.upperBound)
     }
@@ -59,7 +84,7 @@ public struct ExportSettings: Sendable, Hashable, Codable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case folder, nameTemplate, roll, frame, incrementsFrame, counterStart, counterDigits
+        case folder, nameTemplate, roll, validatedRoll, frame, incrementsFrame, counterStart, counterDigits
         case baseName  // step 2: `<baseName>-<date>-<nnn>.tif`
     }
 
@@ -74,6 +99,7 @@ public struct ExportSettings: Sendable, Hashable, Codable {
             nameTemplate = clean + "-{date}-{n}"
         }  // an empty step 2 base meant the default name
         roll = try container.decodeIfPresent(String.self, forKey: .roll) ?? ""
+        validatedRoll = try container.decodeIfPresent(String.self, forKey: .validatedRoll) ?? roll
         frame = Self.clamp(try container.decodeIfPresent(Int.self, forKey: .frame) ?? 1, Self.frameRange)
         incrementsFrame = try container.decodeIfPresent(Bool.self, forKey: .incrementsFrame) ?? true
         counterStart = Self.clamp(try container.decodeIfPresent(Int.self, forKey: .counterStart) ?? 1,
@@ -87,6 +113,7 @@ public struct ExportSettings: Sendable, Hashable, Codable {
         try container.encodeIfPresent(folder, forKey: .folder)
         try container.encode(nameTemplate, forKey: .nameTemplate)
         try container.encode(roll, forKey: .roll)
+        try container.encode(validatedRoll, forKey: .validatedRoll)
         try container.encode(frame, forKey: .frame)
         try container.encode(incrementsFrame, forKey: .incrementsFrame)
         try container.encode(counterStart, forKey: .counterStart)

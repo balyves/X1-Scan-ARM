@@ -174,6 +174,8 @@ public final class AppModel {
 
     @discardableResult
     public func export(date: Date = Date()) -> Result<URL, ExportError> {
+        // Exporting right after typing a new roll name counts as validating it.
+        if exportSettings.needsRollValidation { exportSettings.validateRoll() }
         let result = Result { () throws(ExportError) -> URL in
             try ExportService.export(session.image, settings: exportSettings, date: date)
         }
@@ -197,7 +199,8 @@ public final class AppModel {
 
     /// The name the next export would get (Export palette).
     public func nextExportFileName(date: Date = Date()) -> String {
-        ExportService.nextFileName(settings: exportSettings, date: date)
+        // As the export will write it: with the roll name validated.
+        ExportService.nextFileName(settings: exportSettings.validated, date: date)
     }
 
     // MARK: Viewport

@@ -8,6 +8,7 @@ import X1ScanCore
 struct ExportNameBuilder: View {
     @Bindable var model: AppModel
     @State private var selection: TextSelection?
+    @FocusState private var rollFocused: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -32,14 +33,20 @@ struct ExportNameBuilder: View {
                               text: $model.exportSettings.roll)
                         .textFieldStyle(.roundedBorder)
                         .labelsHidden()
+                        .focused($rollFocused)
+                        // Another roll starts at frame 1, once the name is validated.
+                        .onSubmit { validateRoll() }
+                        .onChange(of: rollFocused) { _, focused in
+                            if !focused { validateRoll() }
+                        }
                 }
                 GridRow {
                     Text("Frame", comment: "File name token button: frame number").foregroundStyle(.secondary)
                     HStack {
-                        TextField(value: $model.exportSettings.frame, format: .number) { EmptyView() }
+                        TextField(value: frame, format: .number) { EmptyView() }
                             .textFieldStyle(.roundedBorder)
                             .frame(width: 56)
-                        Stepper(value: $model.exportSettings.frame, in: ExportSettings.frameRange) { EmptyView() }.labelsHidden()
+                        Stepper(value: frame, in: ExportSettings.frameRange) { EmptyView() }.labelsHidden()
                         Toggle(String(localized: "+1 after export", comment: "Export: increment the frame number"),
                                isOn: $model.exportSettings.incrementsFrame)
                             .toggleStyle(.checkbox)
@@ -70,6 +77,16 @@ struct ExportNameBuilder: View {
                 .truncationMode(.middle)
                 .textSelection(.enabled)
         }
+    }
+
+    /// The frame, set by hand: a roll name typed before is validated first,
+    /// so that the frame chosen for the new roll is kept.
+    private var frame: Binding<Int> {
+        Binding { model.exportSettings.frame } set: { model.exportSettings.setFrame($0) }
+    }
+
+    private func validateRoll() {
+        if model.exportSettings.needsRollValidation { model.exportSettings.validateRoll() }
     }
 
     /// Inserts the token's placeholder at the cursor (replacing a selection), or at the end.

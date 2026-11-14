@@ -284,7 +284,12 @@ Recorded on 2026-11-14. Nothing here changes what is sent to a scanner.
   `{date}`, `{time}`, `{n}`; the buttons that insert them at the cursor are
   translated. Step 2b templates with `{heure}` are converted to `{time}`.
 - `{frame}`: two digits at least; +1 after each successful export (on by
-  default); a new roll name puts it back to 1.
+  default). Passing to another roll puts it back to 1: only when the roll
+  name is validated (Return, leaving the field, or an export) and differs
+  from the last validated one; typing alone changes nothing. Setting the
+  frame by hand validates a roll name typed before it, so the frame chosen
+  for the new roll is kept. The "Next file" preview uses the validated
+  settings, as the export does.
 - `{n}`: first number free in the folder from a start value, with 1 to 6
   digits.
 - The builder (Export palette and Settings > Export) shows the sanitised

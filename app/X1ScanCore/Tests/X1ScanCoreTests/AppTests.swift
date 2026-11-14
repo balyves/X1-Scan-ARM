@@ -93,13 +93,6 @@ struct ExportTests {
 
     @Test func settingsKeepTheirLimits() {
         var settings = ExportSettings()
-        settings.roll = "R1"
-        settings.frame = 12
-        settings.roll = "R2"
-        #expect(settings.frame == 1, "a new roll starts at frame 1")
-        settings.frame = 5
-        settings.roll = "R2"
-        #expect(settings.frame == 5, "same roll: unchanged")
         settings.frame = 0
         #expect(settings.frame == 1)
         settings.counterDigits = 9
@@ -449,5 +442,61 @@ struct ExportLimitsTests {
         let json = #"{"frame":9223372036854775807,"counterStart":-5}"#
         let decoded = try JSONDecoder().decode(ExportSettings.self, from: Data(json.utf8))
         #expect(decoded.frame == 99_999 && decoded.counterStart == 0)
+    }
+}
+
+struct RollValidationTests {
+    /// Passing to another roll puts the frame back to 1, once the name is
+    /// validated; typing, or validating the same name, does not.
+    @Test func frameResetsOnlyWhenAnotherRollIsValidated() throws {
+        var settings = ExportSettings()
+        settings.roll = "R1"
+        settings.validateRoll()
+        settings.frame = 12
+        settings.roll = "R"   // typing a correction, letter by letter
+        settings.roll = "R1 "
+        settings.roll = "R1"
+        #expect(settings.frame == 12, "typing alone changes nothing")
+        settings.validateRoll()
+        #expect(settings.frame == 12, "same name validated: unchanged")
+        settings.roll = "R2"
+        #expect(settings.frame == 12, "not validated yet")
+        settings.validateRoll()
+        #expect(settings.frame == 1 && settings.validatedRoll == "R2", "another roll: frame 1")
+        settings.frame = 4
+        settings.validateRoll()
+        #expect(settings.frame == 4, "validated twice: unchanged")
+
+        // Saved and read back; older settings take their roll as validated.
+        let decoded = try JSONDecoder().decode(ExportSettings.self, from: JSONEncoder().encode(settings))
+        #expect(decoded == settings)
+        var older = try JSONDecoder().decode(ExportSettings.self, from: Data(#"{"roll":"R7","frame":9}"#.utf8))
+        older.validateRoll()
+        #expect(older.frame == 9)
+    }
+
+    @MainActor
+    @Test func exportingRightAfterTypingValidatesTheRoll() async throws {
+        let folder = try temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let model = AppModel(virtualScanner: { try TestFixtures.scanner() }, inspector: ScannerInspector {
+            FakeConnection(responses: [:], openError: TransportError.deviceBusy)
+        }, layoutStore: InMemoryLayoutStore(), defaults: UserDefaults(suiteName: "X1ScanCoreTests-\(UUID().uuidString)")!)
+        model.startPreview()
+        await model.session.waitUntilIdle()
+        model.exportSettings = ExportSettings(folder: folder, nameTemplate: "{roll}_{frame}")
+        model.exportSettings.roll = "A"
+        model.exportSettings.validateRoll()
+        model.exportSettings.frame = 5
+        model.exportSettings.roll = "B"   // typed, then Export clicked at once
+        #expect(model.nextExportFileName() == "B_01.tif", "the preview shows what the export will write")
+        #expect(try model.export().get().lastPathComponent == "B_01.tif")
+        #expect(model.exportSettings.frame == 2)
+
+        // A roll already started: name typed, frame set by hand without leaving the roll field.
+        model.exportSettings.roll = "C"
+        model.exportSettings.setFrame(5)
+        #expect(model.nextExportFileName() == "C_05.tif")
+        #expect(try model.export().get().lastPathComponent == "C_05.tif", "the frame chosen is kept")
     }
 }
