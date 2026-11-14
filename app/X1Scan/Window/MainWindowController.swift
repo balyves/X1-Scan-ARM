@@ -143,9 +143,6 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
             menuItem.state = (menuItem.representedObject as? Double) == model.viewport.currentStep ? .on : .off
         case #selector(togglePalette(_:)):
             menuItem.state = paletteID(of: menuItem).map { model.layout.layout.isHidden($0) ? .off : .on } ?? .off
-        case #selector(toggleAllPalettes(_:)):
-            // Tab must keep moving between text fields.
-            return !(window?.firstResponder is NSText)
         default: break
         }
         return validate(menuItem.action)

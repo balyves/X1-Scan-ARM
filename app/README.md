@@ -47,7 +47,7 @@ real scanner.
 | ⌘+ / ⌘− | Zoom in / out (next step) |
 | ⌘I | Scanner Information |
 | ⌘, | Settings |
-| Tab | Show/hide all palettes |
+| Tab (image area focused) | Show/hide all palettes |
 | H, Z, C | Hand, zoom, crop tools |
 | Space (held) | Hand, temporarily |
 | Option-click (zoom tool) | Zoom out |

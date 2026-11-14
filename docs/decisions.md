@@ -183,9 +183,10 @@ Recorded on 2026-11-14. Nothing here changes what is sent to a scanner.
 ### Window menu and palettes
 
 - One item per palette, checked when shown, with the same title as the
-  palette header. Show/Hide All Palettes (Tab, as in Photoshop; disabled
-  while a text field is edited, so that Tab still moves between fields),
-  Reset Palette Layout.
+  palette header. Show/Hide All Palettes (Tab, as in Photoshop, only when
+  the image area has the focus: elsewhere Tab moves to the next control, as
+  usual; a disabled menu item would still swallow the key, so `WindowMenu`
+  passes it on), Reset Palette Layout.
 - `PaletteLayout` version 2 adds `hidden`; version 1 layouts decode with
   nothing hidden. When every palette is hidden the column collapses.
 
@@ -202,8 +203,9 @@ Recorded on 2026-11-14. Nothing here changes what is sent to a scanner.
 - Export: folder and file name template, shared with the Export palette
   (`ExportSettings.nameTemplate`, default `X1-preview-{date}-{n}`; tokens
   `{date}`, `{heure}` or `{time}`, `{n}`). Step 2 settings keep their base
-  name (`<base>-{date}-{n}`). The palette shows the real name of the next
-  file.
+  name (`<base>-{date}-{n}`). The palette shows the name of the next file;
+  the name actually written is computed again at export time (date, time
+  and first free number then), tested.
 - Scanner: source at launch (Virtual X1, Real X1, last used). The real X1
   is never read at launch.
 

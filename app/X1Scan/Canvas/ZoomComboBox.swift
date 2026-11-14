@@ -89,7 +89,18 @@ struct ZoomComboBox: NSViewRepresentable {
                 model.zoom(typed: text)
             }
             showCurrent(sender)
-            sender.window?.makeFirstResponder(nil)
+            // Back to the image area, so that Tab and the tool keys work again at once.
+            if let window = sender.window {
+                window.makeFirstResponder(window.contentView.flatMap(Self.canvas(in:)))
+            }
+        }
+
+        private static func canvas(in view: NSView) -> ImageCanvasView? {
+            if let canvas = view as? ImageCanvasView { return canvas }
+            for subview in view.subviews {
+                if let canvas = canvas(in: subview) { return canvas }
+            }
+            return nil
         }
 
         /// The box shows the percentage, also after a mode was chosen

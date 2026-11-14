@@ -273,6 +273,35 @@ final class AppModelTests {
         #expect(model.viewport.mode == .fit)
     }
 
+    /// The written name is computed at export time ({date}, {heure}, {n}),
+    /// not taken from the "Next file" shown earlier in the palette.
+    @Test func exportNameIsComputedWhenExporting() async throws {
+        let folder = try temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let model = model()
+        model.startPreview()
+        await model.session.waitUntilIdle()
+        model.exportSettings = ExportSettings(folder: folder, nameTemplate: "{date}_{heure}_{n}")
+        let shownAt = Date(timeIntervalSince1970: 1_794_441_600)  // 2026-11-12 00:00 UTC
+        let exportedAt = shownAt.addingTimeInterval(2 * 86_400 + 3_723)  // two days, 1 h 2 min 3 s later
+        let shown = model.nextExportFileName(date: shownAt)
+
+        func expected(_ date: Date, _ number: String) -> String {
+            let parts = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
+            return String(format: "%04d-%02d-%02d_%02d-%02d-%02d_%@.tif", parts.year!, parts.month!, parts.day!,
+                          parts.hour!, parts.minute!, parts.second!, number)
+        }
+        let first = try model.export(date: exportedAt).get()
+        #expect(first.lastPathComponent == expected(exportedAt, "001"))
+        #expect(first.lastPathComponent != shown)
+        // A file that appears after the name was shown moves {n} on at export time.
+        try Data().write(to: folder.appending(path: expected(exportedAt.addingTimeInterval(60), "001")))
+        let second = try model.export(date: exportedAt.addingTimeInterval(60)).get()
+        #expect(second.lastPathComponent == expected(exportedAt.addingTimeInterval(60), "002"))
+        #expect(model.nextExportFileName(date: exportedAt.addingTimeInterval(60))
+            == expected(exportedAt.addingTimeInterval(60), "003"))
+    }
+
     @Test func missingFixturesDisableTheVirtualScanner() {
         let model = AppModel(virtualScanner: { throw TimeoutError() }, inspector: Self.failingInspector,
                              layoutStore: InMemoryLayoutStore(), defaults: temporaryDefaults())
