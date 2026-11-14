@@ -359,9 +359,9 @@ Recorded on 2026-11-14. Nothing here changes what is sent to a scanner.
   `PaletteLayout`; the keys of the palettes (`PaletteLayout`, `Workspaces`)
   are removed from the preferences at launch.
 - Without an image the zoom menu shows "—" and the R G B values are
-  hidden; when the first preview after launch arrives, the zoom of
-  Settings > Display (Fit by default) is applied; later previews keep the
-  zoom chosen.
+  hidden; every new preview gets the zoom of Settings > Display (Fit by
+  default) when its first rows arrive; the crop rectangle is kept when the
+  new preview has the same size.
 - Bottom bar: scanner state, estimated size of the exported file
   (uncompressed), R G B under the pointer in the unit of Settings > Display
   (0-255 by default, percent, 16-bit; raw sensor values in the tooltip),

@@ -283,9 +283,9 @@ final class AppModelTests {
         #expect(model(defaults: defaults).source == .virtual)
     }
 
-    /// Without an image the zoom cannot be chosen in the app; whatever the
-    /// viewport held, the first preview gets the zoom of Settings > Display.
-    @Test func firstPreviewGetsTheStartupZoom() async {
+    /// Every new preview gets the zoom of Settings > Display, whatever the
+    /// viewport held before.
+    @Test func everyPreviewGetsTheStartupZoom() async {
         let fit = model()
         fit.viewSizeChanged(CGSize(width: 1032, height: 832))
         fit.zoomToActualSize()
@@ -294,10 +294,17 @@ final class AppModelTests {
         fit.refreshImage()
         #expect(fit.viewport.mode == .fit && abs(fit.viewport.magnification - 800.0 / 2451) < 1e-9)
         fit.zoom(to: 2)
+        let crop = PixelRect(x: 10, y: 20, width: 300, height: 200)
+        fit.cropRect = crop
+        let firstRevision = fit.session.imageRevision
         fit.startPreview()
         await fit.session.waitUntilIdle()
+        // Same fixture, so the same final revision: rendered only because startPreview reset it.
+        #expect(fit.session.imageRevision == firstRevision)
         fit.refreshImage()
-        #expect(fit.viewport.magnification == 2, "a later preview keeps the zoom chosen")
+        #expect(fit.viewport.mode == .fit && abs(fit.viewport.magnification - 800.0 / 2451) < 1e-9,
+                "a later preview is fitted again")
+        #expect(fit.cropRect == crop, "same image size: the crop rectangle is kept")
 
         let defaults = temporaryDefaults()
         model(defaults: defaults).settings.startupZoom = .actualSize
@@ -307,6 +314,11 @@ final class AppModelTests {
         await actual.session.waitUntilIdle()
         actual.refreshImage()
         #expect(actual.viewport.mode == .fixed && actual.viewport.magnification == 1)
+        actual.zoomToFit()
+        actual.startPreview()
+        await actual.session.waitUntilIdle()
+        actual.refreshImage()
+        #expect(actual.viewport.mode == .fixed && actual.viewport.magnification == 1, "100 % again")
     }
 
     @Test func statusLineNamesTheSourceAndItsState() async {

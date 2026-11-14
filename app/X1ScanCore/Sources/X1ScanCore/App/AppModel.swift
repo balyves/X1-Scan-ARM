@@ -79,6 +79,8 @@ public final class AppModel {
     public private(set) var displayImage: CGImage?
     public private(set) var histogram = Histogram.empty
     private var renderedRevision = -1
+    /// Set by startPreview: the next image gets the zoom of Settings > Display.
+    private var startupZoomPending = true
     private var renderTask: Task<Void, Never>?
 
     // MARK: Export
@@ -175,6 +177,11 @@ public final class AppModel {
     public func startPreview() {
         guard toolbar.canPreview, let virtualScanner else { return }
         lastExport = nil
+        // Every new preview gets the zoom of Settings > Display when its first
+        // rows arrive (refreshImage). The crop rectangle is kept if the size is the same.
+        startupZoomPending = true
+        // The session counts image revisions from 0 again: the next one must be rendered.
+        renderedRevision = -1
         session.start(on: virtualScanner)
     }
 
@@ -279,13 +286,13 @@ public final class AppModel {
             return
         }
         if viewport.imageWidth != image.width || viewport.imageHeight != image.expectedHeight {
-            // The first preview after launch: the zoom of Settings > Display (Fit by
-            // default). Later previews keep the zoom the user chose.
-            if viewport.imageWidth == 0 {
-                if settings.startupZoom == .fit { viewport.fit() } else { viewport.actualSize() }
-            }
             viewport.setImageSize(width: image.width, height: image.expectedHeight)
             cropRect = nil
+        }
+        if startupZoomPending {
+            // A new preview: the zoom of Settings > Display, Fit by default.
+            startupZoomPending = false
+            if settings.startupZoom == .fit { viewport.fit() } else { viewport.actualSize() }
         }
         renderTask?.cancel()
         renderTask = Task {
