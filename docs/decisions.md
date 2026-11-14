@@ -135,24 +135,27 @@ then quits), `-X1ScanAutoPreview YES` (preview on the virtual X1 at launch),
 
 `IOKitTransport` checks every command before any IOKit call. By default
 (`CommandPolicy.readOnly`) only these reads are allowed, each with its
-direction and a maximum length; the CDB length field must also match the
-transfer length:
+direction, and each CDB must match the captured one **byte for byte**
+(2026-11-14). Only the bytes marked below vary, and only within the values
+seen:
 
-| Opcode | Command | Direction | Max bytes |
-|---|---|---|---|
-| 0x00 | TEST UNIT READY | none | 0 |
-| 0x03 | REQUEST SENSE | in | 18 |
-| 0x12 | INQUIRY | in | 96 |
-| 0x4D | LOG SENSE | in | 52 |
-| 0x5A | MODE SENSE(10) | in | 100 |
-| 0xD3 | status / sensors | in | 2 |
-| 0xDF | scanner state (`df 00 00 00 02 00`) | in | 2 |
-| 0xEE | read register | in | 1 |
+| Opcode | Command | Direction | Allowed CDB | Bytes |
+|---|---|---|---|---|
+| 0x00 | TEST UNIT READY | none | `00 00 00 00 00 00` | 0 |
+| 0x03 | REQUEST SENSE | in | `03 00 00 00 12 00` | 18 |
+| 0x12 | INQUIRY | in | `12 00 00 00 60 00` | 96 |
+| 0x4D | LOG SENSE | in | `4d 00 30 00 00 00 00 00 34 00` | 52 |
+| 0x5A | MODE SENSE(10) | in | `5a 00 PP 01 00 00 00 LL LL 00` | per page, below |
+| 0xD3 | status / sensors | in | `d3 00 00 00 02 00` | 2 |
+| 0xDF | scanner state | in | `df 00 00 00 02 00` | 2 |
+| 0xEE | read register | in | `ee 00 00 00 01 AA 00 00 01 00`, AA = 0x04-0x19 | 1 |
 
-MODE SENSE, LOG SENSE and the register read are further limited to what the
-captures show (2026-11-14): MODE SENSE pages 0x20, 0x21, 0x23, 0x25, 0x26,
-0x27 and 0x29; LOG SENSE page 0x30; registers of bank 1, addresses 0x04 to
-0x19 (CDB bytes 2-5 `00 00 01 AA`). Page control must be 0.
+MODE SENSE pages and lengths seen in the captures: 0x20 (34), 0x21 (12,
+100), 0x23 (12, 60), 0x25 (24), 0x26 (56), 0x27 (20), 0x29 (14). The CDBs of
+INQUIRY, LOG SENSE, MODE SENSE, 0xD3, 0xDF and 0xEE come from the FlexColor
+capture; those of TEST UNIT READY and REQUEST SENSE from `tools/x1probe`, to
+which a real X1 answered. A test checks that every read of the read-only
+list in `tests/fixtures/preview-sequence.json` passes.
 
 Everything else is refused unless `CommandPolicy.unrestricted` is chosen
 explicitly. It is only for runs the user has approved (CLAUDE.md, rule 4).

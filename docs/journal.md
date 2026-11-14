@@ -85,3 +85,9 @@ kept outside the repository) and future ideas; 20More added to related
 projects (feature ideas only, see decisions.md); holder identification noted
 as a hypothesis in protocol.md, where we also note that the holder type used
 during the captures was not recorded.
+
+## 2026-11-14: read-only policy matches the captures byte for byte
+
+`CommandPolicy.readOnly` now compares each CDB with the captured one: only
+the MODE SENSE page and per-page length and the 0xEE address vary, within
+the values seen; a test replays every captured read of the fixture.

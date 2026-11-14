@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: MIT
 import Testing
 import X1Transport
+import X1TestSupport
 
 private func read(_ hex: String, _ length: Int) -> SCSICommand {
     .read([UInt8](hex: hex)!, length: length)
 }
 
 struct CommandPolicyTests {
-    /// The reads FlexColor sends at start-up (tools/x1probe) and 0xDF.
+    /// Reads FlexColor sends (INQUIRY, MODE SENSE, LOG SENSE, 0xEE, 0xD3, 0xDF)
+    /// and those of tools/x1probe (TEST UNIT READY, REQUEST SENSE).
     static let allowedReads: [SCSICommand] = [
         read("12 00 00 00 60 00", 96),                   // INQUIRY
         .noData([UInt8](hex: "00 00 00 00 00 00")!),      // TEST UNIT READY
@@ -58,15 +60,24 @@ struct CommandPolicyTests {
         #expect(throws: TransportError.self) { try CommandPolicy.readOnly.check(command) }
     }
 
-    /// Every MODE SENSE page, LOG SENSE page and register seen in the captures.
-    @Test func readOnlyPolicyAllowsEveryCapturedPageAndRegister() throws {
-        for page: UInt8 in [0x20, 0x21, 0x23, 0x25, 0x26, 0x27, 0x29] {
-            try CommandPolicy.readOnly.check(.read([0x5A, 0, page, 1, 0, 0, 0, 0, 12, 0], length: 12))
+    /// Every read of the read-only list in preview-sequence.json passes, with
+    /// its captured CDB, direction and length.
+    @Test func readOnlyPolicyAllowsEveryCapturedRead() throws {
+        let reads = try Fixtures.sequence().exchanges.filter {
+            CommandPolicy.readOnlyCommands[$0.cdbBytes.first ?? 0xFF] != nil
         }
-        try CommandPolicy.readOnly.check(read("4d 00 30 00 00 00 00 00 34 00", 52))
-        for address: UInt8 in 0x04...0x19 {
-            try CommandPolicy.readOnly.check(.read([0xEE, 0, 0, 0, 1, address, 0, 0, 1, 0], length: 1))
+        #expect(reads.count > 600)
+        for exchange in reads {
+            #expect(exchange.direction == "in")
+            #expect(exchange.dataOut == nil)
+            try CommandPolicy.readOnly.check(.read(exchange.cdbBytes, length: exchange.length))
         }
+        // Every MODE SENSE page and length, and every register, is covered.
+        let modeSense = Set(reads.filter { $0.cdbBytes[0] == 0x5A }.map { [$0.cdbBytes[2], UInt8($0.length)] })
+        let expected = Set(CommandPolicy.modeSenseLengths.flatMap { page, lengths in lengths.map { [page, UInt8($0)] } })
+        #expect(modeSense == expected)
+        let registers = Set(reads.filter { $0.cdbBytes[0] == 0xEE }.map { $0.cdbBytes[5] })
+        #expect(registers == Set(CommandPolicy.registerAddresses))
     }
 
     @Test(arguments: [
@@ -89,14 +100,55 @@ struct CommandPolicyTests {
         read("ee 00 00 00 02 04 00 00 01 00", 1),       // bank 2
         read("ee 00 00 01 01 04 00 00 01 00", 1),       // nonzero high address byte
         read("ee 00 01 00 01 04 00 00 01 00", 1),
+        // other CDB bytes differing from the captures
+        read("4d 01 30 00 00 00 00 00 34 00", 52),      // LOG SENSE with SP (save parameters)
+        read("4d 02 30 00 00 00 00 00 34 00", 52),      // LOG SENSE with PPC
+        read("4d 00 30 00 00 01 00 00 34 00", 52),      // LOG SENSE parameter pointer
+        read("4d 00 30 00 00 00 00 00 34 01", 52),      // LOG SENSE control byte
+        read("4d 00 30 00 00 00 00 00 20 00", 32),      // LOG SENSE shorter than captured
+        read("5a 00 26 00 00 00 00 00 38 00", 56),      // MODE SENSE subpage 00
+        read("5a 00 26 ff 00 00 00 00 38 00", 56),      // MODE SENSE subpage ff
+        read("5a 08 26 01 00 00 00 00 38 00", 56),      // MODE SENSE with DBD
+        read("5a 00 26 01 01 00 00 00 38 00", 56),
+        read("5a 00 26 01 00 00 00 00 38 01", 56),      // MODE SENSE control byte
+        read("5a 00 20 01 00 00 00 00 64 00", 100),     // page 0x20: only 34 captured
+        read("5a 00 26 01 00 00 00 00 0c 00", 12),      // page 0x26: only 56 captured
+        read("5a 00 21 01 00 00 00 00 38 00", 56),      // page 0x21: only 12 and 100 captured
+        read("ee 01 00 00 01 04 00 00 01 00", 1),       // register read, byte 1
+        read("ee 00 00 00 01 04 00 00 01 01", 1),       // register read, control byte
+        read("12 01 00 00 60 00", 96),                  // INQUIRY with EVPD
+        read("12 00 80 00 60 00", 96),                  // INQUIRY page code
+        read("12 00 00 00 24 00", 36),                  // INQUIRY shorter than captured
+        read("d3 01 00 00 02 00", 2),
+        read("d3 00 00 00 01 00", 1),
+        read("df 00 00 01 02 00", 2),
+        read("df 00 00 00 02 80", 2),
+        read("03 00 00 00 08 00", 8),                   // REQUEST SENSE shorter than captured
+        read("03 01 00 00 12 00", 18),
+        .noData([UInt8](hex: "00 00 00 00 00 01")!),    // TEST UNIT READY control byte
     ])
     func readOnlyPolicyRefusesUncapturedPagesAndRegisters(_ command: SCSICommand) {
         #expect(throws: TransportError.self) { try CommandPolicy.readOnly.check(command) }
     }
 
-    @Test func uncapturedPageRefusalNamesThePage() {
+    @Test func refusalsNameWhatDiffers() {
         #expect(throws: TransportError.refusedByPolicy(opcode: 0x5A, reason: "MODE SENSE page 0x22 not seen in the captures")) {
             try CommandPolicy.readOnly.check(read("5a 00 22 01 00 00 00 00 0c 00", 12))
+        }
+        #expect(throws: TransportError.refusedByPolicy(opcode: 0x5A, reason: "MODE SENSE page 0x05 not seen in the captures")) {
+            try CommandPolicy.readOnly.check(read("5a 00 05 01 00 00 00 00 0c 00", 12))
+        }
+        #expect(throws: TransportError.refusedByPolicy(opcode: 0x5A, reason: "MODE SENSE page 0x21 read with 56 bytes, captured: 12, 100")) {
+            try CommandPolicy.readOnly.check(read("5a 00 21 01 00 00 00 00 38 00", 56))
+        }
+        #expect(throws: TransportError.refusedByPolicy(opcode: 0xEE, reason: "register 0x00.0x04 outside bank 0x01, 0x04-0x19")) {
+            try CommandPolicy.readOnly.check(read("ee 00 00 00 00 04 00 00 01 00", 1))
+        }
+        #expect(throws: TransportError.refusedByPolicy(opcode: 0xEE, reason: "register 0x01.0x1A outside bank 0x01, 0x04-0x19")) {
+            try CommandPolicy.readOnly.check(read("ee 00 00 00 01 1a 00 00 01 00", 1))
+        }
+        #expect(throws: TransportError.refusedByPolicy(opcode: 0x4D, reason: "LOG SENSE CDB 4d 01 30 00 00 00 00 00 34 00 differs from the captured 4d 00 30 00 00 00 00 00 34 00")) {
+            try CommandPolicy.readOnly.check(read("4d 01 30 00 00 00 00 00 34 00", 52))
         }
     }
 
