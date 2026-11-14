@@ -124,3 +124,106 @@ struct IncrementalDecodeTests {
         #expect(throws: ImageError.self) { try decoder.append([0, 1, 2]) }
     }
 }
+
+struct TIFFExportTests {
+    /// A gradient with noise, so that the predictor and the compressors have work to do.
+    private static let image: RGB16Image = {
+        let width = 97, height = 41
+        var samples = [UInt16](repeating: 0, count: width * height * 3)
+        var seed: UInt32 = 12_345
+        for y in 0..<height {
+            for x in 0..<width {
+                seed = seed &* 1_103_515_245 &+ 12_345
+                let noise = Int(seed >> 20) & 0x3F
+                let i = (y * width + x) * 3
+                samples[i] = UInt16(min(x * 670 + noise, 65_535))
+                samples[i + 1] = UInt16(min(y * 1_590 + noise, 65_535))
+                samples[i + 2] = UInt16(min((x + y) * 470 + noise, 65_535))
+            }
+        }
+        return RGB16Image(width: width, height: height, samples: samples)
+    }()
+
+    /// Decodes with ImageIO and returns the samples, channel by channel, as stored.
+    /// ImageIO may pad 8-bit RGB to four bytes per pixel: only the first `channels` are kept.
+    private func decode(_ data: Data, channels wanted: Int) throws -> (image: CGImage, samples: [UInt16]) {
+        let source = try #require(CGImageSourceCreateWithData(data as CFData, nil))
+        let image = try #require(CGImageSourceCreateImageAtIndex(source, 0, nil))
+        let bytes = try #require(image.dataProvider?.data as Data?)
+        var samples: [UInt16] = []
+        let channels = image.bitsPerPixel / image.bitsPerComponent
+        for row in 0..<image.height {
+            let rowStart = row * image.bytesPerRow
+            for i in 0..<(image.width * channels) where i % channels < wanted {
+                if image.bitsPerComponent == 16 {
+                    let at = rowStart + 2 * i
+                    let little = image.bitmapInfo.contains(.byteOrder16Little)
+                    let a = UInt16(bytes[at]), b = UInt16(bytes[at + 1])
+                    samples.append(little ? a | b << 8 : a << 8 | b)
+                } else {
+                    samples.append(UInt16(bytes[rowStart + i]))
+                }
+            }
+        }
+        return (image, samples)
+    }
+
+    @Test(arguments: TIFFFormat.allCases, TIFFCompression.allCases)
+    func everyFormatAndCompressionReadsBackExactly(format: TIFFFormat, compression: TIFFCompression) throws {
+        let profile: Data? = switch format {
+        case .rgb8: CGColorSpace(name: CGColorSpace.sRGB)?.copyICCData() as Data?
+        case .gray8: ICCProfiles.graySRGB
+        default: nil
+        }
+        let data = TIFFWriter.data(for: Self.image, format: format, compression: compression, iccProfile: profile)
+        #expect(TIFFWriter.data(for: Self.image, format: format, compression: compression, iccProfile: profile) == data,
+                "reproducible")
+        let (decoded, samples) = try decode(data, channels: format.channels)
+        #expect(decoded.width == 97 && decoded.height == 41)
+        #expect(decoded.bitsPerComponent == format.bitsPerSample)
+        #expect(decoded.bitsPerPixel / decoded.bitsPerComponent >= format.channels)
+        #expect(samples == ExportConversion.samples(of: Self.image, as: format), "values identical after decoding")
+        let model = decoded.colorSpace?.model
+        #expect(model == (format.isGray ? .monochrome : .rgb))
+        if profile != nil { #expect(decoded.colorSpace?.copyICCData() != nil, "profile embedded") }
+    }
+
+    /// Large enough to fill the LZW table several times (Clear codes).
+    @Test func lzwHandlesFullTables() throws {
+        let width = 640, height = 200
+        var seed: UInt32 = 7
+        let samples: [UInt16] = (0..<(width * height * 3)).map { _ in
+            seed = seed &* 1_664_525 &+ 1_013_904_223
+            return UInt16(truncatingIfNeeded: seed >> 7)
+        }
+        let image = RGB16Image(width: width, height: height, samples: samples)
+        for format in [TIFFFormat.rgb16, .gray8] {
+            let data = TIFFWriter.data(for: image, format: format, compression: .lzw, iccProfile: nil)
+            let (_, decoded) = try decode(data, channels: format.channels)
+            #expect(decoded == ExportConversion.samples(of: image, as: format))
+        }
+    }
+
+    @Test func compressionShrinksTheFile() {
+        let none = TIFFWriter.data(for: Self.image, format: .rgb16, compression: .none, iccProfile: nil).count
+        let lzw = TIFFWriter.data(for: Self.image, format: .rgb16, compression: .lzw, iccProfile: nil).count
+        let zip = TIFFWriter.data(for: Self.image, format: .rgb16, compression: .deflate, iccProfile: nil).count
+        #expect(none - TIFFFormat.rgb16.pixelBytes(width: 97, height: 41) < 400, "uncompressed: pixels plus a small header")
+        #expect(zip < none && lzw < none)
+    }
+
+    @Test func eightBitUsesTheSRGBCurveAndGrayTheLuminance() {
+        #expect(ExportConversion.srgbEncoded(0) == 0 && abs(ExportConversion.srgbEncoded(1) - 1) < 1e-12)
+        #expect(abs(ExportConversion.srgbEncoded(0.18) - 0.461) < 0.001, "middle grey")
+        let image = RGB16Image(width: 2, height: 1, samples: [65_535, 0, 0, 11_796, 11_796, 11_796])
+        #expect(ExportConversion.samples(of: image, as: .rgb8) == [255, 0, 0, 118, 118, 118])
+        #expect(ExportConversion.samples(of: image, as: .gray16) == [13_933, 11_796], "0.2126 × 65535; grey kept")
+        #expect(ExportConversion.samples(of: image, as: .gray8)[1] == 118)
+    }
+
+    @Test func graySRGBProfileIsAValidGrayProfile() throws {
+        let space = try #require(CGColorSpace(iccData: ICCProfiles.graySRGB as CFData))
+        #expect(space.model == .monochrome)
+        #expect(ICCProfiles.graySRGB.count % 4 == 0)
+    }
+}

@@ -195,7 +195,7 @@ final class AppModelTests {
         let defaults = defaults ?? temporaryDefaults()
         return AppModel(virtualScanner: { try TestFixtures.scanner(pacing: pacing) },
                  inspector: Self.failingInspector,
-                 layoutStore: InMemoryLayoutStore(), defaults: defaults)
+                 defaults: defaults)
     }
 
     @Test func virtualByDefaultAndPreviewRuns() async {
@@ -291,7 +291,7 @@ final class AppModelTests {
         await model.readRealScanner()
         #expect(model.statusLine == ScannerStatusLine(source: .real, detail: .failed))
         let unavailable = AppModel(virtualScanner: { throw TimeoutError() }, inspector: Self.failingInspector,
-                                   layoutStore: InMemoryLayoutStore(), defaults: temporaryDefaults())
+                                   defaults: temporaryDefaults())
         #expect(unavailable.statusLine == ScannerStatusLine(source: .virtual, detail: .unavailable))
     }
 
@@ -312,7 +312,7 @@ final class AppModelTests {
     }
 
     /// The written name is computed at export time ({date}, {time}, {n}),
-    /// not taken from the "Next file" shown earlier in the palette.
+    /// not taken from the "Next file" shown earlier in the panel.
     @Test func exportNameIsComputedWhenExporting() async throws {
         let folder = try temporaryDirectory()
         defer { try? FileManager.default.removeItem(at: folder) }
@@ -361,7 +361,7 @@ final class AppModelTests {
 
     @Test func missingFixturesDisableTheVirtualScanner() {
         let model = AppModel(virtualScanner: { throw TimeoutError() }, inspector: Self.failingInspector,
-                             layoutStore: InMemoryLayoutStore(), defaults: temporaryDefaults())
+                             defaults: temporaryDefaults())
         #expect(model.virtualScannerError != nil)
         #expect(model.toolbar.previewBlock == .virtualScannerUnavailable)
     }
@@ -481,7 +481,7 @@ struct RollValidationTests {
         defer { try? FileManager.default.removeItem(at: folder) }
         let model = AppModel(virtualScanner: { try TestFixtures.scanner() }, inspector: ScannerInspector {
             FakeConnection(responses: [:], openError: TransportError.deviceBusy)
-        }, layoutStore: InMemoryLayoutStore(), defaults: UserDefaults(suiteName: "X1ScanCoreTests-\(UUID().uuidString)")!)
+        }, defaults: UserDefaults(suiteName: "X1ScanCoreTests-\(UUID().uuidString)")!)
         model.startPreview()
         await model.session.waitUntilIdle()
         model.exportSettings = ExportSettings(folder: folder, nameTemplate: "{roll}_{frame}")

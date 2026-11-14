@@ -77,6 +77,8 @@ Recorded on 2026-11-14.
 - Scan and **export a raw 16-bit TIFF**: linear RGB, with only the
   corrections needed to form the image (flat field from the white and dark
   references, R/B line-gap realignment). No colour profile, no curves.
+  8-bit exports, added in step 3, are the one exception: sRGB curve and
+  profile, provisional (see "Application, step 3").
 - The architecture is ready for **non-destructive processing modules**
   working on linear data, added in this order: basic adjustments, then full
   FlexColor-style corrections.
@@ -156,6 +158,8 @@ Recorded on 2026-11-12.
 
 ### Layout, ready for later steps
 
+*Replaced in step 3 by the settings panel (palettes removed).*
+
 - `PaletteRegistry` lists the palettes; `PaletteLayout` (Codable, versioned)
   keeps order, folded palettes, column mode (expanded or icon bar), column
   width, each palette's placement (`docked` or `floating(frame)`) and the
@@ -206,6 +210,8 @@ Recorded on 2026-11-14. Nothing here changes what is sent to a scanner.
 
 ### Window menu and palettes
 
+*Replaced in step 3 (palettes removed).*
+
 - One item per palette, checked when shown, with the same title as the
   palette header. Show/Hide All Palettes (Tab, as in Photoshop, only when
   the image area has the focus: elsewhere Tab moves to the next control, as
@@ -246,6 +252,8 @@ The snapshot also renders the Settings window and Scanner Information.
 They change the saved layout like a user would.
 
 ## Application, step 2c (palettes, background, file names, Settings)
+
+*The toolbar and the palettes of this step were replaced in step 3.*
 
 Recorded on 2026-11-14. Nothing here changes what is sent to a scanner.
 
@@ -308,6 +316,92 @@ Recorded on 2026-11-14. Nothing here changes what is sent to a scanner.
   degenerate. They are now computed only for an area of 64 points or more
   per side, and the area's size is also followed through the scroll view's
   frame notifications. The exact sequence was not reproduced.
+
+## Application, step 3 (settings panel, after Epson Scan 2)
+
+Recorded on 2026-11-14. Nothing here changes what is sent to a scanner.
+
+### Window
+
+- No window toolbar. From left to right: the image area; a narrow tool
+  column (hand, zoom, crop; rotate, add frame, auto adjust disabled with a
+  tooltip until they exist); the **settings panel**. Tool column and panel
+  are one inspector item: they resize together (260-420 pt for the panel)
+  and hide together with one command, View > Hide Settings Panel (⌥⌘P).
+  Small controls everywhere (`controlSize(.small)`).
+- Panel, top to bottom: **Scanner** (source, state, Read Identity,
+  Information…); **Original** (film type, holder: saved in `ScanSettings`,
+  not sent to the scanner yet); **Main / Advanced** tabs (Main: resolution,
+  input and output size in preview pixels, scale, foldable histogram;
+  Advanced: empty, with a sentence: only settings that work go there);
+  **Output** (format, compression, name template menu and Edit… to
+  Settings > Export, folder, Export Preview); **Preview** (Stop, in red,
+  while a preview runs) and **Scan** (disabled) buttons.
+- Input size: the crop rectangle, or the whole preview, in pixels.
+  Millimetres wait for the preview resolution to be confirmed by a
+  capture. Resolution, scale and crop are saved and apply to the scan
+  later: Export Preview writes the whole preview, and the size estimate of
+  the bottom bar is for that file.
+- `InspectorLayout` (width, hidden, folded sections, tab) replaces
+  `PaletteLayout`; the keys of the palettes (`PaletteLayout`, `Workspaces`)
+  are removed from the preferences at launch.
+- Bottom bar: scanner state, estimated size of the exported file
+  (uncompressed), R G B under the pointer in the unit of Settings > Display
+  (0-255 by default, percent, 16-bit; raw sensor values in the tooltip),
+  zoom menu. The RGB values are the linear corrected values (as in a 16-bit
+  export), scaled to the unit: an 8-bit export holds sRGB-encoded values
+  (middle grey: 46 shown, 118 in the file).
+- The panel can be hidden only through the model (⌥⌘P): dragging the
+  divider cannot collapse it.
+
+### Zoom menu (the 6.25 % report)
+
+- The zoom combo box applied every selection change of its list, so
+  browsing the list (arrow keys, and perhaps the pointer) could apply
+  6.25 %, the first step under Fit and Fill. A choice is now applied only
+  when confirmed (click on an entry, Return) or typed; leaving the field
+  (a click elsewhere after browsing) applies nothing. The exact sequence
+  of the report was not reproduced; this is the likely cause
+  **[hypothesis]**.
+
+### File name tokens
+
+- Token buttons (Settings > Export) insert at the last caret position of
+  the template field, recorded while the field has the focus, with "-"
+  added where the neighbour is not already a separator
+  (`ExportToken.insert`, tested). They used to land at the start, glued.
+
+### Export formats
+
+| Format | Encoding | Profile |
+|---|---|---|
+| RGB 16-bit (default) | linear, raw | none |
+| RGB 8-bit | sRGB curve | sRGB (ColorSync), **provisional** |
+| Grey 16-bit | linear luminance | none |
+| Grey 8-bit | sRGB curve on the luminance | grey, sRGB curve (generated), **provisional** |
+
+- Grey = 0.2126 R + 0.7152 G + 0.0722 B on the linear values (Rec. 709 /
+  sRGB coefficients) **[hypothesis]**: the X1's primaries are unknown.
+- 8 bits is never linear; the sRGB curve and profiles are provisional
+  until the IT8 input profile. A warning is shown with 8-bit formats.
+- Compression: none, LZW, or ZIP (Deflate in a zlib stream), both with the
+  horizontal predictor (TIFF predictor 2). ZIP by default in 16 bits, LZW in
+  8 bits; choosing a format selects its default compression. ImageIO writes
+  LZW and Deflate but without the predictor (checked on 2026-11-14 with a
+  throwaway program on macOS 26: no tag 317 in its files), so
+  `X1Image.TIFFWriter` writes them itself (Apple's Compression framework
+  for Deflate). Every combination is read back by ImageIO with identical
+  values (tests).
+- Sizes on the virtual X1's preview (2004 × 817), measured once with a
+  throwaway probe (not a test), synthetic and smooth, so far more
+  compressible than a real scan:
+
+  | Format | None | LZW | ZIP |
+  |---|---|---|---|
+  | RGB 16-bit | 9.8 MB | 1.7 MB | 1.6 MB |
+  | RGB 8-bit | 4.9 MB | 109 KB | 85 KB |
+  | Grey 16-bit | 3.3 MB | 353 KB | 387 KB |
+  | Grey 8-bit | 1.6 MB | 25 KB | 26 KB |
 
 ## Scanner safety
 

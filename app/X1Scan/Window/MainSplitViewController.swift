@@ -3,31 +3,31 @@ import AppKit
 import SwiftUI
 import X1ScanCore
 
-/// Image area on the left, palette column (an inspector item) on the right.
-/// In icon-bar mode the column is narrowed to a fixed width.
+/// Image area on the left; on the right, the tool column glued to the
+/// settings panel, in one inspector item: they resize and hide together.
 @MainActor
 final class MainSplitViewController: NSSplitViewController {
-    private static let iconBarWidth: CGFloat = 52
-
     private let model: AppModel
-    private let paletteItem: NSSplitViewItem
+    private let panelItem: NSSplitViewItem
     private var observers: [Observing] = []
-    private var appliedMode: ColumnMode?
+    private var applyingWidth = false
 
     init(model: AppModel) {
         self.model = model
         let canvas = CanvasViewController(model: model)
-        let column = NSHostingController(rootView: PaletteColumnView(model: model))
-        column.sizingOptions = []
-        paletteItem = NSSplitViewItem(inspectorWithViewController: column)
-        // Collapsible only while the column is empty (applyHiddenPalettes), so that
-        // dragging the divider cannot hide the column behind the model's back.
-        paletteItem.canCollapse = false
-        paletteItem.holdingPriority = .defaultHigh
+        let panel = NSHostingController(rootView: PanelColumnView(model: model))
+        panel.sizingOptions = []
+        panelItem = NSSplitViewItem(inspectorWithViewController: panel)
+        // Collapsible only while the model hides it (applyHidden), so that dragging
+        // the divider or shrinking the window cannot hide it behind the model's back.
+        panelItem.canCollapse = false
+        panelItem.holdingPriority = .defaultHigh
+        panelItem.minimumThickness = InspectorLayout.minimumWidth + PanelColumnView.toolWidth
+        panelItem.maximumThickness = InspectorLayout.maximumWidth + PanelColumnView.toolWidth
         super.init(nibName: nil, bundle: nil)
         addSplitViewItem(NSSplitViewItem(viewController: canvas))
-        addSplitViewItem(paletteItem)
-        splitView.autosaveName = nil  // the width is part of PaletteLayout
+        addSplitViewItem(panelItem)
+        splitView.autosaveName = nil  // the width is part of InspectorLayout
     }
 
     @available(*, unavailable)
@@ -35,58 +35,62 @@ final class MainSplitViewController: NSSplitViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        observers.append(Observing { [weak self] in self?.applyColumnMode() })
-        observers.append(Observing { [weak self] in self?.applyHiddenPalettes() })
+        observers.append(Observing { [weak self] in self?.applyHidden() })
     }
 
-    private func applyColumnMode() {
-        let layout = model.layout.layout
-        guard layout.columnMode != appliedMode else { return }
-        appliedMode = layout.columnMode
-        switch layout.columnMode {
-        case .expanded:
-            paletteItem.minimumThickness = PaletteLayout.minimumColumnWidth
-            paletteItem.maximumThickness = PaletteLayout.maximumColumnWidth
-            setColumnWidth(layout.columnWidth)
-        case .iconBar:
-            paletteItem.minimumThickness = Self.iconBarWidth
-            paletteItem.maximumThickness = Self.iconBarWidth
-            setColumnWidth(Self.iconBarWidth)
-        }
+    override func viewDidAppear() {
+        super.viewDidAppear()
+        setPanelWidth(model.panel.layout.width)
     }
 
-    /// Collapses the column when it has nothing to show (palettes hidden or
-    /// floating). The image area then
-    /// grows and Fit or Fill is recomputed (CanvasViewController.viewDidLayout).
-    private func applyHiddenPalettes() {
-        let collapsed = model.layout.layout.columnIsEmpty
-        guard paletteItem.isCollapsed != collapsed else { return }
-        if collapsed {
-            paletteItem.canCollapse = true
-            paletteItem.isCollapsed = true
+    /// One command hides or shows the panel (View menu). The image area then
+    /// grows and Fit or Fill is recomputed.
+    private func applyHidden() {
+        let hidden = model.panel.layout.isHidden
+        guard panelItem.isCollapsed != hidden else { return }
+        if hidden {
+            panelItem.canCollapse = true
+            panelItem.isCollapsed = true
         } else {
-            paletteItem.isCollapsed = false
-            paletteItem.canCollapse = false
-        }
-        if !collapsed, appliedMode == .expanded {
+            panelItem.isCollapsed = false
+            panelItem.canCollapse = false
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
-                setColumnWidth(model.layout.layout.columnWidth)
+                setPanelWidth(model.panel.layout.width)
             }
         }
     }
 
-    private func setColumnWidth(_ width: CGFloat) {
-        guard splitView.subviews.count == 2 else { return }
+    private func setPanelWidth(_ width: Double) {
+        guard splitView.subviews.count == 2, !panelItem.isCollapsed else { return }
+        applyingWidth = true
         splitView.layoutSubtreeIfNeeded()
-        splitView.setPosition(splitView.bounds.width - width - splitView.dividerThickness, ofDividerAt: 0)
+        let total = CGFloat(width) + PanelColumnView.toolWidth
+        splitView.setPosition(splitView.bounds.width - total - splitView.dividerThickness, ofDividerAt: 0)
+        applyingWidth = false
     }
 
     override func splitViewDidResizeSubviews(_ notification: Notification) {
         super.splitViewDidResizeSubviews(notification)
-        // Remember the width chosen by dragging, in expanded mode only.
-        guard appliedMode == .expanded, !paletteItem.isCollapsed, splitView.subviews.count == 2, view.window != nil,
+        // Remember the width chosen by dragging the divider.
+        guard !applyingWidth, !panelItem.isCollapsed, splitView.subviews.count == 2, view.window != nil,
               notification.userInfo?["NSSplitViewDividerIndex"] != nil else { return }
-        model.layout.setColumnWidth(splitView.subviews[1].frame.width)
+        model.panel.setWidth(Double(splitView.subviews[1].frame.width - PanelColumnView.toolWidth))
+    }
+}
+
+/// Tool column and settings panel, side by side.
+struct PanelColumnView: View {
+    static let toolWidth: CGFloat = 37
+
+    @Bindable var model: AppModel
+
+    var body: some View {
+        HStack(spacing: 0) {
+            ToolColumnView(model: model)
+            Divider()
+            SettingsPanelView(model: model)
+                .frame(maxWidth: .infinity)
+        }
     }
 }

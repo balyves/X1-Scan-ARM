@@ -67,7 +67,7 @@ public struct Viewport: Sendable, Hashable {
         return Self.clamp(max(max(viewSize.width, 1) / size.width, max(viewSize.height, 1) / size.height))
     }
 
-    /// The view changed size (window, full screen, palettes shown or hidden):
+    /// The view changed size (window, full screen, settings panel shown or hidden):
     /// Fit and Fill are recomputed, a fixed magnification is kept.
     public mutating func viewSizeChanged(_ size: CGSize) {
         viewSize = size

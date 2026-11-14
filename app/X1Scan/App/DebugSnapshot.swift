@@ -8,14 +8,12 @@ import X1ScanCore
 /// recording permission. Launch arguments:
 ///   -X1ScanSnapshot <path.png>   render the window into a PNG after a few seconds
 ///   -X1ScanAutoPreview YES       start a preview on the virtual X1 at launch
-///   -X1ScanIconBar YES           show the palettes as icons
-///   -X1ScanHideAllPalettes YES   hide every palette (column collapsed)
+///   -X1ScanHidePanel YES         hide the settings panel
 ///   -X1ScanZoomFill YES          Fill Window instead of the startup zoom
-///   -X1ScanOpenStack YES         icon bar: open every palette in the stack
-///   -X1ScanDetachInfo YES        detach the Info palette into a floating panel
+///   -X1ScanOpenHistogram YES     unfold the histogram in the panel
 /// The snapshot also writes each Settings pane and Scanner Information
 /// (`<path>-settings-<n>.png`, `<path>-info.png`), serial always masked.
-/// These arguments change the saved layout like a user would.
+/// These arguments change the saved panel layout like a user would.
 /// Never used against the real scanner: the preview only runs on the virtual X1.
 /// Write the PNGs outside the repository: they show the counters and the
 /// (masked) serial number of the capture.
@@ -23,19 +21,11 @@ import X1ScanCore
 enum DebugSnapshot {
     static func run(window: NSWindow?, model: AppModel) {
         let arguments = UserDefaults.standard
-        if arguments.bool(forKey: "X1ScanIconBar"), model.layout.layout.columnMode == .expanded {
-            model.layout.toggleColumnMode()
-        }
-        if arguments.bool(forKey: "X1ScanHideAllPalettes"), !model.layout.layout.allHidden {
-            model.layout.toggleAllHidden()
-        }
+        if arguments.bool(forKey: "X1ScanHidePanel"), !model.panel.layout.isHidden { model.panel.toggleHidden() }
         if arguments.bool(forKey: "X1ScanZoomFill") { model.zoomToFill() }
-        if arguments.bool(forKey: "X1ScanOpenStack") {
-            for id in model.layout.layout.visibleDockedPalettes where !model.layout.layout.openInIconBar.contains(id) {
-                model.layout.toggleOverlay(id)
-            }
+        if arguments.bool(forKey: "X1ScanOpenHistogram"), model.panel.layout.isFolded(.histogram) {
+            model.panel.toggleFolded(.histogram)
         }
-        if arguments.bool(forKey: "X1ScanDetachInfo") { FloatingPalettes.detach(.info, model: model) }
         if arguments.bool(forKey: "X1ScanAutoPreview") { model.startPreview() }
         guard let path = arguments.string(forKey: "X1ScanSnapshot"), let window else { return }
         Task { @MainActor in
@@ -63,24 +53,6 @@ enum DebugSnapshot {
                     try? paneRep.representation(using: .png, properties: [:])?.write(to: URL(filePath: panePath))
                 }
             }
-            // Palette contents through ImageRenderer (scroll views are not captured by cacheDisplay).
-            let palettes = VStack(alignment: .leading, spacing: 16) {
-                ForEach(model.layout.registry.ids, id: \.self) { id in
-                    Text(Strings.paletteTitle(id)).font(.headline)
-                    PaletteContent(model: model, id: id)
-                }
-            }
-            .padding(12)
-            .frame(width: 270)
-            .background(Color(nsColor: .windowBackgroundColor))
-            let renderer = ImageRenderer(content: palettes)
-            renderer.scale = 2
-            if let image = renderer.nsImage, let tiff = image.tiffRepresentation,
-               let bitmap = NSBitmapImageRep(data: tiff) {
-                try? bitmap.representation(using: .png, properties: [:])?
-                    .write(to: URL(filePath: path.replacingOccurrences(of: ".png", with: "-palettes.png")))
-            }
-            // Settings tabs and Scanner Information, in offscreen windows (AppKit controls included).
             render(AnyView(ScannerInfoView(model: model, alwaysMasksSerial: true)),
                    to: path.replacingOccurrences(of: ".png", with: "-info.png"))
             let settings = SettingsWindowController(model: model)
@@ -95,7 +67,7 @@ enum DebugSnapshot {
                         .write(to: URL(filePath: path.replacingOccurrences(of: ".png", with: "-settings-\(index).png")))
                 }
             }
-            // Floating panels.
+            // Other panels (colour panel excluded).
             for panel in NSApp.windows where panel is NSPanel && panel.isVisible && !(panel is NSColorPanel) {
                 guard let view = panel.contentView, let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds)
                 else { continue }

@@ -2,12 +2,19 @@
 import SwiftUI
 import X1ScanCore
 
-/// The file name builder, in the Export palette and in Settings > Export:
+/// The file name builder, in Settings > Export:
 /// template field, token buttons inserted at the cursor, roll, frame and
 /// counter, and the real name of the next file (sanitised).
 struct ExportNameBuilder: View {
     @Bindable var model: AppModel
     @State private var selection: TextSelection?
+    /// Last caret position in the template field (character offset and selection
+    /// length). Kept when a token button takes the focus away from the field.
+    @State private var caret: (offset: Int, length: Int)?
+    @FocusState private var templateFocused: Bool
+    /// The template as this builder last wrote it; another value means it was
+    /// changed elsewhere (the panel's Name menu) and the caret no longer applies.
+    @State private var templateFromBuilder: String?
     @FocusState private var rollFocused: Bool
 
     var body: some View {
@@ -17,6 +24,13 @@ struct ExportNameBuilder: View {
                 .textFieldStyle(.roundedBorder)
                 .labelsHidden()
                 .monospaced()
+                .focused($templateFocused)
+                // Only while the field has the focus: losing it (a token button
+                // clicked) may move the selection to the start.
+                .onChange(of: selection) { _, newValue in if templateFocused { rememberCaret(newValue) } }
+                .onChange(of: model.exportSettings.nameTemplate) { _, newValue in
+                    if !templateFocused, newValue != templateFromBuilder { caret = nil }  // insert at the end
+                }
 
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 72), spacing: 6)], alignment: .leading, spacing: 6) {
                 ForEach(ExportToken.allCases, id: \.self) { token in
@@ -89,20 +103,25 @@ struct ExportNameBuilder: View {
         if model.exportSettings.needsRollValidation { model.exportSettings.validateRoll() }
     }
 
-    /// Inserts the token's placeholder at the cursor (replacing a selection), or at the end.
+    /// Inserts the token at the last caret position, with "-" separators
+    /// where needed (ExportToken.insert); at the end if the field was never edited.
     private func insert(_ token: ExportToken) {
-        var text = model.exportSettings.nameTemplate
-        let placeholder = token.placeholder
-        if case .selection(let range) = selection?.indices,
-           range.lowerBound >= text.startIndex, range.upperBound <= text.endIndex {
-            text.replaceSubrange(range, with: placeholder)
-            let caret = text.index(range.lowerBound, offsetBy: placeholder.count)
-            model.exportSettings.nameTemplate = text
-            selection = TextSelection(insertionPoint: caret)
-        } else {
-            model.exportSettings.nameTemplate = text + placeholder
-            selection = nil
-        }
+        let result = token.insert(into: model.exportSettings.nameTemplate, at: caret?.offset,
+                                  selectionLength: caret?.length ?? 0)
+        templateFromBuilder = result.text
+        model.exportSettings.nameTemplate = result.text
+        caret = (result.caret, 0)
+        let text = result.text
+        let index = text.index(text.startIndex, offsetBy: min(result.caret, text.count))
+        selection = TextSelection(insertionPoint: index)
+    }
+
+    private func rememberCaret(_ selection: TextSelection?) {
+        guard case .selection(let range) = selection?.indices else { return }
+        let text = model.exportSettings.nameTemplate
+        guard range.lowerBound >= text.startIndex, range.upperBound <= text.endIndex else { return }
+        caret = (text.distance(from: text.startIndex, to: range.lowerBound),
+                 text.distance(from: range.lowerBound, to: range.upperBound))
     }
 }
 

@@ -97,7 +97,7 @@ public enum StartupSource: String, Sendable, Hashable, CaseIterable {
 }
 
 /// Settings window (⌘,), saved in UserDefaults. The export settings are in
-/// `AppModel.exportSettings`, shared with the Export palette.
+/// `AppModel.exportSettings`, shared with the Output section of the settings panel.
 @MainActor
 @Observable
 public final class AppSettings {
@@ -127,6 +127,10 @@ public final class AppSettings {
     public var startupSource: StartupSource {
         didSet { defaults.set(startupSource.rawValue, forKey: Keys.startupSource) }
     }
+    /// Unit of the RGB values in the bottom bar. 0-255 by default.
+    public var rgbUnit: RGBUnit {
+        didSet { defaults.set(rgbUnit.rawValue, forKey: Keys.rgbUnit) }
+    }
 
     private let defaults: UserDefaults
 
@@ -138,6 +142,7 @@ public final class AppSettings {
         static let canvasBackground = "CanvasBackground"
         static let startupZoom = "StartupZoom"
         static let startupSource = "StartupSource"
+        static let rgbUnit = "RGBUnit"
     }
 
     public init(defaults: UserDefaults = .standard) {
@@ -149,6 +154,7 @@ public final class AppSettings {
             ?? .neutralGray
         startupZoom = Self.value(defaults, Keys.startupZoom, StartupZoom.fit)
         startupSource = Self.value(defaults, Keys.startupSource, StartupSource.last)
+        rgbUnit = Self.value(defaults, Keys.rgbUnit, RGBUnit.eightBit)
     }
 
     private static func value<T: RawRepresentable<String>>(_ defaults: UserDefaults, _ key: String, _ fallback: T) -> T {

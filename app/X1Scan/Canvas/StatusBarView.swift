@@ -2,8 +2,8 @@
 import SwiftUI
 import X1ScanCore
 
-/// Bottom bar: source and state ("Virtual X1 · Ready"), preview progress,
-/// image size, zoom menu.
+/// Bottom bar: scanner state ("Virtual X1 · Ready"), preview progress,
+/// estimated size of the exported file, R G B under the pointer, zoom menu.
 struct StatusBarView: View {
     @Bindable var model: AppModel
 
@@ -18,20 +18,23 @@ struct StatusBarView: View {
                 .foregroundStyle(statusColor(session.state))
             if session.state == .running {
                 ProgressView(value: session.progress.fraction)
-                    .frame(maxWidth: 220)
+                    .frame(maxWidth: 160)
             }
             Spacer(minLength: 8)
-            if let image = session.image {
-                Text("\(image.width) × \(image.expectedHeight) px", comment: "Image size in the status bar")
+            if let bytes = model.estimatedExportBytes {
+                Text(Strings.estimatedSize(bytes))
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
+                    .help(Text("Uncompressed size of the file an export would write now", comment: "Tooltip"))
             }
+            RGBReadout(model: model)
             ZoomComboBox(model: model, magnification: model.viewport.magnification, enabled: session.image != nil)
-                .frame(width: 128)
+                .frame(width: 118)
         }
         .font(.callout)
+        .controlSize(.small)
         .padding(.horizontal, 12)
-        .frame(height: 28)
+        .frame(height: 26)
         .background(.bar)
     }
 
@@ -43,5 +46,35 @@ struct StatusBarView: View {
         case .stopped(let outcome?) where outcome != .stoppedAndReady: return .red
         default: return .primary
         }
+    }
+}
+
+/// R G B of the pixel under the pointer, in the unit of Settings > Display;
+/// the raw sensor values in the tooltip. Replaces the Info palette.
+private struct RGBReadout: View {
+    @Bindable var model: AppModel
+
+    var body: some View {
+        let unit = model.settings.rgbUnit
+        HStack(spacing: 6) {
+            if let reading = model.pixelReading {
+                ForEach(0..<3, id: \.self) { channel in
+                    HStack(spacing: 2) {
+                        Text(verbatim: ["R", "G", "B"][channel])
+                            .foregroundStyle([Color.red, .green, .blue][channel])
+                            .font(.caption.weight(.semibold))
+                        Text(Strings.rgbValue(reading.corrected[channel], unit: unit))
+                            .monospacedDigit()
+                            .frame(minWidth: unit == .sixteenBit ? 40 : 30, alignment: .trailing)
+                    }
+                }
+            } else {
+                Text(verbatim: "R – G – B –").foregroundStyle(.tertiary)
+            }
+        }
+        .help(model.pixelReading.map {
+            String(localized: "x \($0.coordinate.x), y \($0.coordinate.y). Linear corrected values (as exported in 16 bits). Raw sensor values: \($0.raw[0]), \($0.raw[1]), \($0.raw[2])",
+                   comment: "Tooltip of the RGB values")
+        } ?? "")
     }
 }

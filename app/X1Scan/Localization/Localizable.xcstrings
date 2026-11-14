@@ -244,17 +244,6 @@
         }
       }
     },
-    "Export a raw 16-bit TIFF (⇧⌘E)": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Exporter un TIFF 16 bits brut (⇧⌘E)"
-          }
-        }
-      }
-    },
     "Export failed": {
       "extractionState": "manual",
       "localizations": {
@@ -409,17 +398,6 @@
         }
       }
     },
-    "Info": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Infos"
-          }
-        }
-      }
-    },
     "Initialising": {
       "extractionState": "manual",
       "localizations": {
@@ -427,17 +405,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Initialisation"
-          }
-        }
-      }
-    },
-    "Large: corrected values (exported). Small: raw sensor values.": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "En grand : valeurs corrigées (exportées). En petit : valeurs brutes du capteur."
           }
         }
       }
@@ -486,28 +453,6 @@
         }
       }
     },
-    "Move Down": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Descendre"
-          }
-        }
-      }
-    },
-    "Move Up": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Monter"
-          }
-        }
-      }
-    },
     "No X1 found. Check that it is on and connected.": {
       "extractionState": "manual",
       "localizations": {
@@ -548,17 +493,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Seules des lectures sont envoyées (identité, état, compteurs) ; le scanner est refermé aussitôt après."
-          }
-        }
-      }
-    },
-    "Palettes": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Palettes"
           }
         }
       }
@@ -717,17 +651,6 @@
         }
       }
     },
-    "Reset Palette Layout": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Réinitialiser la disposition"
-          }
-        }
-      }
-    },
     "RGB histogram": {
       "extractionState": "manual",
       "localizations": {
@@ -873,28 +796,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Afficher dans le Finder"
-          }
-        }
-      }
-    },
-    "Show Palettes as Icons": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Afficher les palettes en icônes"
-          }
-        }
-      }
-    },
-    "Show the palettes in full or as icons (⌥⌘P)": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Afficher les palettes en entier ou en icônes (⌥⌘P)"
           }
         }
       }
@@ -1066,17 +967,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "This scanner is not a Flextight X1 (%1$@ %2$@). Nothing more was sent."
-          }
-        }
-      }
-    },
-    "TIFF, 16-bit RGB, linear, raw: no profile, no curve.": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "TIFF, RVB 16 bits, linéaire, brut : sans profil, sans courbe."
           }
         }
       }
@@ -1572,28 +1462,6 @@
         }
       }
     },
-    "Show/Hide All Palettes": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Afficher/Masquer toutes les palettes"
-          }
-        }
-      }
-    },
-    "Hide": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Masquer"
-          }
-        }
-      }
-    },
     "zoom.steps": {
       "extractionState": "manual",
       "localizations": {
@@ -1677,39 +1545,6 @@
         }
       }
     },
-    "Attach All Palettes": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rattacher toutes les palettes"
-          }
-        }
-      }
-    },
-    "Attach": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rattacher"
-          }
-        }
-      }
-    },
-    "Detach": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Détacher"
-          }
-        }
-      }
-    },
     "+1 after export": {
       "extractionState": "manual",
       "localizations": {
@@ -1743,13 +1578,514 @@
         }
       }
     },
-    "Drag onto the column to attach": {
+    "Original": {
       "extractionState": "manual",
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Glisser sur la colonne pour rattacher"
+            "value": "Original"
+          }
+        }
+      }
+    },
+    "Settings": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réglages"
+          }
+        }
+      }
+    },
+    "Output": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sortie"
+          }
+        }
+      }
+    },
+    "Positive": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Positif"
+          }
+        }
+      }
+    },
+    "Colour negative": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Négatif couleur"
+          }
+        }
+      }
+    },
+    "B&W negative": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Négatif N&B"
+          }
+        }
+      }
+    },
+    "RGB 16-bit (raw, linear)": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "RVB 16 bits (brut, linéaire)"
+          }
+        }
+      }
+    },
+    "RGB 8-bit (sRGB)": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "RVB 8 bits (sRVB)"
+          }
+        }
+      }
+    },
+    "Grey 16-bit (linear)": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Niveaux de gris 16 bits (linéaire)"
+          }
+        }
+      }
+    },
+    "Grey 8-bit (sRGB curve)": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Niveaux de gris 8 bits (courbe sRVB)"
+          }
+        }
+      }
+    },
+    "LZW": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LZW"
+          }
+        }
+      }
+    },
+    "ZIP": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ZIP"
+          }
+        }
+      }
+    },
+    "≈ %@ before compression": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "≈ %@ avant compression"
+          }
+        }
+      }
+    },
+    "0–255": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "0–255"
+          }
+        }
+      }
+    },
+    "Percent": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pourcentage"
+          }
+        }
+      }
+    },
+    "16-bit (0–65535)": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "16 bits (0–65535)"
+          }
+        }
+      }
+    },
+    "RGB values": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valeurs RVB"
+          }
+        }
+      }
+    },
+    "Uncompressed size of the file an export would write now": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Taille non compressée du fichier qu'un export écrirait maintenant"
+          }
+        }
+      }
+    },
+    "Hide Settings Panel": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Masquer le panneau de réglages"
+          }
+        }
+      }
+    },
+    "Show Settings Panel": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher le panneau de réglages"
+          }
+        }
+      }
+    },
+    "Rotate": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rotation"
+          }
+        }
+      }
+    },
+    "Add Frame": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter un cadre"
+          }
+        }
+      }
+    },
+    "Auto Adjust": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réglage auto"
+          }
+        }
+      }
+    },
+    "%@: not available yet": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ : pas encore disponible"
+          }
+        }
+      }
+    },
+    "Source": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Source"
+          }
+        }
+      }
+    },
+    "Information…": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Informations…"
+          }
+        }
+      }
+    },
+    "Film": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Film"
+          }
+        }
+      }
+    },
+    "Holder": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Porte-film"
+          }
+        }
+      }
+    },
+    "Not specified": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non précisé"
+          }
+        }
+      }
+    },
+    "Saved; applied to the scanner with real scans (a later step).": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistré ; appliqué au scanner avec les vrais scans (étape suivante)."
+          }
+        }
+      }
+    },
+    "Advanced settings come with real scans; only settings that work are shown here.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les réglages avancés viendront avec les vrais scans ; seuls les réglages qui fonctionnent apparaissent ici."
+          }
+        }
+      }
+    },
+    "Main": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Principal"
+          }
+        }
+      }
+    },
+    "Advanced": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avancé"
+          }
+        }
+      }
+    },
+    "Resolution": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Résolution"
+          }
+        }
+      }
+    },
+    "Input": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entrée"
+          }
+        }
+      }
+    },
+    "Scale": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Échelle"
+          }
+        }
+      }
+    },
+    "ppi": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ppp"
+          }
+        }
+      }
+    },
+    "8 bits: sRGB curve and profile (provisional); fewer levels than the raw 16 bits.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "8 bits : courbe et profil sRVB (provisoires) ; moins de niveaux que le 16 bits brut."
+          }
+        }
+      }
+    },
+    "Compression": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compression"
+          }
+        }
+      }
+    },
+    "Name": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nom"
+          }
+        }
+      }
+    },
+    "Export Preview": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exporter l'aperçu"
+          }
+        }
+      }
+    },
+    "Export the preview with these settings (⇧⌘E)": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exporter l'aperçu avec ces réglages (⇧⌘E)"
+          }
+        }
+      }
+    },
+    "Edit…": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifier…"
+          }
+        }
+      }
+    },
+    "Sizes in preview pixels; millimetres once the preview resolution is confirmed. Resolution, scale and crop apply to the scan (a later step): Export Preview writes the whole preview.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tailles en pixels de l'aperçu ; en millimètres quand la résolution de l'aperçu sera confirmée. Résolution, échelle et cadrage s'appliquent au scan (étape suivante) : « Exporter l'aperçu » écrit l'aperçu entier."
+          }
+        }
+      }
+    },
+    "x %lld, y %lld. Linear corrected values (as exported in 16 bits). Raw sensor values: %u, %u, %u": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "x %1$lld, y %2$lld. Valeurs corrigées linéaires (comme dans un export 16 bits). Valeurs brutes du capteur : %3$u, %4$u, %5$u"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "x %1$lld, y %2$lld. Linear corrected values (as exported in 16 bits). Raw sensor values: %3$u, %4$u, %5$u"
+          }
+        }
+      }
+    },
+    "Not available yet": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas encore disponible"
           }
         }
       }

@@ -48,6 +48,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         settingsController?.showWindow(nil)
     }
 
+    /// Settings > Export, from the panel's Edit… button.
+    @objc func showExportSettings(_ sender: Any?) {
+        guard let model else { return }
+        if settingsController == nil {
+            settingsController = SettingsWindowController(model: model)
+            settingsController?.window?.center()
+        }
+        settingsController?.show(.export)
+    }
+
     @objc func showScannerInformation(_ sender: Any?) {
         guard let model else { return }
         if scannerInfoController == nil { scannerInfoController = ScannerInfoWindowController(model: model) }

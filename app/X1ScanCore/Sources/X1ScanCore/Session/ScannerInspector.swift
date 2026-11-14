@@ -2,7 +2,7 @@
 import X1Protocol
 import X1Transport
 
-/// What the Scanner palette shows: identity, usage counters and state.
+/// What Scanner Information shows: identity, usage counters and state.
 public struct ScannerInfo: Sendable, Hashable {
     public var vendor: String
     public var model: String

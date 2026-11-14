@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-/// The values under the cursor, for the Info palette.
+/// The values under the cursor, for the RGB values of the bottom bar.
 public struct PixelReading: Sendable, Hashable {
     public var coordinate: PixelCoordinate
     /// Corrected 16-bit values (flat field, line gap), as exported. R, G, B.

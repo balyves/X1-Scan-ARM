@@ -4,7 +4,7 @@ import X1ScanCore
 
 /// RGB histogram of the corrected values (what is exported). Square-root
 /// scale by default, logarithmic as an option.
-struct HistogramPaletteView: View {
+struct HistogramView: View {
     @Bindable var model: AppModel
     @AppStorage("HistogramLogarithmic") private var logarithmic = false
 
@@ -17,7 +17,7 @@ struct HistogramPaletteView: View {
                     context.fill(path(bins[channel], in: size), with: .color(color.opacity(0.75)))
                 }
             }
-            .frame(height: 110)
+            .frame(height: 90)
             .background(Color.black.opacity(0.85), in: .rect(cornerRadius: 6))
             .accessibilityLabel(Text("RGB histogram", comment: "Accessibility"))
 

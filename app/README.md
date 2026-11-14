@@ -1,14 +1,14 @@
 # app
 
 The macOS application **X1 Scan** (macOS 26, Swift 6). Decisions:
-[`docs/decisions.md`](../docs/decisions.md), "Application, step 2".
+[`docs/decisions.md`](../docs/decisions.md), "Application, step 3".
 
 - `X1Scan.xcodeproj`, `X1Scan/`: the application. AppKit shell (window,
-  toolbar, menus, image canvas), SwiftUI palettes, String Catalog (English,
-  French). Not sandboxed, hardened runtime.
+  menus, image canvas), SwiftUI settings panel and tool column, String
+  Catalog (English, French). Not sandboxed, hardened runtime.
 - `X1ScanCore/`: models and view models (preview session, virtual X1,
-  read-only inspector of the real X1, viewport, histogram, palette layout,
-  export). No interface.
+  read-only inspector of the real X1, viewport, histogram, panel layout,
+  scan and export settings). No interface.
 
 ## Build and run
 
@@ -42,18 +42,13 @@ real scanner.
 |---|---|
 | ⌘R | Preview |
 | ⌘. or Esc | Stop |
-| ⇧⌘E | Export |
+| ⇧⌘E | Export the preview |
 | ⌘0 / ⌥⌘0 / ⌘1 | Zoom to fit / fill window / actual size |
 | ⌘+ / ⌘− | Zoom in / out (next step) |
 | ⌘I | Scanner Information |
 | ⌘, | Settings |
-| Tab (image area focused) | Show/hide all palettes |
 | H, Z, C | Hand, zoom, crop tools |
 | Space (held) | Hand, temporarily |
 | Option-click (zoom tool) | Zoom out |
-| ⌥⌘P | Palettes in full or as icons |
+| ⌥⌘P | Hide / show the settings panel |
 | ⌃⌘F | Full screen |
-
-Palettes: drag a header or icon to reorder; drop it on the image, or use
-Detach in its menu, to float it; Attach (or dragging the floating panel's
-handle back onto the column) puts it back.

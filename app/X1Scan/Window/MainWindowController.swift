@@ -2,51 +2,33 @@
 import AppKit
 import X1ScanCore
 
-/// The main window: toolbar, split view (image area, palette column), menu
-/// actions and their validation. All decisions come from `AppModel`; this
-/// class only forwards and mirrors.
+/// The main window: no toolbar (Preview, Stop and Scan are in the settings
+/// panel, everything is in the menus), a split view (image area; tool column
+/// and settings panel), menu actions and their validation. All decisions
+/// come from `AppModel`; this class only forwards and mirrors.
 @MainActor
-final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolbarDelegate,
-    NSMenuItemValidation, NSToolbarItemValidation {
+final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuItemValidation {
     private let model: AppModel
     private let splitController: MainSplitViewController
     private var observers: [Observing] = []
     private var lastAlertedState: PreviewSession.State?
-    private var floatingPalettes: FloatingPalettes?
-
-    private enum Item {
-        static let preview = NSToolbarItem.Identifier("preview")
-        static let scan = NSToolbarItem.Identifier("scan")
-        static let stop = NSToolbarItem.Identifier("stop")
-        static let export = NSToolbarItem.Identifier("export")
-        static let palettes = NSToolbarItem.Identifier("palettes")
-    }
 
     init(model: AppModel) {
         self.model = model
         splitController = MainSplitViewController(model: model)
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1280, height: 820),
-                              styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
+                              styleMask: [.titled, .closable, .miniaturizable, .resizable],
                               backing: .buffered, defer: false)
         window.title = "X1 Scan"
-        window.minSize = NSSize(width: 760, height: 480)
+        window.minSize = NSSize(width: 820, height: 520)
         window.collectionBehavior.insert(.fullScreenPrimary)
         window.contentViewController = splitController
         window.setContentSize(NSSize(width: 1280, height: 820))
         window.center()
         window.setFrameAutosaveName("MainWindow")
-        window.toolbarStyle = .unified
         super.init(window: window)
         window.delegate = self
-
-        let toolbar = NSToolbar(identifier: "MainToolbar")
-        toolbar.delegate = self
-        toolbar.displayMode = .iconAndLabel
-        toolbar.allowsUserCustomization = false
-        window.toolbar = toolbar
-
         observers.append(Observing { [weak self] in self?.modelChanged() })
-        floatingPalettes = FloatingPalettes(model: model, mainWindow: window)
     }
 
     @available(*, unavailable)
@@ -54,18 +36,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
 
     /// Called whenever an observed model value changes.
     private func modelChanged() {
-        let toolbar = model.toolbar  // read inside the tracking: re-validated on every change
         let state = model.session.state
-        window?.toolbar?.validateVisibleItems()
-        if let stop = window?.toolbar?.items.first(where: { $0.itemIdentifier == Item.stop }) {
-            // Red only while a preview runs.
-            stop.style = toolbar.stopIsProminent ? .prominent : .plain
-            stop.backgroundTintColor = toolbar.stopIsProminent ? .systemRed : nil
-        }
-        if let item = window?.toolbar?.items.first(where: { $0.itemIdentifier == Item.preview }) {
-            item.toolTip = toolbar.previewBlock.map(Strings.previewBlock)
-                ?? String(localized: "Run a preview on the virtual X1 (⌘R)", comment: "Tooltip")
-        }
         if state != lastAlertedState {
             lastAlertedState = state
             Task { @MainActor in self.alertIfNeeded(for: state) }
@@ -79,65 +50,10 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
         DispatchQueue.main.async { NSApp.terminate(nil) }
     }
 
-    // MARK: Toolbar
-
-    func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
-        // Everything before the inspector tracking separator: no button sits above the palette column.
-        [Item.preview, Item.scan, .space, Item.stop, .flexibleSpace, Item.export, Item.palettes,
-         .inspectorTrackingSeparator, .flexibleSpace]
-    }
-
-    func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
-        toolbarDefaultItemIdentifiers(toolbar)
-    }
-
-    func toolbar(_ toolbar: NSToolbar, itemForItemIdentifier identifier: NSToolbarItem.Identifier,
-                 willBeInsertedIntoToolbar flag: Bool) -> NSToolbarItem? {
-        let item = NSToolbarItem(itemIdentifier: identifier)
-        item.target = self
-        item.autovalidates = true
-        switch identifier {
-        case Item.preview:
-            configure(item, String(localized: "Preview", comment: "Menu item and toolbar button"), "eye",
-                      #selector(startPreview(_:)))
-        case Item.scan:
-            configure(item, String(localized: "Scan", comment: "Toolbar button"), "scanner",
-                      #selector(startScan(_:)))
-            item.toolTip = String(localized: "Scanning comes in a later version.", comment: "Tooltip")
-        case Item.stop:
-            configure(item, String(localized: "Stop", comment: "Menu item and toolbar button"), "stop.fill",
-                      #selector(stopPreview(_:)))
-            item.toolTip = String(localized: "Stop the preview (⌘. or Esc)", comment: "Tooltip")
-        case Item.export:
-            configure(item, String(localized: "Export", comment: "Palette title"), "square.and.arrow.up",
-                      #selector(exportImage(_:)))
-            item.toolTip = String(localized: "Export a raw 16-bit TIFF (⇧⌘E)", comment: "Tooltip")
-        case Item.palettes:
-            configure(item, String(localized: "Palettes", comment: "Toolbar button"), "sidebar.trailing",
-                      #selector(toggleColumnMode(_:)))
-            item.toolTip = String(localized: "Show the palettes in full or as icons (⌥⌘P)", comment: "Tooltip")
-        default:
-            return nil
-        }
-        return item
-    }
-
-    private func configure(_ item: NSToolbarItem, _ label: String, _ symbol: String, _ action: Selector) {
-        item.label = label
-        item.paletteLabel = label
-        item.image = NSImage(systemSymbolName: symbol, accessibilityDescription: label)
-        item.action = action
-    }
-
-    func validateToolbarItem(_ item: NSToolbarItem) -> Bool {
-        validate(item.action)
-    }
-
     func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
         switch menuItem.action {
         case #selector(selectVirtualSource(_:)): menuItem.state = model.source == .virtual ? .on : .off
         case #selector(selectRealSource(_:)): menuItem.state = model.source == .real ? .on : .off
-        case #selector(toggleColumnMode(_:)): menuItem.state = model.layout.layout.columnMode == .iconBar ? .on : .off
         case #selector(selectHandTool(_:)): menuItem.state = model.tools.selected == .hand ? .on : .off
         case #selector(selectZoomTool(_:)): menuItem.state = model.tools.selected == .zoom ? .on : .off
         case #selector(selectCropTool(_:)): menuItem.state = model.tools.selected == .crop ? .on : .off
@@ -145,8 +61,10 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
         case #selector(zoomToFill(_:)): menuItem.state = model.viewport.mode == .fill ? .on : .off
         case #selector(zoomToStep(_:)):
             menuItem.state = (menuItem.representedObject as? Double) == model.viewport.currentStep ? .on : .off
-        case #selector(togglePalette(_:)):
-            menuItem.state = paletteID(of: menuItem).map { model.layout.layout.isHidden($0) ? .off : .on } ?? .off
+        case #selector(toggleSettingsPanel(_:)):
+            menuItem.title = model.panel.layout.isHidden
+                ? String(localized: "Show Settings Panel", comment: "Menu item")
+                : String(localized: "Hide Settings Panel", comment: "Menu item")
         default: break
         }
         return validate(menuItem.action)
@@ -165,7 +83,6 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
              #selector(zoomToStep(_:)):
             return model.session.image != nil
         case #selector(selectRealSource(_:)), #selector(selectVirtualSource(_:)): return !model.session.isBusy
-        case #selector(attachAllPalettes(_:)): return !model.layout.layout.placements.isEmpty
         default: return true
         }
     }
@@ -201,17 +118,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
     @objc func selectHandTool(_ sender: Any?) { model.tools.selected = .hand }
     @objc func selectZoomTool(_ sender: Any?) { model.tools.selected = .zoom }
     @objc func selectCropTool(_ sender: Any?) { model.tools.selected = .crop }
-    @objc func toggleColumnMode(_ sender: Any?) { model.layout.toggleColumnMode() }
-    @objc func resetPaletteLayout(_ sender: Any?) { model.layout.resetToDefault() }
-    @objc func togglePalette(_ sender: Any?) {
-        if let id = (sender as? NSMenuItem).flatMap(paletteID(of:)) { model.layout.toggleHidden(id) }
-    }
-    @objc func toggleAllPalettes(_ sender: Any?) { model.layout.toggleAllHidden() }
-    @objc func attachAllPalettes(_ sender: Any?) { model.layout.attachAll() }
-
-    private func paletteID(of item: NSMenuItem) -> PaletteID? {
-        (item.representedObject as? String).map(PaletteID.init(rawValue:))
-    }
+    @objc func toggleSettingsPanel(_ sender: Any?) { model.panel.toggleHidden() }
     @objc func selectVirtualSource(_ sender: Any?) { model.source = .virtual }
     @objc func selectRealSource(_ sender: Any?) { model.source = .real }
 
@@ -243,7 +150,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
     }
 }
 
-/// The folder chooser of the Export palette and of File > Choose Export Folder.
+/// The folder chooser of the panel, Settings > Export and File > Choose Export Folder.
 @MainActor
 enum ExportFolderPanel {
     static func choose(for window: NSWindow?, model: AppModel) {

@@ -113,8 +113,8 @@ enum MainMenu {
         tools.addItem(item(Strings.toolName(.crop), #selector(MainWindowController.selectCropTool(_:))))
         menu.addItem(submenu(tools))
         menu.addItem(.separator())
-        menu.addItem(item(String(localized: "Show Palettes as Icons", comment: "Menu item"),
-                          #selector(MainWindowController.toggleColumnMode(_:)), "p", [.command, .option]))
+        menu.addItem(item(String(localized: "Hide Settings Panel", comment: "Menu item"),
+                          #selector(MainWindowController.toggleSettingsPanel(_:)), "p", [.command, .option]))
         menu.addItem(.separator())
         // AppKit adds "Enter Full Screen" (⌃⌘F) to the View menu by itself.
         return menu
@@ -138,39 +138,9 @@ enum MainMenu {
     }
 
     private static func windowMenu() -> NSMenu {
-        let menu = WindowMenu(title: String(localized: "Window", comment: "Menu"))
+        let menu = NSMenu(title: String(localized: "Window", comment: "Menu"))
         menu.addItem(item(String(localized: "Minimize", comment: "Menu item"), #selector(NSWindow.performMiniaturize(_:)), "m"))
         menu.addItem(item(String(localized: "Zoom", comment: "Menu item: window zoom"), #selector(NSWindow.performZoom(_:))))
-        menu.addItem(.separator())
-        // Same titles as the palette headers (Strings.paletteTitle).
-        for id in PaletteRegistry.standard.ids {
-            let paletteItem = item(Strings.paletteTitle(id), #selector(MainWindowController.togglePalette(_:)))
-            paletteItem.representedObject = id.rawValue
-            menu.addItem(paletteItem)
-        }
-        // Tab, as in Photoshop, only when the image area has the focus (WindowMenu).
-        menu.addItem(item(String(localized: "Show/Hide All Palettes", comment: "Menu item"),
-                          #selector(MainWindowController.toggleAllPalettes(_:)), "\t", []))
-        menu.addItem(item(String(localized: "Attach All Palettes", comment: "Menu item: floating palettes back in the column"),
-                          #selector(MainWindowController.attachAllPalettes(_:))))
-        menu.addItem(item(String(localized: "Reset Palette Layout", comment: "Menu item"),
-                          #selector(MainWindowController.resetPaletteLayout(_:))))
-        menu.addItem(.separator())
         return menu
-    }
-}
-
-/// The Window menu. Its Show/Hide All Palettes item has Tab (no modifier) as
-/// key equivalent, which a menu would take from every control, even with the
-/// item disabled. Tab is passed on unless the image area of the key window
-/// has the focus, so that it keeps moving to the next control elsewhere.
-final class WindowMenu: NSMenu {
-    override func performKeyEquivalent(with event: NSEvent) -> Bool {
-        if event.charactersIgnoringModifiers == "\t" {
-            // Key equivalents are dispatched on the main thread.
-            let canvasHasFocus = MainActor.assumeIsolated { NSApp.keyWindow?.firstResponder is ImageCanvasView }
-            if !canvasHasFocus { return false }
-        }
-        return super.performKeyEquivalent(with: event)
     }
 }

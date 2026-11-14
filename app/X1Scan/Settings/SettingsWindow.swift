@@ -8,6 +8,14 @@ import X1ScanCore
 /// SwiftUI form; the window takes the height of the pane shown.
 @MainActor
 final class SettingsWindowController: NSWindowController {
+    enum Pane: Int { case general, display, export, scanner }
+
+    /// Shows the window on `pane`.
+    func show(_ pane: Pane) {
+        (window?.contentViewController as? NSTabViewController)?.selectedTabViewItemIndex = pane.rawValue
+        showWindow(nil)
+    }
+
     init(model: AppModel) {
         let tabs = NSTabViewController()
         tabs.tabStyle = .toolbar
@@ -23,7 +31,7 @@ final class SettingsWindowController: NSWindowController {
             tabs.addTabViewItem(item)
         }
         pane(String(localized: "General", comment: "Settings tab"), "gearshape", height: 230, GeneralSettings(settings: model.settings))
-        pane(String(localized: "Display", comment: "Settings tab"), "display", height: 250, DisplaySettings(settings: model.settings))
+        pane(String(localized: "Display", comment: "Settings tab"), "display", height: 280, DisplaySettings(settings: model.settings))
         pane(String(localized: "Export", comment: "Palette title"), "square.and.arrow.up", height: 400, ExportSettingsForm(model: model))
         pane(String(localized: "Scanner", comment: "Menu"), "scanner", height: 150, ScannerSettings(settings: model.settings))
 
@@ -108,6 +116,10 @@ private struct DisplaySettings: View {
             Picker(String(localized: "Zoom when opening", comment: "Setting"), selection: $settings.startupZoom) {
                 ForEach(StartupZoom.allCases, id: \.self) { Text(Strings.startupZoom($0)).tag($0) }
             }
+            Picker(String(localized: "RGB values", comment: "Setting: unit of the RGB values in the bottom bar"),
+                   selection: $settings.rgbUnit) {
+                ForEach(RGBUnit.allCases, id: \.self) { Text(Strings.rgbUnit($0)).tag($0) }
+            }
         }
         .formStyle(.grouped)
     }
@@ -157,7 +169,7 @@ final class BackgroundColorPanel: NSObject {
     }
 }
 
-/// Shared with the Export palette: both edit `AppModel.exportSettings`.
+/// Shared with the panel's Output section: both edit `AppModel.exportSettings`.
 struct ExportSettingsForm: View {
     @Bindable var model: AppModel
 

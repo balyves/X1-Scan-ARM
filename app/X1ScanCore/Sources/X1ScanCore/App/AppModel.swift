@@ -58,9 +58,14 @@ public final class AppModel {
 
     public let settings: AppSettings
 
-    // MARK: Layout and viewing
+    // MARK: Panel and viewing
 
-    public let layout: LayoutController
+    /// The settings panel on the right.
+    public let panel: PanelController
+    /// Original and scan settings of the panel (saved, not sent to the scanner yet).
+    public var scanSettings: ScanSettings {
+        didSet { if let data = try? JSONEncoder().encode(scanSettings) { defaults.set(data, forKey: Keys.scanSettings) } }
+    }
     public var tools = ToolState()
     public private(set) var viewport: Viewport
     /// Size of the visible image area, reported by the canvas.
@@ -85,11 +90,11 @@ public final class AppModel {
     private enum Keys {
         static let source = "ScannerSource"
         static let exportSettings = "ExportSettings"
+        static let scanSettings = "ScanSettings"
     }
 
     public init(virtualScanner: () throws -> VirtualScanner,
                 inspector: ScannerInspector = .realScanner,
-                layoutStore: (any LayoutStore)? = nil,
                 defaults: UserDefaults = .standard) {
         self.defaults = defaults
         self.inspector = inspector
@@ -101,7 +106,9 @@ public final class AppModel {
             virtualScannerError = String(describing: error)
         }
         session = PreviewSession()
-        layout = LayoutController(store: layoutStore ?? UserDefaultsLayoutStore(defaults: defaults))
+        panel = PanelController(defaults: defaults)
+        scanSettings = defaults.data(forKey: Keys.scanSettings)
+            .flatMap { try? JSONDecoder().decode(ScanSettings.self, from: $0) } ?? ScanSettings()
         let settings = AppSettings(defaults: defaults)
         self.settings = settings
         switch settings.startupSource {
@@ -197,7 +204,19 @@ public final class AppModel {
         }
     }
 
-    /// The name the next export would get (Export palette).
+    /// Uncompressed size of the file an export would write now (bottom bar).
+    public var estimatedExportBytes: Int? {
+        ExportService.estimatedBytes(for: session.image, settings: exportSettings)
+    }
+
+    /// Input size of the panel: the crop rectangle, or the whole preview, in pixels.
+    public var inputPixelSize: (width: Int, height: Int)? {
+        if let cropRect { return (cropRect.width, cropRect.height) }
+        guard let image = session.image else { return nil }
+        return (image.width, image.expectedHeight)
+    }
+
+    /// The name the next export would get.
     public func nextExportFileName(date: Date = Date()) -> String {
         // As the export will write it: with the roll name validated.
         ExportService.nextFileName(settings: exportSettings.validated, date: date)
@@ -205,7 +224,7 @@ public final class AppModel {
 
     // MARK: Viewport
 
-    /// The image area changed size: window, full screen, palettes shown or hidden.
+    /// The image area changed size: window, full screen, settings panel shown or hidden.
     public func viewSizeChanged(_ size: CGSize) { viewport.viewSizeChanged(size) }
 
     public func zoomToFit() { viewport.fit() }

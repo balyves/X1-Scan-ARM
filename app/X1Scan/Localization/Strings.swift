@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import Foundation
+import X1Image
 import X1Preview
 import X1Protocol
 import X1ScanCore
@@ -8,15 +9,6 @@ import X1ScanCore
 /// produces interface text; every translatable string lives in this target's
 /// String Catalog (Localizable.xcstrings, English and French).
 enum Strings {
-    static func paletteTitle(_ id: PaletteID) -> String {
-        switch id {
-        case .histogram: String(localized: "Histogram", comment: "Palette title")
-        case .info: String(localized: "Info", comment: "Palette title")
-        case .export: String(localized: "Export", comment: "Palette title")
-        default: id.rawValue
-        }
-    }
-
     static func toolName(_ tool: Tool) -> String {
         switch tool {
         case .hand: String(localized: "tool.hand", defaultValue: "Hand", comment: "Tool: move the image")
@@ -143,7 +135,13 @@ enum Strings {
     /// Bottom bar: "Virtual X1 · Ready".
     @MainActor
     static func statusLine(_ line: ScannerStatusLine, session: PreviewSession) -> String {
-        let detail: String = switch line.detail {
+        "\(source(line.source)) · \(statusDetail(line, session: session))"
+    }
+
+    /// The state alone: "Ready", "Identity read"…
+    @MainActor
+    static func statusDetail(_ line: ScannerStatusLine, session: PreviewSession) -> String {
+        switch line.detail {
         case .session: sessionStatus(session)
         case .unavailable: String(localized: "Unavailable", comment: "Status: virtual X1 fixtures missing")
         case .notRead: String(localized: "Not read", comment: "Scanner state")
@@ -151,7 +149,62 @@ enum Strings {
         case .read: String(localized: "Identity read", comment: "Status: the real X1 was read")
         case .failed: String(localized: "Reading failed", comment: "Status: reading the real X1 failed")
         }
-        return "\(source(line.source)) · \(detail)"
+    }
+
+    static func panelSection(_ section: PanelSection) -> String {
+        switch section {
+        case .scanner: String(localized: "Scanner", comment: "Menu")
+        case .original: String(localized: "Original", comment: "Panel section: the film")
+        case .settings: String(localized: "Settings", comment: "Panel section: Main / Advanced")
+        case .histogram: String(localized: "Histogram", comment: "Palette title")
+        case .output: String(localized: "Output", comment: "Panel section: export")
+        }
+    }
+
+    static func filmType(_ film: FilmType) -> String {
+        switch film {
+        case .positive: String(localized: "Positive", comment: "Film type")
+        case .colorNegative: String(localized: "Colour negative", comment: "Film type")
+        case .blackAndWhiteNegative: String(localized: "B&W negative", comment: "Film type")
+        }
+    }
+
+    static func exportFormat(_ format: TIFFFormat) -> String {
+        switch format {
+        case .rgb16: String(localized: "RGB 16-bit (raw, linear)", comment: "Export format")
+        case .rgb8: String(localized: "RGB 8-bit (sRGB)", comment: "Export format")
+        case .gray16: String(localized: "Grey 16-bit (linear)", comment: "Export format")
+        case .gray8: String(localized: "Grey 8-bit (sRGB curve)", comment: "Export format")
+        }
+    }
+
+    static func compression(_ compression: TIFFCompression) -> String {
+        switch compression {
+        case .none: String(localized: "None", comment: "TIFF compression")
+        case .lzw: String(localized: "LZW", comment: "TIFF compression")
+        case .deflate: String(localized: "ZIP", comment: "TIFF compression (Deflate)")
+        }
+    }
+
+    static func estimatedSize(_ bytes: Int) -> String {
+        let size = Int64(bytes).formatted(.byteCount(style: .file))
+        return String(localized: "≈ \(size) before compression", comment: "Bottom bar: estimated export size")
+    }
+
+    static func rgbValue(_ sample: UInt16, unit: RGBUnit) -> String {
+        let value = unit.value(sample)
+        return switch unit {
+        case .eightBit, .sixteenBit: Int(value).formatted(.number.grouping(.never))
+        case .percent: (value / 100).formatted(.percent.precision(.fractionLength(1)))
+        }
+    }
+
+    static func rgbUnit(_ unit: RGBUnit) -> String {
+        switch unit {
+        case .eightBit: String(localized: "0–255", comment: "RGB unit")
+        case .percent: String(localized: "Percent", comment: "RGB unit")
+        case .sixteenBit: String(localized: "16-bit (0–65535)", comment: "RGB unit")
+        }
     }
 
     static func language(_ language: InterfaceLanguage) -> String {

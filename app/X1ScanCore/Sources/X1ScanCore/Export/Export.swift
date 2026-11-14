@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+import CoreGraphics
 import Foundation
 import X1Image
 
@@ -13,12 +14,33 @@ public enum ExportToken: String, Sendable, Hashable, CaseIterable {
 
     /// `{roll}`, `{frame}`, `{date}`, `{time}`, `{n}`.
     public var placeholder: String { "{\(rawValue)}" }
+
+    /// Characters that already separate two parts of a name.
+    static let separators: Set<Character> = ["-", "_", " ", "."]
+
+    /// Inserts the placeholder into `text` at the character offset `caret`
+    /// (replacing `selectionLength` characters), adding a "-" before and after
+    /// where the neighbour is not already a separator. A caret out of range
+    /// (or nil) inserts at the end. Returns the text and the caret after it.
+    public func insert(into text: String, at caret: Int?, selectionLength: Int = 0) -> (text: String, caret: Int) {
+        let characters = Array(text)
+        let start = min(max(caret ?? characters.count, 0), characters.count)
+        let end = min(start + max(selectionLength, 0), characters.count)
+        let before = characters[..<start], after = characters[end...]
+        var inserted = placeholder
+        if let last = before.last, !Self.separators.contains(last) { inserted = "-" + inserted }
+        if let next = after.first, !Self.separators.contains(next) { inserted += "-" }
+        let result = String(before) + inserted + String(after)
+        return (result, start + inserted.count)
+    }
 }
 
-/// Export settings, shared by the Export palette and Settings > Export,
+/// Export settings, shared by the settings panel (Output) and Settings > Export,
 /// saved between launches.
 public struct ExportSettings: Sendable, Hashable, Codable {
     public static let defaultTemplate = "X1-preview-{date}-{n}"
+    /// Templates offered in the panel's Name menu (the current one is always listed too).
+    public static let presetTemplates = [defaultTemplate, "{roll}-{frame}", "{roll}_{frame}_{date}", "{date}-{time}-{n}"]
     public static let counterDigitsRange = 1...6
     public static let frameRange = 1...99_999
     public static let counterStartRange = 0...999_999
@@ -44,6 +66,17 @@ public struct ExportSettings: Sendable, Hashable, Codable {
     public var counterStart: Int = 1 {
         didSet { counterStart = Self.clamp(counterStart, Self.counterStartRange) }
     }
+    /// Pixel layout of the TIFF. Changing it selects that format's default
+    /// compression (ZIP in 16 bits, LZW in 8 bits).
+    public var format: TIFFFormat = .rgb16 {
+        didSet { if format != oldValue { compression = Self.defaultCompression(for: format) } }
+    }
+    public var compression: TIFFCompression = .deflate
+
+    public static func defaultCompression(for format: TIFFFormat) -> TIFFCompression {
+        format.bitsPerSample == 16 ? .deflate : .lzw
+    }
+
     /// Digits of `{n}`, 1 to 6.
     public var counterDigits: Int = 3 {
         didSet { counterDigits = Self.clamp(counterDigits, Self.counterDigitsRange) }
@@ -84,7 +117,7 @@ public struct ExportSettings: Sendable, Hashable, Codable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case folder, nameTemplate, roll, validatedRoll, frame, incrementsFrame, counterStart, counterDigits
+        case folder, nameTemplate, format, compression, roll, validatedRoll, frame, incrementsFrame, counterStart, counterDigits
         case baseName  // step 2: `<baseName>-<date>-<nnn>.tif`
     }
 
@@ -98,6 +131,9 @@ public struct ExportSettings: Sendable, Hashable, Codable {
                   let clean = ExportService.sanitizedFileName(base) {
             nameTemplate = clean + "-{date}-{n}"
         }  // an empty step 2 base meant the default name
+        format = (try container.decodeIfPresent(String.self, forKey: .format)).flatMap(TIFFFormat.init(rawValue:)) ?? .rgb16
+        compression = (try container.decodeIfPresent(String.self, forKey: .compression))
+            .flatMap(TIFFCompression.init(rawValue:)) ?? Self.defaultCompression(for: format)
         roll = try container.decodeIfPresent(String.self, forKey: .roll) ?? ""
         validatedRoll = try container.decodeIfPresent(String.self, forKey: .validatedRoll) ?? roll
         frame = Self.clamp(try container.decodeIfPresent(Int.self, forKey: .frame) ?? 1, Self.frameRange)
@@ -112,6 +148,8 @@ public struct ExportSettings: Sendable, Hashable, Codable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encodeIfPresent(folder, forKey: .folder)
         try container.encode(nameTemplate, forKey: .nameTemplate)
+        try container.encode(format.rawValue, forKey: .format)
+        try container.encode(compression.rawValue, forKey: .compression)
         try container.encode(roll, forKey: .roll)
         try container.encode(validatedRoll, forKey: .validatedRoll)
         try container.encode(frame, forKey: .frame)
@@ -188,13 +226,42 @@ public enum ExportService {
         }
     }
 
+    /// The TIFF bytes for `image` with the format and compression of
+    /// `settings`: 16 bits raw and linear without profile; 8 bits with the
+    /// sRGB curve and an sRGB profile (grey: the grey profile with the sRGB
+    /// curve). Provisional until the IT8 input profile (docs/decisions.md).
+    public static func tiffData(for image: PreviewImage, settings: ExportSettings) -> Data {
+        let profile: Data? = switch settings.format {
+        case .rgb8: ExportService.srgbProfile
+        case .gray8: ICCProfiles.graySRGB
+        case .rgb16, .gray16: nil
+        }
+        return TIFFWriter.data(for: image.exportImage, format: settings.format, compression: settings.compression,
+                               iccProfile: profile)
+    }
+
+    /// ColorSync's sRGB profile. 8 bits is never written without it: if it were
+    /// missing, that would be a broken system, not a choice.
+    static let srgbProfile: Data = {
+        guard let data = CGColorSpace(name: CGColorSpace.sRGB)?.copyICCData() as Data? else {
+            preconditionFailure("ColorSync has no sRGB profile")
+        }
+        return data
+    }()
+
+    /// Uncompressed pixel bytes of the exported image (bottom bar estimate).
+    public static func estimatedBytes(for image: PreviewImage?, settings: ExportSettings) -> Int? {
+        guard let image, image.width > 0, image.expectedHeight > 0 else { return nil }
+        return settings.format.pixelBytes(width: image.width, height: image.expectedHeight)
+    }
+
     /// `value` in decimal, with leading zeros up to `digits` digits.
     static func padded(_ value: Int, _ digits: Int) -> String {
         let text = String(value)
         return String(repeating: "0", count: max(digits - text.count, 0)) + text
     }
 
-    /// The name the next export would get, for the Export palette.
+    /// The name the next export would get, for the settings panel.
     public static func nextFileName(settings: ExportSettings, date: Date = Date(),
                                     fileManager: FileManager = .default) -> String {
         fileName(settings: settings, date: date) { name in
@@ -217,7 +284,7 @@ public enum ExportService {
         let url = folder.appending(path: name)
         do {
             // If a file appeared in between, fail rather than replace it (cannot be combined with .atomic).
-            try TIFFWriter.data(for: image.exportImage).write(to: url, options: .withoutOverwriting)
+            try tiffData(for: image, settings: settings).write(to: url, options: .withoutOverwriting)
         } catch {
             throw .write(error.localizedDescription)
         }

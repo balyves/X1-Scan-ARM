@@ -12,16 +12,12 @@ struct ZoomComboBox: NSViewRepresentable {
     let magnification: Double
     let enabled: Bool
 
-    private enum Entry {
-        case mode(ZoomMode)
-        case step(Double)
-    }
+    private static let entries = ZoomMenuEntry.all
 
-    private static let entries: [Entry] = [.mode(.fit), .mode(.fill)] + Viewport.steps.map(Entry.step)
-
-    private static func title(_ entry: Entry) -> String {
+    static func title(_ entry: ZoomMenuEntry) -> String {
         switch entry {
-        case .mode(let mode): Strings.zoomMode(mode)
+        case .fit: Strings.zoomMode(.fit)
+        case .fill: Strings.zoomMode(.fill)
         case .step(let value): Strings.zoom(value)
         }
     }
@@ -40,6 +36,9 @@ struct ZoomComboBox: NSViewRepresentable {
         box.delegate = context.coordinator
         box.target = context.coordinator
         box.action = #selector(Coordinator.commit(_:))
+        // No action when the field just loses the focus: a value shown while
+        // browsing the list (e.g. 6.25 %) must not be applied by clicking elsewhere.
+        box.cell?.sendsActionOnEndEditing = false
         box.setAccessibilityLabel(String(localized: "zoom.steps", defaultValue: "Zoom", comment: "Menu: zoom steps (not the window zoom)"))
         return box
     }
@@ -55,8 +54,6 @@ struct ZoomComboBox: NSViewRepresentable {
         var model: AppModel
         /// Text last written by the app: Return on it changes nothing (Fit stays Fit).
         private var shown = ""
-        /// Set by a list selection, whose action must not be read as typing.
-        private var selecting = false
 
         init(model: AppModel) { self.model = model }
 
@@ -65,33 +62,32 @@ struct ZoomComboBox: NSViewRepresentable {
             box.stringValue = text
         }
 
-        /// A list entry was chosen.
-        func comboBoxSelectionDidChange(_ notification: Notification) {
-            guard let box = notification.object as? NSComboBox else { return }
-            let index = box.indexOfSelectedItem
-            guard ZoomComboBox.entries.indices.contains(index) else { return }
-            selecting = true
-            switch ZoomComboBox.entries[index] {
-            case .mode(.fit): model.zoomToFit()
-            case .mode(.fill): model.zoomToFill()
-            case .mode(.fixed): model.zoomToActualSize()
-            case .step(let value): model.zoom(to: value)
-            }
-            showCurrent(box)
-        }
+        // Browsing the list (pointer, arrow keys) changes nothing: a choice is
+        // applied only when confirmed, in commit(_:). Applying every selection
+        // change could set 6.25 %, the first step under Fit and Fill.
 
-        /// Return pressed after typing, or the field left.
+        /// A list entry clicked, or Return after typing or browsing.
         @objc func commit(_ sender: NSComboBox) {
             let text = sender.stringValue
-            if selecting {
-                selecting = false
-            } else if text != shown {
-                model.zoom(typed: text)
+            if text != shown {
+                if let entry = ZoomMenuEntry.entry(titled: text, title: ZoomComboBox.title) {
+                    apply(entry)
+                } else {
+                    model.zoom(typed: text)
+                }
             }
             showCurrent(sender)
             // Back to the image area, so that Tab and the tool keys work again at once.
             if let window = sender.window {
                 window.makeFirstResponder(window.contentView.flatMap(Self.canvas(in:)))
+            }
+        }
+
+        private func apply(_ entry: ZoomMenuEntry) {
+            switch entry {
+            case .fit: model.zoomToFit()
+            case .fill: model.zoomToFill()
+            case .step(let value): model.zoom(to: value)
             }
         }
 
@@ -107,7 +103,6 @@ struct ZoomComboBox: NSViewRepresentable {
         /// (NSComboBox writes the entry's title after the selection notification).
         private func showCurrent(_ box: NSComboBox) {
             DispatchQueue.main.async { [model] in
-                self.selecting = false
                 if box.currentEditor() == nil { self.show(Strings.zoom(model.viewport.magnification), in: box) }
             }
         }

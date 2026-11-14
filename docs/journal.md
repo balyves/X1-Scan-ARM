@@ -134,3 +134,14 @@ development Mac, capture of a real scan on the reference Mac, what to keep
 and pass on. `cap3.py` gains `X1CAP_RAW` and `X1CAP_SCAN_MB` (image data
 after each SCAN limited to a contiguous start; calibration reads, CDB
 byte 5 = 01, never skipped).
+
+## 2026-11-14: application step 3, settings panel
+
+Palettes replaced by a fixed settings panel on the right, after Epson Scan
+2 (Scanner, Original, Main / Advanced, Output, Preview and Scan buttons),
+with a tool column beside it and no window toolbar; R G B, estimated file
+size and zoom in the bottom bar. Exports in RGB or grey, 16 bits (linear,
+raw) or 8 bits (sRGB curve and profile, provisional), with no compression,
+LZW or ZIP (with the horizontal predictor), written by our TIFF writer and
+read back by ImageIO. Zoom menu applies only confirmed choices (likely
+cause of the 6.25 % report); token buttons insert at the caret.
