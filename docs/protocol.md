@@ -46,7 +46,7 @@ at every power-up; the X1 does not.)
 | 0x12 | INQUIRY | in | 96 | `Imacon` / `Flextight X1` / `R185`. Bytes 36-95 are zero. **[confirmed]** |
 | 0x00 | TEST UNIT READY | - | 0 | GOOD when idle. **[confirmed]** |
 | 0x03 | REQUEST SENSE | in | 18 | Fixed format. **[confirmed]** |
-| 0x5A | MODE SENSE(10) | in | 12-100 | Vendor pages 0x20-0x29, CDB `5a 00 PP 01 00 00 00 LL LL 00`. See §5. **[confirmed]** |
+| 0x5A | MODE SENSE(10) | in | 12-100 | Vendor pages 0x20, 0x21, 0x23, 0x25, 0x26, 0x27 and 0x29 (the only ones seen), CDB `5a 00 PP 01 00 00 00 LL LL 00`. See §5. **[confirmed]** |
 | 0x4D | LOG SENSE(10) | in | 52 | Vendor page 0x30, CDB `4d 00 30 00 00 00 00 00 34 00`. See §6. **[confirmed]** |
 | 0xEE | read register | in | 1 | CDB `ee 00 00 00 01 AA 00 00 01 00`, AA = 0x04-0x19. Polled continuously. **[confirmed]** |
 | 0xD3 | status / sensors | in | 2 | `00 0e` at rest, other values during activity. Possibly the scan button plus sensors. **[hypothesis]** |

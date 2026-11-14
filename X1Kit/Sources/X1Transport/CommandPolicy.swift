@@ -4,7 +4,9 @@
 ///
 /// By default (`.readOnly`) only the reads FlexColor sends at start-up are
 /// allowed (the list of tools/x1probe, plus the 0xDF state read), each with
-/// its direction and a maximum length. Everything else is refused before any
+/// its direction and a maximum length. MODE SENSE, LOG SENSE and the register
+/// read are further limited to the pages and registers seen in the captures.
+/// Everything else is refused before any
 /// IOKit call. `.unrestricted` lets every command through and must only be
 /// used for runs the user has explicitly approved (CLAUDE.md, rule 4).
 public struct CommandPolicy: Sendable, Hashable {
@@ -25,6 +27,15 @@ public struct CommandPolicy: Sendable, Hashable {
         0xDF: ReadRule(name: "scanner state", direction: .fromDevice, maximumLength: 2),
         0xEE: ReadRule(name: "read register", direction: .fromDevice, maximumLength: 1),
     ]
+
+    /// MODE SENSE pages seen in the captures (CDB byte 2, page control 0).
+    public static let modeSensePages: Set<UInt8> = [0x20, 0x21, 0x23, 0x25, 0x26, 0x27, 0x29]
+    /// LOG SENSE pages seen in the captures (CDB byte 2, page control 0).
+    public static let logSensePages: Set<UInt8> = [0x30]
+    /// Register bank seen in the captures (0xEE CDB bytes 2-4: `00 00 01`).
+    public static let registerBank: UInt8 = 0x01
+    /// Register addresses seen in the captures (0xEE CDB byte 5).
+    public static let registerAddresses: ClosedRange<UInt8> = 0x04...0x19
 
     public static let readOnly = CommandPolicy(allowsStateChangingCommands: false)
     /// Lets every command through. Only for runs the user has explicitly approved.
@@ -54,6 +65,26 @@ public struct CommandPolicy: Sendable, Hashable {
         }
         guard CDBLayout.allocationLength(of: command.cdb) == command.transferLength else {
             throw refuse("CDB size or length field does not match the transfer length")
+        }
+        // The length check above guarantees a 10-byte CDB for these opcodes.
+        let cdb = command.cdb
+        func hex(_ byte: UInt8) -> String { "0x" + String(byte, radix: 16, uppercase: true) }
+        switch opcode {
+        case 0x5A:
+            guard Self.modeSensePages.contains(cdb[2]) else {
+                throw refuse("MODE SENSE page \(hex(cdb[2])) not seen in the captures")
+            }
+        case 0x4D:
+            guard Self.logSensePages.contains(cdb[2]) else {
+                throw refuse("LOG SENSE page \(hex(cdb[2])) not seen in the captures")
+            }
+        case 0xEE:
+            guard cdb[2] == 0, cdb[3] == 0, cdb[4] == Self.registerBank,
+                  Self.registerAddresses.contains(cdb[5]) else {
+                throw refuse("register outside bank 1, 0x04-0x19")
+            }
+        default:
+            break
         }
     }
 }

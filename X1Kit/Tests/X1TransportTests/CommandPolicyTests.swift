@@ -58,6 +58,48 @@ struct CommandPolicyTests {
         #expect(throws: TransportError.self) { try CommandPolicy.readOnly.check(command) }
     }
 
+    /// Every MODE SENSE page, LOG SENSE page and register seen in the captures.
+    @Test func readOnlyPolicyAllowsEveryCapturedPageAndRegister() throws {
+        for page: UInt8 in [0x20, 0x21, 0x23, 0x25, 0x26, 0x27, 0x29] {
+            try CommandPolicy.readOnly.check(.read([0x5A, 0, page, 1, 0, 0, 0, 0, 12, 0], length: 12))
+        }
+        try CommandPolicy.readOnly.check(read("4d 00 30 00 00 00 00 00 34 00", 52))
+        for address: UInt8 in 0x04...0x19 {
+            try CommandPolicy.readOnly.check(.read([0xEE, 0, 0, 0, 1, address, 0, 0, 1, 0], length: 1))
+        }
+    }
+
+    @Test(arguments: [
+        // MODE SENSE pages never captured
+        read("5a 00 22 01 00 00 00 00 0c 00", 12),
+        read("5a 00 24 01 00 00 00 00 0c 00", 12),
+        read("5a 00 28 01 00 00 00 00 0c 00", 12),
+        read("5a 00 1f 01 00 00 00 00 0c 00", 12),
+        read("5a 00 2a 01 00 00 00 00 0c 00", 12),
+        read("5a 00 3f 01 00 00 00 00 64 00", 100),     // all pages
+        read("5a 00 66 01 00 00 00 00 38 00", 56),      // page 0x26 with page control ≠ 0
+        // LOG SENSE pages never captured
+        read("4d 00 00 00 00 00 00 00 34 00", 52),
+        read("4d 00 31 00 00 00 00 00 34 00", 52),
+        read("4d 00 70 00 00 00 00 00 34 00", 52),      // page 0x30 with page control ≠ 0
+        // registers outside bank 1, 0x04-0x19
+        read("ee 00 00 00 01 03 00 00 01 00", 1),
+        read("ee 00 00 00 01 1a 00 00 01 00", 1),
+        read("ee 00 00 00 00 04 00 00 01 00", 1),       // bank 0
+        read("ee 00 00 00 02 04 00 00 01 00", 1),       // bank 2
+        read("ee 00 00 01 01 04 00 00 01 00", 1),       // nonzero high address byte
+        read("ee 00 01 00 01 04 00 00 01 00", 1),
+    ])
+    func readOnlyPolicyRefusesUncapturedPagesAndRegisters(_ command: SCSICommand) {
+        #expect(throws: TransportError.self) { try CommandPolicy.readOnly.check(command) }
+    }
+
+    @Test func uncapturedPageRefusalNamesThePage() {
+        #expect(throws: TransportError.refusedByPolicy(opcode: 0x5A, reason: "MODE SENSE page 0x22 not seen in the captures")) {
+            try CommandPolicy.readOnly.check(read("5a 00 22 01 00 00 00 00 0c 00", 12))
+        }
+    }
+
     @Test(arguments: stateChanging)
     func unrestrictedPolicyAllowsEverything(_ command: SCSICommand) throws {
         try CommandPolicy.unrestricted.check(command)

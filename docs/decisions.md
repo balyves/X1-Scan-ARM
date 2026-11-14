@@ -149,6 +149,11 @@ transfer length:
 | 0xDF | scanner state (`df 00 00 00 02 00`) | in | 2 |
 | 0xEE | read register | in | 1 |
 
+MODE SENSE, LOG SENSE and the register read are further limited to what the
+captures show (2026-11-14): MODE SENSE pages 0x20, 0x21, 0x23, 0x25, 0x26,
+0x27 and 0x29; LOG SENSE page 0x30; registers of bank 1, addresses 0x04 to
+0x19 (CDB bytes 2-5 `00 00 01 AA`). Page control must be 0.
+
 Everything else is refused unless `CommandPolicy.unrestricted` is chosen
 explicitly. It is only for runs the user has approved (CLAUDE.md, rule 4).
 
