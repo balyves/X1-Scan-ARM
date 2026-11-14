@@ -42,10 +42,27 @@ wrong, not for what is right. Do not approve by default.
 ### 1. Scanner safety
 
 - No command outside the read-only list (`CommandPolicy.readOnlyCommands`:
-  0x00, 0x03, 0x12, 0x4D, 0x5A, 0xD3, 0xDF, 0xEE, read direction, maximum
-  lengths) can reach `IOKitTransport` unless `CommandPolicy.unrestricted` is
-  chosen explicitly. Look for new code paths that bypass `policy.check`,
-  default to `.unrestricted`, widen the list, or call `CX1IOKit` directly.
+  0x00, 0x03, 0x12, 0x4D, 0x5A, 0xD3, 0xDF, 0xEE, read direction) can reach
+  `IOKitTransport` unless `CommandPolicy.unrestricted` is chosen explicitly.
+  Look for new code paths that bypass `policy.check`, default to
+  `.unrestricted`, widen the list, or call `CX1IOKit` directly.
+- In `.readOnly`, every CDB must match its template byte for byte
+  (`CLAUDE.md` rule 4, `docs/decisions.md` "Read-only guard"):
+  - `CommandPolicy.capturedCDBs`: exact CDBs of 0x00, 0x03, 0x12, 0x4D (page
+    0x30 only), 0xD3 and 0xDF;
+  - `CommandPolicy.modeSenseLengths`: MODE SENSE `5a 00 PP 01 00 00 00 LL LL 00`,
+    only the captured pages, each with its captured lengths;
+  - `CommandPolicy.registerBank` and `registerAddresses`: 0xEE
+    `ee 00 00 00 01 AA 00 00 01 00`, bank 1, AA = 0x04-0x19.
+
+  Report as **Bloquant** any CDB byte that becomes free (a guard removed or
+  loosened, a byte no longer compared), and any page, length, register,
+  bank or fixed CDB added or changed without a capture behind it in
+  `tests/fixtures/preview-sequence.json` (or, for 0x00 and 0x03,
+  `tools/x1probe`). Check that the fixture replay test in
+  `CommandPolicyTests` still compares the captured pages, lengths and
+  registers with these constants exactly, and that `CLAUDE.md` rule 4 and
+  `docs/decisions.md` still list the same templates as the code.
 - Stop behaviour matches `docs/decisions.md`:
   - stop at the first unexpected response;
   - after SCAN (0x1B), send only `DB 00 00 00 00 00`, then wait for 0xDF
