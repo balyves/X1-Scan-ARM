@@ -151,6 +151,8 @@ enum MainMenu {
         // Tab, as in Photoshop, only when the image area has the focus (WindowMenu).
         menu.addItem(item(String(localized: "Show/Hide All Palettes", comment: "Menu item"),
                           #selector(MainWindowController.toggleAllPalettes(_:)), "\t", []))
+        menu.addItem(item(String(localized: "Attach All Palettes", comment: "Menu item: floating palettes back in the column"),
+                          #selector(MainWindowController.attachAllPalettes(_:))))
         menu.addItem(item(String(localized: "Reset Palette Layout", comment: "Menu item"),
                           #selector(MainWindowController.resetPaletteLayout(_:))))
         menu.addItem(.separator())

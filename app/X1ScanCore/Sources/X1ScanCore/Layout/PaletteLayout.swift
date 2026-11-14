@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 import Foundation
 
-/// A window frame, stored for floating palettes (later stage).
+/// A window frame (screen coordinates), stored for floating palettes.
 public struct StoredFrame: Sendable, Hashable, Codable {
     public var x: Double
     public var y: Double
@@ -18,9 +18,9 @@ public struct StoredFrame: Sendable, Hashable, Codable {
 
 /// Where a palette lives.
 public enum PalettePlacement: Sendable, Hashable, Codable {
-    /// In the column on the right. The only placement implemented at this stage.
+    /// In the column on the right.
     case docked
-    /// In its own floating window. Modelled and saved, not implemented yet.
+    /// In its own floating panel, at this frame.
     case floating(StoredFrame)
 }
 
@@ -28,7 +28,8 @@ public enum PalettePlacement: Sendable, Hashable, Codable {
 public enum ColumnMode: String, Sendable, Hashable, Codable {
     /// Palettes with their content.
     case expanded
-    /// A narrow bar of icons; a click shows a palette over the image.
+    /// A narrow bar of icons; a click opens or closes a palette in the stack
+    /// beside the bar. Several can be open.
     case iconBar
 }
 
@@ -46,7 +47,8 @@ public enum ToolBarPlacement: String, Sendable, Hashable, Codable {
 /// once in `order`).
 public struct PaletteLayout: Sendable, Hashable, Codable {
     /// 2: `hidden` added (step 2b). Version 1 layouts decode with nothing hidden.
-    public static let currentVersion = 2
+    /// 3: `openInIconBar` added (step 2c). Older layouts decode with none open.
+    public static let currentVersion = 3
     public static let minimumColumnWidth: Double = 220
     public static let maximumColumnWidth: Double = 480
     public static let defaultColumnWidth: Double = 270
@@ -56,6 +58,8 @@ public struct PaletteLayout: Sendable, Hashable, Codable {
     public private(set) var collapsed: Set<PaletteID>
     /// Palettes hidden from the Window menu; they keep their place in `order`.
     public private(set) var hidden: Set<PaletteID> = []
+    /// Palettes open beside the icon bar (icon-bar mode), several at once.
+    public private(set) var openInIconBar: Set<PaletteID> = []
     public var columnMode: ColumnMode = .expanded
     public private(set) var columnWidth: Double = PaletteLayout.defaultColumnWidth
     /// Placement of each palette; a missing entry means `.docked`.
@@ -63,7 +67,7 @@ public struct PaletteLayout: Sendable, Hashable, Codable {
     public var toolBarPlacement: ToolBarPlacement = .floating
 
     private enum CodingKeys: String, CodingKey {
-        case version, order, collapsed, hidden, columnMode, columnWidth, placements, toolBarPlacement
+        case version, order, collapsed, hidden, openInIconBar, columnMode, columnWidth, placements, toolBarPlacement
     }
 
     public init(from decoder: any Decoder) throws {
@@ -72,6 +76,7 @@ public struct PaletteLayout: Sendable, Hashable, Codable {
         order = try container.decode([PaletteID].self, forKey: .order)
         collapsed = try container.decode(Set<PaletteID>.self, forKey: .collapsed)
         hidden = try container.decodeIfPresent(Set<PaletteID>.self, forKey: .hidden) ?? []
+        openInIconBar = try container.decodeIfPresent(Set<PaletteID>.self, forKey: .openInIconBar) ?? []
         columnMode = try container.decode(ColumnMode.self, forKey: .columnMode)
         columnWidth = try container.decode(Double.self, forKey: .columnWidth)
         placements = try container.decode([PaletteID: PalettePlacement].self, forKey: .placements)
@@ -97,7 +102,20 @@ public struct PaletteLayout: Sendable, Hashable, Codable {
     /// Palettes shown in the column, in order.
     public var visibleDockedPalettes: [PaletteID] { dockedPalettes.filter { !isHidden($0) } }
 
-    /// True when every palette is hidden: the column is collapsed.
+    /// Floating palettes that are shown, in order.
+    public var visibleFloatingPalettes: [PaletteID] {
+        order.filter { !isHidden($0) && placement(of: $0) != .docked }
+    }
+
+    /// Palettes open beside the icon bar, in order (stacked top to bottom).
+    public var iconBarStack: [PaletteID] {
+        visibleDockedPalettes.filter { openInIconBar.contains($0) }
+    }
+
+    /// True when the column has nothing to show: it is collapsed.
+    public var columnIsEmpty: Bool { visibleDockedPalettes.isEmpty }
+
+    /// True when every palette is hidden (see also `columnIsEmpty`).
     public var allHidden: Bool { order.allSatisfy(isHidden) }
 
     // MARK: Changes
@@ -125,6 +143,43 @@ public struct PaletteLayout: Sendable, Hashable, Codable {
         hidden = allHidden ? [] : Set(order)
     }
 
+    /// Icon bar: opens or closes `id` beside the bar.
+    public mutating func toggleOpenInIconBar(_ id: PaletteID) {
+        guard order.contains(id) else { return }
+        if openInIconBar.contains(id) { openInIconBar.remove(id) } else { openInIconBar.insert(id) }
+    }
+
+    /// Drag and drop: moves `id` just before `target`, or to the end when `target` is nil.
+    public mutating func move(_ id: PaletteID, before target: PaletteID?) {
+        guard id != target, let from = order.firstIndex(of: id) else { return }
+        order.remove(at: from)
+        let index = target.flatMap { order.firstIndex(of: $0) } ?? order.count
+        order.insert(id, at: index)
+    }
+
+    /// Detaches `id` into a floating panel at `frame`.
+    public mutating func detach(_ id: PaletteID, frame: StoredFrame) {
+        guard order.contains(id) else { return }
+        placements[id] = .floating(frame)
+        openInIconBar.remove(id)
+        hidden.remove(id)
+    }
+
+    /// Puts a floating palette back in the column, at its place in the order.
+    public mutating func attach(_ id: PaletteID) {
+        placements[id] = nil
+    }
+
+    public mutating func attachAll() {
+        placements = [:]
+    }
+
+    /// The panel of a floating palette was moved or resized.
+    public mutating func setFloatingFrame(_ frame: StoredFrame, for id: PaletteID) {
+        guard case .floating = placement(of: id) else { return }
+        placements[id] = .floating(frame)
+    }
+
     /// Moves `id` to `index` in the order (clamped).
     public mutating func move(_ id: PaletteID, to index: Int) {
         guard let from = order.firstIndex(of: id) else { return }
@@ -140,7 +195,6 @@ public struct PaletteLayout: Sendable, Hashable, Codable {
         columnMode = columnMode == .expanded ? .iconBar : .expanded
     }
 
-    /// Floating palettes are a later stage; this only records the placement.
     public mutating func setPlacement(_ placement: PalettePlacement, for id: PaletteID) {
         guard order.contains(id) else { return }
         placements[id] = placement == .docked ? nil : placement
@@ -159,6 +213,7 @@ public struct PaletteLayout: Sendable, Hashable, Codable {
         }
         result.collapsed = result.collapsed.filter(registry.contains)
         result.hidden = result.hidden.filter(registry.contains)
+        result.openInIconBar = result.openInIconBar.filter(registry.contains)
         result.placements = result.placements.filter { registry.contains($0.key) }
         result.columnWidth = min(max(columnWidth, Self.minimumColumnWidth), Self.maximumColumnWidth)
         return result

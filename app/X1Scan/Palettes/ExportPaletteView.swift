@@ -24,19 +24,7 @@ struct ExportPaletteView: View {
             .font(.callout)
 
             Text("File name", comment: "Export palette label").font(.caption).foregroundStyle(.secondary)
-            TextField(String(localized: "File name", comment: "Export palette label"),
-                      text: $model.exportSettings.nameTemplate)
-                .textFieldStyle(.roundedBorder)
-                .labelsHidden()
-            Text(ExportNameHelp.tokens)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-            Text(ExportNameHelp.next(model))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-                .truncationMode(.middle)
+            ExportNameBuilder(model: model)
 
             Text("Format", comment: "Export palette label").font(.caption).foregroundStyle(.secondary)
             Text("TIFF, 16-bit RGB, linear, raw: no profile, no curve.", comment: "Export format")

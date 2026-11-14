@@ -114,3 +114,15 @@ IT8.7/1 profiling stays in roadmap step 8; the future idea keeps only the
 ICC profile embedded at export. decisions.md adds licence details (lcms2
 core only, DNG SDK and DNG patent licence to check, output profiles never
 committed) and the rules for existing 3F files.
+
+## 2026-11-14: application step 2c
+
+Palettes: several open beside the icon bar, drag-and-drop order, floating
+panels (detach, attach); Palettes button in the toolbar group; custom
+background colour; file name builder with roll, frame and counter
+settings; Settings with an icon toolbar; Fit no longer computed from an
+unknown view size. Two timing-sensitive session tests made robust (slower
+virtual image reads in the tests). Nothing sent to a scanner changed.
+
+To do later: make the stop tests deterministic (the virtual X1 waits for a
+signal from the test instead of a 100 ms delay per image read).

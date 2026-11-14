@@ -20,7 +20,7 @@ final class MainSplitViewController: NSSplitViewController {
         let column = NSHostingController(rootView: PaletteColumnView(model: model))
         column.sizingOptions = []
         paletteItem = NSSplitViewItem(inspectorWithViewController: column)
-        // Collapsible only while every palette is hidden (applyHiddenPalettes), so that
+        // Collapsible only while the column is empty (applyHiddenPalettes), so that
         // dragging the divider cannot hide the column behind the model's back.
         paletteItem.canCollapse = false
         paletteItem.holdingPriority = .defaultHigh
@@ -55,10 +55,11 @@ final class MainSplitViewController: NSSplitViewController {
         }
     }
 
-    /// Collapses the column when every palette is hidden. The image area then
+    /// Collapses the column when it has nothing to show (palettes hidden or
+    /// floating). The image area then
     /// grows and Fit or Fill is recomputed (CanvasViewController.viewDidLayout).
     private func applyHiddenPalettes() {
-        let collapsed = model.layout.layout.allHidden
+        let collapsed = model.layout.layout.columnIsEmpty
         guard paletteItem.isCollapsed != collapsed else { return }
         if collapsed {
             paletteItem.canCollapse = true

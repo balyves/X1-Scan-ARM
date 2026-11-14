@@ -3,44 +3,39 @@ import AppKit
 import SwiftUI
 import X1ScanCore
 
-/// X1 Scan > Settings… (⌘,): General, Display, Export, Scanner.
+/// X1 Scan > Settings… (⌘,): an icon toolbar at the top (General, Display,
+/// Export, Scanner), as in the settings of Mail or Safari. Each pane is a
+/// SwiftUI form; the window takes the height of the pane shown.
 @MainActor
 final class SettingsWindowController: NSWindowController {
     init(model: AppModel) {
-        let hosting = NSHostingController(rootView: SettingsView(model: model))
-        hosting.sizingOptions = [.preferredContentSize]
-        let window = NSWindow(contentViewController: hosting)
-        window.title = String(localized: "Settings", comment: "Window title")
+        let tabs = NSTabViewController()
+        tabs.tabStyle = .toolbar
+        tabs.transitionOptions = [.crossfade, .allowUserInteraction]
+        // Grouped forms scroll and have no natural height: each pane gets its own.
+        func pane(_ title: String, _ symbol: String, height: CGFloat, _ view: some View) {
+            let hosting = NSHostingController(rootView: view.frame(width: 520, height: height))
+            hosting.sizingOptions = [.preferredContentSize]
+            hosting.title = title
+            let item = NSTabViewItem(viewController: hosting)
+            item.label = title
+            item.image = NSImage(systemSymbolName: symbol, accessibilityDescription: title)
+            tabs.addTabViewItem(item)
+        }
+        pane(String(localized: "General", comment: "Settings tab"), "gearshape", height: 230, GeneralSettings(settings: model.settings))
+        pane(String(localized: "Display", comment: "Settings tab"), "display", height: 250, DisplaySettings(settings: model.settings))
+        pane(String(localized: "Export", comment: "Palette title"), "square.and.arrow.up", height: 400, ExportSettingsForm(model: model))
+        pane(String(localized: "Scanner", comment: "Menu"), "scanner", height: 150, ScannerSettings(settings: model.settings))
+
+        let window = NSWindow(contentViewController: tabs)
         window.styleMask = [.titled, .closable]
+        window.toolbarStyle = .preference
         window.isReleasedWhenClosed = false
         super.init(window: window)
     }
 
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("not used") }
-}
-
-struct SettingsView: View {
-    @Bindable var model: AppModel
-
-    var body: some View {
-        TabView {
-            Tab(String(localized: "General", comment: "Settings tab"), systemImage: "gearshape") {
-                GeneralSettings(settings: model.settings)
-            }
-            Tab(String(localized: "Display", comment: "Settings tab"), systemImage: "display") {
-                DisplaySettings(settings: model.settings)
-            }
-            Tab(String(localized: "Export", comment: "Palette title"), systemImage: "square.and.arrow.up") {
-                ExportSettingsForm(model: model)
-            }
-            Tab(String(localized: "Scanner", comment: "Menu"), systemImage: "scanner") {
-                ScannerSettings(settings: model.settings)
-            }
-        }
-        .frame(width: 520)
-        .fixedSize(horizontal: false, vertical: true)
-    }
 }
 
 private struct GeneralSettings: View {
@@ -66,20 +61,99 @@ private struct GeneralSettings: View {
 private struct DisplaySettings: View {
     @Bindable var settings: AppSettings
 
+    /// The background menu: the presets, then Custom… (opens the colour panel).
+    private enum BackgroundChoice: Hashable {
+        case preset(CanvasBackground)
+        case custom
+    }
+
+    private var choice: Binding<BackgroundChoice> {
+        Binding {
+            if case .custom = settings.canvasBackground { .custom } else { .preset(settings.canvasBackground) }
+        } set: { newValue in
+            switch newValue {
+            case .preset(let background): settings.canvasBackground = background
+            case .custom: BackgroundColorPanel.show(settings: settings)
+            }
+        }
+    }
+
     var body: some View {
         Form {
             Picker(String(localized: "Appearance", comment: "Setting"), selection: $settings.appearance) {
                 ForEach(AppearanceSetting.allCases, id: \.self) { Text(Strings.appearance($0)).tag($0) }
             }
-            Picker(String(localized: "Background around the image", comment: "Setting"),
-                   selection: $settings.canvasBackground) {
-                ForEach(CanvasBackground.allCases, id: \.self) { Text(Strings.canvasBackground($0)).tag($0) }
+            LabeledContent(String(localized: "Background around the image", comment: "Setting")) {
+                HStack {
+                    Picker(String(localized: "Background around the image", comment: "Setting"), selection: choice) {
+                        ForEach(CanvasBackground.presets, id: \.self) {
+                            Text(Strings.canvasBackground($0)).tag(BackgroundChoice.preset($0))
+                        }
+                        Divider()
+                        Text(Strings.canvasBackground(.custom(SRGBColor(red: 0, green: 0, blue: 0))))
+                            .tag(BackgroundChoice.custom)
+                    }
+                    .labelsHidden()
+                    .fixedSize()
+                    swatch
+                }
+            }
+            HStack {
+                Spacer()
+                Button(String(localized: "Neutral grey 18 %", comment: "Background around the image")) {
+                    settings.canvasBackground = .neutralGray
+                }
+                .disabled(settings.canvasBackground == .neutralGray)
             }
             Picker(String(localized: "Zoom when opening", comment: "Setting"), selection: $settings.startupZoom) {
                 ForEach(StartupZoom.allCases, id: \.self) { Text(Strings.startupZoom($0)).tag($0) }
             }
         }
         .formStyle(.grouped)
+    }
+
+    /// The current colour; a click opens the colour panel.
+    private var swatch: some View {
+        let color = settings.canvasBackground.color
+        return Button {
+            BackgroundColorPanel.show(settings: settings)
+        } label: {
+            RoundedRectangle(cornerRadius: 4)
+                .fill(Color(.sRGB, red: color.red, green: color.green, blue: color.blue))
+                .overlay(RoundedRectangle(cornerRadius: 4).strokeBorder(.secondary.opacity(0.5)))
+                .frame(width: 28, height: 18)
+        }
+        .buttonStyle(.plain)
+        .help(Text("Custom…", comment: "Background around the image: chosen with the colour panel"))
+    }
+}
+
+/// The system colour panel, applied live to the background around the image.
+@MainActor
+final class BackgroundColorPanel: NSObject {
+    private static var shared: BackgroundColorPanel?
+    private let settings: AppSettings
+
+    private init(settings: AppSettings) { self.settings = settings }
+
+    static func show(settings: AppSettings) {
+        let bridge = BackgroundColorPanel(settings: settings)
+        shared = bridge
+        let panel = NSColorPanel.shared
+        let color = settings.canvasBackground.color
+        panel.setTarget(nil)
+        panel.color = NSColor(srgbRed: color.red, green: color.green, blue: color.blue, alpha: 1)
+        panel.showsAlpha = false
+        panel.isContinuous = true
+        panel.setTarget(bridge)
+        panel.setAction(#selector(colorChanged(_:)))
+        panel.orderFront(nil)
+    }
+
+    @objc private func colorChanged(_ sender: NSColorPanel) {
+        guard let srgb = sender.color.usingColorSpace(.sRGB) else { return }
+        settings.canvasBackground = .custom(SRGBColor(red: srgb.redComponent, green: srgb.greenComponent,
+                                                      blue: srgb.blueComponent))
     }
 }
 
@@ -100,10 +174,9 @@ struct ExportSettingsForm: View {
                     }
                 }
             }
-            TextField(String(localized: "File name", comment: "Export palette label"),
-                      text: $model.exportSettings.nameTemplate)
-            Text(ExportNameHelp.tokens).font(.caption).foregroundStyle(.secondary)
-            Text(ExportNameHelp.next(model)).font(.caption).foregroundStyle(.secondary)
+            Section(String(localized: "File name", comment: "Export palette label")) {
+                ExportNameBuilder(model: model)
+            }
         }
         .formStyle(.grouped)
     }
@@ -122,19 +195,5 @@ private struct ScannerSettings: View {
                 .foregroundStyle(.secondary)
         }
         .formStyle(.grouped)
-    }
-}
-
-/// Help under the file name, in the Export palette and in Settings.
-@MainActor
-enum ExportNameHelp {
-    static var tokens: String {
-        String(localized: "{date}, {time} and {n} are replaced by the date, the time and a number.",
-               comment: "Export file name tokens. Both {time} and {heure} work; French shows {heure}")
-    }
-
-    static func next(_ model: AppModel) -> String {
-        _ = model.lastExport  // recomputed after each export: the number moves on
-        return String(localized: "Next file: \(model.nextExportFileName())", comment: "Export: name of the next file")
     }
 }

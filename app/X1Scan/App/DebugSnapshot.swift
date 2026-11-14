@@ -11,8 +11,11 @@ import X1ScanCore
 ///   -X1ScanIconBar YES           show the palettes as icons
 ///   -X1ScanHideAllPalettes YES   hide every palette (column collapsed)
 ///   -X1ScanZoomFill YES          Fill Window instead of the startup zoom
-/// The snapshot also writes the Settings window (first tab) and Scanner
-/// Information (`<path>-settings.png`, `<path>-info.png`), serial always masked.
+///   -X1ScanOpenStack YES         icon bar: open every palette in the stack
+///   -X1ScanDetachInfo YES        detach the Info palette into a floating panel
+/// The snapshot also writes each Settings pane and Scanner Information
+/// (`<path>-settings-<n>.png`, `<path>-info.png`), serial always masked.
+/// These arguments change the saved layout like a user would.
 /// Never used against the real scanner: the preview only runs on the virtual X1.
 /// Write the PNGs outside the repository: they show the counters and the
 /// (masked) serial number of the capture.
@@ -27,6 +30,12 @@ enum DebugSnapshot {
             model.layout.toggleAllHidden()
         }
         if arguments.bool(forKey: "X1ScanZoomFill") { model.zoomToFill() }
+        if arguments.bool(forKey: "X1ScanOpenStack") {
+            for id in model.layout.layout.visibleDockedPalettes where !model.layout.layout.openInIconBar.contains(id) {
+                model.layout.toggleOverlay(id)
+            }
+        }
+        if arguments.bool(forKey: "X1ScanDetachInfo") { FloatingPalettes.detach(.info, model: model) }
         if arguments.bool(forKey: "X1ScanAutoPreview") { model.startPreview() }
         guard let path = arguments.string(forKey: "X1ScanSnapshot"), let window else { return }
         Task { @MainActor in
@@ -72,10 +81,28 @@ enum DebugSnapshot {
                     .write(to: URL(filePath: path.replacingOccurrences(of: ".png", with: "-palettes.png")))
             }
             // Settings tabs and Scanner Information, in offscreen windows (AppKit controls included).
-            let tabs: [AnyView] = [AnyView(SettingsView(model: model)), AnyView(ScannerInfoView(model: model, alwaysMasksSerial: true))]
-            for (index, view) in tabs.enumerated() {
-                let suffix = index == 0 ? "-settings.png" : "-info.png"
-                render(view, to: path.replacingOccurrences(of: ".png", with: suffix))
+            render(AnyView(ScannerInfoView(model: model, alwaysMasksSerial: true)),
+                   to: path.replacingOccurrences(of: ".png", with: "-info.png"))
+            let settings = SettingsWindowController(model: model)
+            if let settingsWindow = settings.window, let tabs = settingsWindow.contentViewController as? NSTabViewController {
+                for index in tabs.tabViewItems.indices {
+                    tabs.selectedTabViewItemIndex = index
+                    try? await Task.sleep(for: .milliseconds(300))
+                    guard let view = settingsWindow.contentView,
+                          let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { continue }
+                    view.cacheDisplay(in: view.bounds, to: rep)
+                    try? rep.representation(using: .png, properties: [:])?
+                        .write(to: URL(filePath: path.replacingOccurrences(of: ".png", with: "-settings-\(index).png")))
+                }
+            }
+            // Floating panels.
+            for panel in NSApp.windows where panel is NSPanel && panel.isVisible && !(panel is NSColorPanel) {
+                guard let view = panel.contentView, let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds)
+                else { continue }
+                view.cacheDisplay(in: view.bounds, to: rep)
+                let name = panel.identifier?.rawValue ?? "panel"
+                try? rep.representation(using: .png, properties: [:])?
+                    .write(to: URL(filePath: path.replacingOccurrences(of: ".png", with: "-floating-\(name).png")))
             }
             NSApp.terminate(nil)
         }

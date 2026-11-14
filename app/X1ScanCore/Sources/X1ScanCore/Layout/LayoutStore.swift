@@ -68,8 +68,7 @@ public final class InMemoryLayoutStore: LayoutStore, @unchecked Sendable {
     public func saveWorkspaces(_ workspaces: [Workspace]) { lock.withLock { self.workspaces = workspaces } }
 }
 
-/// The layout the window shows. Changes are saved at once. The palette shown
-/// over the image from the icon bar is transient and never saved.
+/// The layout the window shows. Changes are saved at once.
 @MainActor
 @Observable
 public final class LayoutController {
@@ -78,8 +77,6 @@ public final class LayoutController {
         didSet { if layout != oldValue { store.saveLayout(layout) } }
     }
     public private(set) var workspaces: [Workspace]
-    /// Palette shown over the image while the column is an icon bar.
-    public private(set) var overlayPalette: PaletteID?
 
     private let store: any LayoutStore
 
@@ -93,35 +90,27 @@ public final class LayoutController {
     }
 
     public func toggleCollapsed(_ id: PaletteID) { layout.toggleCollapsed(id) }
-
-    public func toggleHidden(_ id: PaletteID) {
-        layout.toggleHidden(id)
-        if layout.isHidden(id), overlayPalette == id { overlayPalette = nil }
-    }
-
-    public func toggleAllHidden() {
-        layout.toggleAllHidden()
-        if layout.allHidden { overlayPalette = nil }
-    }
+    public func toggleHidden(_ id: PaletteID) { layout.toggleHidden(id) }
+    public func setHidden(_ id: PaletteID, _ value: Bool) { layout.setHidden(id, value) }
+    public func toggleAllHidden() { layout.toggleAllHidden() }
     public func move(_ id: PaletteID, to index: Int) { layout.move(id, to: index) }
+    public func move(_ id: PaletteID, before target: PaletteID?) { layout.move(id, before: target) }
     public func setColumnWidth(_ width: Double) { layout.setColumnWidth(width) }
+    public func toggleColumnMode() { layout.toggleColumnMode() }
 
-    public func toggleColumnMode() {
-        layout.toggleColumnMode()
-        overlayPalette = nil
-    }
-
-    /// Icon bar click: shows the palette over the image, or hides it if it is already shown.
+    /// Icon bar click: opens or closes the palette beside the bar (several may be open).
     public func toggleOverlay(_ id: PaletteID) {
         guard layout.columnMode == .iconBar, registry.contains(id) else { return }
-        overlayPalette = overlayPalette == id ? nil : id
+        layout.toggleOpenInIconBar(id)
     }
 
-    public func closeOverlay() { overlayPalette = nil }
+    public func detach(_ id: PaletteID, frame: StoredFrame) { layout.detach(id, frame: frame) }
+    public func attach(_ id: PaletteID) { layout.attach(id) }
+    public func attachAll() { layout.attachAll() }
+    public func setFloatingFrame(_ frame: StoredFrame, for id: PaletteID) { layout.setFloatingFrame(frame, for: id) }
 
     public func resetToDefault() {
         layout = PaletteLayout(registry: registry)
-        overlayPalette = nil
     }
 
     // MARK: Workspaces (model only at this stage)
@@ -136,7 +125,6 @@ public final class LayoutController {
 
     public func apply(_ workspace: Workspace) {
         layout = workspace.layout.reconciled(with: registry)
-        overlayPalette = nil
     }
 
     public func deleteWorkspace(_ id: UUID) {

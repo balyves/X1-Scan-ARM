@@ -53,3 +53,7 @@ real scanner.
 | Option-click (zoom tool) | Zoom out |
 | ⌥⌘P | Palettes in full or as icons |
 | ⌃⌘F | Full screen |
+
+Palettes: drag a header or icon to reorder; drop it on the image, or use
+Detach in its menu, to float it; Attach (or dragging the floating panel's
+handle back onto the column) puts it back.

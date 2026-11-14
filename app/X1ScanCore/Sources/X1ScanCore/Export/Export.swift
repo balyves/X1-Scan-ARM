@@ -2,16 +2,56 @@
 import Foundation
 import X1Image
 
+/// A file name token. The template stores the English placeholder only;
+/// the app shows translated button labels.
+public enum ExportToken: String, Sendable, Hashable, CaseIterable {
+    case roll
+    case frame
+    case date
+    case time
+    case counter = "n"
+
+    /// `{roll}`, `{frame}`, `{date}`, `{time}`, `{n}`.
+    public var placeholder: String { "{\(rawValue)}" }
+}
+
 /// Export settings, shared by the Export palette and Settings > Export,
 /// saved between launches.
 public struct ExportSettings: Sendable, Hashable, Codable {
     public static let defaultTemplate = "X1-preview-{date}-{n}"
+    public static let counterDigitsRange = 1...6
+    public static let frameRange = 1...99_999
+    public static let counterStartRange = 0...999_999
 
     /// Destination folder; nil until chosen.
     public var folder: URL?
-    /// File name without extension. Tokens: `{date}` (yyyy-MM-dd), `{heure}`
-    /// or `{time}` (HH-mm-ss), `{n}` (001, 002…: the first number free in the folder).
+    /// File name without extension. Tokens (`ExportToken`): `{roll}`,
+    /// `{frame}` (two digits at least), `{date}` (yyyy-MM-dd), `{time}`
+    /// (HH-mm-ss), `{n}` (the first number free in the folder from
+    /// `counterStart`, `counterDigits` digits).
     public var nameTemplate: String = ExportSettings.defaultTemplate
+    /// Roll name for `{roll}`. Changing it puts the frame back to 1.
+    public var roll: String = "" {
+        didSet { if roll != oldValue { frame = 1 } }
+    }
+    /// Frame number for `{frame}`, 1 to 99 999.
+    public var frame: Int = 1 {
+        didSet { frame = Self.clamp(frame, Self.frameRange) }
+    }
+    /// Adds 1 to `frame` after each successful export.
+    public var incrementsFrame = true
+    /// First value tried for `{n}`, 0 to 999 999.
+    public var counterStart: Int = 1 {
+        didSet { counterStart = Self.clamp(counterStart, Self.counterStartRange) }
+    }
+    /// Digits of `{n}`, 1 to 6.
+    public var counterDigits: Int = 3 {
+        didSet { counterDigits = Self.clamp(counterDigits, Self.counterDigitsRange) }
+    }
+
+    static func clamp(_ value: Int, _ range: ClosedRange<Int>) -> Int {
+        min(max(value, range.lowerBound), range.upperBound)
+    }
 
     public init(folder: URL? = nil, nameTemplate: String = ExportSettings.defaultTemplate) {
         self.folder = folder
@@ -19,7 +59,7 @@ public struct ExportSettings: Sendable, Hashable, Codable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case folder, nameTemplate
+        case folder, nameTemplate, roll, frame, incrementsFrame, counterStart, counterDigits
         case baseName  // step 2: `<baseName>-<date>-<nnn>.tif`
     }
 
@@ -27,17 +67,30 @@ public struct ExportSettings: Sendable, Hashable, Codable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         folder = try container.decodeIfPresent(URL.self, forKey: .folder)
         if let template = try container.decodeIfPresent(String.self, forKey: .nameTemplate) {
-            nameTemplate = template
+            // Step 2b also accepted the French token {heure}; the template now stores English tokens only.
+            nameTemplate = template.replacingOccurrences(of: "{heure}", with: ExportToken.time.placeholder)
         } else if let base = try container.decodeIfPresent(String.self, forKey: .baseName),
                   let clean = ExportService.sanitizedFileName(base) {
             nameTemplate = clean + "-{date}-{n}"
         }  // an empty step 2 base meant the default name
+        roll = try container.decodeIfPresent(String.self, forKey: .roll) ?? ""
+        frame = Self.clamp(try container.decodeIfPresent(Int.self, forKey: .frame) ?? 1, Self.frameRange)
+        incrementsFrame = try container.decodeIfPresent(Bool.self, forKey: .incrementsFrame) ?? true
+        counterStart = Self.clamp(try container.decodeIfPresent(Int.self, forKey: .counterStart) ?? 1,
+                                  Self.counterStartRange)
+        counterDigits = Self.clamp(try container.decodeIfPresent(Int.self, forKey: .counterDigits) ?? 3,
+                                   Self.counterDigitsRange)
     }
 
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encodeIfPresent(folder, forKey: .folder)
         try container.encode(nameTemplate, forKey: .nameTemplate)
+        try container.encode(roll, forKey: .roll)
+        try container.encode(frame, forKey: .frame)
+        try container.encode(incrementsFrame, forKey: .incrementsFrame)
+        try container.encode(counterStart, forKey: .counterStart)
+        try container.encode(counterDigits, forKey: .counterDigits)
     }
 }
 
@@ -70,39 +123,54 @@ public enum ExportService {
         return cleaned.isEmpty ? nil : cleaned
     }
 
-    /// The file name for `template` at `date`, with the first counter whose
-    /// file does not exist. Without `{n}`, the plain name is used if free,
-    /// then `-002`, `-003`… are added. An empty result uses the default template.
-    public static func fileName(template: String, date: Date, calendar: Calendar = .current,
+    /// The file name for `settings` at `date`, with the first counter whose
+    /// file does not exist (from `counterStart`). Without `{n}`, the plain
+    /// name is used if free, then `-2`, `-3`… (with `counterDigits` digits)
+    /// are added. An empty result uses the default template.
+    public static func fileName(settings: ExportSettings, date: Date, calendar: Calendar = .current,
                                 exists: (String) -> Bool) -> String {
         let parts = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
         let day = String(format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
         let time = String(format: "%02d-%02d-%02d", parts.hour ?? 0, parts.minute ?? 0, parts.second ?? 0)
+        let frame = padded(settings.frame, 2)
         func name(_ template: String) -> String? {
-            sanitizedFileName(template.replacingOccurrences(of: "{date}", with: day)
-                .replacingOccurrences(of: "{heure}", with: time)
-                .replacingOccurrences(of: "{time}", with: time))
+            // {roll} last: a roll name that contains a token is kept as typed.
+            sanitizedFileName(template
+                .replacingOccurrences(of: ExportToken.frame.placeholder, with: frame)
+                .replacingOccurrences(of: ExportToken.date.placeholder, with: day)
+                .replacingOccurrences(of: ExportToken.time.placeholder, with: time)
+                .replacingOccurrences(of: ExportToken.roll.placeholder, with: settings.roll))
         }
-        let resolved = name(template).map { _ in template } ?? ExportSettings.defaultTemplate
-        let hasCounter = resolved.contains("{n}")
-        var counter = 1
+        let counter = ExportToken.counter.placeholder
+        // Checked with a sample number, so that a template made of {n} alone still counts as a name.
+        let template = name(settings.nameTemplate.replacingOccurrences(of: counter, with: "1")) != nil
+            ? settings.nameTemplate : ExportSettings.defaultTemplate
+        let hasCounter = template.contains(counter)
+        let digits = settings.counterDigits
+        var number = hasCounter ? settings.counterStart : 1
         while true {
-            let number = String(format: "%03d", counter)
+            let formatted = padded(number, digits)
             let candidate: String
             if hasCounter {
-                candidate = name(resolved.replacingOccurrences(of: "{n}", with: number))! + ".tif"
+                candidate = name(template.replacingOccurrences(of: counter, with: formatted))! + ".tif"
             } else {
-                candidate = name(resolved)! + (counter == 1 ? "" : "-" + number) + ".tif"
+                candidate = name(template)! + (number == 1 ? "" : "-" + formatted) + ".tif"
             }
             if !exists(candidate) { return candidate }
-            counter += 1
+            number += 1
         }
+    }
+
+    /// `value` in decimal, with leading zeros up to `digits` digits.
+    static func padded(_ value: Int, _ digits: Int) -> String {
+        let text = String(value)
+        return String(repeating: "0", count: max(digits - text.count, 0)) + text
     }
 
     /// The name the next export would get, for the Export palette.
     public static func nextFileName(settings: ExportSettings, date: Date = Date(),
                                     fileManager: FileManager = .default) -> String {
-        fileName(template: settings.nameTemplate, date: date) { name in
+        fileName(settings: settings, date: date) { name in
             settings.folder.map { fileManager.fileExists(atPath: $0.appending(path: name).path) } ?? false
         }
     }
@@ -116,7 +184,7 @@ public enum ExportService {
         guard fileManager.fileExists(atPath: folder.path, isDirectory: &isDirectory), isDirectory.boolValue else {
             throw .folderMissing(folder.path)
         }
-        let name = fileName(template: settings.nameTemplate, date: date) {
+        let name = fileName(settings: settings, date: date) {
             fileManager.fileExists(atPath: folder.appending(path: $0).path)
         }
         let url = folder.appending(path: name)

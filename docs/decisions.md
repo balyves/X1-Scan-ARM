@@ -162,8 +162,8 @@ Recorded on 2026-11-12.
   tool bar placement (`floating` capsule or `dockedColumn`). Saved in
   UserDefaults and reconciled with the registry on load.
 - `Workspace` (a named layout) and the store exist as models.
-- **Not done yet**: floating palette windows, docked tool column, workspace
-  menu, drag-and-drop reordering (the header menu moves palettes up and down).
+- **Not done yet**: docked tool column, workspace menu. Floating palettes
+  and drag-and-drop reordering came with step 2c.
 
 ### Debug builds
 
@@ -226,7 +226,8 @@ Recorded on 2026-11-14. Nothing here changes what is sent to a scanner.
   black or white; zoom when opening (Fit or 100 %).
 - Export: folder and file name template, shared with the Export palette
   (`ExportSettings.nameTemplate`, default `X1-preview-{date}-{n}`; tokens
-  `{date}`, `{heure}` or `{time}`, `{n}`). Step 2 settings keep their base
+  `{date}`, `{time}`, `{n}`; `{heure}` was accepted in step 2b only and is
+  converted to `{time}` since step 2c). Step 2 settings keep their base
   name (`<base>-{date}-{n}`). The palette shows the name of the next file;
   the name actually written is computed again at export time (date, time
   and first free number then), tested.
@@ -243,6 +244,65 @@ Recorded on 2026-11-14. Nothing here changes what is sent to a scanner.
 New launch arguments: `-X1ScanHideAllPalettes YES`, `-X1ScanZoomFill YES`.
 The snapshot also renders the Settings window and Scanner Information.
 They change the saved layout like a user would.
+
+## Application, step 2c (palettes, background, file names, Settings)
+
+Recorded on 2026-11-14. Nothing here changes what is sent to a scanner.
+
+### Toolbar
+
+- The Palettes button sits in the toolbar's button group, next to Export,
+  before the inspector tracking separator: no button above the column.
+
+### Palettes
+
+- `PaletteLayout` version 3 adds `openInIconBar`; version 2 layouts decode
+  with nothing open.
+- **Icon bar**: each icon opens or closes its palette in a stack beside the
+  bar, over the image area (top right); several can be open, in palette
+  order. Saved.
+- **Drag and drop**: a palette header (or icon) dropped on another palette
+  moves it before that one; dropped below the last, to the end.
+- **Floating panels**: Detach (header menu) or a palette dropped on the
+  image area opens it in an `NSPanel` (utility, floating, hidden when the
+  app is in the background), at the drop point. Its frame is saved
+  (`PalettePlacement.floating`). Attach (button in the panel), Window >
+  Attach All Palettes, or the panel's drag handle dropped on the column
+  puts it back at its place. Closing the panel hides the palette; the Window menu shows it
+  again at the same place.
+- The column collapses when no palette is shown in it (hidden or floating).
+
+### Background around the image
+
+- `CanvasBackground.custom(SRGBColor)`, chosen with the system colour panel
+  (Settings > Display > Custom…, or the colour swatch), applied live; saved
+  as `custom:r,g,b`. A button puts back the neutral grey 18 %.
+
+### File names
+
+- Tokens stored in English only (`ExportToken`): `{roll}`, `{frame}`,
+  `{date}`, `{time}`, `{n}`; the buttons that insert them at the cursor are
+  translated. Step 2b templates with `{heure}` are converted to `{time}`.
+- `{frame}`: two digits at least; +1 after each successful export (on by
+  default); a new roll name puts it back to 1.
+- `{n}`: first number free in the folder from a start value, with 1 to 6
+  digits.
+- The builder (Export palette and Settings > Export) shows the sanitised
+  name of the next file; the name actually written is computed at export
+  time. Scan setting tokens (resolution, film, holder) come with real scans.
+
+### Settings
+
+- An icon toolbar at the top (`NSTabViewController`, toolbar style), as in
+  Mail or Safari: General, Display, Export, Scanner.
+
+### Fit (⌘0)
+
+- A reported Fit at 6.25 % (the minimum) with a tiny image: Fit and Fill
+  were computed from a size of the image area that was not known yet or
+  degenerate. They are now computed only for an area of 64 points or more
+  per side, and the area's size is also followed through the scroll view's
+  frame notifications. The exact sequence was not reproduced.
 
 ## Scanner safety
 

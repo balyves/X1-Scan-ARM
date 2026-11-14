@@ -175,6 +175,7 @@ enum Strings {
         case .neutralGray: String(localized: "Neutral grey 18 %", comment: "Background around the image")
         case .black: String(localized: "Black", comment: "Background around the image")
         case .white: String(localized: "White", comment: "Background around the image")
+        case .custom: String(localized: "Custom…", comment: "Background around the image: chosen with the colour panel")
         }
     }
 
@@ -182,6 +183,17 @@ enum Strings {
         switch zoom {
         case .fit: String(localized: "Zoom to Fit", comment: "Menu item")
         case .actualSize: String(localized: "Actual Size (100 %)", comment: "Setting: zoom at launch")
+        }
+    }
+
+    /// Label of a file name token button; the template stores the English placeholder.
+    static func exportToken(_ token: ExportToken) -> String {
+        switch token {
+        case .roll: String(localized: "Roll", comment: "File name token button: roll name")
+        case .frame: String(localized: "Frame", comment: "File name token button: frame number")
+        case .date: String(localized: "Date", comment: "File name token button")
+        case .time: String(localized: "Time", comment: "File name token button")
+        case .counter: String(localized: "Number", comment: "File name token button: counter {n}")
         }
     }
 

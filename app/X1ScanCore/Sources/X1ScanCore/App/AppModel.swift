@@ -178,6 +178,7 @@ public final class AppModel {
             try ExportService.export(session.image, settings: exportSettings, date: date)
         }
         lastExport = result
+        if case .success = result, exportSettings.incrementsFrame { exportSettings.frame += 1 }
         return result
     }
 

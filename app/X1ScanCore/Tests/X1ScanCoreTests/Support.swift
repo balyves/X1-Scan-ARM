@@ -17,8 +17,11 @@ enum TestFixtures {
         try VirtualScanner.load(fixturesDirectory: directory, pacing: pacing)
     }
 
-    /// Slow enough to stop at a chosen phase, fast enough for a test.
-    static let slow = Pacing(perCommand: .milliseconds(2), perImageRead: .milliseconds(15))
+    /// Slow enough to stop at a chosen phase, fast enough for a test. The
+    /// image reads are slow (about 4 s in all) so that a stop sent after the
+    /// first lines always lands before the end, even when other tests load
+    /// the machine; the tests that use it stop early.
+    static let slow = Pacing(perCommand: .milliseconds(2), perImageRead: .milliseconds(100))
 }
 
 /// Waits on the main actor until `condition` holds, or fails after `timeout`.

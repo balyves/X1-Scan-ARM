@@ -552,17 +552,6 @@
         }
       }
     },
-    "Open in Separate Window": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ouvrir dans une fenêtre séparée"
-          }
-        }
-      }
-    },
     "Palettes": {
       "extractionState": "manual",
       "localizations": {
@@ -1418,17 +1407,6 @@
         }
       }
     },
-    "Settings": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Réglages"
-          }
-        }
-      }
-    },
     "General": {
       "extractionState": "manual",
       "localizations": {
@@ -1513,17 +1491,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Zoom à l'ouverture"
-          }
-        }
-      }
-    },
-    "{date}, {time} and {n} are replaced by the date, the time and a number.": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "{date}, {heure} et {n} sont remplacés par la date, l'heure et un numéro."
           }
         }
       }
@@ -1640,6 +1607,149 @@
           "stringUnit": {
             "state": "translated",
             "value": "Zoom"
+          }
+        }
+      }
+    },
+    "Custom…": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Personnalisé…"
+          }
+        }
+      }
+    },
+    "Roll": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pellicule"
+          }
+        }
+      }
+    },
+    "Frame": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vue"
+          }
+        }
+      }
+    },
+    "Date": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Date"
+          }
+        }
+      }
+    },
+    "Time": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Heure"
+          }
+        }
+      }
+    },
+    "Number": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Numéro"
+          }
+        }
+      }
+    },
+    "Attach All Palettes": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rattacher toutes les palettes"
+          }
+        }
+      }
+    },
+    "Attach": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rattacher"
+          }
+        }
+      }
+    },
+    "Detach": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Détacher"
+          }
+        }
+      }
+    },
+    "+1 after export": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+1 après l'export"
+          }
+        }
+      }
+    },
+    "From": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Départ"
+          }
+        }
+      }
+    },
+    "Digits": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chiffres"
+          }
+        }
+      }
+    },
+    "Drag onto the column to attach": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Glisser sur la colonne pour rattacher"
           }
         }
       }

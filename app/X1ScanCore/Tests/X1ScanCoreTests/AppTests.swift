@@ -62,18 +62,53 @@ struct ExportTests {
         return calendar
     }
 
-    private func name(_ template: String, taken: Set<String> = []) -> String {
-        ExportService.fileName(template: template, date: date.addingTimeInterval(13 * 3600 + 5 * 60 + 9),
-                               calendar: utc) { taken.contains($0) }
+    private func name(_ template: String, taken: Set<String> = [], configure: (inout ExportSettings) -> Void = { _ in })
+        -> String {
+        var settings = ExportSettings(nameTemplate: template)
+        configure(&settings)
+        return ExportService.fileName(settings: settings, date: date.addingTimeInterval(13 * 3600 + 5 * 60 + 9),
+                                      calendar: utc) { taken.contains($0) }
     }
 
     @Test func templateTokensAndCounter() {
         let taken: Set = ["X1-preview-2026-11-12-001.tif", "X1-preview-2026-11-12-002.tif"]
         #expect(name(ExportSettings.defaultTemplate, taken: taken) == "X1-preview-2026-11-12-003.tif")
-        #expect(name("{date}_{heure}_{n}") == "2026-11-12_13-05-09_001.tif")
-        #expect(name("{time}") == "13-05-09.tif", "English token")
+        #expect(name("{date}_{time}_{n}") == "2026-11-12_13-05-09_001.tif")
+        #expect(name("{heure}") == "{heure}.tif", "only English tokens in the template")
         #expect(name("Scan") == "Scan.tif")
         #expect(name("Scan", taken: ["Scan.tif", "Scan-002.tif"]) == "Scan-003.tif", "no {n}: added when needed")
+    }
+
+    @Test func rollFrameAndCounterSettings() {
+        let roll: (inout ExportSettings) -> Void = { $0.roll = "R042"; $0.frame = 7 }
+        #expect(name("{roll}_{frame}", configure: roll) == "R042_07.tif")
+        #expect(name("{roll}-{n}", configure: { $0.roll = "A"; $0.counterStart = 40; $0.counterDigits = 5 })
+            == "A-00040.tif")
+        #expect(name("{n}", taken: ["0040.tif", "0041.tif"], configure: { $0.counterStart = 40; $0.counterDigits = 4 })
+            == "0042.tif")
+        #expect(name("{n}", configure: { $0.counterStart = 0; $0.counterDigits = 1 }) == "0.tif")
+        #expect(name("{n}") == "001.tif", "a template made of {n} alone is a name")
+        #expect(name("{roll}", configure: { $0.roll = "a/b" }) == "a-b.tif", "the roll name is sanitised too")
+    }
+
+    @Test func settingsKeepTheirLimits() {
+        var settings = ExportSettings()
+        settings.roll = "R1"
+        settings.frame = 12
+        settings.roll = "R2"
+        #expect(settings.frame == 1, "a new roll starts at frame 1")
+        settings.frame = 5
+        settings.roll = "R2"
+        #expect(settings.frame == 5, "same roll: unchanged")
+        settings.frame = 0
+        #expect(settings.frame == 1)
+        settings.counterDigits = 9
+        #expect(settings.counterDigits == 6)
+        settings.counterDigits = 0
+        #expect(settings.counterDigits == 1)
+        settings.counterStart = -3
+        #expect(settings.counterStart == 0)
+        #expect(ExportToken.allCases.map(\.placeholder) == ["{roll}", "{frame}", "{date}", "{time}", "{n}"])
     }
 
     @Test func templateIsSanitised() {
@@ -100,6 +135,16 @@ struct ExportTests {
         #expect(settings.nameTemplate == "Studio-{date}-{n}" && settings.folder == nil)
         let roundTrip = try JSONDecoder().decode(ExportSettings.self, from: JSONEncoder().encode(settings))
         #expect(roundTrip == settings)
+        let heure = try JSONDecoder().decode(ExportSettings.self, from: Data(#"{"nameTemplate":"S-{heure}-{n}"}"#.utf8))
+        #expect(heure.nameTemplate == "S-{time}-{n}", "step 2b French token stored in English")
+        #expect(heure.frame == 1 && heure.incrementsFrame && heure.counterStart == 1 && heure.counterDigits == 3)
+        var full = ExportSettings(nameTemplate: "{roll}")
+        full.roll = "R9"
+        full.frame = 4
+        full.incrementsFrame = false
+        full.counterStart = 10
+        full.counterDigits = 2
+        #expect(try JSONDecoder().decode(ExportSettings.self, from: JSONEncoder().encode(full)) == full)
         for blank in [#"{"baseName":""}"#, #"{"baseName":"  "}"#] {
             let decoded = try JSONDecoder().decode(ExportSettings.self, from: Data(blank.utf8))
             #expect(decoded.nameTemplate == ExportSettings.defaultTemplate, "empty base: default name, as in step 2")
@@ -273,7 +318,7 @@ final class AppModelTests {
         #expect(model.viewport.mode == .fit)
     }
 
-    /// The written name is computed at export time ({date}, {heure}, {n}),
+    /// The written name is computed at export time ({date}, {time}, {n}),
     /// not taken from the "Next file" shown earlier in the palette.
     @Test func exportNameIsComputedWhenExporting() async throws {
         let folder = try temporaryDirectory()
@@ -281,7 +326,7 @@ final class AppModelTests {
         let model = model()
         model.startPreview()
         await model.session.waitUntilIdle()
-        model.exportSettings = ExportSettings(folder: folder, nameTemplate: "{date}_{heure}_{n}")
+        model.exportSettings = ExportSettings(folder: folder, nameTemplate: "{date}_{time}_{n}")
         let shownAt = Date(timeIntervalSince1970: 1_794_441_600)  // 2026-11-12 00:00 UTC
         let exportedAt = shownAt.addingTimeInterval(2 * 86_400 + 3_723)  // two days, 1 h 2 min 3 s later
         let shown = model.nextExportFileName(date: shownAt)
@@ -300,6 +345,25 @@ final class AppModelTests {
         #expect(second.lastPathComponent == expected(exportedAt.addingTimeInterval(60), "002"))
         #expect(model.nextExportFileName(date: exportedAt.addingTimeInterval(60))
             == expected(exportedAt.addingTimeInterval(60), "003"))
+    }
+
+    @Test func frameMovesOnAfterEachExport() async throws {
+        let folder = try temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let model = model()
+        model.startPreview()
+        await model.session.waitUntilIdle()
+        model.exportSettings = ExportSettings(folder: folder, nameTemplate: "{roll}_{frame}")
+        model.exportSettings.roll = "R1"
+        #expect(try model.export().get().lastPathComponent == "R1_01.tif")
+        #expect(try model.export().get().lastPathComponent == "R1_02.tif")
+        #expect(model.exportSettings.frame == 3)
+        model.exportSettings.incrementsFrame = false
+        #expect(try model.export().get().lastPathComponent == "R1_03.tif")
+        #expect(model.exportSettings.frame == 3, "not incremented")
+        model.exportSettings.folder = folder.appending(path: "missing")
+        _ = model.export()
+        #expect(model.exportSettings.frame == 3, "a failed export does not move the frame on")
     }
 
     @Test func missingFixturesDisableTheVirtualScanner() {
@@ -352,6 +416,38 @@ struct AppSettingsTests {
     }
 
     @Test func neutralGrayIsMiddleGray() {
-        #expect(CanvasBackground.neutralGray.srgbLevel == 119.0 / 255)
+        #expect(CanvasBackground.neutralGray.color == SRGBColor(red: 119.0 / 255, green: 119.0 / 255, blue: 119.0 / 255))
+    }
+
+    @Test func customBackgroundIsSavedAndCanGoBackToGray() {
+        withTemporaryDefaults { defaults in
+            let settings = AppSettings(defaults: defaults)
+            settings.canvasBackground = .custom(SRGBColor(red: 0.25, green: 0.5, blue: 2))
+            let reloaded = AppSettings(defaults: defaults)
+            #expect(reloaded.canvasBackground == .custom(SRGBColor(red: 0.25, green: 0.5, blue: 1)), "clamped")
+            reloaded.canvasBackground = .neutralGray
+            #expect(AppSettings(defaults: defaults).canvasBackground == .neutralGray)
+            defaults.set("custom:1,2", forKey: "CanvasBackground")
+            #expect(AppSettings(defaults: defaults).canvasBackground == .neutralGray, "garbage: default")
+        }
+    }
+}
+
+struct ExportLimitsTests {
+    @Test func frameAndCounterAreBoundedAndPaddedWithoutOverflow() throws {
+        var settings = ExportSettings(nameTemplate: "{roll}_{frame}_{n}")
+        settings.frame = Int.max
+        #expect(settings.frame == ExportSettings.frameRange.upperBound)
+        settings.counterStart = Int.max
+        #expect(settings.counterStart == ExportSettings.counterStartRange.upperBound)
+        settings.counterDigits = 6
+        settings.roll = "R{date}"
+        settings.frame = 99_999
+        settings.counterStart = 999_999
+        let name = ExportService.fileName(settings: settings, date: Date(timeIntervalSince1970: 0)) { _ in false }
+        #expect(name == "R{date}_99999_999999.tif", "roll kept as typed; numbers not truncated")
+        let json = #"{"frame":9223372036854775807,"counterStart":-5}"#
+        let decoded = try JSONDecoder().decode(ExportSettings.self, from: Data(json.utf8))
+        #expect(decoded.frame == 99_999 && decoded.counterStart == 0)
     }
 }

@@ -198,3 +198,19 @@ struct ImageModelTests {
         #expect(DisplayImage.make(from: PreviewImage(width: 2, expectedHeight: 5)) == nil)
     }
 }
+
+struct ViewportDegenerateSizeTests {
+    /// ⌘0 must not fall to 6.25 % because the image area size is not known yet.
+    @Test func fitWaitsForARealViewSize() {
+        var v = Viewport(imageWidth: 2004, imageHeight: 817, pixelAspectRatio: 3)
+        v.actualSize()
+        v.fit()
+        #expect(v.mode == .fit && v.magnification == 1, "no size yet: kept")
+        v.viewSizeChanged(CGSize(width: 1010, height: 0))
+        #expect(v.magnification == 1, "degenerate size: kept")
+        v.viewSizeChanged(CGSize(width: 1032, height: 832))
+        #expect(abs(v.magnification - 800.0 / 2451) < 1e-9, "computed as soon as the size is real")
+        v.viewSizeChanged(CGSize(width: 20, height: 20))
+        #expect(abs(v.magnification - 800.0 / 2451) < 1e-9)
+    }
+}

@@ -144,7 +144,13 @@ public struct Viewport: Sendable, Hashable {
                width: Double(rect.width), height: Double(rect.height) * pixelAspectRatio)
     }
 
+    /// Smallest image area Fit and Fill are computed for. Below that the size
+    /// is not known yet (or the view is in a transition): the magnification
+    /// is kept rather than falling to the 6.25 % minimum.
+    public static let minimumViewSide: Double = 64
+
     private mutating func recompute() {
+        guard viewSize.width >= Self.minimumViewSide, viewSize.height >= Self.minimumViewSide else { return }
         switch mode {
         case .fit: magnification = fitMagnification(in: viewSize)
         case .fill: magnification = fillMagnification(in: viewSize)

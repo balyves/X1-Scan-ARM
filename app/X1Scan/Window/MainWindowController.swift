@@ -12,6 +12,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
     private let splitController: MainSplitViewController
     private var observers: [Observing] = []
     private var lastAlertedState: PreviewSession.State?
+    private var floatingPalettes: FloatingPalettes?
 
     private enum Item {
         static let preview = NSToolbarItem.Identifier("preview")
@@ -45,6 +46,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
         window.toolbar = toolbar
 
         observers.append(Observing { [weak self] in self?.modelChanged() })
+        floatingPalettes = FloatingPalettes(model: model, mainWindow: window)
     }
 
     @available(*, unavailable)
@@ -80,7 +82,9 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
     // MARK: Toolbar
 
     func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
-        [Item.preview, Item.scan, .space, Item.stop, .flexibleSpace, Item.export, Item.palettes]
+        // Everything before the inspector tracking separator: no button sits above the palette column.
+        [Item.preview, Item.scan, .space, Item.stop, .flexibleSpace, Item.export, Item.palettes,
+         .inspectorTrackingSeparator, .flexibleSpace]
     }
 
     func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
@@ -161,6 +165,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
              #selector(zoomToStep(_:)):
             return model.session.image != nil
         case #selector(selectRealSource(_:)), #selector(selectVirtualSource(_:)): return !model.session.isBusy
+        case #selector(attachAllPalettes(_:)): return !model.layout.layout.placements.isEmpty
         default: return true
         }
     }
@@ -202,6 +207,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
         if let id = (sender as? NSMenuItem).flatMap(paletteID(of:)) { model.layout.toggleHidden(id) }
     }
     @objc func toggleAllPalettes(_ sender: Any?) { model.layout.toggleAllHidden() }
+    @objc func attachAllPalettes(_ sender: Any?) { model.layout.attachAll() }
 
     private func paletteID(of item: NSMenuItem) -> PaletteID? {
         (item.representedObject as? String).map(PaletteID.init(rawValue:))

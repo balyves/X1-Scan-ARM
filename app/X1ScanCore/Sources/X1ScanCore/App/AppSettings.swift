@@ -24,19 +24,60 @@ public enum AppearanceSetting: String, Sendable, Hashable, CaseIterable {
     case dark
 }
 
+/// An sRGB colour, components 0...1.
+public struct SRGBColor: Sendable, Hashable {
+    public var red: Double
+    public var green: Double
+    public var blue: Double
+
+    public init(red: Double, green: Double, blue: Double) {
+        func clamp(_ value: Double) -> Double { value.isFinite ? min(max(value, 0), 1) : 0 }
+        self.red = clamp(red)
+        self.green = clamp(green)
+        self.blue = clamp(blue)
+    }
+}
+
 /// Background around the image.
-public enum CanvasBackground: String, Sendable, Hashable, CaseIterable {
-    /// Middle grey: 18 % reflectance, L* 50, sRGB 119/119/119.
+public enum CanvasBackground: Sendable, Hashable {
+    /// Middle grey: 18 % reflectance, L* 50, sRGB 119/119/119. Default.
     case neutralGray
     case black
     case white
+    /// Chosen with the system colour panel.
+    case custom(SRGBColor)
 
-    /// sRGB component, 0...1, of this neutral colour.
-    public var srgbLevel: Double {
+    public static let presets: [CanvasBackground] = [.neutralGray, .black, .white]
+
+    public var color: SRGBColor {
         switch self {
-        case .neutralGray: 119.0 / 255
-        case .black: 0
-        case .white: 1
+        case .neutralGray: SRGBColor(red: 119.0 / 255, green: 119.0 / 255, blue: 119.0 / 255)
+        case .black: SRGBColor(red: 0, green: 0, blue: 0)
+        case .white: SRGBColor(red: 1, green: 1, blue: 1)
+        case .custom(let color): color
+        }
+    }
+
+    /// Saved form: `neutralGray`, `black`, `white` or `custom:r,g,b`.
+    public var storedValue: String {
+        switch self {
+        case .neutralGray: "neutralGray"
+        case .black: "black"
+        case .white: "white"
+        case .custom(let c): "custom:\(c.red),\(c.green),\(c.blue)"
+        }
+    }
+
+    public init?(storedValue: String) {
+        switch storedValue {
+        case "neutralGray": self = .neutralGray
+        case "black": self = .black
+        case "white": self = .white
+        default:
+            guard storedValue.hasPrefix("custom:") else { return nil }
+            let parts = storedValue.dropFirst("custom:".count).split(separator: ",").compactMap { Double($0) }
+            guard parts.count == 3 else { return nil }
+            self = .custom(SRGBColor(red: parts[0], green: parts[1], blue: parts[2]))
         }
     }
 }
@@ -78,7 +119,7 @@ public final class AppSettings {
         didSet { defaults.set(appearance.rawValue, forKey: Keys.appearance) }
     }
     public var canvasBackground: CanvasBackground {
-        didSet { defaults.set(canvasBackground.rawValue, forKey: Keys.canvasBackground) }
+        didSet { defaults.set(canvasBackground.storedValue, forKey: Keys.canvasBackground) }
     }
     public var startupZoom: StartupZoom {
         didSet { defaults.set(startupZoom.rawValue, forKey: Keys.startupZoom) }
@@ -104,7 +145,8 @@ public final class AppSettings {
         language = Self.value(defaults, Keys.language, InterfaceLanguage.system)
         hidesSerialNumber = defaults.object(forKey: Keys.hidesSerialNumber) as? Bool ?? true
         appearance = Self.value(defaults, Keys.appearance, AppearanceSetting.system)
-        canvasBackground = Self.value(defaults, Keys.canvasBackground, CanvasBackground.neutralGray)
+        canvasBackground = defaults.string(forKey: Keys.canvasBackground).flatMap(CanvasBackground.init(storedValue:))
+            ?? .neutralGray
         startupZoom = Self.value(defaults, Keys.startupZoom, StartupZoom.fit)
         startupSource = Self.value(defaults, Keys.startupSource, StartupSource.last)
     }
