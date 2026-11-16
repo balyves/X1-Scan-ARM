@@ -2584,6 +2584,18 @@
           }
         }
       }
+    },
+    "Exports the whole preview, without the crop.": {
+      "comment": "Panel note under Export Preview, shown only while a crop is drawn",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exporte l'aperçu entier, sans le recadrage."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

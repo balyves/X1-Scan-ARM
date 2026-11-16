@@ -11,6 +11,8 @@ import X1ScanCore
 ///   -X1ScanHidePanel YES         hide the settings panel
 ///   -X1ScanZoomFill YES          Fill Window instead of the startup zoom
 ///   -X1ScanOpenHistogram YES     unfold the histogram in the panel
+///   -X1ScanCropDemo YES          draw a centred crop on the preview before the snapshot
+///                                (needs -X1ScanAutoPreview YES)
 ///   -X1ScanResizeProbe YES       resize the window, move the divider, hide and show the panel,
 ///                                print the sizes, put the window frame and panel layout back, quit
 /// The snapshot also writes each Settings pane and Scanner Information
@@ -76,6 +78,15 @@ enum DebugSnapshot {
         guard let path = arguments.string(forKey: "X1ScanSnapshot"), let window else { return }
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(arguments.bool(forKey: "X1ScanAutoPreview") ? 7 : 2))
+            if arguments.bool(forKey: "X1ScanCropDemo") {
+                // In preview pixels, on the final size (not the rows received so far).
+                if let image = model.session.image {
+                    model.cropRect = PixelRect(x: image.width / 4, y: image.expectedHeight / 4,
+                                               width: image.width / 2, height: image.expectedHeight / 2)
+                } else {
+                    FileHandle.standardError.write(Data("X1ScanCropDemo: no preview image, no crop drawn\n".utf8))
+                }
+            }
             model.pointer = PixelCoordinate(x: 1000, y: 400)
             try? await Task.sleep(for: .milliseconds(300))
             FileHandle.standardError.write(Data("""

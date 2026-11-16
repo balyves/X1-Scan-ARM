@@ -240,10 +240,24 @@ private struct OutputSection: View {
                 }
             }
         }
+        let wholePreviewNote = String(localized: "Exports the whole preview, without the crop.",
+                                      comment: "Panel note under Export Preview, shown only while a crop is drawn")
         CompactDetailRow {
             Button(String(localized: "Export Preview", comment: "Panel button")) { model.export() }
                 .disabled(!model.toolbar.canExport)
                 .help(Text("Export the preview with these settings (⇧⌘E)", comment: "Tooltip"))
+                // VoiceOver hears the note with the button, before using it.
+                .accessibilityHint(model.cropRect != nil ? wholePreviewNote : "")
+        }
+        if model.cropRect != nil {
+            // Visible without hovering: with a crop drawn, one could expect a cropped file.
+            CompactDetailRow {
+                Text(wholePreviewNote)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityHidden(true)  // already the button's hint
+            }
         }
         switch model.lastExport {
         case .success(let url):
