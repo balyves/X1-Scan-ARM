@@ -247,7 +247,8 @@ Recorded on 2026-11-14. Nothing here changes what is sent to a scanner.
 ### Fixes
 
 - Stop is red (prominent) only while a preview runs.
-- Histogram: square-root scale by default, logarithmic as an option.
+- Histogram: linear scale by default, logarithmic as an option (square root
+  by default until 2026-11-16).
 
 ### Debug builds
 

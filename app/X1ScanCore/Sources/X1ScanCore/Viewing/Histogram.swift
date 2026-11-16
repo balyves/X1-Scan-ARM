@@ -34,8 +34,9 @@ public struct Histogram: Sendable, Hashable {
         self.init(bins: [red, green, blue], pixelCount: end / 3)
     }
 
-    /// Vertical scale of the drawing. Square root by default: a linear scale
-    /// lets the tallest bins flatten everything else.
+    /// Vertical scale of the drawing. Linear by default (heights proportional
+    /// to pixel counts); logarithmic as an option, for the small bins that a
+    /// few tall ones flatten. Square root is kept for callers that want it.
     public enum Scale: String, Sendable, Hashable, CaseIterable {
         case linear
         case squareRoot
@@ -43,7 +44,7 @@ public struct Histogram: Sendable, Hashable {
     }
 
     /// Bins scaled to 0...1 for drawing, against the largest bin of all channels.
-    public func normalized(scale: Scale = .squareRoot) -> [[Double]] {
+    public func normalized(scale: Scale = .linear) -> [[Double]] {
         let transform: (Int) -> Double = switch scale {
         case .linear: { Double($0) }
         case .squareRoot: { Double($0).squareRoot() }

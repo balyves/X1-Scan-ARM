@@ -2,8 +2,8 @@
 import SwiftUI
 import X1ScanCore
 
-/// RGB histogram of the corrected values (what is exported). Square-root
-/// scale by default, logarithmic as an option. Drawn straight on the panel
+/// RGB histogram of the corrected values (what is exported). Linear scale by
+/// default, logarithmic as an option. Drawn straight on the panel
 /// background, without a box. Channels add up in dark mode (overlaps turn
 /// white) and multiply in light mode (overlaps turn neutral grey), so that
 /// the drawing order does not tint the result and a neutral image reads as
@@ -15,7 +15,7 @@ struct HistogramView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: CompactPanelMetrics.rowSpacing) {
-            let bins = model.histogram.normalized(scale: logarithmic ? .logarithmic : .squareRoot)
+            let bins = model.histogram.normalized(scale: logarithmic ? .logarithmic : .linear)
             let dark = colorScheme == .dark
             Canvas { context, size in
                 context.blendMode = dark ? .plusLighter : .multiply

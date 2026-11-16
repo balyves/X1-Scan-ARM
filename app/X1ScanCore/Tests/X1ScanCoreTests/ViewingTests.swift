@@ -185,7 +185,7 @@ struct ImageModelTests {
         let histogram = Histogram(bins: [red, zeros, zeros], pixelCount: 10_100)
         #expect(histogram.normalized(scale: .linear)[0][1] == 0.01)
         #expect(histogram.normalized(scale: .squareRoot)[0][1] == 0.1)
-        #expect(histogram.normalized().first?[1] == 0.1, "square root by default")
+        #expect(histogram.normalized().first?[1] == 0.01, "linear by default")
         let log = histogram.normalized(scale: .logarithmic)[0][1]
         #expect(abs(log - log1p(100) / log1p(10_000)) < 1e-12)
     }
