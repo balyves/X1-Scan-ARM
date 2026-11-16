@@ -313,6 +313,7 @@ private struct ActionButtons: View {
                     Text("Preview", comment: "Menu item and toolbar button").frame(maxWidth: .infinity)
                 }
                 .disabled(!toolbar.canPreview)
+                .tint(toolbar.canPreview ? nil : .gray)  // a disabled prominent button stays tinted in dark mode
                 .help(toolbar.previewBlock.map(Strings.previewBlockShort)
                       ?? (toolbar.previewNeedsConfirmation
                           ? String(localized: "Run FlexColor's captured preview on the real X1 (⌘R)", comment: "Tooltip")
@@ -324,6 +325,7 @@ private struct ActionButtons: View {
                 Text("Scan", comment: "Toolbar button").frame(maxWidth: .infinity)
             }
             .disabled(!toolbar.canScan)
+            .tint(toolbar.canScan ? nil : .gray)  // a disabled prominent button stays tinted in dark mode
             .help(Text("Scanning comes in a later version.", comment: "Tooltip"))
         }
         .controlSize(.large)
