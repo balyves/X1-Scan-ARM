@@ -199,3 +199,41 @@ struct CompactSliderScaleTests {
         #expect(format.value(forSliderPosition: 0.25) == 0.32, "√(0.1 × 1) ≈ 0.316, two digits")
     }
 }
+
+struct CompactPopUpIndexTests {
+    private typealias PopUp = CompactPopUp<String?>
+    private let sections: [[PopUp.Item]] = [
+        [.init("Not specified", nil)],
+        [.init("6×7", "a"), .init("4×5", "b")],
+    ]
+
+    @Test func separatorTakesAnIndex() {
+        // Menu: 0 Not specified, 1 separator, 2 6×7, 3 4×5.
+        #expect(PopUp.menuIndex(of: nil, in: sections) == 0)
+        #expect(PopUp.menuIndex(of: "a", in: sections) == 2)
+        #expect(PopUp.menuIndex(of: "b", in: sections) == 3)
+        #expect(PopUp.menuIndex(of: "z", in: sections) == nil)
+        #expect(PopUp.value(atMenuIndex: 0, in: sections) == .some(nil))
+        #expect(PopUp.value(atMenuIndex: 1, in: sections) == nil, "the separator has no value")
+        #expect(PopUp.value(atMenuIndex: 3, in: sections) == .some("b"))
+        #expect(PopUp.value(atMenuIndex: 4, in: sections) == nil)
+        #expect(PopUp.value(atMenuIndex: -1, in: sections) == nil)
+    }
+
+    @Test func emptySectionAddsNoSeparator() {
+        let noHolders: [[PopUp.Item]] = [[.init("Not specified", nil)], []]
+        #expect(PopUp.menuIndex(of: nil, in: noHolders) == 0)
+        #expect(PopUp.value(atMenuIndex: 1, in: noHolders) == nil)
+        let single: [[CompactPopUp<Int>.Item]] = [[.init("A", 1), .init("B", 2)]]
+        #expect(CompactPopUp<Int>.value(atMenuIndex: 1, in: single) == 2)
+    }
+
+    @Test func noSeparatorFirstOrLast() {
+        typealias Ints = CompactPopUp<Int>
+        let sections: [[Ints.Item]] = [[], [.init("A", 1)], [], [.init("B", 2)], []]
+        // Menu: 0 A, 1 separator, 2 B.
+        #expect(Ints.menu(of: sections).map { $0?.title } == ["A", nil, "B"])
+        #expect(Ints.menuIndex(of: 1, in: sections) == 0 && Ints.menuIndex(of: 2, in: sections) == 2)
+        #expect(Ints.menu(of: [[], []]).isEmpty)
+    }
+}

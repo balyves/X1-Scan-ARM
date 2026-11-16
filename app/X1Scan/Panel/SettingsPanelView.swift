@@ -6,9 +6,9 @@ import X1ScanCore
 
 /// The settings panel on the right (step 3): Original, Main / Advanced tabs,
 /// Output, and the Preview and Scan buttons. Small controls everywhere. The
-/// Settings section follows the compact panel conventions
-/// (.claude/skills/compact-settings-panel/SKILL.md); the others still use
-/// PanelSectionView until they are converted.
+/// Original and Settings sections follow the compact panel conventions
+/// (.claude/skills/compact-settings-panel/SKILL.md); Output still uses
+/// PanelSectionView until it is converted.
 struct SettingsPanelView: View {
     @Bindable var model: AppModel
 
@@ -16,7 +16,8 @@ struct SettingsPanelView: View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    PanelSectionView(model: model, section: .original, title: Strings.panelSection(.original)) {
+                    CompactSection(Strings.panelSection(.original), foldTexts: Strings.foldTexts,
+                                   isExpanded: model.panel.expansion(of: .original)) {
                         OriginalSection(model: model)
                     }
                     CompactSection(Strings.panelSection(.settings), foldTexts: Strings.foldTexts,
@@ -98,46 +99,37 @@ private struct PanelRow<Control: View>: View {
 private struct OriginalSection: View {
     @Bindable var model: AppModel
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            PanelRow(label: String(localized: "Film", comment: "Panel label: film type")) {
-                Picker(String(localized: "Film", comment: "Panel label: film type"), selection: $model.scanSettings.filmType) {
-                    ForEach(FilmType.allCases, id: \.self) { Text(Strings.filmType($0)).tag($0) }
-                }
-                .labelsHidden()
-            }
-            PanelRow(label: String(localized: "Holder", comment: "Panel label: film holder")) {
-                HStack(spacing: 4) {
-                    Picker(String(localized: "Holder", comment: "Panel label: film holder"),
-                           selection: Binding { model.selectedHolder?.id } set: { model.scanSettings.holderID = $0 }) {
-                        Text("Not specified", comment: "Holder placeholder").tag(String?.none)
-                        if !model.holders.ownedHolders.isEmpty { Divider() }
-                        ForEach(model.holders.ownedHolders) { holder in
-                            Text(Strings.holderMenuTitle(holder)).tag(Optional(holder.id))
-                        }
-                    }
-                    .labelsHidden()
-                    Button {
-                        NSApp.sendAction(#selector(AppDelegate.showHolderSettings(_:)), to: nil, from: nil)
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
-                    }
-                    .buttonStyle(.borderless)
-                    .help(Text("Choose the holders shown here (Settings > Holders)", comment: "Tooltip"))
-                }
-            }
-            NotYetNote()
-        }
+    /// Tooltip of both rows: saved, but not sent to the scanner yet.
+    private static var notYet: String {
+        String(localized: "Saved; applied to the scanner with real scans (a later step).",
+               comment: "Tooltip of the Film and Holder rows of the settings panel")
     }
-}
 
-/// Saved, but not sent to the scanner yet.
-private struct NotYetNote: View {
     var body: some View {
-        Text("Saved; applied to the scanner with real scans (a later step).", comment: "Panel note")
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            .fixedSize(horizontal: false, vertical: true)
+        let film = String(localized: "Film", comment: "Panel label: film type")
+        let holder = String(localized: "Holder", comment: "Panel label: film holder")
+        CompactControlRow(film, help: Self.notYet) {
+            CompactPopUp(film, help: Self.notYet, selection: $model.scanSettings.filmType,
+                         items: FilmType.allCases.map { .init(Strings.filmType($0), $0) })
+        }
+        CompactControlRow(holder, help: Self.notYet) {
+            HStack(spacing: CompactPanelMetrics.columnSpacing) {
+                CompactPopUp(holder, help: Self.notYet,
+                             selection: Binding { model.selectedHolder?.id } set: { model.scanSettings.holderID = $0 },
+                             sections: [
+                                [.init(String(localized: "Not specified", comment: "Holder placeholder"), nil)],
+                                model.holders.ownedHolders.map { .init(Strings.holderMenuTitle($0), Optional($0.id)) },
+                             ])
+                Button {
+                    NSApp.sendAction(#selector(AppDelegate.showHolderSettings(_:)), to: nil, from: nil)
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                }
+                .buttonStyle(.borderless)
+                .help(Text("Choose the holders shown here (Settings > Holders)", comment: "Tooltip"))
+                .accessibilityLabel(Text("Edit Holders", comment: "VoiceOver label of the … button next to the holder menu"))
+            }
+        }
     }
 }
 

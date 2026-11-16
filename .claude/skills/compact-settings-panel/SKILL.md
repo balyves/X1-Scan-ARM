@@ -24,7 +24,13 @@ with the components below when they are touched.
 - `CompactSliderRow(value:format:texts:)`: a number on one row. `texts`
   comes from `Strings.sliderRow(label:unit:format:)`; for an `Int` setting,
   `value` is `Binding(rounding: $model.…)`.
-- `CompactInfoRow(label, value:)`: a read-only value on one row.
+- `CompactInfoRow(label, value:help:)`: a read-only value on one row.
+- `CompactControlRow(label, help:) { … }`: a choice or an action on one row,
+  the control across the whole control column.
+- `CompactPopUp(label, selection:items:)` or `(…, sections:)`: a menu that
+  fills the control column (a SwiftUI `Picker` keeps the width of its
+  longest item on macOS and cannot be stretched). Sections are separated in
+  the menu; titles come translated; `label` is read by VoiceOver.
 - `CompactPanelMetrics`: the grid (label column, field and unit widths,
   column, row and group spacings, content inset, section insets). Use these
   constants; do not hard-code sizes.
@@ -99,8 +105,16 @@ passes every string, already translated (see Text and languages).
 - A double-click on the label restores the default value. The label's
   tooltip says what that default is (value and unit). VoiceOver gets the same
   action as a named accessibility action.
-- Choices are pickers with hidden labels (`.labelsHidden()`), placed in the
-  control column after the label. Read-only values are `CompactInfoRow`.
+- Every menu is a `CompactPopUp` in a `CompactControlRow`: all menus start
+  at the same x and end at the same edge, or just before the small button
+  that goes with them (for example "…" to edit the list, in the same row),
+  whatever the length of their items; long titles are truncated in the
+  middle. Menu titles follow the control size (as the system's menus do),
+  not `.callout`. An explanation of a menu goes in `CompactPopUp(help:)`,
+  which reaches both the tooltip and VoiceOver. Read-only values are
+  `CompactInfoRow`.
+- Menu titles are short enough to be read whole at the minimum width:
+  shorten the wording rather than relying on truncation.
 
 ## No decoration
 
@@ -159,8 +173,8 @@ passes every string, already translated (see Text and languages).
   slider or menu that takes the free space. A row must look right at the
   minimum width and not spread out at the maximum. No label/control row
   reflows onto two lines when the panel narrows; notes wrap.
-- Sections not converted yet (`PanelSectionView` / `PanelRow`, today Original
-  and Output) do not follow this rule yet: at the minimum width a menu can be
+- Sections not converted yet (`PanelSectionView` / `PanelRow`, today
+  Output) do not follow this rule yet: at the minimum width a menu can be
   truncated, at the maximum buttons drift to the edge. Converting them fixes
   that.
 - Content that does not fit vertically scrolls in the panel's

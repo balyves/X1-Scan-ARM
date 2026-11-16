@@ -1887,6 +1887,7 @@
       }
     },
     "Saved; applied to the scanner with real scans (a later step).": {
+      "comment": "Tooltip of the Film and Holder rows of the settings panel",
       "extractionState": "manual",
       "localizations": {
         "fr": {
@@ -2509,6 +2510,18 @@
           "stringUnit": {
             "state": "translated",
             "value": "Double-cliquer pour revenir à %@"
+          }
+        }
+      }
+    },
+    "Edit Holders": {
+      "comment": "VoiceOver label of the … button next to the holder menu",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifier les porte-films"
           }
         }
       }

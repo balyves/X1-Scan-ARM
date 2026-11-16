@@ -110,6 +110,37 @@ public struct CompactSection<Content: View>: View {
     }
 }
 
+/// A choice or an action on one row: label column, then the control across
+/// the remaining width, so that every menu of the panel starts at the same x
+/// and ends at the same edge. The control carries its own accessibility label
+/// (`CompactPopUp(label:)`); the visible label is hidden from VoiceOver to
+/// avoid reading it twice. `help` is the label's tooltip only: give the
+/// control its own (`CompactPopUp(help:)`), which also reaches VoiceOver.
+public struct CompactControlRow<Control: View>: View {
+    let label: String
+    let help: String?
+    @ViewBuilder var control: () -> Control
+
+    public init(_ label: String, help: String? = nil, @ViewBuilder control: @escaping () -> Control) {
+        self.label = label
+        self.help = help
+        self.control = control
+    }
+
+    public var body: some View {
+        HStack(alignment: .center, spacing: CompactPanelMetrics.columnSpacing) {
+            Text(label)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .frame(width: CompactPanelMetrics.labelWidth, alignment: .leading)
+                .help(help ?? "")
+                .accessibilityHidden(true)
+            control()
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+}
+
 /// A read-only value on one row: label column, then the value. An
 /// explanation goes in the tooltip, not under the row.
 public struct CompactInfoRow: View {
