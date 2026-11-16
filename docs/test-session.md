@@ -392,7 +392,8 @@ Known risks, as written before the first run:
   real preview; for the first run of the day, the X1 switched on in E2
   counts), then click **Start Preview** (Return does not start it).
 - Watch the scanner. The bottom bar shows the phases (initialising,
-  calibrating, references, scanning, finishing). **Stop** (⌘. or Esc)
+  calibrating, reading references, then "Preview: n of m lines" while the
+  image is read, finishing). **Stop** (⌘. or Esc)
   stays available: before SCAN nothing more is sent, after SCAN only the
   stop command, then the app waits for the scanner to be ready. During the
   scan, wait up to 30 s for Stop to act.

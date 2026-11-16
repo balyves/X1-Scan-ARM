@@ -695,17 +695,6 @@
         }
       }
     },
-    "Scanning": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Numérisation"
-          }
-        }
-      }
-    },
     "Scanning (%@)": {
       "extractionState": "manual",
       "localizations": {
@@ -724,23 +713,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "La numérisation viendra dans une version ultérieure."
-          }
-        }
-      }
-    },
-    "Scanning: %lld of %lld lines": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Numérisation : %1$lld lignes sur %2$lld"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Scanning: %1$lld of %2$lld lines"
           }
         }
       }
@@ -2738,6 +2710,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aucun pixel sous le pointeur"
+          }
+        }
+      }
+    },
+    "Preview: %lld of %lld lines": {
+      "comment": "Status while the preview reads the image lines",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preview: %1$lld of %2$lld lines"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aperçu : %1$lld lignes sur %2$lld"
+          }
+        }
+      }
+    },
+    "Reading the image": {
+      "comment": "Preview phase: image lines are read",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lecture de l'image"
           }
         }
       }

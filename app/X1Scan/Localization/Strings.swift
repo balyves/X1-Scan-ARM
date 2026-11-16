@@ -49,7 +49,8 @@ enum Strings {
         case .initialisation: String(localized: "Initialising", comment: "Preview phase")
         case .calibration: String(localized: "Calibrating", comment: "Preview phase")
         case .references: String(localized: "Reading references", comment: "Preview phase: white and dark references")
-        case .scanning: String(localized: "Scanning", comment: "Preview phase")
+        // Not shown today: sessionStatus shows "Preview: n of m lines" for this phase.
+        case .scanning: String(localized: "Reading the image", comment: "Preview phase: image lines are read")
         case .finishing: String(localized: "Finishing", comment: "Preview phase")
         }
     }
@@ -86,8 +87,9 @@ enum Strings {
         case .running:
             guard let phase = session.progress.phase else { return String(localized: "Starting", comment: "Status") }
             if phase == .scanning {
-                return String(localized: "Scanning: \(session.progress.linesReceived) of \(session.progress.linesExpected) lines",
-                              comment: "Status during the scan")
+                // The only session today is a preview; a real scan will say "Scanning: …".
+                return String(localized: "Preview: \(session.progress.linesReceived) of \(session.progress.linesExpected) lines",
+                              comment: "Status while the preview reads the image lines")
             }
             return Self.phase(phase)
         case .stopping:
