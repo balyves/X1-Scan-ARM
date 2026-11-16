@@ -304,6 +304,10 @@ Recorded on 2026-11-14. Nothing here changes what is sent to a scanner.
   settings, as the export does.
 - `{n}`: first number free in the folder from a start value, with 1 to 6
   digits.
+- `{roll}` with an empty roll name (or spaces only) is removed with its
+  separators, so that "X1-{roll}-{frame}" gives "X1-07", not "X1--07": the
+  run of separators before it, or after it at the start of the name; glued
+  to other text on either side, only the token goes (2026-11-16).
 - The builder (Export palette and Settings > Export) shows the sanitised
   name of the next file; the name actually written is computed at export
   time. Scan setting tokens (resolution, film, holder) come with real scans.

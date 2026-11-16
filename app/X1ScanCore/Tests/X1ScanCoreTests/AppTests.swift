@@ -91,6 +91,27 @@ struct ExportTests {
         #expect(name("{roll}", configure: { $0.roll = "a/b" }) == "a-b.tif", "the roll name is sanitised too")
     }
 
+    @Test func emptyRollTakesItsSeparatorWithIt() {
+        let frame: (inout ExportSettings) -> Void = { $0.frame = 7 }
+        #expect(name("X1-{roll}-{frame}", configure: frame) == "X1-07.tif", "not X1--07")
+        #expect(name("{roll}-{frame}", configure: frame) == "07.tif", "first: the separator after goes")
+        #expect(name("{frame}_{roll}", configure: frame) == "07.tif", "last: the separator before goes")
+        #expect(name("X1-{roll}{frame}", configure: frame) == "X1-07.tif", "glued to the next token")
+        #expect(name("Scan{roll}_{frame}", configure: frame) == "Scan_07.tif", "glued before: nothing welded")
+        #expect(name("{frame}{roll}-{date}", configure: frame) == "07-2026-11-12.tif")
+        #expect(name("X1 - {roll} - {frame}", configure: frame) == "X1 - 07.tif", "a spaced separator goes whole")
+        #expect(name("{roll} - {frame}", configure: frame) == "07.tif")
+        #expect(name("{roll}{roll}") == "X1-preview-2026-11-12-001.tif", "two empty rolls: default template")
+        #expect(name("A-{roll}-{roll}-B") == "A-B.tif", "every occurrence")
+        #expect(name("X1-{roll}-{frame}", configure: { $0.frame = 7; $0.roll = "  " }) == "X1-07.tif",
+                "spaces only: empty")
+        #expect(name("X1-{roll}-{frame}", configure: { $0.frame = 7; $0.roll = "R1" }) == "X1-R1-07.tif",
+                "a roll name keeps both separators")
+        #expect(name("{roll}", taken: []) == "X1-preview-2026-11-12-001.tif", "nothing left: default template")
+        #expect(ExportToken.roll.removed(from: "X1-{roll}-{frame}") == "X1-{frame}")
+        #expect(ExportToken.frame.removed(from: "{roll}") == "{roll}", "other tokens untouched")
+    }
+
     @Test func settingsKeepTheirLimits() {
         var settings = ExportSettings()
         settings.frame = 0

@@ -18,6 +18,42 @@ public enum ExportToken: String, Sendable, Hashable, CaseIterable {
     /// Characters that already separate two parts of a name.
     static let separators: Set<Character> = ["-", "_", " ", "."]
 
+    /// `template` without this placeholder, for a token whose value is empty,
+    /// so that "X1-{roll}-{frame}" gives "X1-07", not "X1--07":
+    /// - glued to other text on either side ("Scan{roll}_{frame}",
+    ///   "X1-{roll}{frame}"), only the placeholder goes: it brought no
+    ///   separator of its own;
+    /// - otherwise the run of separators before it goes with it
+    ///   ("X1 - {roll} - {frame}" gives "X1 - {frame}"), or, at the start of
+    ///   the name, the run after it ("{roll}-{frame}" gives "{frame}").
+    public func removed(from template: String) -> String {
+        var characters = Array(template)
+        let token = Array(placeholder)
+        let isSeparator = { (character: Character) in Self.separators.contains(character) }
+        var index = 0
+        while index + token.count <= characters.count {
+            guard Array(characters[index..<(index + token.count)]) == token else { index += 1; continue }
+            let start = index, end = index + token.count
+            let gluedBefore = start > 0 && !isSeparator(characters[start - 1])
+            let gluedAfter = end < characters.count && !isSeparator(characters[end])
+            var range = start..<end
+            if !gluedBefore && !gluedAfter {
+                var before = start
+                while before > 0, isSeparator(characters[before - 1]) { before -= 1 }
+                if before < start {
+                    range = before..<end
+                } else {
+                    var after = end
+                    while after < characters.count, isSeparator(characters[after]) { after += 1 }
+                    range = start..<after
+                }
+            }
+            characters.removeSubrange(range)
+            index = range.lowerBound
+        }
+        return String(characters)
+    }
+
     /// Inserts the placeholder into `text` at the character offset `caret`
     /// (replacing `selectionLength` characters), adding a "-" before and after
     /// where the neighbour is not already a separator. A caret out of range
@@ -47,8 +83,10 @@ public struct ExportSettings: Sendable, Hashable, Codable {
 
     /// Destination folder; nil until chosen.
     public var folder: URL?
-    /// File name without extension. Tokens (`ExportToken`): `{roll}`,
-    /// `{frame}` (two digits at least), `{date}` (yyyy-MM-dd), `{time}`
+    /// File name without extension. Tokens (`ExportToken`): `{roll}` (when
+    /// the roll name is empty, removed with its separators, see
+    /// `ExportToken.removed(from:)`), `{frame}` (two digits at least),
+    /// `{date}` (yyyy-MM-dd), `{time}`
     /// (HH-mm-ss), `{n}` (the first number free in the folder from
     /// `counterStart`, `counterDigits` digits).
     public var nameTemplate: String = ExportSettings.defaultTemplate
@@ -191,16 +229,20 @@ public enum ExportService {
     /// The file name for `settings` at `date`, with the first counter whose
     /// file does not exist (from `counterStart`). Without `{n}`, the plain
     /// name is used if free, then `-2`, `-3`… (with `counterDigits` digits)
-    /// are added. An empty result uses the default template.
+    /// are added. An empty roll name removes `{roll}` and its separators
+    /// first; an empty result uses the default template.
     public static func fileName(settings: ExportSettings, date: Date, calendar: Calendar = .current,
                                 exists: (String) -> Bool) -> String {
         let parts = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
         let day = String(format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
         let time = String(format: "%02d-%02d-%02d", parts.hour ?? 0, parts.minute ?? 0, parts.second ?? 0)
         let frame = padded(settings.frame, 2)
+        // An empty roll name takes its separator with it ("X1--07" would look like a gap).
+        let rollIsEmpty = settings.roll.allSatisfy(\.isWhitespace)
         func name(_ template: String) -> String? {
+            let template = rollIsEmpty ? ExportToken.roll.removed(from: template) : template
             // {roll} last: a roll name that contains a token is kept as typed.
-            sanitizedFileName(template
+            return sanitizedFileName(template
                 .replacingOccurrences(of: ExportToken.frame.placeholder, with: frame)
                 .replacingOccurrences(of: ExportToken.date.placeholder, with: day)
                 .replacingOccurrences(of: ExportToken.time.placeholder, with: time)
