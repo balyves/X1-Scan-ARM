@@ -16,7 +16,10 @@ struct InspectorLayoutTests {
         layout.setWidth(.infinity)
         #expect(layout.width == InspectorLayout.defaultWidth)
         layout.setWidth(10_000)
-        #expect(layout.width == InspectorLayout.maximumWidth && InspectorLayout.maximumWidth >= 600)
+        #expect(layout.width == InspectorLayout.maximumWidth)
+        // Decision of 2026-11-16 (docs/decisions.md, step 3): 280-480 pt, 300 at first launch.
+        #expect(InspectorLayout.minimumWidth == 280 && InspectorLayout.maximumWidth == 480
+                && InspectorLayout.defaultWidth == 300)
         layout.toggleFolded(.histogram)
         layout.toggleFolded(.output)
         #expect(layout.isFolded(.histogram) && layout.isFolded(.output))

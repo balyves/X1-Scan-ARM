@@ -330,7 +330,9 @@ Recorded on 2026-11-14. Nothing here changes what is sent to a scanner.
 - No window toolbar. From left to right: the image area; a narrow tool
   column (hand, zoom, crop; rotate, add frame, auto adjust disabled with a
   tooltip until they exist); the **settings panel**. Tool column and panel
-  are one split view item: they resize together (260-640 pt for the panel)
+  are one split view item: they resize together (280-480 pt for the panel,
+  300 at first launch, then remembered; 260-640 until 2026-11-16, narrowed
+  for the compact panel)
   and hide together with one command, View > Hide Settings Panel (⌥⌘P).
   The item has a holding priority of 260, just above the image area's 250:
   at 750 it was above the divider drag and froze the panel at its minimum

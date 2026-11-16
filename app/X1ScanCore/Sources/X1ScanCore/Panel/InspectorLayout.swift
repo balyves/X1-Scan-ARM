@@ -19,8 +19,12 @@ public enum PanelTab: String, Sendable, Hashable, CaseIterable, Codable {
 /// The settings panel on the right (step 3): width, hidden or shown,
 /// folded sections, tab. Replaces the palettes (PaletteLayout) of step 2.
 public struct InspectorLayout: Sendable, Hashable, Codable {
-    public static let minimumWidth: Double = 260
-    public static let maximumWidth: Double = 640
+    /// Bounds of the user-resizable panel (compact settings panel conventions):
+    /// at the minimum a slider row keeps a usable slider next to a 5-digit
+    /// field; beyond the maximum rows would only spread out.
+    public static let minimumWidth: Double = 280
+    public static let maximumWidth: Double = 480
+    /// Width at first launch; then the width the user left is remembered.
     public static let defaultWidth: Double = 300
 
     public private(set) var width: Double = InspectorLayout.defaultWidth

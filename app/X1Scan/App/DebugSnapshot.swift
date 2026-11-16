@@ -49,7 +49,10 @@ enum DebugSnapshot {
                 report("smaller")
                 if let controller = window.contentViewController as? NSSplitViewController {
                     let split = controller.splitView
-                    for width in [400.0, 600.0] {
+                    // Each bound of the panel (tool column included), then beyond both.
+                    let tool = PanelColumnView.toolWidth
+                    for width in [InspectorLayout.minimumWidth + tool, InspectorLayout.maximumWidth + tool,
+                                  InspectorLayout.minimumWidth + tool - 40, InspectorLayout.maximumWidth + tool + 120] {
                         split.setPosition(split.bounds.width - width - split.dividerThickness, ofDividerAt: 0)
                         try? await Task.sleep(for: .milliseconds(300))
                         report("divider \(Int(width))")

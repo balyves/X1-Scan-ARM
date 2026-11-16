@@ -143,13 +143,20 @@ passes every string, already translated (see Text and languages).
 
 ## Width and scrolling
 
-- The panel content is laid out for a fixed width: rows do not stretch or
-  reflow when the window changes. Content that does not fit vertically
-  scrolls in the panel's `ScrollView`; the Preview and Scan buttons stay
-  fixed below it.
-- Note: the panel is resizable today (260-640 pt, docs/decisions.md, step
-  3). Until that decision changes, a row must look right at 260 pt and not
-  spread out at 640 pt: fixed columns, the slider takes the free space.
+- The panel is resizable within bounds: `InspectorLayout.minimumWidth` to
+  `maximumWidth` (280-480 pt), compact by default (`defaultWidth`, 300 pt),
+  and the width the user leaves is remembered. The window resizes the image
+  area, not the panel.
+- Rows are built for that range: fixed columns (label, field, unit) and a
+  slider or menu that takes the free space. A row must look right at the
+  minimum width and not spread out at the maximum. No label/control row
+  reflows onto two lines when the panel narrows; notes wrap.
+- Sections not converted yet (`PanelSectionView` / `PanelRow`, today Original
+  and Output) do not follow this rule yet: at the minimum width a menu can be
+  truncated, at the maximum buttons drift to the edge. Converting them fixes
+  that.
+- Content that does not fit vertically scrolls in the panel's
+  `ScrollView`; the Preview and Scan buttons stay fixed below it.
 
 ## Checking a change
 
