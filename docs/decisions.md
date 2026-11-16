@@ -482,9 +482,10 @@ sent by our code: only FlexColor's captured preview, byte for byte.
 - Hidden setting, off by default, no interface:
   `defaults write org.x1scanarm.X1Scan EnableRealPreview -bool YES`.
   Off: Preview stays disabled on the real X1, as before.
-- On: Preview (⌘R or the panel) asks, every time, for three ticked
-  checks: the X1 is on, a holder is in place, FlexColor is closed. Start is
-  disabled until all three are ticked, and Return does not start it.
+- On: Preview (⌘R or the panel) asks, every time, for ticked checks: the
+  X1 is on, a holder is in place, FlexColor is closed, and (since
+  2026-11-16) the X1 was switched off and on since the last real preview.
+  Start is disabled until all are ticked, and Return does not start it.
 - No identity read while a preview runs; changing the source stops a
   preview with the usual stop rules; quitting waits for the stop sequence.
 - Any preview on the real X1 that does not complete (anomaly, Stop, change
@@ -646,7 +647,9 @@ explicitly. It is only for runs the user has approved (CLAUDE.md, rule 4).
   2 048 × 3 with a session open, modes set and the carriage possibly moved:
   a second run without switching the X1 off would pass the check. That 2 048
   × 3 means "just switched on" is a **[hypothesis]**; the protection then
-  rests on the advice of every alert (switch off and on again).
+  rests on the advice of every alert (switch off and on again) and on a
+  fourth check in the confirmation: "the X1 was switched off and on since
+  the last real preview" (user's decision).
 - The warm sequence could not be chosen at that read: the two sequences
   already differ before it (the page 0x28 read, cold only). Using both would
   have meant sending a command FlexColor did not send in one of them. Kept

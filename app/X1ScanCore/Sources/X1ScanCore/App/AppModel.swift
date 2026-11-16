@@ -35,19 +35,25 @@ public struct ScannerStatusLine: Sendable, Hashable {
     }
 }
 
-/// The three checks the user confirms before every preview on the real X1.
+/// The four checks the user confirms before every preview on the real X1.
 public struct RealPreviewConfirmation: Sendable, Hashable {
     public var scannerOn = false
     public var holderInPlace = false
     public var flexColorClosed = false
+    /// The X1 was switched off and on since the last real preview: a cold run
+    /// stopped during calibration still shows the power-on values on page
+    /// 0x20, so the power-on check alone does not catch it (docs/decisions.md).
+    public var powerCycledSinceLastRealPreview = false
 
-    public init(scannerOn: Bool = false, holderInPlace: Bool = false, flexColorClosed: Bool = false) {
+    public init(scannerOn: Bool = false, holderInPlace: Bool = false, flexColorClosed: Bool = false,
+                powerCycledSinceLastRealPreview: Bool = false) {
         self.scannerOn = scannerOn
         self.holderInPlace = holderInPlace
         self.flexColorClosed = flexColorClosed
+        self.powerCycledSinceLastRealPreview = powerCycledSinceLastRealPreview
     }
 
-    public var isComplete: Bool { scannerOn && holderInPlace && flexColorClosed }
+    public var isComplete: Bool { scannerOn && holderInPlace && flexColorClosed && powerCycledSinceLastRealPreview }
 }
 
 public enum RealPreviewError: Error, Hashable, CustomStringConvertible {
@@ -248,7 +254,7 @@ public final class AppModel {
     }
 
     /// FlexColor's captured preview on the real X1 (step 4): only with the
-    /// hidden setting, the real source, nothing running, and all three checks
+    /// hidden setting, the real source, nothing running, and all four checks
     /// confirmed. The transport lets through only the captured sequence; every
     /// command and response is logged under `captureFolder`. Returns the log.
     @discardableResult

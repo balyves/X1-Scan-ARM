@@ -87,7 +87,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     // MARK: Actions
 
     /// ⌘R and the panel's Preview button. On the real X1 (hidden setting on),
-    /// the three checks are confirmed first, every time.
+    /// the four checks are confirmed first, every time.
     @objc func startPreview(_ sender: Any?) {
         guard model.toolbar.previewNeedsConfirmation else {
             model.startPreview()
@@ -225,7 +225,7 @@ enum ExportFolderPanel {
 }
 
 /// Asked before every preview on the real X1: Start is enabled only when
-/// the three boxes are ticked.
+/// the four boxes are ticked.
 @MainActor
 enum RealPreviewConfirmationAlert {
     static func run(for window: NSWindow, start: @escaping @MainActor (RealPreviewConfirmation) -> Void) {
@@ -239,11 +239,12 @@ enum RealPreviewConfirmationAlert {
             String(localized: "The X1 is on", comment: "Real preview check"),
             String(localized: "A holder is in place", comment: "Real preview check"),
             String(localized: "FlexColor is closed", comment: "Real preview check"),
+            String(localized: "The X1 was switched off and on since the last real preview", comment: "Real preview check"),
         ].map { NSButton(checkboxWithTitle: $0, target: nil, action: nil) }
         let stack = NSStackView(views: boxes)
         stack.orientation = .vertical
         stack.alignment = .leading
-        stack.frame = NSRect(x: 0, y: 0, width: 300, height: 66)
+        stack.frame = NSRect(x: 0, y: 0, width: 420, height: 90)
         alert.accessoryView = stack
         let startButton = alert.addButton(withTitle: String(localized: "Start Preview", comment: "Confirmation button"))
         alert.addButton(withTitle: String(localized: "Cancel", comment: "Button"))
@@ -258,7 +259,8 @@ enum RealPreviewConfirmationAlert {
             withExtendedLifetime(watcher) {}
             guard response == .alertFirstButtonReturn else { return }
             let ticked = boxes.map { $0.state == .on }
-            start(RealPreviewConfirmation(scannerOn: ticked[0], holderInPlace: ticked[1], flexColorClosed: ticked[2]))
+            start(RealPreviewConfirmation(scannerOn: ticked[0], holderInPlace: ticked[1], flexColorClosed: ticked[2],
+                                          powerCycledSinceLastRealPreview: ticked[3]))
         }
     }
 

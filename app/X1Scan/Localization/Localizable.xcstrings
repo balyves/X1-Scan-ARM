@@ -2475,6 +2475,18 @@
           }
         }
       }
+    },
+    "The X1 was switched off and on since the last real preview": {
+      "comment": "Real preview check",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le X1 a été éteint et rallumé depuis le dernier aperçu réel"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

@@ -94,7 +94,12 @@ available; ask.
 
 - `docs/`: protocol, hardware chain, FlexColor internals, 3F format, journal.
 - `tools/x1probe/`: read-only probe (C, IOKit SCSITaskUserClient).
-- `tools/capture/`: lldb capture script for FlexColor on Mojave.
+- `tools/capture/`: lldb capture script for FlexColor on Mojave, and its
+  converter to fixtures.
+- `tests/fixtures/`: FlexColor captures. `preview-sequence.json` (warm,
+  after earlier previews) is replayed by the virtual X1;
+  `preview-sequence-cold.json` (right after power-on) is the only sequence
+  sent to the real X1.
 - `tools/decode/`: preview decoder (Python, numpy, Pillow).
 - `X1Kit/`: Swift package (transport, protocol, preview sequence, image);
   `swift test` runs against the simulator, never against a real scanner.
@@ -103,7 +108,8 @@ available; ask.
   models, `swift test`). The preview runs on the virtual X1; on the real X1,
   only FlexColor's captured preview, behind the hidden setting
   `EnableRealPreview`, a confirmation before every run and
-  `CapturedSequenceGuard` (docs/decisions.md, step 4). Otherwise the real X1
+  `CapturedSequenceGuard` built from the cold capture (docs/decisions.md,
+  step 4 and "Real X1: the sequence right after power-on only"). Otherwise the real X1
   is only read.
 - `tools/git-hooks/`: `x1-check` (serial numbers, scan and firmware files, size,
   commit messages), run by the pre-commit and commit-msg hooks and by the CI.

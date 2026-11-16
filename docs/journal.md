@@ -221,3 +221,10 @@ cold sequence for now, behind a check of the power-on values (2 048 × 3).
 
 To do later: a warm capture right after a cold one, without switching the
 X1 off, to see what triggers the page 0x28 read.
+
+Holder timing in the cold capture (user, 2026-11-16): inserted after
+FlexColor was opened, just before the preview, which matches the 0xD3
+activity between the initialisation and the session start. Test-session E3
+now inserts it at the same point (after Read Identity, just before the
+preview). The confirmation of a real preview gets a fourth check: the X1
+was switched off and on since the last real preview.

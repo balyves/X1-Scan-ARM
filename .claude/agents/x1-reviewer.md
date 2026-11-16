@@ -31,7 +31,10 @@ wrong, not for what is right. Do not approve by default.
   changes including untracked files (`git status`, `git diff`, and read the
   new files).
 - Read `CLAUDE.md`, `docs/decisions.md` and `docs/protocol.md` first. For any
-  protocol value, check it against `tests/fixtures/preview-sequence.json`.
+  protocol value, check it against the captures in `tests/fixtures/`:
+  `preview-sequence.json` (warm, replayed by the virtual X1) and
+  `preview-sequence-cold.json` (right after power-on, the only sequence
+  sent to the real X1).
 - Every finding must point to a file and line and say concretely what goes
   wrong. Do not report vague concerns or matters of taste as problems.
   Verify before reporting: if you are not sure, say so and say what would
@@ -58,7 +61,8 @@ wrong, not for what is right. Do not approve by default.
   Report as **Bloquant** any CDB byte that becomes free (a guard removed or
   loosened, a byte no longer compared), and any page, length, register,
   bank or fixed CDB added or changed without a capture behind it in
-  `tests/fixtures/preview-sequence.json` (or, for 0x00 and 0x03,
+  `tests/fixtures/preview-sequence.json` or
+  `tests/fixtures/preview-sequence-cold.json` (or, for 0x00 and 0x03,
   `tools/x1probe`). Check that the fixture replay test in
   `CommandPolicyTests` still compares the captured pages, lengths and
   registers with these constants exactly, and that `CLAUDE.md` rule 4 and

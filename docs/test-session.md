@@ -356,20 +356,30 @@ Known risks of this first run:
 
 ### E3. The original
 
-- Machine: development Mac. **X1: on.** **FlexColor: closed.**
-- Put the IT8.7/1 target in **the 6×7 holder, reference 50200403**, the one
-  of the captures of 2026-11-12 and 2026-11-16, and insert it as for the
-  capture right after power-on. In the panel, choose this
-  holder (Original > Holder; tick it first in Settings > Holders if needed).
+- Machine: development Mac. **X1: on** (just switched on, only Read
+  Identity since). **FlexColor: closed.** X1 Scan: open, source Real X1.
+- As in the capture right after power-on, where the user inserted the
+  holder after FlexColor was opened, just before the preview: only now,
+  after Read Identity and just before E4, put the IT8.7/1 target in **the
+  6×7 holder, reference 50200403** (the one of the captures of 2026-11-12
+  and 2026-11-16) and insert it. Wait until the X1 has drawn it in and is
+  quiet.
+- In the panel, choose this holder (Original > Holder; tick it first in
+  Settings > Holders if needed).
+- Difference with the capture: FlexColor read the scanner's identity and
+  pages when it opened, before the holder was inserted; X1 Scan sends the
+  same reads when the preview starts, after it. Only reads differ in
+  timing, not in content. **[hypothesis]**: no effect.
 
 ### E4. The preview
 
 - Machine: development Mac. **X1: on.** **FlexColor: closed.** X1 Scan:
   open, source Real X1, nothing else open on the scanner (`x1probe`
   finished).
-- Click **Preview** in the panel (or ⌘R). Tick the three checks (X1 on,
-  holder in place, FlexColor closed), then click **Start Preview** (Return
-  does not start it).
+- Click **Preview** in the panel (or ⌘R). Tick the four checks (X1 on,
+  holder in place, FlexColor closed, X1 switched off and on since the last
+  real preview; for the first run of the day, the X1 switched on in E2
+  counts), then click **Start Preview** (Return does not start it).
 - Watch the scanner. The bottom bar shows the phases (initialising,
   calibrating, references, scanning, finishing). **Stop** (⌘. or Esc)
   stays available: before SCAN nothing more is sent, after SCAN only the

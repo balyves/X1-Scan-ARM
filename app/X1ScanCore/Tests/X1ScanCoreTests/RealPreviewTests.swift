@@ -81,7 +81,8 @@ final class RealPreviewTests {
     }
 
     private var box: ConnectionBox?
-    private let all = RealPreviewConfirmation(scannerOn: true, holderInPlace: true, flexColorClosed: true)
+    private let all = RealPreviewConfirmation(scannerOn: true, holderInPlace: true, flexColorClosed: true,
+                                              powerCycledSinceLastRealPreview: true)
 
     @Test func offByDefault() throws {
         let model = try model(enabled: false)
@@ -99,9 +100,14 @@ final class RealPreviewTests {
         #expect(model.startRealPreview(all) == .failure(.notAllowed), "virtual source")
         model.source = .real
         #expect(model.toolbar.previewBlock == nil && model.toolbar.previewNeedsConfirmation)
-        for missing in [RealPreviewConfirmation(scannerOn: false, holderInPlace: true, flexColorClosed: true),
-                        RealPreviewConfirmation(scannerOn: true, holderInPlace: false, flexColorClosed: true),
-                        RealPreviewConfirmation(scannerOn: true, holderInPlace: true, flexColorClosed: false)] {
+        for missing in [RealPreviewConfirmation(scannerOn: false, holderInPlace: true, flexColorClosed: true,
+                                                powerCycledSinceLastRealPreview: true),
+                        RealPreviewConfirmation(scannerOn: true, holderInPlace: false, flexColorClosed: true,
+                                                powerCycledSinceLastRealPreview: true),
+                        RealPreviewConfirmation(scannerOn: true, holderInPlace: true, flexColorClosed: false,
+                                                powerCycledSinceLastRealPreview: true),
+                        RealPreviewConfirmation(scannerOn: true, holderInPlace: true, flexColorClosed: true,
+                                                powerCycledSinceLastRealPreview: false)] {
             #expect(model.startRealPreview(missing) == .failure(.notAllowed))
         }
         model.startPreview()
