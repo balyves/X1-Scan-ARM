@@ -322,7 +322,7 @@ enum Strings {
         switch startup {
         case .virtual: source(.virtual)
         case .real: source(.real)
-        case .last: String(localized: "Last used", comment: "Setting: scanner source at launch")
+        case .last: String(localized: "Last chosen", comment: "Setting: scanner source at launch, the last source chosen in the interface")
         }
     }
 }

@@ -241,8 +241,12 @@ Recorded on 2026-11-14. Nothing here changes what is sent to a scanner.
   name (`<base>-{date}-{n}`). The palette shows the name of the next file;
   the name actually written is computed again at export time (date, time
   and first free number then), tested.
-- Scanner: source at launch (Virtual X1, Real X1, last used). The real X1
-  is never read at launch.
+- Scanner: source at launch (Virtual X1, Real X1, last chosen). The real X1
+  is never read at launch. "Last chosen" is the last source chosen in the
+  interface; a source imposed at launch (the startup setting, or the
+  `-StartupSource` argument of tools/run-virtual.sh) is never saved
+  (2026-11-16; the setting read "Last used" before). Only a change of source
+  saves: choosing the source already shown saves nothing.
 
 ### Fixes
 

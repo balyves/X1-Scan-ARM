@@ -304,15 +304,37 @@ final class AppModelTests {
         let second = model(defaults: defaults)
         #expect(second.source == .virtual)
         #expect(second.viewport.mode == .fixed && second.viewport.magnification == 1)
-        second.source = .virtual
         second.settings.startupSource = .real
         #expect(model(defaults: defaults).source == .real, "never read at launch")
         #expect(model(defaults: defaults).realStatus == .notRead)
         second.settings.startupSource = .last
-        #expect(model(defaults: defaults).source == .real, "the source of the last session")
+        #expect(model(defaults: defaults).source == .real, "the last source chosen in the interface")
         let third = model(defaults: defaults)
         third.source = .virtual
         #expect(model(defaults: defaults).source == .virtual)
+    }
+
+    /// A source imposed at launch (startup setting, or the -StartupSource
+    /// argument, which UserDefaults reads the same way) is never remembered as
+    /// the last chosen one; only a choice made in the interface is.
+    @Test func aSourceImposedAtLaunchIsNotRemembered() {
+        let defaults = temporaryDefaults()
+        let first = model(defaults: defaults)
+        first.source = .real  // chosen in the interface
+        #expect(defaults.string(forKey: "ScannerSource") == "real")
+        first.settings.startupSource = .virtual
+        let imposed = model(defaults: defaults)  // e.g. tools/run-virtual.sh
+        #expect(imposed.source == .virtual)
+        #expect(defaults.string(forKey: "ScannerSource") == "real", "launching on an imposed source saves nothing")
+        imposed.settings.startupSource = .last
+        #expect(model(defaults: defaults).source == .real, "back to the source chosen in the interface")
+    }
+
+    @Test func firstLaunchWithLastSourceStartsVirtualAndSavesNothing() {
+        let defaults = temporaryDefaults()
+        let model = model(defaults: defaults)
+        #expect(model.source == .virtual)
+        #expect(defaults.string(forKey: "ScannerSource") == nil)
     }
 
     /// Every new preview gets the zoom of Settings > Display, whatever the

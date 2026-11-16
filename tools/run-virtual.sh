@@ -14,10 +14,10 @@
 #   --app PATH         use this "X1 Scan.app" instead of searching
 #
 # Without --app, the most recent Debug build among Xcode's DerivedData and
-# app/build is used. Appearance and language apply to this launch only. The
-# app saves its window and panel layout as usual, and remembers the virtual
-# X1 as the last source used (Settings > Scanner, "last source" starts there
-# next time). Quit X1 Scan first: a running instance would ignore the options.
+# app/build is used. Source, appearance and language apply to this launch
+# only: a source imposed at launch is never saved as the last one used. The
+# app saves its window and panel layout as usual. Quit X1 Scan first: a
+# running instance would ignore the options.
 
 set -u
 repo=$(cd "$(dirname "$0")/.." && pwd)

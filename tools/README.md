@@ -67,9 +67,10 @@ the real scanner. Quit X1 Scan first.
     tools/run-virtual.sh --build --dark  # build Debug first, into app/build
 
 It takes the most recent Debug build in Xcode's DerivedData or in
-`app/build`; `--app PATH` chooses another one. Appearance and language
-apply to that launch only; the app remembers the virtual X1 as the last
-source used.
+`app/build`; `--app PATH` chooses another one. Source, appearance and
+language apply to that launch only (the last source chosen in the app is
+kept). During that launch, Settings > Scanner > Source at launch shows the
+imposed value; changing it there is saved as usual.
 
 ## x1probe/ (read-only)
 

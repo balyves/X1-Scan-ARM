@@ -195,7 +195,9 @@ public final class AppModel {
         viewport = Viewport(imageWidth: 0, imageHeight: 0, mode: settings.startupZoom == .fit ? .fit : .fixed)
         exportSettings = defaults.data(forKey: Keys.exportSettings)
             .flatMap { try? JSONDecoder().decode(ExportSettings.self, from: $0) } ?? ExportSettings()
-        defaults.set(source.rawValue, forKey: Keys.source)  // "last used" is this session's source
+        // Not saved here: "last chosen" is the last source chosen in the interface
+        // (`source.didSet`), never one imposed at launch (startup setting or
+        // the -StartupSource argument).
         if migratedHolder, let data = try? JSONEncoder().encode(scanSettings) {
             defaults.set(data, forKey: Keys.scanSettings)  // converted once, not at every launch
         }

@@ -1286,17 +1286,6 @@
         }
       }
     },
-    "Last used": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dernière utilisée"
-          }
-        }
-      }
-    },
     "General": {
       "extractionState": "manual",
       "localizations": {
@@ -2593,6 +2582,18 @@
           "stringUnit": {
             "state": "translated",
             "value": "Exporte l'aperçu entier, sans le recadrage."
+          }
+        }
+      }
+    },
+    "Last chosen": {
+      "comment": "Setting: scanner source at launch, the last source chosen in the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dernière choisie"
           }
         }
       }
