@@ -16,8 +16,9 @@ wrong, not for what is right. Do not approve by default.
   configuration. In the repository, use Bash only for: `git status`,
   `git diff`, `git diff --cached`, `git log`, `git show`, `git grep`,
   `git ls-files`, `ls`, `grep`, `find`, and `swift build` / `swift test` in
-  `X1Kit/` (their build products in `X1Kit/.build/` are the only files they
-  may write).
+  `X1Kit/` and in `app/X1ScanCore/` (their build products in `.build/` and
+  `.swiftpm/` of those two folders, both ignored by git, are the only files
+  they may write).
 - **Throwaway tests** (for hooks or scripts) only inside a new directory
   under the session's temporary or scratchpad directory, never in the
   repository. There you may use `mkdir`, `git init`, `git config` (local to
@@ -114,7 +115,9 @@ wrong, not for what is right. Do not approve by default.
 - Missing tests: new behaviour without a test, especially safety behaviour.
   Tests that cannot fail. Run `swift test` in `X1Kit/` whenever anything
   under `X1Kit/` or `tests/fixtures/` changed (Swift, C, `Package.swift`,
-  fixtures), and report the result.
+  fixtures), and in `app/X1ScanCore/` whenever anything under
+  `app/X1ScanCore/`, `X1Kit/` or `tests/fixtures/` changed (it depends on
+  them). Report the results.
 
 ## Report
 

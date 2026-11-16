@@ -163,6 +163,11 @@ counter 3 is the **number of scans**. **[hypothesis]**
 | `08 02`, `08 03`, `08 06`, `08 07` | busy; seen only right after power-on (2026-11-16): after the first `F0` FlexColor read `08 07`, `08 06`, `08 02`, `08 06`, `08 40`, then `00 00`; `08 03` after the first `F0 01 01 01 01` |
 | `00 01` | seen once right after SCAN; FlexColor starts reading image lines on this value **[confirmed]** |
 
+Our own preview of 2026-11-16 on the real X1 (sequence right after
+power-on, journal) saw the same busy states, `08 01`, `08 02`, `08 03`,
+`08 06`, `08 07` and `08 40`, then `00 00`, with every status 0x00
+**[confirmed]**.
+
 `08 xx` = busy is **[confirmed]** for the six values above only: FlexColor
 went on polling until `00 00` (or `00 01` after SCAN) each time. The
 meaning of the low byte is unknown.

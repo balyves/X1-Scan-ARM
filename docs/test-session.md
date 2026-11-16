@@ -3,7 +3,10 @@
 A step-by-step procedure to follow on site. Every step states the machine,
 the required state of the **X1** (on / off) and of **FlexColor** (open /
 closed), as CLAUDE.md rule 5 requires. **Only one program can open the X1
-at a time**, and the X1 is connected to **one Mac at a time**.
+at a time**, and the X1 is connected to **one Mac at a time**. **After
+moving the FireWire cable from one Mac to the other, switch the X1 off and
+on again**: on 2026-11-16 the new Mac did not detect it otherwise
+(observed once).
 
 Machines (details in `CLAUDE.local.md`, not committed):
 
@@ -16,7 +19,8 @@ Safety, for the whole session:
 
 - On the development Mac, **our tools send only reads** (CLAUDE.md rule 4):
   the X1 Scan app checks every command against `CommandPolicy.readOnly`,
-  and `x1probe` has its own whitelist. Preview is disabled on the real X1.
+  and `x1probe` has its own whitelist. Preview is disabled on the real X1
+  unless the hidden setting `EnableRealPreview` is set (part E).
   What **ASFireWire itself** sends to the X1 when it enumerates it is
   outside our control **[hypothesis: SBP-2 login, then standard SCSI
   commands such as INQUIRY]**.
@@ -69,8 +73,8 @@ A1 to A3 and A5 are done at home; A4 is done on site, before part C.
   Check that `systemextensionsctl list` no longer lists it, and only then
   delete `ASFW.app`. Deleting the app alone does **not** remove the
   extension. Do not delete anything in `/Library/SystemExtensions` by hand.
-- ASFireWire is beta and **has not been tested with the X1** (only Nikon
-  Coolscan scanners are reported working over SBP-2).
+- ASFireWire is beta. With the X1, version 0.6.0 ran identity reads, then a
+  complete preview on 2026-11-16 (E8).
 
 ### A3. Tools on the development Mac
 
@@ -139,6 +143,8 @@ is the expected outcome: it says nothing about the scanner. Note the
 - Connect in this order: Thunderbolt 3 to Thunderbolt 2 adapter on the
   Mac, Thunderbolt to FireWire 800 adapter, FireWire 800 cable, X1.
 - Then switch the **X1 on** and wait until it is idle (about a minute).
+  Starting from "X1: off" also covers a cable just moved from the other Mac,
+  which needs the X1 switched off and on again.
 
 ### B2. diag.sh
 
@@ -201,8 +207,9 @@ is the expected outcome: it says nothing about the scanner. Note the
       log show --last 10m --predicate 'eventMessage CONTAINS[c] "SCSI" OR eventMessage CONTAINS[c] "SBP"' \
         > "$S/scsi-log.txt"
 
-- Try once more: X1 off, wait 10 seconds, X1 on, repeat B2. Do not try
-  anything else on the scanner; part C does not depend on part B.
+- Try once more: X1 off, wait 10 seconds, X1 on, repeat B2 (this is also
+  what a cable just moved from the other Mac needs). Do not try anything
+  else on the scanner; part C does not depend on part B.
 
 ### B8. Disconnect
 
@@ -217,7 +224,9 @@ is the expected outcome: it says nothing about the scanner. Note the
 
 - Machine: reference Mac. **X1: off.** FlexColor: closed.
 - Connect the X1 to the reference Mac (as for the captures of 2026-11-12),
-  then switch the **X1 on** and wait until it is idle.
+  then switch the **X1 on** and wait until it is idle. Starting from
+  "X1: off" also covers a cable just moved from the development Mac, which
+  needs the X1 switched off and on again.
 
 ### C2. One lldb session per capture
 
@@ -320,12 +329,13 @@ passed: ASFireWire active, Read Identity working. "FlexColor: closed"
 below means: FlexColor does not run on the development Mac, and the
 reference Mac is not connected to the X1.
 
-Known risks of this first run:
+Known risks, as written before the first run:
 
-- No large READ has gone through ASFireWire yet (Read Identity only reads a
-  few bytes). The first READ of 47 952 bytes comes during calibration, the
-  first of 120 240 bytes with the references, those of 240 480 bytes during
-  the scan.
+- Before the run of 2026-11-16, no large READ had gone through ASFireWire
+  (Read Identity only reads a few bytes). The first READ of 47 952 bytes
+  comes during calibration, the first of 120 240 bytes with the references,
+  those of 240 480 bytes during the scan. All of them went through in the
+  complete preview of 2026-11-16 (E8).
 - A READ cannot be interrupted while it waits: **Stop can take up to 30 s**
   to act during the scan. After a READ that times out (30 s), the run stops
   with the stop command.
@@ -345,7 +355,8 @@ Known risks of this first run:
 
 - Machine: development Mac. **X1: off.** **FlexColor: closed.** X1 Scan:
   closed.
-- Connect as in B1, then switch the **X1 on** and wait until it is idle.
+- Connect as in B1 (X1 off first, also when the cable was just moved from
+  the other Mac), then switch the **X1 on** and wait until it is idle.
   Do nothing else with the scanner from now on except Read Identity
   below (reads only): the preview needs the state of a freshly switched-on
   X1. If anything else ran, switch the X1 off and on again.
@@ -441,3 +452,16 @@ Known risks of this first run:
   positions) and the 0xDF states.
 - Pass on the log with the serial number replaced by `FX1xxxxxxx` (part
   D2), the `.raw` file, the holder reference and the duration.
+
+### E8. Result of 2026-11-16, 15:14: success
+
+- Development Mac, macOS 26 Tahoe, ASFireWire 0.6.0, sequence right after
+  power-on.
+- Complete preview. The 208 commands outside polling were identical, byte
+  for byte, to `flexcolor-froid.txt` (E7: empty diff); 380 statuses, all
+  0x00; 0xDF states `08 01`, `08 02`, `08 03`, `08 06`, `08 07`, `08 40`,
+  then `00 00`; end with `DB` and `CF 00 02 80`.
+- Decoded image correct: mean white about 54 148 / 52 342 / 44 168, dark
+  about 314 / 288 / 305 (R/G/B).
+- The log stays outside the repository (part D1). Details in
+  docs/journal.md.

@@ -12,6 +12,10 @@ The X1 has a FireWire 800 (9-pin) port. On Macs without FireWire:
 Both adapters are discontinued (second-hand market). USB to FireWire adapters
 do not work.
 
+After the FireWire cable has been moved from one Mac to another, switch the
+X1 off and on again: on 2026-11-16 the new Mac did not detect it otherwise
+(observed once).
+
 ## macOS versions
 
 - **Up to macOS 15 Sequoia**: Apple's FireWire stack (IOFireWireFamily,
@@ -21,7 +25,9 @@ do not work.
   [ASFireWire](https://github.com/mrmidi/ASFireWire) (DriverKit, Apache-2.0,
   beta) reimplements an OHCI host including SBP-2 through
   SCSIControllerDriverKit; Nikon Coolscan scanners are reported working.
-  **Not yet tested with the X1.**
+  **Works with the X1** **[confirmed]**: identity reads, then a complete
+  preview with ASFireWire 0.6.0 on 2026-11-16, large READs (up to 240 480
+  bytes) included (docs/journal.md).
 
 X1-Scan-ARM only depends on the SCSITaskUserClient layer
 (IOSCSIArchitectureModelFamily), which still exists on Tahoe. The same

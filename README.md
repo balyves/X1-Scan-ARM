@@ -3,9 +3,13 @@
 **Open-source scanning software for the Hasselblad Flextight X1 on modern macOS (Apple Silicon).**
 
 > **Status: research.** The X1 protocol is being decoded from captures of
-> FlexColor. Our tools can identify the scanner and decode a captured preview,
-> but cannot drive a scan yet. Do not use anything in this repository on a real
-> scanner unless a tool explicitly says it is read-only.
+> FlexColor. On 2026-11-16 our application ran a complete preview on a real X1
+> from macOS 26 Tahoe, by replaying FlexColor's captured sequence byte for
+> byte; it cannot run a full-resolution scan yet. Do not use anything in this
+> repository on a real scanner unless a tool explicitly says it is read-only,
+> except the preview of `docs/test-session.md` part E, under its conditions
+> only: the captured sequence right after power-on, the X1 switched on just
+> before, the holder of the capture.
 
 ## Why
 
@@ -26,8 +30,9 @@ X1-Scan-ARM aims to let the X1 scan again from a current Mac.
   (A1790) → Thunderbolt → FireWire 800 adapter (A1463) → X1.
 - **macOS 15 Sequoia** still includes Apple's FireWire stack.
   **macOS 26 Tahoe** removed it; the open-source
-  [ASFireWire](https://github.com/mrmidi/ASFireWire) DriverKit driver is
-  expected to provide the same SCSI device there (to be validated with the X1).
+  [ASFireWire](https://github.com/mrmidi/ASFireWire) DriverKit driver
+  provides the same SCSI device there: a complete preview ran through
+  ASFireWire 0.6.0 on 2026-11-16.
 - Unlike older SCSI Flextights, the X1 **boots on firmware stored in its own
   flash memory**: no firmware upload is needed from the host for a preview.
   No Hasselblad firmware is distributed here.
@@ -56,7 +61,9 @@ journal, and [`tools/`](tools/) for the probe, capture and decode tools.
    explicit approval. The backup will contain the scanner's serial number and
    stays outside the repository.
 5. Capture a full-resolution scan.
-6. Preview driven by our own code.
+6. ~~Preview driven by our own code.~~ Done (2026-11-16): FlexColor's
+   sequence right after power-on, replayed byte for byte on a real X1 from
+   macOS 26 Tahoe through ASFireWire 0.6.0.
 7. Full scan, 3F/TIFF output.
 8. Colour: input ICC profile built from an IT8.7/1 target, film rendering.
 

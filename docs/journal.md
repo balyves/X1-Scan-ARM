@@ -228,3 +228,27 @@ activity between the initialisation and the session start. Test-session E3
 now inserts it at the same point (after Read Identity, just before the
 preview). The confirmation of a real preview gets a fourth check: the X1
 was switched off and on since the last real preview.
+
+## 2026-11-16: first complete preview on the real X1 (15:14)
+
+Development Mac, macOS 26 Tahoe, ASFireWire 0.6.0, the sequence right
+after power-on (test-session part E). **Success**
+**[confirmed]**:
+
+- the 208 commands outside polling were identical, byte for byte, to
+  FlexColor's capture right after power-on (`flexcolor-froid.txt`);
+- 380 statuses, all 0x00;
+- 0xDF states `08 01`, `08 02`, `08 03`, `08 06`, `08 07`, `08 40`, then
+  `00 00` (all already listed in protocol.md §7);
+- it ended with `DB` and `CF 00 02 80`;
+- the decoded image is correct. Mean white reference about 54 148 /
+  52 342 / 44 168 (R/G/B), dark about 314 / 288 / 305.
+
+This is the first complete preview driven by our own code: roadmap step 6
+("Preview driven by our own code") is done. It also means the large READs
+(47 952, 120 240 and 240 480 bytes) went through ASFireWire. The run log stays outside the
+repository.
+
+Also observed today (once): after the FireWire cable was moved from one Mac
+to the other, the X1 was detected only once it had been switched off and on
+again. Test-session now asks for it wherever the cable changes Mac.

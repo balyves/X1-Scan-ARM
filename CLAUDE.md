@@ -81,8 +81,9 @@ Scope: **Flextight X1 only**. Other Flextight / Imacon models are out of scope.
 - A reference Mac on **macOS 10.14 Mojave** with FlexColor 4.8.13 and the X1,
   used for captures (`tools/capture/cap3.py`, lldb, i386).
 - Current Macs on **macOS 26 Tahoe** (Apple Silicon) for development and
-  production. Apple removed FireWire in Tahoe; the X1 would need the
-  ASFireWire DriverKit driver (beta, not yet tested with the X1).
+  production. Apple removed FireWire in Tahoe; the X1 works there through
+  the ASFireWire DriverKit driver (beta; complete preview with 0.6.0 on
+  2026-11-16).
 
 Details about the user's machines are kept in `CLAUDE.local.md`, which is
 not committed.
