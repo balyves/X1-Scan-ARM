@@ -2463,6 +2463,18 @@
           }
         }
       }
+    },
+    "On the real X1 the preview only runs right after the scanner is switched on. Only reads, the startup command and the session start were sent: no window, mode, exposure, image read or scan.": {
+      "comment": "Real preview stopped: the X1 was not just switched on",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur le X1 réel, l'aperçu ne fonctionne que juste après la mise sous tension du scanner. Seules des lectures, la commande de démarrage et l'ouverture de session ont été envoyées : aucune fenêtre, aucun mode, aucune exposition, aucune lecture d'image, aucun scan."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

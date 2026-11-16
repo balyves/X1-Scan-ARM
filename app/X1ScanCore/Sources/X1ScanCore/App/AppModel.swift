@@ -255,7 +255,7 @@ public final class AppModel {
     public func startRealPreview(_ confirmation: RealPreviewConfirmation) -> Result<URL, RealPreviewError> {
         guard source == .real, realPreviewEnabled, confirmation.isComplete, toolbar.canPreview,
               realStatus != .reading else { return .failure(.notAllowed) }
-        guard let fixture = virtualScanner?.fixture else {
+        guard let fixture = virtualScanner?.coldFixture else {
             return .failure(.noCapturedSequence(virtualScannerError ?? "no fixtures"))
         }
         let sequence: CapturedSequenceGuard
@@ -298,6 +298,7 @@ public final class AppModel {
         return try CaptureLog(textURL: folder.appending(path: base + ".txt"), rawURL: folder.appending(path: base + ".raw"),
                               header: """
                                 X1 Scan: FlexColor 4.8.13's captured preview replayed on the real X1, \(date.ISO8601Format())
+                                Sequence: capture right after power-on (2026-11-16, preview-sequence-cold.json).
                                 Format of tools/capture/cap3.py; image data in \(base).raw.
                                 Contains the scanner's serial number: keep outside the repository.
                                 """)

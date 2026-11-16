@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+import X1Protocol
 import X1Transport
 
 /// Wraps a transport and corrupts one non-polling command, to test how the
@@ -14,6 +15,11 @@ public actor FaultInjectingTransport: SCSITransport {
         /// The command is forwarded, and the measured position (page 0x20,
         /// bytes 27-28) in its response is shifted.
         case shiftMeasuredPosition(by: Int)
+        /// The command is forwarded, and bytes 19-24 of its response (page
+        /// 0x20) are replaced by these three LE16 values.
+        case setChannelValues([Int])
+        /// The command is forwarded; the next 0xDF read answers this state.
+        case stateAfter(ScannerState)
     }
 
     private let inner: any SCSITransport
@@ -22,6 +28,7 @@ public actor FaultInjectingTransport: SCSITransport {
     private var nonPollingCount = 0
     private var playingAlone = false
     private var statesAfterFault: [[UInt8]] = [[0x08, 0x01], [0x00, 0x00]]
+    private var nextState: ScannerState?
 
     /// Every command received, in order.
     public private(set) var log: [SCSICommand] = []
@@ -50,6 +57,10 @@ public actor FaultInjectingTransport: SCSITransport {
             }
             return SCSIResult()
         }
+        if command.opcode == 0xDF, let state = nextState {
+            nextState = nil
+            return SCSIResult(data: [UInt8(state.rawValue >> 8), UInt8(state.rawValue & 0xFF)])
+        }
         guard !SimulatedX1.pollingOpcodes.contains(command.opcode) else {
             return try await inner.execute(command)
         }
@@ -76,6 +87,17 @@ public actor FaultInjectingTransport: SCSITransport {
             data[27] = UInt8(shifted & 0xFF)
             data[28] = UInt8(shifted >> 8)
             return SCSIResult(status: result.status, data: data, sense: result.sense)
+        case .setChannelValues(let values):
+            let result = try await inner.execute(command)
+            var data = result.data
+            for (channel, value) in values.enumerated() {
+                data[19 + 2 * channel] = UInt8(value & 0xFF)
+                data[20 + 2 * channel] = UInt8(value >> 8)
+            }
+            return SCSIResult(status: result.status, data: data, sense: result.sense)
+        case .stateAfter(let state):
+            nextState = state
+            return try await inner.execute(command)
         }
     }
 }

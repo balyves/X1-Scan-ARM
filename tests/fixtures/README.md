@@ -32,6 +32,17 @@ Uses:
 Note: some "static-looking" pages change over time (page 0x25 byte 21 went
 from 0x1b to 0x1c between two reads a few minutes apart).
 
+## preview-sequence-cold.json
+
+The same preview right after the X1 was switched on (cold lamp, 6×7 holder
+50200403), 2026-11-16, 821 exchanges, same fields. Converted from the
+cap3.py log with `tools/capture/cap3_to_fixture.py`. cap3.py prints at most
+64 bytes of a response: the 11 longer ones (INQUIRY, 96 bytes; page 0x21,
+100 bytes) were completed from `preview-sequence.json`, whose complete
+responses were read with `tools/x1probe`; their first 64 bytes are
+identical. Those exchanges carry `"completed_from"`. This is the only
+sequence sent to the real X1 (docs/decisions.md).
+
 ## preview-calibration-profile.json
 
 Per-column white and dark reference levels (2004 px × RGB, 16-bit) from the

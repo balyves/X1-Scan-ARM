@@ -3,8 +3,9 @@ import Synchronization
 
 /// Lets through only FlexColor's captured preview, command after command.
 ///
-/// Built from the capture itself (tests/fixtures/preview-sequence.json), not
-/// from `PreviewScript`: the script must agree with an independent source.
+/// Built from the capture itself (a tests/fixtures file; the app uses
+/// preview-sequence-cold.json), not from `PreviewScript`: the script must
+/// agree with an independent source.
 /// Rules (docs/decisions.md, "Application, step 4"):
 /// - every command other than a poll must be, in order, the next captured
 ///   exchange: same CDB, direction, length and data out, byte for byte;

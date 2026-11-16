@@ -63,13 +63,21 @@ public struct ScanStatusPage: Sendable, Hashable {
     public let measuredPosition: Int
     /// Bytes 31-32, LE16: lines acquired since SCAN. [confirmed]
     public let linesAcquired: Int
+    /// Bytes 19-24, three LE16. 2 048 × 3 right after power-on [confirmed];
+    /// per-channel calibration values [hypothesis] (docs/protocol.md §5).
+    public let channelValues: [Int]
     public let bytes: [UInt8]
+
+    /// The values of bytes 19-24 right after the X1 is switched on. [confirmed]
+    public static let powerOnChannelValues = [2048, 2048, 2048]
+    public var showsPowerOnValues: Bool { channelValues == Self.powerOnChannelValues }
 
     public init(_ bytes: [UInt8]) throws {
         try requireLength(bytes, 33, "page 0x20")
         guard bytes[8] == Self.page else { throw ResponseError.wrongPage(expected: Self.page, received: bytes[8]) }
         measuredPosition = littleEndian16(bytes, at: 27)
         linesAcquired = littleEndian16(bytes, at: 31)
+        channelValues = [littleEndian16(bytes, at: 19), littleEndian16(bytes, at: 21), littleEndian16(bytes, at: 23)]
         self.bytes = bytes
     }
 }
@@ -130,7 +138,16 @@ public struct ScannerState: Sendable, Hashable, CustomStringConvertible {
     /// `00 01` seen once, right after SCAN; FlexColor then starts reading image lines. [confirmed]
     public static let afterScan = ScannerState(rawValue: 0x0001)
 
-    public var isBusy: Bool { self == .busy || self == .busyOtherPhase }
+    /// The `08 xx` states seen while FlexColor waited for `00 00` or `00 01`:
+    /// 08 01 and 08 40 (2026-11-12), 08 02, 08 03, 08 06, 08 07 (right after
+    /// power-on, 2026-11-16). Busy [confirmed for these values only]; any
+    /// other state stops the preview.
+    public static let observedBusyStates: Set<ScannerState> = [
+        ScannerState(rawValue: 0x0801), ScannerState(rawValue: 0x0802), ScannerState(rawValue: 0x0803),
+        ScannerState(rawValue: 0x0806), ScannerState(rawValue: 0x0807), ScannerState(rawValue: 0x0840),
+    ]
+
+    public var isBusy: Bool { Self.observedBusyStates.contains(self) }
 
     public var description: String { [UInt8(rawValue >> 8), UInt8(rawValue & 0xFF)].hexString }
 }

@@ -144,6 +144,11 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
                 switch failure.cause {
                 case .anomaly(.couldNotOpen):
                     break  // nothing was sent: no advice to switch the scanner off
+                case .anomaly(.notJustSwitchedOn):
+                    // First page 0x20 read: only reads, D2 and the session start were sent.
+                    text += "\n\n" + String(localized: "On the real X1 the preview only runs right after the scanner is switched on. Only reads, the startup command and the session start were sent: no window, mode, exposure, image read or scan.",
+                                             comment: "Real preview stopped: the X1 was not just switched on")
+                    text += realPreviewAdvice(stoppedBeforeScan: true)
                 case .decoding:
                     // The scanner side completed, end of session included: only the log.
                     text += realPreviewAdvice(stoppedBeforeScan: nil)

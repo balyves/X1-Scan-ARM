@@ -201,3 +201,23 @@ use, not a measurement. After power-on page 0x20 holds 2 048 × 3 (bytes
 19-24), 8 203 and 0 lines; the capture, made after several previews, had
 1 936 / 1 846 / 1 891, 6 155 and 824 (protocol.md §5). The position
 tolerance now applies only after a window that requests a position.
+
+## 2026-11-16: the sequence right after power-on
+
+Three more tests on the real X1 (13:27, 13:29, 13:31). The first two still
+ran the previous build and stopped at the first page 0x20 read again. The
+third ran the new build, went past it and stopped at a wait on 0xDF: `08
+07` after the first `F0`, a state the runner did not know. Nothing was sent
+after either stop.
+
+The user then captured FlexColor right after power-on (cold lamp, 6×7
+holder 50200403): 821 commands, all status 0x00. The sequence differs from
+the warm one: a page 0x28 read before the session start, other calibration
+windows (ratio 62 500), more `F0`, and the busy states `08 02`, `08 03`,
+`08 06`, `08 07`. From the preview-width calibration on it is the same.
+The two sequences already differ before the first page 0x20 read, so the
+choice between them cannot be made there: the user chose to send only the
+cold sequence for now, behind a check of the power-on values (2 048 × 3).
+
+To do later: a warm capture right after a cold one, without switching the
+X1 off, to see what triggers the page 0x28 read.

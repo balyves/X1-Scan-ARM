@@ -2,8 +2,11 @@
 import X1Protocol
 import X1Transport
 
-/// FlexColor 4.8.13's preview sequence, as captured on 2026-11-12
-/// (tests/fixtures/preview-sequence.json, seq numbers in comments).
+/// FlexColor 4.8.13's preview sequences: after earlier previews, captured on
+/// 2026-11-12 (tests/fixtures/preview-sequence.json, `flexColor4813`), and
+/// right after power-on, captured on 2026-11-16
+/// (tests/fixtures/preview-sequence-cold.json, `flexColor4813Cold`, the one
+/// sent to the real X1). Seq numbers in comments.
 ///
 /// Every value is the captured one: windows, modes, exposure data, read
 /// sizes and the redundant page re-reads. No rule is inferred. Polling of
@@ -18,6 +21,17 @@ public enum PreviewScript {
     public static let flexColor4813: [PreviewStep] = {
         var builder = Builder()
         builder.buildFlexColor4813()
+        return builder.steps
+    }()
+
+    /// FlexColor 4.8.13's preview right after the X1 was switched on, as
+    /// captured on 2026-11-16 (tests/fixtures/preview-sequence-cold.json, seq
+    /// numbers in comments). The only sequence used on the real X1 for now
+    /// (docs/decisions.md): its first page 0x20 read must show the power-on
+    /// values, or the preview stops before any window, mode, exposure or READ.
+    public static let flexColor4813Cold: [PreviewStep] = {
+        var builder = Builder()
+        builder.buildFlexColor4813Cold()
         return builder.steps
     }()
 }
@@ -67,6 +81,41 @@ enum Window {
         00 00 00 00 00 00 00 00 00 00 00 00 00 00 01 04 6a 18 00 00 d4 ef 06 00 37 12 0d 00 8c 3c 00 00 00 00
         """)
 
+    // Right after power-on (capture of 2026-11-16): ratio 62 500 instead of
+    // 125 000 and other bytes 54-61. From calibrationRatio8M on, the windows
+    // are those of the warm capture.
+
+    /// Ratio 62 500, field 22 = 0, field 26 = 2, target 10 000. Cold seq 286
+    static let coldTarget10000 = bytes("""
+        00 00 00 00 00 00 00 3c 00 00 00 24 f4 00 00 00 00 00 00 00 00 00 00 00 00 00 02 00 00 00 00 00 00 00 \
+        00 00 00 00 00 00 00 00 00 00 00 00 00 00 01 01 10 27 00 00 17 69 05 00 62 cb 08 00 8c 3c 00 00 00 00
+        """)
+    /// As above with target 0. Cold seq 288
+    static let coldNoTarget = bytes("""
+        00 00 00 00 00 00 00 3c 00 00 00 24 f4 00 00 00 00 00 00 00 00 00 00 00 00 00 02 00 00 00 00 00 00 00 \
+        00 00 00 00 00 00 00 00 00 00 00 00 00 00 01 01 00 00 00 00 17 69 05 00 62 cb 08 00 8c 3c 00 00 00 00
+        """)
+    /// Full CCD (7 992 px), ratio 62 500, field 26 = 3, target 0. Cold seq 309
+    static let coldCalibrationA = bytes("""
+        00 00 00 00 00 00 00 3c 00 00 00 24 f4 00 00 00 00 00 00 00 00 00 38 1f 00 00 03 00 00 00 00 00 00 00 \
+        00 00 00 00 00 00 00 00 00 00 00 00 00 00 01 01 00 00 00 00 17 69 05 00 62 cb 08 00 8c 3c 00 00 00 00
+        """)
+    /// As cold A with field 26 = 2. Cold seq 314
+    static let coldCalibrationB = bytes("""
+        00 00 00 00 00 00 00 3c 00 00 00 24 f4 00 00 00 00 00 00 00 00 00 38 1f 00 00 02 00 00 00 00 00 00 00 \
+        00 00 00 00 00 00 00 00 00 00 00 00 00 00 01 01 00 00 00 00 17 69 05 00 62 cb 08 00 8c 3c 00 00 00 00
+        """)
+    /// As cold A with target 9 000. Cold seq 328
+    static let coldTarget9000 = bytes("""
+        00 00 00 00 00 00 00 3c 00 00 00 24 f4 00 00 00 00 00 00 00 00 00 38 1f 00 00 03 00 00 00 00 00 00 00 \
+        00 00 00 00 00 00 00 00 00 00 00 00 00 00 01 01 28 23 00 00 17 69 05 00 62 cb 08 00 8c 3c 00 00 00 00
+        """)
+    /// As cold A with target 8 971. Cold seq 342
+    static let coldTarget8971 = bytes("""
+        00 00 00 00 00 00 00 3c 00 00 00 24 f4 00 00 00 00 00 00 00 00 00 38 1f 00 00 03 00 00 00 00 00 00 00 \
+        00 00 00 00 00 00 00 00 00 00 00 00 00 00 01 01 0b 23 00 00 17 69 05 00 62 cb 08 00 8c 3c 00 00 00 00
+        """)
+
     /// 0xE4 data, identical at every occurrence.
     static let exposure = bytes("05 04 10 00 05 04 20 00 05 04 30 00")
 
@@ -97,6 +146,9 @@ struct Builder {
     private mutating func status(_ captured: Int) {
         add(X1Command.modeSense(page: ScanStatusPage.page, length: ScanStatusPage.length),
             .scanStatus(capturedPosition: captured))
+    }
+    private mutating func powerOnCheck() {
+        add(X1Command.modeSense(page: ScanStatusPage.page, length: ScanStatusPage.length), .powerOnCheck)
     }
     private mutating func mode(_ a: UInt8, _ b: UInt8, _ c: UInt8, _ d: UInt8) { add(X1Command.setMode(a, b, c, d)) }
     private mutating func window(_ descriptor: [UInt8]) { add(X1Command.setWindow(descriptor)) }
@@ -129,8 +181,8 @@ struct Builder {
         page(0x26, 56)
     }
 
-    mutating func buildFlexColor4813() {
-        // 1. Initialisation, seq 1-221: identity, vendor pages, usage log, D2.
+    /// Identity, vendor pages, usage log, D2 (warm seq 1-221, cold seq 1-221).
+    private mutating func initialisation() {
         inquiry()
         page(0x26, 56)
         pageSet()
@@ -141,6 +193,11 @@ struct Builder {
         page(0x27, 20)
         add(X1Command.usageLog())
         add(X1Command.usageLog())
+    }
+
+    mutating func buildFlexColor4813() {
+        // 1. Initialisation, seq 1-221.
+        initialisation()
 
         // 2. Session start, seq 224-243.
         add(X1Command.session(.start)); thenWait()
@@ -171,6 +228,12 @@ struct Builder {
         page(0x27, 20); thenWait()
         mode(0, 2, 0, 1); thenWait()
 
+        previewAndScan()
+    }
+
+    /// From the preview-width calibration to the end of session (warm seq
+    /// 305-748, cold seq 361-821: the same commands).
+    private mutating func previewAndScan() {
         // 4. Preview width, seq 305-366.
         pageSet()
         status(8971)
@@ -212,5 +275,44 @@ struct Builder {
         // 7. Stop and end of session, seq 729-748.
         add(X1Command.stop()); thenWait()
         add(X1Command.session(.end)); thenWait()
+    }
+
+    mutating func buildFlexColor4813Cold() {
+        // 1. Initialisation, cold seq 1-221 (as warm).
+        initialisation()
+        page(0x28, 30)  // cold seq 259: not in the warm capture
+
+        // 2. Session start, cold seq 266-285. The page 0x20 read must show the power-on values.
+        add(X1Command.session(.start)); thenWait()
+        pageSet()
+        powerOnCheck()
+
+        // 3. Calibration at full CCD width and positioning, cold seq 286-359.
+        window(Window.coldTarget10000); thenWait()
+        window(Window.coldNoTarget); thenWait()
+        mode(0, 0, 1, 1); thenWait()
+        page(0x27, 20)
+        window(Window.coldCalibrationA); thenWait()
+        exposure(); thenWait()
+        window(Window.coldCalibrationB); thenWait()
+        mode(0, 1, 1, 1); thenWait()
+        status(14219); thenWait()
+        status(14219)
+        window(Window.coldTarget9000); thenWait()
+        calibrationLine(pixels: 7992); thenWait()
+        mode(0, 0, 0, 1); thenWait()
+        calibrationLine(pixels: 7992)
+        status(8971)
+        window(Window.coldTarget8971); thenWait()
+        exposure(); thenWait()
+        mode(0, 2, 0, 1); thenWait()
+        add(X1Command.readE1())
+        status(8971)
+        calibrationLine(pixels: 8016)
+        page(0x27, 20); thenWait()
+        mode(0, 2, 0, 1); thenWait()
+
+        // 4-7. As warm, cold seq 361-821.
+        previewAndScan()
     }
 }

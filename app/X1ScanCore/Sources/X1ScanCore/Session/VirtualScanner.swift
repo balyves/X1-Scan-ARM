@@ -12,6 +12,10 @@ import X1Transport
 /// is reached through `ScannerInspector`, which only sends reads.
 public struct VirtualScanner: Sendable {
     public let fixture: CaptureFixture
+    /// FlexColor's preview right after power-on (2026-11-16): the only
+    /// sequence the real X1 may receive (`PreviewScript.flexColor4813Cold`).
+    /// The virtual X1 itself replays `fixture`.
+    public let coldFixture: CaptureFixture
     public let profile: CalibrationProfile
     public let pacing: Pacing
 
@@ -21,17 +25,21 @@ public struct VirtualScanner: Sendable {
     /// virtual X1 at a chosen command until the test lets it go on).
     var transportWrapper: (@Sendable (any SCSITransport) -> any SCSITransport)?
 
-    public init(fixture: CaptureFixture, profile: CalibrationProfile, pacing: Pacing = .display) throws {
+    public init(fixture: CaptureFixture, coldFixture: CaptureFixture, profile: CalibrationProfile,
+                pacing: Pacing = .display) throws {
         self.fixture = fixture
+        self.coldFixture = coldFixture
         self.profile = profile
         self.pacing = pacing
         info = try Self.recordedInfo(in: fixture)
     }
 
-    /// Loads `preview-sequence.json` and `preview-calibration-profile.json` from `directory`.
+    /// Loads `preview-sequence.json`, `preview-sequence-cold.json` and
+    /// `preview-calibration-profile.json` from `directory`.
     public static func load(fixturesDirectory directory: URL, pacing: Pacing = .display) throws -> VirtualScanner {
         try VirtualScanner(
             fixture: CaptureFixture.load(from: directory.appending(path: "preview-sequence.json")),
+            coldFixture: CaptureFixture.load(from: directory.appending(path: "preview-sequence-cold.json")),
             profile: CalibrationProfile.load(from: directory.appending(path: "preview-calibration-profile.json")),
             pacing: pacing)
     }

@@ -11,6 +11,10 @@ public struct PreviewStep: Sendable {
         case inquiry
         /// Page 0x20: the measured position must stay within the tolerance of the captured value.
         case scanStatus(capturedPosition: Int)
+        /// Page 0x20, first read of the cold sequence: bytes 19-24 must be
+        /// 2 048 × 3 (X1 just switched on), or the preview stops. Before this
+        /// read only reads, D2 and the session start have been sent.
+        case powerOnCheck
         /// READ: data kept for decoding.
         case read(ReadPurpose)
         /// 0x1B SCAN: must return `00 00`. From here on, an anomaly triggers the stop sequence.

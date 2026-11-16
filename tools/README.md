@@ -89,6 +89,14 @@ skipped reads are logged as `RAW skipped`; a value that is not a number is
 ignored, with a message). A full-resolution scan can take
 several GB without it. See `docs/test-session.md`.
 
+`cap3_to_fixture.py` turns such a log into a fixture in the format of
+`tests/fixtures/README.md` (serial number anonymised in text and hex, no
+image data). With an existing fixture as fourth argument, responses longer
+than the 64 bytes cap3.py prints are completed from it when its first 64
+bytes are identical:
+
+    python3 -I cap3_to_fixture.py capture.txt out.json "description" ../../tests/fixtures/preview-sequence.json
+
 ## decode/
 
 `decode_preview.py` turns a capture into a PNG (Python 3, numpy, Pillow).

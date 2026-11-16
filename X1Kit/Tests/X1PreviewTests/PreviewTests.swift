@@ -6,16 +6,32 @@ import X1Protocol
 import X1TestSupport
 import X1Transport
 
+/// The two captured sequences: warm (2026-11-12, after earlier previews) and
+/// cold (2026-11-16, right after power-on).
+enum Capture: String, CaseIterable, Sendable, CustomTestStringConvertible {
+    case warm, cold
+
+    var script: [PreviewStep] { self == .cold ? PreviewScript.flexColor4813Cold : PreviewScript.flexColor4813 }
+    func simulator() throws -> SimulatedX1 { self == .cold ? try Fixtures.coldSimulator() : try Fixtures.simulator() }
+    func fixture() throws -> CaptureFixture { self == .cold ? try Fixtures.coldSequence() : try Fixtures.sequence() }
+    func nonPollingExchanges() throws -> [CaptureExchange] { try Fixtures.nonPollingExchanges(cold: self == .cold) }
+    func run(on transport: any SCSITransport) async throws -> PreviewCapture {
+        try await PreviewRunner(transport: transport, configuration: .simulator, script: script).run()
+    }
+    var testDescription: String { rawValue }
+}
+
 struct PreviewConformanceTests {
     /// Our sequence, played against the simulator, sends the same commands as
     /// FlexColor in the same order: CDB, direction, transfer length and data_out,
     /// apart from the polling commands (0xEE, 0xD3, 0xDF).
-    @Test func previewMatchesTheCaptureCommandForCommand() async throws {
-        let simulator = try Fixtures.simulator()
-        _ = try await PreviewRunner(transport: simulator, configuration: .simulator).run()
+    @Test(arguments: Capture.allCases)
+    func previewMatchesTheCaptureCommandForCommand(_ capture: Capture) async throws {
+        let simulator = try capture.simulator()
+        _ = try await capture.run(on: simulator)
 
         let sent = await simulator.log.filter { !SimulatedX1.pollingOpcodes.contains($0.opcode) }
-        let captured = try Fixtures.nonPollingExchanges()
+        let captured = try capture.nonPollingExchanges()
         #expect(sent.count == captured.count)
         for (command, exchange) in zip(sent, captured) {
             #expect(command.cdb == exchange.cdbBytes, "seq \(exchange.seq): CDB")
@@ -28,9 +44,10 @@ struct PreviewConformanceTests {
     /// We poll 0xDF after exactly the commands after which FlexColor polled it
     /// (the number of polls may differ). Not waiting would mean sending the next
     /// command while the scanner is still moving.
-    @Test func waitsOnScannerStateWhereFlexColorDid() async throws {
-        let simulator = try Fixtures.simulator()
-        _ = try await PreviewRunner(transport: simulator, configuration: .simulator).run()
+    @Test(arguments: Capture.allCases)
+    func waitsOnScannerStateWhereFlexColorDid(_ capture: Capture) async throws {
+        let simulator = try capture.simulator()
+        _ = try await capture.run(on: simulator)
 
         func waitsAfterEachCommand(_ opcodes: [UInt8]) -> [Bool] {
             var waits: [Bool] = []
@@ -44,31 +61,135 @@ struct PreviewConformanceTests {
             return waits
         }
         let ours = waitsAfterEachCommand(await simulator.log.map(\.opcode))
-        let flexColor = waitsAfterEachCommand(try Fixtures.sequence().exchanges.map { $0.cdbBytes[0] })
-        let captured = try Fixtures.nonPollingExchanges()
+        let flexColor = waitsAfterEachCommand(try capture.fixture().exchanges.map { $0.cdbBytes[0] })
+        let captured = try capture.nonPollingExchanges()
         #expect(ours.count == flexColor.count)
         for (index, (mine, theirs)) in zip(ours, flexColor).enumerated() {
             #expect(mine == theirs, "after seq \(captured[index].seq) (\(captured[index].cdb))")
         }
     }
 
-    @Test func onlyPollingCommandSentIsTheStateRead() async throws {
-        let simulator = try Fixtures.simulator()
-        _ = try await PreviewRunner(transport: simulator, configuration: .simulator).run()
+    /// Every wait ends on the state FlexColor last saw there.
+    @Test(arguments: Capture.allCases)
+    func waitsEndOnTheStateFlexColorLastSaw(_ capture: Capture) throws {
+        var lastState: [Int: String] = [:]
+        var index = -1
+        for exchange in try capture.fixture().exchanges {
+            let opcode = exchange.cdbBytes.first ?? 0
+            if opcode == 0xDF, index >= 0 { lastState[index] = exchange.response }
+            else if !SimulatedX1.pollingOpcodes.contains(opcode) { index += 1 }
+        }
+        for (index, step) in capture.script.enumerated() {
+            #expect(step.waitUntil?.description == lastState[index], "step \(index)")
+        }
+    }
+
+    @Test(arguments: Capture.allCases)
+    func onlyPollingCommandSentIsTheStateRead(_ capture: Capture) async throws {
+        let simulator = try capture.simulator()
+        _ = try await capture.run(on: simulator)
         let polls = await simulator.log.filter { SimulatedX1.pollingOpcodes.contains($0.opcode) }
         #expect(!polls.isEmpty)
         #expect(polls.allSatisfy { $0 == X1Command.scannerState() })
     }
 
-    @Test func captureContainsTheExpectedReads() async throws {
-        let simulator = try Fixtures.simulator()
-        let capture = try await PreviewRunner(transport: simulator, configuration: .simulator).run()
-        #expect(capture.calibrationLines.count == 3)
-        #expect(capture.whiteReference.count == 5)
-        #expect(capture.darkReference.count == 18)
-        #expect(capture.leadIn.count == 3)
-        #expect(capture.image.count == 41)
-        #expect(capture.image.reduce(0) { $0 + $1.count } == 819 * 2004 * 6)
+    @Test(arguments: Capture.allCases)
+    func captureContainsTheExpectedReads(_ capture: Capture) async throws {
+        let result = try await capture.run(on: try capture.simulator())
+        #expect(result.calibrationLines.count == 3)
+        #expect(result.whiteReference.count == 5)
+        #expect(result.darkReference.count == 18)
+        #expect(result.leadIn.count == 3)
+        #expect(result.image.count == 41)
+        #expect(result.image.reduce(0) { $0 + $1.count } == 819 * 2004 * 6)
+    }
+}
+
+/// The cold sequence (2026-11-16): power-on check and busy states.
+struct ColdSequenceTests {
+    private static let script = PreviewScript.flexColor4813Cold
+    private static let checkIndex = script.firstIndex { $0.kind == .powerOnCheck }!
+
+    /// One power-on check, the first page 0x20 read, with nothing that moves
+    /// the scanner before it: only reads, the startup D2 and the session start,
+    /// as in both captures.
+    @Test func thePowerOnCheckComesBeforeAnythingThatMoves() {
+        #expect(Self.script.filter { $0.kind == .powerOnCheck }.count == 1)
+        let firstStatusRead = Self.script.firstIndex { $0.command.cdb.prefix(3) == [0x5A, 0x00, 0x20] }
+        #expect(firstStatusRead == Self.checkIndex)
+        let before = Self.script[..<Self.checkIndex].map(\.command)
+        let allowed: Set<[UInt8]> = [X1Command.startupD2().cdb, X1Command.session(.start).cdb]
+        for command in before where command.direction != .fromDevice {
+            #expect(allowed.contains(command.cdb), "\(command) before the power-on check")
+        }
+        #expect(!before.contains { [0x24, 0xF0, 0xE4, 0x1B, 0x28].contains($0.opcode) })
+    }
+
+    @Test(arguments: [[2048, 2048, 2047], [1928, 1843, 1882], [1936, 1846, 1891], [0, 0, 0]])
+    func otherValuesStopBeforeAnythingMoves(_ values: [Int]) async throws {
+        let transport = FaultInjectingTransport(inner: try Fixtures.coldSimulator(),
+                                                faultAtNonPollingCommand: Self.checkIndex,
+                                                fault: .setChannelValues(values))
+        do {
+            _ = try await PreviewRunner(transport: transport, configuration: .simulator, script: Self.script).run()
+            Issue.record("the preview should have stopped")
+        } catch {
+            #expect(error.anomaly == .notJustSwitchedOn(channelValues: values))
+            #expect(error.stepIndex == Self.checkIndex)
+            #expect(error.emergencyStop == nil)
+            #expect(await transport.commandsAfterFault.isEmpty, "nothing sent after the check")
+        }
+    }
+
+    @Test func powerOnValuesAreAccepted() async throws {
+        let result = try await Capture.cold.run(on: try Fixtures.coldSimulator())
+        #expect(result.scanStatuses.first?.showsPowerOnValues == true)
+        #expect(result.scanStatuses.first?.measuredPosition == 8203)
+    }
+
+    /// The cold capture's waits went through 08 07, 08 06, 08 02, 08 03.
+    @Test func coldCaptureStatesAreTheObservedOnes() throws {
+        let states = Set(try Fixtures.coldSequence().exchanges
+            .filter { $0.cdbBytes.first == 0xDF }
+            .compactMap { $0.response })
+        #expect(states == ["00 00", "00 01", "08 01", "08 02", "08 03", "08 06", "08 07", "08 40"])
+    }
+
+    @Test(arguments: [0x0801, 0x0802, 0x0803, 0x0806, 0x0807, 0x0840])
+    func observedBusyStates(_ raw: Int) {
+        #expect(ScannerState(rawValue: UInt16(raw)).isBusy)
+    }
+
+    @Test(arguments: [0x0800, 0x0804, 0x0805, 0x0808, 0x0841, 0x0001, 0x0002, 0x0C01, 0xFFFF])
+    func otherStatesAreNotBusy(_ raw: Int) {
+        #expect(!ScannerState(rawValue: UInt16(raw)).isBusy)
+    }
+
+    /// A state never observed during a wait still stops the preview.
+    @Test func anUnknownStateStillStops() async throws {
+        let index = try #require(Self.script.firstIndex { $0.command.opcode == 0xF0 })
+        let transport = FaultInjectingTransport(inner: try Fixtures.coldSimulator(),
+                                                faultAtNonPollingCommand: index,
+                                                fault: .stateAfter(ScannerState(rawValue: 0x0805)))
+        do {
+            _ = try await PreviewRunner(transport: transport, configuration: .simulator, script: Self.script).run()
+            Issue.record("the preview should have stopped")
+        } catch {
+            #expect(error.anomaly == .unexpectedState(ScannerState(rawValue: 0x0805), waitingFor: .ready))
+            #expect(error.emergencyStop == nil)
+        }
+    }
+
+    /// The incomplete responses of the capture (INQUIRY 96 bytes, page 0x21
+    /// 100 bytes: cap3.py prints 64) were completed from the warm fixture.
+    @Test func longResponsesWereCompletedFromTheWarmFixture() throws {
+        let warm = try Fixtures.sequence().exchanges
+        for exchange in try Fixtures.coldSequence().exchanges
+            where exchange.direction == "in" && exchange.length > 64 && exchange.cdbBytes[0] != 0x28 {
+            let response = try #require(exchange.responseBytes, "seq \(exchange.seq)")
+            #expect(response.count == exchange.length)
+            #expect(warm.contains { $0.cdb == exchange.cdb && $0.responseBytes == response })
+        }
     }
 }
 

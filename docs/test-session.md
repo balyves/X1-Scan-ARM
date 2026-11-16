@@ -311,7 +311,10 @@ What is learned then goes into `docs/protocol.md` (marked [confirmed] or
 ## Part E: first preview on the real X1, on the development Mac
 
 Step 4 of the application: FlexColor's captured preview replayed on the
-real X1 (docs/decisions.md, "Application, step 4"). It is the first time
+real X1 (docs/decisions.md, "Application, step 4"). Since 2026-11-16 the
+app sends only the sequence FlexColor sends **right after power-on**: the
+X1 must be switched on just before each preview (docs/decisions.md, "Real
+X1: the sequence right after power-on only"). It is the first time
 our code sends commands that move the scanner. Parts A to B must have
 passed: ASFireWire active, Read Identity working. "FlexColor: closed"
 below means: FlexColor does not run on the development Mac, and the
@@ -343,6 +346,9 @@ Known risks of this first run:
 - Machine: development Mac. **X1: off.** **FlexColor: closed.** X1 Scan:
   closed.
 - Connect as in B1, then switch the **X1 on** and wait until it is idle.
+  Do nothing else with the scanner from now on except Read Identity
+  below (reads only): the preview needs the state of a freshly switched-on
+  X1. If anything else ran, switch the X1 off and on again.
 - Machine: development Mac. **X1: on.** **FlexColor: closed.**
 - Open X1 Scan, Settings > Scanner > Source: **Real X1**. Scanner > Scanner
   Information… (⌘I), button **Read Identity**: expect `Imacon` / `Flextight X1` / `R185`. If this fails, stop
@@ -352,7 +358,8 @@ Known risks of this first run:
 
 - Machine: development Mac. **X1: on.** **FlexColor: closed.**
 - Put the IT8.7/1 target in **the 6×7 holder, reference 50200403**, the one
-  of the capture of 2026-11-12, and insert it. In the panel, choose this
+  of the captures of 2026-11-12 and 2026-11-16, and insert it as for the
+  capture right after power-on. In the panel, choose this
   holder (Original > Holder; tick it first in Settings > Holders if needed).
 
 ### E4. The preview
@@ -376,6 +383,11 @@ Known risks of this first run:
 
 - **Preview complete** (X1: on). The image appears; note the duration.
   Then E6.
+- **Not just switched on** (X1: on, then off). The alert says the preview
+  only runs right after the scanner is switched on, and gives bytes 19-24
+  of page 0x20 in its text. Only reads, D2 and the session start were sent
+  (no window, mode, exposure, image read or SCAN). Switch the X1 off, wait 10 seconds, on again, and go
+  back to E2.
 - **Stopped before SCAN**, by an anomaly or by Stop (X1: on, then off).
   The alert gives the reason (for a position beyond the tolerance of 100,
   the measured and the captured value) and says to switch the X1 off and on
@@ -386,8 +398,8 @@ Known risks of this first run:
   - The scanner reported ready: switch it off and on again before another
     preview (the end of session is not sent on the stop path).
   - It did not report ready: **switch the X1 off**. This can be a false
-    alarm (the first state read after the stop is not one the capture shows
-    during a stop), but the scanner's state is then unknown.
+    alarm (a state that is not one of the observed busy states, protocol.md
+    §7, or no `00 00` within 120 s), but the scanner's state is then unknown.
 - **Refused by the guard** (alert or log line `ERREUR … refused by
   policy`): nothing was sent for that command; same as stopped before or
   after SCAN, depending on where it happened.
@@ -406,11 +418,11 @@ Known risks of this first run:
 ### E7. Comparing with the FlexColor capture
 
 - Machine: any, X1 not used. **FlexColor: closed.** The commands, polls
-  left out, should be the same as in the FlexColor capture (here
-  `flexcolor-apercu4.txt`):
+  left out, should be the same as in the FlexColor capture right after
+  power-on (`flexcolor-froid.txt`, 2026-11-16):
 
       cmds() { grep -E '^[0-9]{4} CDB' "$1" | cut -c10- | grep -vE '^(ee|d3|df) '; }
-      diff <(cmds flexcolor-apercu4.txt) <(cmds x1scan-apercu-<time>.txt)
+      diff <(cmds flexcolor-froid.txt) <(cmds x1scan-apercu-<time>.txt)
 
   An empty diff (or one that ends where the run stopped) is what the guard
   enforces. Each CDB line of our log is written before the command is sent;

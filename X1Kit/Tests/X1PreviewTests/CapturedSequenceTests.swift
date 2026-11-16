@@ -191,3 +191,90 @@ struct CaptureLogTests {
         }
     }
 }
+
+/// The guard built from the cold capture (2026-11-16), the one used on the real X1.
+struct ColdCapturedSequenceGuardTests {
+    private func makeGuard() throws -> CapturedSequenceGuard {
+        try CapturedSequenceGuard(fixture: Fixtures.coldSequence())
+    }
+
+    private static let cold = PreviewScript.flexColor4813Cold.map(\.command)
+    private static let warm = PreviewScript.flexColor4813.map(\.command)
+    private static let scanIndex = cold.firstIndex { $0.opcode == 0x1B }!
+
+    @Test func coldScriptIsExactlyTheColdCapture() throws {
+        #expect(try makeGuard().expected == Self.cold)
+    }
+
+    @Test func wholeColdPreviewGoesThroughTheGuard() async throws {
+        let sequence = try makeGuard()
+        let runner = PreviewRunner(transport: GuardedTransport(inner: try Fixtures.coldSimulator(), sequence: sequence),
+                                   configuration: .simulator, script: PreviewScript.flexColor4813Cold)
+        let capture = try await runner.run()
+        #expect(capture.image.count == 41)
+        #expect(sequence.isComplete)
+    }
+
+    /// The warm sequence cannot run through the cold guard: it is refused at
+    /// its first difference, the session start without the page 0x28 read.
+    @Test func theWarmSequenceIsRefused() async throws {
+        let sequence = try makeGuard()
+        let firstDifference = Self.cold.indices.first { Self.warm[$0] != Self.cold[$0] }!
+        #expect(Self.cold[firstDifference] == X1Command.modeSense(page: 0x28, length: 30))
+        let transport = GuardedTransport(inner: try Fixtures.simulator(), sequence: sequence)
+        do {
+            _ = try await PreviewRunner(transport: transport, configuration: .simulator).run()
+            Issue.record("the warm sequence should have been refused")
+        } catch {
+            #expect(error.stepIndex == firstDifference)
+            #expect(error.emergencyStop == nil)
+        }
+        #expect(sequence.position == firstDifference)
+    }
+
+    /// After the power-on check, the next warm command (F0) is refused.
+    @Test func noWarmCommandAfterThePowerOnCheck() throws {
+        let sequence = try makeGuard()
+        let check = PreviewScript.flexColor4813Cold.firstIndex { $0.kind == .powerOnCheck }!
+        for command in Self.cold.prefix(check + 1) { try sequence.check(command) }
+        let warmCheck = Self.warm.firstIndex { $0.cdb.prefix(3) == [0x5A, 0x00, 0x20] }!
+        #expect(throws: TransportError.self) { try sequence.check(Self.warm[warmCheck + 1]) }
+        try sequence.check(Self.cold[check + 1])
+    }
+
+    /// The emergency stop after SCAN goes through the cold guard too.
+    @Test func emergencyStopPassesTheColdGuard() async throws {
+        let sequence = try makeGuard()
+        let faulty = FaultInjectingTransport(inner: try Fixtures.coldSimulator(),
+                                             faultAtNonPollingCommand: Self.scanIndex + 10, fault: .checkCondition)
+        let runner = PreviewRunner(transport: GuardedTransport(inner: faulty, sequence: sequence),
+                                   configuration: .simulator, script: PreviewScript.flexColor4813Cold)
+        do {
+            _ = try await runner.run()
+            Issue.record("the preview should have stopped")
+        } catch {
+            #expect(error.emergencyStop == .stoppedAndReady)
+        }
+        let after = await faulty.commandsAfterFault
+        #expect(after.first == X1Command.stop())
+        #expect(after.dropFirst().allSatisfy { $0 == X1Command.scannerState() })
+    }
+
+    /// A stop before SCAN (here: not just switched on) sends nothing more.
+    @Test func powerOnCheckFailureSendsNothingMore() async throws {
+        let check = PreviewScript.flexColor4813Cold.firstIndex { $0.kind == .powerOnCheck }!
+        let sequence = try makeGuard()
+        let faulty = FaultInjectingTransport(inner: try Fixtures.coldSimulator(), faultAtNonPollingCommand: check,
+                                             fault: .setChannelValues([1928, 1843, 1882]))
+        let runner = PreviewRunner(transport: GuardedTransport(inner: faulty, sequence: sequence),
+                                   configuration: .simulator, script: PreviewScript.flexColor4813Cold)
+        do {
+            _ = try await runner.run()
+            Issue.record("the preview should have stopped")
+        } catch {
+            #expect(error.anomaly == .notJustSwitchedOn(channelValues: [1928, 1843, 1882]))
+        }
+        #expect(await faulty.commandsAfterFault.isEmpty)
+        #expect(sequence.position == check + 1)
+    }
+}

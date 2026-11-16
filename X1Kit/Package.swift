@@ -20,7 +20,7 @@ let package = Package(
         .target(name: "X1Preview", dependencies: ["X1Transport", "X1Protocol"]),
         .target(name: "X1Image"),
 
-        .target(name: "X1TestSupport", dependencies: ["X1Transport"], path: "Tests/X1TestSupport"),
+        .target(name: "X1TestSupport", dependencies: ["X1Transport", "X1Protocol"], path: "Tests/X1TestSupport"),
         .testTarget(name: "X1TransportTests", dependencies: ["X1Transport", "X1TestSupport"]),
         .testTarget(name: "X1ProtocolTests", dependencies: ["X1Protocol", "X1Transport", "X1TestSupport"]),
         .testTarget(name: "X1PreviewTests", dependencies: ["X1Preview", "X1Protocol", "X1Transport", "X1TestSupport"]),

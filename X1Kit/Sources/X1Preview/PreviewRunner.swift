@@ -117,6 +117,13 @@ public struct PreviewRunner: Sendable {
             }
         case .scan:
             guard result.data == [0x00, 0x00] else { throw PreviewAnomaly.unexpectedScanResponse(result.data) }
+        case .powerOnCheck:
+            let status = try parse { try ScanStatusPage(result.data) }
+            guard status.showsPowerOnValues else {
+                throw PreviewAnomaly.notJustSwitchedOn(channelValues: status.channelValues)
+            }
+            capture.scanStatuses.append(status)
+            progress?(.scanStatus(status))
         case .scanStatus(let captured):
             let status = try parse { try ScanStatusPage(result.data) }
             guard !positionRequested || abs(status.measuredPosition - captured) <= configuration.positionTolerance else {
@@ -143,7 +150,8 @@ public struct PreviewRunner: Sendable {
 
     // MARK: Waiting on 0xDF
 
-    /// Polls 0xDF until `target`. Only the busy states (08 01, 08 40) are accepted meanwhile.
+    /// Polls 0xDF until `target`. Only the observed busy states
+    /// (`ScannerState.observedBusyStates`) are accepted meanwhile.
     private func waitForState(_ target: ScannerState, honouringCancellation: Bool) async throws {
         let clock = ContinuousClock()
         let deadline = clock.now + configuration.stateTimeout
@@ -194,6 +202,8 @@ public enum PreviewAnomaly: Error, Hashable, CustomStringConvertible {
     case unexpectedIdentity(vendor: String, product: String)
     case unexpectedScanResponse([UInt8])
     case positionOutOfTolerance(captured: Int, measured: Int, tolerance: Int)
+    /// The first page 0x20 read of the cold sequence does not show the power-on values.
+    case notJustSwitchedOn(channelValues: [Int])
     case lineCounterWentBack(previous: Int, current: Int)
     case unexpectedState(ScannerState, waitingFor: ScannerState)
     case stateTimeout(waitingFor: ScannerState, last: ScannerState)
@@ -213,6 +223,10 @@ public enum PreviewAnomaly: Error, Hashable, CustomStringConvertible {
             "unexpected scanner '\(vendor)' '\(product)'"
         case .unexpectedScanResponse(let bytes):
             "SCAN returned \(bytes.hexString), 00 00 expected"
+        case .notJustSwitchedOn(let values):
+            "the X1 is not in its power-on state (page 0x20 bytes 19-24: "
+                + values.map(String.init).joined(separator: " / ")
+                + ", expected 2048 / 2048 / 2048): switch it off and on again, then start the preview again"
         case .positionOutOfTolerance(let captured, let measured, let tolerance):
             "measured position \(measured), captured \(captured) (tolerance \(tolerance))"
         case .lineCounterWentBack(let previous, let current):

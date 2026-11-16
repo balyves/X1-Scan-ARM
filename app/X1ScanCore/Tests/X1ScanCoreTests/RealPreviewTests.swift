@@ -10,13 +10,19 @@ actor GuardedSimulatedConnection: ScannerConnection {
     let sequence: CapturedSequenceGuard
     private let simulator: SimulatedX1
     private let openError: (any Error)?
+    /// If set, bytes 19-24 of the first page 0x20 read (an X1 not just switched on).
+    private let channelValues: [Int]?
+    private var statusReads = 0
     private(set) var opened = false
     private(set) var closed = false
     private(set) var sent: [SCSICommand] = []
 
-    init(sequence: CapturedSequenceGuard, scanner: VirtualScanner, openError: (any Error)? = nil) {
+    init(sequence: CapturedSequenceGuard, scanner: VirtualScanner, openError: (any Error)? = nil,
+         channelValues: [Int]? = nil) {
+        self.channelValues = channelValues
         self.sequence = sequence
-        simulator = scanner.makeTransport().simulator
+        // The real X1 receives the cold sequence: the simulator replays the cold capture.
+        simulator = SimulatedX1(fixture: scanner.coldFixture, profile: scanner.profile)
         self.openError = openError
     }
 
@@ -31,7 +37,16 @@ actor GuardedSimulatedConnection: ScannerConnection {
         guard opened, !closed else { throw TransportError.notOpen }
         try sequence.check(command)  // as IOKitTransport does, before the device
         sent.append(command)
-        return try await simulator.execute(command)
+        let result = try await simulator.execute(command)
+        guard command.cdb.prefix(3) == [0x5A, 0x00, 0x20] else { return result }
+        statusReads += 1
+        guard statusReads == 1, let channelValues else { return result }
+        var data = result.data
+        for (channel, value) in channelValues.enumerated() {
+            data[19 + 2 * channel] = UInt8(value & 0xFF)
+            data[20 + 2 * channel] = UInt8(value >> 8)
+        }
+        return SCSIResult(status: result.status, data: data)
     }
 }
 
@@ -46,7 +61,7 @@ final class RealPreviewTests {
         try? FileManager.default.removeItem(at: folder)
     }
 
-    private func model(enabled: Bool, openError: (any Error)? = nil) throws -> AppModel {
+    private func model(enabled: Bool, openError: (any Error)? = nil, channelValues: [Int]? = nil) throws -> AppModel {
         let suite = "X1ScanCoreTests-\(UUID().uuidString)"
         suites.append(suite)
         let defaults = UserDefaults(suiteName: suite)!
@@ -56,7 +71,8 @@ final class RealPreviewTests {
         let model = AppModel(virtualScanner: { scanner }, inspector: ScannerInspector {
             FakeConnection(responses: [:], openError: TransportError.deviceBusy)
         }, defaults: defaults, realConnection: { sequence in
-            let connection = GuardedSimulatedConnection(sequence: sequence, scanner: scanner, openError: openError)
+            let connection = GuardedSimulatedConnection(sequence: sequence, scanner: scanner, openError: openError,
+                                                        channelValues: channelValues)
             box.set(connection)
             return connection
         }, captureFolder: folder)
@@ -105,12 +121,36 @@ final class RealPreviewTests {
         let opened = await connection.opened, closed = await connection.closed
         #expect(opened && closed, "opened, then always closed")
         #expect(connection.sequence.isComplete)
+        #expect(connection.sequence.expected == PreviewSession.realScannerScript.map(\.command), "the cold sequence")
         let text = try String(contentsOf: log, encoding: .utf8)
         #expect(text.hasPrefix("# X1 Scan: FlexColor 4.8.13's captured preview replayed on the real X1"))
         #expect(text.contains("0001 CDB 12 00 00 00 60 00"))
         #expect(text.hasSuffix("# preview complete\n"))
         #expect(FileManager.default.fileExists(atPath: log.deletingPathExtension().appendingPathExtension("raw").path))
         #expect(log.path.hasPrefix(folder.path), "outside the repository, in the capture folder")
+    }
+
+    /// An X1 that was not just switched on (here with the values of the warm
+    /// capture): the preview stops at the first page 0x20 read, before anything moves.
+    @Test func stopsIfTheScannerWasNotJustSwitchedOn() async throws {
+        let model = try model(enabled: true, channelValues: [1936, 1846, 1891])
+        model.source = .real
+        let log = try model.startRealPreview(all).get()
+        await model.session.waitUntilIdle()
+        guard case .failed(let failure) = model.session.state else {
+            Issue.record("expected a failure, got \(model.session.state)")
+            return
+        }
+        #expect(failure.emergencyStop == nil)
+        if case .anomaly(.notJustSwitchedOn([1936, 1846, 1891])) = failure.cause {} else {
+            Issue.record("notJustSwitchedOn expected, got \(failure.cause)")
+        }
+        let connection = try #require(box?.connection)
+        let sent = await connection.sent
+        #expect(sent.last?.cdb.prefix(3) == [0x5A, 0x00, 0x20], "nothing after the check")
+        #expect(!sent.contains { [0x24, 0xF0, 0xE4, 0x1B, 0x28].contains($0.opcode) }, "nothing that moves")
+        #expect(await connection.closed)
+        #expect(try String(contentsOf: log, encoding: .utf8).contains("switch it off and on again"))
     }
 
     @Test func openFailureSendsNothing() async throws {

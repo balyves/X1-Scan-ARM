@@ -434,8 +434,9 @@ sent by our code: only FlexColor's captured preview, byte for byte.
 ### Guard
 
 - `CapturedSequenceGuard` (X1Transport) is built from the capture itself,
-  `tests/fixtures/preview-sequence.json`, not from `PreviewScript`; a test
-  checks that both give exactly the same commands.
+  not from `PreviewScript`; a test checks that both give exactly the same
+  commands. Since 2026-11-16 the app builds it from
+  `tests/fixtures/preview-sequence-cold.json` (see the last section).
 - Every command other than a poll must be, **in order**, the next captured
   exchange: CDB, direction, length and data out, byte for byte. Polls
   (0xEE, 0xD3, 0xDF reads of `CommandPolicy.readOnly`) are allowed between
@@ -590,7 +591,13 @@ explicitly. It is only for runs the user has approved (CLAUDE.md, rule 4).
   and the runner is unchanged.
 - **Waits on 0xDF.** We poll 0xDF after exactly the commands where FlexColor
   polled it, until the state FlexColor last saw there: `00 00`, or `00 01`
-  after SCAN. Only `08 01` and `08 40` are accepted meanwhile.
+  after SCAN. Only the busy states observed in the captures are accepted
+  meanwhile: `08 01`, `08 40` (2026-11-12), `08 02`, `08 03`, `08 06`,
+  `08 07` (right after power-on, 2026-11-16). Any other state stops the
+  preview. The wait after an emergency stop (DB) uses the same set, although
+  both captures show only `08 01` there: this changes nothing that is sent
+  (only 0xDF after DB, the guard allows nothing else), only how long the
+  app keeps polling (up to 120 s) before reporting "not ready".
 - **Stop at the first unexpected response**:
   - a status other than GOOD;
   - a wrong number of bytes;
@@ -615,3 +622,44 @@ explicitly. It is only for runs the user has approved (CLAUDE.md, rule 4).
   apart from polling commands, and waits on 0xDF at the same points.
 - **Nothing in the test suite talks to a real scanner.** `IOKitTransport` is
   only tested unopened.
+
+## Real X1: the sequence right after power-on only (2026-11-16)
+
+- The first real tests stopped at the first page 0x20 read (position 8 203
+  against 6 155), then at a wait on 0xDF (`08 07`). FlexColor's capture
+  right after power-on showed why: from a cold start it sends another
+  sequence (protocol.md §11) and goes through other busy states.
+- **On the real X1 only that cold sequence is sent** (user's decision,
+  option A): `PreviewScript.flexColor4813Cold`, and a guard built from
+  `tests/fixtures/preview-sequence-cold.json`. The virtual X1 still replays
+  the warm capture.
+- **Power-on check.** The first page 0x20 read must give 2 048 × 3 in bytes
+  19-24, or the preview stops (`PreviewAnomaly.notJustSwitchedOn`) and the
+  alert says to switch the X1 off and on again. Before that read only reads,
+  the startup `D2` and the session start `CF 00 01 80` have been sent, as in
+  both captures: no window, mode, exposure, image read or SCAN. Whether D2
+  and CF move anything is unknown (CLAUDE.md rule 4 counts them as
+  state-changing).
+- **What the check does not cover.** In the cold capture bytes 19-24 stay at
+  2 048 × 3 until the calibration (still at seq 285, 1 928 / 1 843 / 1 882
+  at seq 325). A cold run stopped before that point (anomaly, Stop) leaves
+  2 048 × 3 with a session open, modes set and the carriage possibly moved:
+  a second run without switching the X1 off would pass the check. That 2 048
+  × 3 means "just switched on" is a **[hypothesis]**; the protection then
+  rests on the advice of every alert (switch off and on again).
+- The warm sequence could not be chosen at that read: the two sequences
+  already differ before it (the page 0x28 read, cold only). Using both would
+  have meant sending a command FlexColor did not send in one of them. Kept
+  for later: a warm capture right after a cold one, without a restart, to
+  understand what triggers the page 0x28 read. The rule then planned: 2 048
+  × 3 → cold; all three between 1 750 and 2 050 and not all 2 048 → warm;
+  anything else → stop.
+- The page 0x28 read belongs to the captured cold sequence; it is **not**
+  added to `CommandPolicy.readOnly` (the inspector does not read it).
+- Fixture: converted with `tools/capture/cap3_to_fixture.py` (serial
+  number anonymised, no image data). cap3.py prints at most 64 bytes per
+  response: the INQUIRY (96 bytes) and page 0x21 (100 bytes) responses
+  were completed from the warm fixture, whose complete responses come from
+  `tools/x1probe`; their first 64 bytes are identical (marked
+  `completed_from`). They only feed the virtual X1 and the identity check.
+

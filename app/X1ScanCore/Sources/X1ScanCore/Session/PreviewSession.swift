@@ -81,8 +81,16 @@ public final class PreviewSession {
         self.script = script
     }
 
+    /// The only script sent to the real X1: FlexColor's preview right after
+    /// power-on, which stops at its first page 0x20 read (before any window,
+    /// mode, exposure or READ) if the X1 was not just switched on
+    /// (docs/decisions.md). Same image reads as the warm one.
+    public static let realScannerScript = PreviewScript.flexColor4813Cold
+
     /// Image lines the script reads (819 for FlexColor 4.8.13's preview).
-    public var expectedImageLines: Int {
+    public var expectedImageLines: Int { Self.imageLines(in: script) }
+
+    private static func imageLines(in script: [PreviewStep]) -> Int {
         script.reduce(0) { total, step in
             step.kind == .read(.image) ? total + Int(step.command.cdb[4]) : total
         }
@@ -97,7 +105,7 @@ public final class PreviewSession {
         simulator = made.simulator
         let runner = PreviewRunner(transport: made.transport, configuration: scanner.configuration,
                                    script: script)
-        launch { continuation in
+        launch(script: script) { continuation in
             do throws(PreviewError) {
                 return .success(try await runner.run { continuation.yield($0) })
             } catch {
@@ -114,10 +122,11 @@ public final class PreviewSession {
     public func start(onRealScanner connection: any ScannerConnection, log: CaptureLog) {
         guard !isBusy else { return }
         simulator = nil
+        let script = Self.realScannerScript
         let runner = PreviewRunner(transport: LoggingTransport(inner: connection, log: log),
                                    configuration: PreviewConfiguration(), script: script)
         let firstCommand = script[0].command
-        launch { continuation in
+        launch(script: script) { continuation in
             defer { log.close() }
             do {
                 try await connection.open()
@@ -142,12 +151,13 @@ public final class PreviewSession {
     }
 
     /// Common part of both starts: the run task, its events and the end.
-    private func launch(_ body: @escaping @Sendable (AsyncStream<PreviewEvent>.Continuation) async
+    private func launch(script: [PreviewStep],
+                        _ body: @escaping @Sendable (AsyncStream<PreviewEvent>.Continuation) async
                             -> Result<PreviewCapture, PreviewError>) {
         reset()
         state = .running
         progress.stepCount = script.count
-        progress.linesExpected = expectedImageLines
+        progress.linesExpected = Self.imageLines(in: script)
 
         let (events, continuation) = AsyncStream.makeStream(of: PreviewEvent.self, bufferingPolicy: .unbounded)
         let runTask = Task.detached { () -> Result<PreviewCapture, PreviewError> in
