@@ -4,9 +4,11 @@ import SwiftUI
 import X1Image
 import X1ScanCore
 
-/// The settings panel on the right (step 3, after Epson Scan 2): Scanner,
-/// Original, Main / Advanced tabs, Output, and the Preview and Scan buttons.
-/// Small controls everywhere, as in Xcode's inspectors.
+/// The settings panel on the right (step 3): Original, Main / Advanced tabs,
+/// Output, and the Preview and Scan buttons. Small controls everywhere. The
+/// Settings section follows the compact panel conventions
+/// (.claude/skills/compact-settings-panel/SKILL.md); the others still use
+/// PanelSectionView until they are converted.
 struct SettingsPanelView: View {
     @Bindable var model: AppModel
 
@@ -17,7 +19,8 @@ struct SettingsPanelView: View {
                     PanelSectionView(model: model, section: .original, title: Strings.panelSection(.original)) {
                         OriginalSection(model: model)
                     }
-                    PanelSectionView(model: model, section: .settings, title: Strings.panelSection(.settings)) {
+                    CompactSection(Strings.panelSection(.settings), foldTexts: Strings.foldTexts,
+                                   isExpanded: model.panel.expansion(of: .settings)) {
                         TabsSection(model: model)
                     }
                     PanelSectionView(model: model, section: .output, title: Strings.panelSection(.output)) {
@@ -142,7 +145,7 @@ private struct TabsSection: View {
     @Bindable var model: AppModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: CompactPanelMetrics.groupSpacing) {
             Picker(String(localized: "Settings", comment: "Panel section: Main / Advanced"),
                    selection: Binding { model.panel.layout.tab } set: { model.panel.layout.tab = $0 }) {
                 Text("Main", comment: "Panel tab").tag(PanelTab.main)
@@ -166,33 +169,31 @@ private struct TabsSection: View {
 private struct MainTab: View {
     @Bindable var model: AppModel
 
+    private static let resolutionFormat = CompactValueFormat(
+        integers: ScanSettings.resolutionRange, defaultValue: ScanSettings.defaultResolution)
+    private static let scaleFormat = CompactValueFormat(
+        integers: ScanSettings.scaleRange, defaultValue: ScanSettings.defaultScalePercent)
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            PanelRow(label: String(localized: "Resolution", comment: "Panel label")) {
-                HStack(spacing: 4) {
-                    TextField(value: $model.scanSettings.resolution, format: .number.grouping(.never)) { EmptyView() }
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 64)
-                    Text("ppi", comment: "Unit: pixels per inch").foregroundStyle(.secondary)
-                }
-            }
-            PanelRow(label: String(localized: "Input", comment: "Panel label: input size")) {
-                Text(pixels(model.inputPixelSize)).monospacedDigit()
-            }
-            PanelRow(label: String(localized: "Scale", comment: "Panel label")) {
-                HStack(spacing: 4) {
-                    TextField(value: $model.scanSettings.scalePercent, format: .number.grouping(.never)) { EmptyView() }
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 52)
-                    Text(verbatim: "%").foregroundStyle(.secondary)
-                }
-            }
-            PanelRow(label: String(localized: "Output", comment: "Panel label: output size")) {
-                Text(pixels(model.inputPixelSize.map {
-                    let scale = Double(model.scanSettings.scalePercent) / 100
-                    return (Int((Double($0.width) * scale).rounded()), Int((Double($0.height) * scale).rounded()))
-                })).monospacedDigit()
-            }
+        VStack(alignment: .leading, spacing: CompactPanelMetrics.rowSpacing) {
+            CompactSliderRow(
+                value: Binding(rounding: $model.scanSettings.resolution),
+                format: Self.resolutionFormat,
+                texts: Strings.sliderRow(label: String(localized: "Resolution", comment: "Panel label"),
+                                         unit: String(localized: "ppi", comment: "Unit: pixels per inch"),
+                                         format: Self.resolutionFormat))
+            CompactInfoRow(String(localized: "Input", comment: "Panel label: input size"),
+                           value: pixels(model.inputPixelSize))
+            CompactSliderRow(
+                value: Binding(rounding: $model.scanSettings.scalePercent),
+                format: Self.scaleFormat,
+                texts: Strings.sliderRow(label: String(localized: "Scale", comment: "Panel label"),
+                                         unit: "%", format: Self.scaleFormat))
+            CompactInfoRow(String(localized: "Output", comment: "Panel label: output size"),
+                           value: pixels(model.inputPixelSize.map {
+                               let scale = Double(model.scanSettings.scalePercent) / 100
+                               return (Int((Double($0.width) * scale).rounded()), Int((Double($0.height) * scale).rounded()))
+                           }))
             Text("Sizes in preview pixels; millimetres once the preview resolution is confirmed. Resolution, scale and crop apply to the scan (a later step): Export Preview writes the whole preview.",
                  comment: "Panel note under the sizes")
                 .font(.caption)
@@ -208,29 +209,18 @@ private struct MainTab: View {
     }
 }
 
+/// Inside the Settings section: a sub-group without its own separator.
 private struct HistogramDisclosure: View {
     @Bindable var model: AppModel
 
     var body: some View {
-        let folded = model.panel.layout.isFolded(.histogram)
-        VStack(alignment: .leading, spacing: 6) {
-            Button {
-                withAnimation(.snappy(duration: 0.15)) { model.panel.toggleFolded(.histogram) }
-            } label: {
-                HStack(spacing: 5) {
-                    Image(systemName: "chevron.right")
-                        .font(.caption2.weight(.semibold))
-                        .rotationEffect(.degrees(folded ? 0 : 90))
-                        .foregroundStyle(.secondary)
-                    Text("Histogram", comment: "Palette title")
-                    Spacer()
-                }
-                .contentShape(.rect)
-            }
-            .buttonStyle(.plain)
-            if !folded { HistogramView(model: model) }
+        DisclosureGroup(isExpanded: model.panel.expansion(of: .histogram)) {
+            HistogramView(model: model)
+        } label: {
+            Text("Histogram", comment: "Palette title")
         }
-        .padding(.top, 4)
+        .disclosureGroupStyle(CompactDisclosureStyle(texts: Strings.foldTexts))
+        .padding(.top, CompactPanelMetrics.groupSpacing - CompactPanelMetrics.rowSpacing)
     }
 }
 

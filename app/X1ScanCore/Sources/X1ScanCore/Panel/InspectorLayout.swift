@@ -41,6 +41,10 @@ public struct InspectorLayout: Sendable, Hashable, Codable {
         if folded.contains(section) { folded.remove(section) } else { folded.insert(section) }
     }
 
+    public mutating func setFolded(_ section: PanelSection, _ isFolded: Bool) {
+        if isFolded { folded.insert(section) } else { folded.remove(section) }
+    }
+
     private enum CodingKeys: String, CodingKey { case width, isHidden, folded, tab }
 
     /// Unknown sections and tabs (another version) are dropped, not fatal.
@@ -85,6 +89,7 @@ public final class PanelController {
 
     public func toggleHidden() { layout.isHidden.toggle() }
     public func toggleFolded(_ section: PanelSection) { layout.toggleFolded(section) }
+    public func setFolded(_ section: PanelSection, _ isFolded: Bool) { layout.setFolded(section, isFolded) }
     public func setWidth(_ width: Double) { layout.setWidth(width) }
 
     private func save() {

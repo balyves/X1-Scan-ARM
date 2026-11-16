@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: MIT
 import PackageDescription
 
-// Models and view models of the X1 Scan application. No user interface here,
-// so that everything can be tested with `swift test`.
+// Models and view models of the X1 Scan application, tested with `swift test`.
+// The only views are the reusable components of the compact settings panel
+// (Sources/X1ScanCore/UI): no state of their own, no interface text.
 let package = Package(
     name: "X1ScanCore",
     platforms: [.macOS("26.0")],

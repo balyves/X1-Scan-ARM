@@ -2487,6 +2487,30 @@
           }
         }
       }
+    },
+    "Reset to Default": {
+      "comment": "VoiceOver action of a panel slider row",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rétablir la valeur par défaut"
+          }
+        }
+      }
+    },
+    "Double-click to reset to %@": {
+      "comment": "Tooltip of a panel slider row label; the default value with its unit",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Double-cliquer pour revenir à %@"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

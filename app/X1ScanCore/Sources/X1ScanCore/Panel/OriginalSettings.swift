@@ -14,6 +14,9 @@ public enum FilmType: String, Sendable, Hashable, CaseIterable, Codable {
 public struct ScanSettings: Sendable, Hashable, Codable {
     public static let resolutionRange = 50...10_000
     public static let scaleRange = 1...1_000
+    /// Values at first launch, and restored by a double-click on the label.
+    public static let defaultResolution = 2_000
+    public static let defaultScalePercent = 100
 
     public var filmType: FilmType = .positive
     /// The holder chosen in the panel (`Holder.id`); nil: not specified.
@@ -21,11 +24,11 @@ public struct ScanSettings: Sendable, Hashable, Codable {
     /// Step 3 saved the holder as free text; converted to a custom holder by AppModel.
     public private(set) var legacyHolderName: String?
     /// Pixels per inch, for the scan (stored only).
-    public var resolution: Int = 2_000 {
+    public var resolution: Int = ScanSettings.defaultResolution {
         didSet { resolution = min(max(resolution, Self.resolutionRange.lowerBound), Self.resolutionRange.upperBound) }
     }
     /// Output scale in percent (stored only).
-    public var scalePercent: Int = 100 {
+    public var scalePercent: Int = ScanSettings.defaultScalePercent {
         didSet { scalePercent = min(max(scalePercent, Self.scaleRange.lowerBound), Self.scaleRange.upperBound) }
     }
 
@@ -42,8 +45,8 @@ public struct ScanSettings: Sendable, Hashable, Codable {
         holderID = try container.decodeIfPresent(String.self, forKey: .holderID)
         let legacy = try container.decodeIfPresent(String.self, forKey: .holder)?.trimmingCharacters(in: .whitespacesAndNewlines)
         legacyHolderName = (legacy?.isEmpty ?? true) ? nil : legacy
-        let resolution = try container.decodeIfPresent(Int.self, forKey: .resolution) ?? 2_000
-        let scale = try container.decodeIfPresent(Int.self, forKey: .scalePercent) ?? 100
+        let resolution = try container.decodeIfPresent(Int.self, forKey: .resolution) ?? Self.defaultResolution
+        let scale = try container.decodeIfPresent(Int.self, forKey: .scalePercent) ?? Self.defaultScalePercent
         self.resolution = min(max(resolution, Self.resolutionRange.lowerBound), Self.resolutionRange.upperBound)
         scalePercent = min(max(scale, Self.scaleRange.lowerBound), Self.scaleRange.upperBound)
     }

@@ -71,7 +71,8 @@ Scope: **Flextight X1 only**. Other Flextight / Imacon models are out of scope.
 7. **Review before every commit**: run the `x1-reviewer` subagent
    (`.claude/agents/x1-reviewer.md`) on the changes, and show the user its
    full report together with `git status` and the diff summary. Fix or
-   discuss every "Bloquant" item before committing. The pre-commit hook
+   discuss every "Bloquant" item before committing. For interface changes,
+   run the `x1-ui` subagent as well and show its opinion. The pre-commit hook
    (`tools/git-hooks`, install with `git config core.hooksPath
    tools/git-hooks`) and the X1Kit CI workflow are additional checks, not a
    substitute.
@@ -106,7 +107,8 @@ available; ask.
   `swift test` runs against the simulator, never against a real scanner.
 - `app/`: macOS application. `X1Scan.xcodeproj` and `X1Scan/` (AppKit
   shell, SwiftUI settings panel and tool column, String Catalog), `X1ScanCore/` (models and view
-  models, `swift test`). The preview runs on the virtual X1; on the real X1,
+  models, plus the reusable views of the compact settings panel in `UI/`,
+  `swift test`). The preview runs on the virtual X1; on the real X1,
   only FlexColor's captured preview, behind the hidden setting
   `EnableRealPreview`, a confirmation before every run and
   `CapturedSequenceGuard` built from the cold capture (docs/decisions.md,
@@ -115,6 +117,8 @@ available; ask.
 - `tools/git-hooks/`: `x1-check` (serial numbers, scan and firmware files, size,
   commit messages), run by the pre-commit and commit-msg hooks and by the CI.
 - `.claude/agents/x1-reviewer.md`: pre-commit review subagent.
+- `.claude/agents/x1-ui.md`: read-only review of interface changes against
+  `.claude/skills/compact-settings-panel/SKILL.md` (settings panel conventions).
 - `.github/workflows/x1kit.yml`: CI, runs `x1-check` on every pushed commit, builds
   X1Kit and runs its tests, tests X1ScanCore and builds the app.
 

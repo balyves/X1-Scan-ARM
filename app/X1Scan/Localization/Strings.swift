@@ -9,6 +9,26 @@ import X1ScanCore
 /// produces interface text; every translatable string lives in this target's
 /// String Catalog (Localizable.xcstrings, English and French).
 enum Strings {
+    /// Texts of a compact slider row: label and unit as given, the reset
+    /// action, and a tooltip with the default value and its unit.
+    static func sliderRow(label: String, unit: String, format: CompactValueFormat) -> CompactSliderRow.Texts {
+        let defaultValue = format.text(for: format.defaultValue, locale: .current)
+        // No-break space: the value and its unit stay on one line.
+        let defaultText = unit.isEmpty ? defaultValue : "\(defaultValue)\u{00A0}\(unit)"
+        return CompactSliderRow.Texts(
+            label: label,
+            unit: unit,
+            resetAction: String(localized: "Reset to Default", comment: "VoiceOver action of a panel slider row"),
+            resetHelp: String(localized: "Double-click to reset to \(defaultText)",
+                              comment: "Tooltip of a panel slider row label; the default value with its unit"))
+    }
+
+    /// VoiceOver values of a foldable panel title.
+    static var foldTexts: CompactFoldTexts {
+        CompactFoldTexts(expanded: String(localized: "Expanded", comment: "Palette state"),
+                         collapsed: String(localized: "Collapsed", comment: "Palette state"))
+    }
+
     static func toolName(_ tool: Tool) -> String {
         switch tool {
         case .hand: String(localized: "tool.hand", defaultValue: "Hand", comment: "Tool: move the image")
