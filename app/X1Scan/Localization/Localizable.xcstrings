@@ -1644,50 +1644,6 @@
         }
       }
     },
-    "RGB 16-bit (raw, linear)": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "RVB 16 bits (brut, linéaire)"
-          }
-        }
-      }
-    },
-    "RGB 8-bit (sRGB)": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "RVB 8 bits (sRVB)"
-          }
-        }
-      }
-    },
-    "Grey 16-bit (linear)": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Niveaux de gris 16 bits (linéaire)"
-          }
-        }
-      }
-    },
-    "Grey 8-bit (sRGB curve)": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Niveaux de gris 8 bits (courbe sRVB)"
-          }
-        }
-      }
-    },
     "LZW": {
       "extractionState": "manual",
       "localizations": {
@@ -1971,17 +1927,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "ppp"
-          }
-        }
-      }
-    },
-    "8 bits: sRGB curve and profile (provisional); fewer levels than the raw 16 bits.": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "8 bits : courbe et profil sRVB (provisoires) ; moins de niveaux que le 16 bits brut."
           }
         }
       }
@@ -2522,6 +2467,120 @@
           "stringUnit": {
             "state": "translated",
             "value": "Modifier les porte-films"
+          }
+        }
+      }
+    },
+    "RGB 16-bit linear": {
+      "comment": "Export format (short: shown whole in the panel menu)",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "RVB 16 bits linéaire"
+          }
+        }
+      }
+    },
+    "RGB 8-bit sRGB": {
+      "comment": "Export format (short: shown whole in the panel menu)",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "RVB 8 bits sRVB"
+          }
+        }
+      }
+    },
+    "Grey 16-bit linear": {
+      "comment": "Export format (short: shown whole in the panel menu)",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gris 16 bits linéaire"
+          }
+        }
+      }
+    },
+    "Grey 8-bit sRGB": {
+      "comment": "Export format (short: shown whole in the panel menu)",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gris 8 bits sRVB"
+          }
+        }
+      }
+    },
+    "RGB 16-bit: the scanner's linear values after the white and dark references, without profile. Grey 16-bit: linear luminance (provisional weights). 8-bit: sRGB curve and profile (provisional).": {
+      "comment": "Tooltip of the export format menu of the settings panel",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "RVB 16 bits : valeurs linéaires du scanner après les références blanc et noir, sans profil. Gris 16 bits : luminance linéaire (coefficients provisoires). 8 bits : courbe et profil sRVB (provisoires)."
+          }
+        }
+      }
+    },
+    "Edit the name templates (Settings > Export)": {
+      "comment": "Tooltip of the … button next to the name template menu",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifier les modèles de nom (Réglages › Exporter)"
+          }
+        }
+      }
+    },
+    "Edit Name Templates": {
+      "comment": "VoiceOver label of the … button next to the name template menu",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifier les modèles de nom"
+          }
+        }
+      }
+    },
+    "compression.none": {
+      "comment": "TIFF compression: none (feminine in French)",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "None"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune"
+          }
+        }
+      }
+    },
+    "8 bits: sRGB curve and profile (provisional); fewer levels than 16-bit linear.": {
+      "comment": "Export warning for 8-bit formats, under the format menu",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "8 bits : courbe et profil sRVB (provisoires) ; moins de niveaux que le 16 bits linéaire."
           }
         }
       }

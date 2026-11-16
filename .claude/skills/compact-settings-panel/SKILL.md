@@ -8,9 +8,7 @@ description: Interface conventions for the settings panel on the right of the X1
 The panel on the right of the main window holds the scan and export
 settings. It is a working tool used for hours: dense, quiet and aligned, with
 every number readable and editable in one place. These rules apply to every
-section of the panel. Sections not converted yet still use
-`PanelSectionView` / `PanelRow` in `SettingsPanelView.swift`; convert them
-with the components below when they are touched.
+section of the panel (today Original, Settings, Output).
 
 ## Components (X1ScanCore, `Sources/X1ScanCore/UI/CompactPanel.swift`)
 
@@ -27,7 +25,10 @@ with the components below when they are touched.
 - `CompactInfoRow(label, value:help:)`: a read-only value on one row.
 - `CompactControlRow(label, help:) { … }`: a choice or an action on one row,
   the control across the whole control column.
-- `CompactPopUp(label, selection:items:)` or `(…, sections:)`: a menu that
+- `CompactDetailRow { … }`: content in the control column without a label:
+  what completes the row above (the name a template gives), a warning, an
+  action button, the result of an action.
+- `CompactPopUp(label, help:, selection:items:)` or `(…, sections:)`: a menu that
   fills the control column (a SwiftUI `Picker` keeps the width of its
   longest item on macOS and cannot be stretched). Sections are separated in
   the menu; titles come translated; `label` is read by VoiceOver.
@@ -173,10 +174,6 @@ passes every string, already translated (see Text and languages).
   slider or menu that takes the free space. A row must look right at the
   minimum width and not spread out at the maximum. No label/control row
   reflows onto two lines when the panel narrows; notes wrap.
-- Sections not converted yet (`PanelSectionView` / `PanelRow`, today
-  Output) do not follow this rule yet: at the minimum width a menu can be
-  truncated, at the maximum buttons drift to the edge. Converting them fixes
-  that.
 - Content that does not fit vertically scrolls in the panel's
   `ScrollView`; the Preview and Scan buttons stay fixed below it.
 

@@ -141,6 +141,23 @@ public struct CompactControlRow<Control: View>: View {
     }
 }
 
+/// Content in the control column, without a label: what completes the row
+/// above (the name a template gives), a warning, an action button, the
+/// result of an action.
+public struct CompactDetailRow<Content: View>: View {
+    @ViewBuilder var content: () -> Content
+
+    public init(@ViewBuilder content: @escaping () -> Content) {
+        self.content = content
+    }
+
+    public var body: some View {
+        content()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.leading, CompactPanelMetrics.labelWidth + CompactPanelMetrics.columnSpacing)
+    }
+}
+
 /// A read-only value on one row: label column, then the value. An
 /// explanation goes in the tooltip, not under the row.
 public struct CompactInfoRow: View {

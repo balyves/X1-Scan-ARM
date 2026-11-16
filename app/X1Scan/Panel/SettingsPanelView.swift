@@ -5,10 +5,9 @@ import X1Image
 import X1ScanCore
 
 /// The settings panel on the right (step 3): Original, Main / Advanced tabs,
-/// Output, and the Preview and Scan buttons. Small controls everywhere. The
-/// Original and Settings sections follow the compact panel conventions
-/// (.claude/skills/compact-settings-panel/SKILL.md); Output still uses
-/// PanelSectionView until it is converted.
+/// Output, and the Preview and Scan buttons. Small controls everywhere. All
+/// sections follow the compact panel conventions
+/// (.claude/skills/compact-settings-panel/SKILL.md).
 struct SettingsPanelView: View {
     @Bindable var model: AppModel
 
@@ -24,7 +23,8 @@ struct SettingsPanelView: View {
                                    isExpanded: model.panel.expansion(of: .settings)) {
                         TabsSection(model: model)
                     }
-                    PanelSectionView(model: model, section: .output, title: Strings.panelSection(.output)) {
+                    CompactSection(Strings.panelSection(.output), foldTexts: Strings.foldTexts,
+                                   isExpanded: model.panel.expansion(of: .output)) {
                         OutputSection(model: model)
                     }
                 }
@@ -45,54 +45,6 @@ struct SettingsPanelView: View {
         }
         .controlSize(.small)
         .font(.callout)
-    }
-}
-
-/// A foldable section with a small header.
-private struct PanelSectionView<Content: View>: View {
-    @Bindable var model: AppModel
-    let section: PanelSection
-    let title: String
-    @ViewBuilder var content: () -> Content
-
-    var body: some View {
-        let folded = model.panel.layout.isFolded(section)
-        VStack(alignment: .leading, spacing: 6) {
-            Button {
-                withAnimation(.snappy(duration: 0.15)) { model.panel.toggleFolded(section) }
-            } label: {
-                HStack(spacing: 5) {
-                    Image(systemName: "chevron.right")
-                        .font(.caption2.weight(.semibold))
-                        .rotationEffect(.degrees(folded ? 0 : 90))
-                        .foregroundStyle(.secondary)
-                    Text(title).font(.subheadline.weight(.semibold))
-                    Spacer()
-                }
-                .contentShape(.rect)
-            }
-            .buttonStyle(.plain)
-            .accessibilityValue(folded ? Text("Collapsed", comment: "Palette state") : Text("Expanded", comment: "Palette state"))
-            if !folded {
-                content()
-            }
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        Divider().padding(.horizontal, 8)
-    }
-}
-
-/// Label and control on one row, labels aligned.
-private struct PanelRow<Control: View>: View {
-    let label: String
-    @ViewBuilder var control: () -> Control
-
-    var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Text(label).foregroundStyle(.secondary).frame(width: 78, alignment: .leading)
-            control().frame(maxWidth: .infinity, alignment: .leading)
-        }
     }
 }
 
@@ -223,63 +175,80 @@ private struct OutputSection: View {
     @Bindable var model: AppModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            PanelRow(label: String(localized: "Format", comment: "Export palette label")) {
-                Picker(String(localized: "Format", comment: "Export palette label"), selection: $model.exportSettings.format) {
-                    ForEach(TIFFFormat.allCases, id: \.self) { Text(Strings.exportFormat($0)).tag($0) }
-                }
-                .labelsHidden()
-            }
-            if model.exportSettings.format.usesSRGBCurve {
-                Label(String(localized: "8 bits: sRGB curve and profile (provisional); fewer levels than the raw 16 bits.",
+        let format = String(localized: "Format", comment: "Export palette label")
+        let compression = String(localized: "Compression", comment: "Panel label")
+        let name = String(localized: "Name", comment: "Panel label: file name template")
+        CompactControlRow(format, help: Strings.exportFormatHelp) {
+            CompactPopUp(format, help: Strings.exportFormatHelp, selection: $model.exportSettings.format,
+                         items: TIFFFormat.allCases.map { .init(Strings.exportFormat($0), $0) })
+        }
+        if model.exportSettings.format.usesSRGBCurve {
+            // A warning: stays visible, not in a tooltip.
+            CompactDetailRow {
+                Label(String(localized: "8 bits: sRGB curve and profile (provisional); fewer levels than 16-bit linear.",
                              comment: "Export warning for 8-bit formats"),
                       systemImage: "exclamationmark.triangle")
                     .font(.caption)
                     .foregroundStyle(.orange)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            PanelRow(label: String(localized: "Compression", comment: "Panel label")) {
-                Picker(String(localized: "Compression", comment: "Panel label"), selection: $model.exportSettings.compression) {
-                    ForEach(TIFFCompression.allCases, id: \.self) { Text(Strings.compression($0)).tag($0) }
+        }
+        CompactControlRow(compression) {
+            CompactPopUp(compression, selection: $model.exportSettings.compression,
+                         items: TIFFCompression.allCases.map { .init(Strings.compression($0), $0) })
+        }
+        CompactControlRow(name) {
+            HStack(spacing: CompactPanelMetrics.columnSpacing) {
+                CompactPopUp(name, selection: $model.exportSettings.nameTemplate,
+                             items: templates.map { .init($0, $0) })
+                // Same small button as the holder row: the menu keeps the room.
+                Button {
+                    NSApp.sendAction(#selector(AppDelegate.showExportSettings(_:)), to: nil, from: nil)
+                } label: {
+                    Image(systemName: "ellipsis.circle")
                 }
-                .labelsHidden()
+                .buttonStyle(.borderless)
+                .help(Text("Edit the name templates (Settings > Export)", comment: "Tooltip of the … button next to the name template menu"))
+                .accessibilityLabel(Text("Edit Name Templates", comment: "VoiceOver label of the … button next to the name template menu"))
             }
-            PanelRow(label: String(localized: "Name", comment: "Panel label: file name template")) {
-                HStack(spacing: 4) {
-                    Picker(String(localized: "Name", comment: "Panel label: file name template"),
-                           selection: $model.exportSettings.nameTemplate) {
-                        ForEach(templates, id: \.self) { Text(verbatim: $0).tag($0) }
-                    }
-                    .labelsHidden()
-                    Button(String(localized: "Edit…", comment: "Panel button: opens Settings > Export")) {
-                        NSApp.sendAction(#selector(AppDelegate.showExportSettings(_:)), to: nil, from: nil)
-                    }
-                }
-            }
+        }
+        // The name the template gives now: the immediate result of the row above.
+        CompactDetailRow {
             Text(ExportNameHelp.next(model))
                 .font(.caption)
                 .foregroundStyle(.secondary)
-                .lineLimit(2)
+                .lineLimit(1)
                 .truncationMode(.middle)
-            PanelRow(label: String(localized: "Folder", comment: "Export palette label")) {
-                HStack(spacing: 4) {
-                    Text(model.exportSettings.folder?.lastPathComponent
-                         ?? String(localized: "None", comment: "No export folder chosen"))
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                        .help(model.exportSettings.folder?.path(percentEncoded: false) ?? "")
-                    Spacer(minLength: 4)
-                    Button(String(localized: "Choose…", comment: "Button")) {
-                        ExportFolderPanel.choose(for: NSApp.keyWindow, model: model)
-                    }
+                .help(ExportNameHelp.next(model))  // whole name when truncated
+        }
+        let folderLabel = String(localized: "Folder", comment: "Export palette label")
+        let folderName = model.exportSettings.folder.map {
+            FileManager.default.displayName(atPath: $0.path(percentEncoded: false))  // localized ("Bureau")
+        } ?? String(localized: "None", comment: "No export folder chosen")
+        CompactControlRow(folderLabel) {
+            HStack(spacing: CompactPanelMetrics.columnSpacing) {
+                Text(folderName)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .help(model.exportSettings.folder?.path(percentEncoded: false) ?? "")
+                    // The row's visible label is hidden from VoiceOver: name the value here.
+                    .accessibilityLabel(folderLabel)
+                    .accessibilityValue(folderName)
+                Button(String(localized: "Choose…", comment: "Button")) {
+                    ExportFolderPanel.choose(for: NSApp.keyWindow, model: model)
                 }
             }
+        }
+        CompactDetailRow {
             Button(String(localized: "Export Preview", comment: "Panel button")) { model.export() }
                 .disabled(!model.toolbar.canExport)
                 .help(Text("Export the preview with these settings (⇧⌘E)", comment: "Tooltip"))
-            switch model.lastExport {
-            case .success(let url):
-                HStack {
+        }
+        switch model.lastExport {
+        case .success(let url):
+            CompactDetailRow {
+                HStack(spacing: CompactPanelMetrics.columnSpacing) {
                     Text(url.lastPathComponent).font(.caption).lineLimit(1).truncationMode(.middle)
                     Button(String(localized: "Show in Finder", comment: "Button")) {
                         NSWorkspace.shared.activateFileViewerSelecting([url])
@@ -287,11 +256,14 @@ private struct OutputSection: View {
                     .buttonStyle(.link)
                     .font(.caption)
                 }
-            case .failure(let error):
-                Text(Strings.exportError(error)).font(.caption).foregroundStyle(.red)
-            case nil:
-                EmptyView()
             }
+        case .failure(let error):
+            CompactDetailRow {
+                Text(Strings.exportError(error)).font(.caption).foregroundStyle(.red)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        case nil:
+            EmptyView()
         }
     }
 

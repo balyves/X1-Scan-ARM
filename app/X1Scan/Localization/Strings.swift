@@ -233,16 +233,22 @@ enum Strings {
 
     static func exportFormat(_ format: TIFFFormat) -> String {
         switch format {
-        case .rgb16: String(localized: "RGB 16-bit (raw, linear)", comment: "Export format")
-        case .rgb8: String(localized: "RGB 8-bit (sRGB)", comment: "Export format")
-        case .gray16: String(localized: "Grey 16-bit (linear)", comment: "Export format")
-        case .gray8: String(localized: "Grey 8-bit (sRGB curve)", comment: "Export format")
+        case .rgb16: String(localized: "RGB 16-bit linear", comment: "Export format (short: shown whole in the panel menu)")
+        case .rgb8: String(localized: "RGB 8-bit sRGB", comment: "Export format (short: shown whole in the panel menu)")
+        case .gray16: String(localized: "Grey 16-bit linear", comment: "Export format (short: shown whole in the panel menu)")
+        case .gray8: String(localized: "Grey 8-bit sRGB", comment: "Export format (short: shown whole in the panel menu)")
         }
+    }
+
+    /// Tooltip and VoiceOver help of the export format menu.
+    static var exportFormatHelp: String {
+        String(localized: "RGB 16-bit: the scanner's linear values after the white and dark references, without profile. Grey 16-bit: linear luminance (provisional weights). 8-bit: sRGB curve and profile (provisional).",
+               comment: "Tooltip of the export format menu of the settings panel")
     }
 
     static func compression(_ compression: TIFFCompression) -> String {
         switch compression {
-        case .none: String(localized: "None", comment: "TIFF compression")
+        case .none: String(localized: "compression.none", defaultValue: "None", comment: "TIFF compression: none (feminine in French)")
         case .lzw: String(localized: "LZW", comment: "TIFF compression")
         case .deflate: String(localized: "ZIP", comment: "TIFF compression (Deflate)")
         }

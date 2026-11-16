@@ -80,7 +80,7 @@ Then review the change against it, critically. Look for what is wrong.
    mode: do not report that as a defect of the change.
 7. **Scope and consistency**:
    - the change does what was asked and no more;
-   - sections not converted are left as they are, unless asked;
+   - sections the change does not concern are left as they are, unless asked;
    - comments and documentation describe the style in generic terms: no
      product, company or person is named as a model;
    - code, comments and documentation are in English.
