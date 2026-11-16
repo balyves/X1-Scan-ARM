@@ -112,12 +112,16 @@ public final class AppModel {
     public private(set) var viewport: Viewport
     /// Size of the visible image area, reported by the canvas.
     public var viewSize: CGSize { viewport.viewSize }
-    /// Framing rectangle drawn with the crop tool. No effect at this stage.
-    public var cropRect: PixelRect?
+    /// Framing rectangle drawn with the crop tool. Not exported at this stage;
+    /// the histogram counts its pixels only.
+    public var cropRect: PixelRect? {
+        didSet { if Self.histogramRegion(of: cropRect) != Self.histogramRegion(of: oldValue) { refreshHistogram() } }
+    }
     /// Pixel under the pointer, reported by the canvas.
     public var pointer: PixelCoordinate?
     public private(set) var displayImage: CGImage?
     public private(set) var histogram = Histogram.empty
+    private var histogramTask: Task<Void, Never>?
     private var renderedRevision = -1
     /// Set by startPreview: the next image gets the zoom of Settings > Display.
     private var startupZoomPending = true
@@ -423,19 +427,54 @@ public final class AppModel {
             if settings.startupZoom == .fit { viewport.fit() } else { viewport.actualSize() }
         }
         renderTask?.cancel()
+        histogramTask?.cancel()
+        let region = histogramRegion
         renderTask = Task {
             let rendered = await Task.detached(priority: .userInitiated) {
-                (DisplayImage.make(from: image).map(SendableImage.init), Histogram(samples: image.corrected))
+                (DisplayImage.make(from: image).map(SendableImage.init),
+                 Histogram(samples: image.corrected, width: image.width, region: region))
             }.value
             guard !Task.isCancelled, revision == self.session.imageRevision else { return }
             self.displayImage = rendered.0?.image
-            self.histogram = rendered.1
+            if region == self.histogramRegion { self.histogram = rendered.1 }
         }
     }
 
-    /// Waits for the latest `refreshImage` work (tests).
+    /// The crop the histogram counts: none below 2 × 2 pixels (a click with the
+    /// crop tool draws a 1 × 1 rectangle, which would leave a one-pixel histogram).
+    var histogramRegion: PixelRect? { Self.histogramRegion(of: cropRect) }
+
+    static func histogramRegion(of crop: PixelRect?) -> PixelRect? {
+        guard let crop, crop.width >= 2, crop.height >= 2 else { return nil }
+        return crop
+    }
+
+    /// The histogram of the crop (or of the whole image without one), after the
+    /// crop changed; the display image does not change.
+    private func refreshHistogram() {
+        histogramTask?.cancel()
+        guard let image = session.image else {
+            histogram = .empty
+            return
+        }
+        let region = histogramRegion
+        histogramTask = Task {
+            // While the crop is being dragged, only the position it rests at is counted:
+            // each mouse move cancels the previous task during this pause.
+            try? await Task.sleep(for: .milliseconds(50))
+            guard !Task.isCancelled else { return }
+            let histogram = await Task.detached(priority: .userInitiated) {
+                Histogram(samples: image.corrected, width: image.width, region: region)
+            }.value
+            guard !Task.isCancelled, region == self.histogramRegion else { return }
+            self.histogram = histogram
+        }
+    }
+
+    /// Waits for the latest `refreshImage` / histogram work (tests).
     public func waitForRendering() async {
         await renderTask?.value
+        await histogramTask?.value
     }
 
     private func saveExportSettings() {

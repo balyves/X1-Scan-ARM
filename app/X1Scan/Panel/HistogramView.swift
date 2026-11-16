@@ -15,12 +15,15 @@ struct HistogramView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: CompactPanelMetrics.rowSpacing) {
-            let bins = model.histogram.normalized(scale: logarithmic ? .logarithmic : .linear)
+            // Linear: the top of the scale is the 99.5th percentile of the bins, so that a
+            // few isolated peaks are cut instead of flattening the rest of the distribution.
+            let bins = logarithmic ? model.histogram.normalized(scale: .logarithmic)
+                : model.histogram.normalized(scale: .linear, peakPercentile: 0.995)
             let dark = colorScheme == .dark
             Canvas { context, size in
                 context.blendMode = dark ? .plusLighter : .multiply
                 for (channel, color) in Self.channelColors.enumerated() {
-                    context.fill(path(bins[channel], in: size), with: .color(color.opacity(dark ? 0.75 : 0.45)))
+                    context.fill(path(bins[channel], in: size), with: .color(color.opacity(dark ? 0.75 : 0.25)))
                 }
             }
             .frame(height: 90)

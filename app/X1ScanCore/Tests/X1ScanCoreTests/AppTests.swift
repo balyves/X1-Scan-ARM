@@ -232,6 +232,17 @@ final class AppModelTests {
         #expect(model.displayImage?.width == 2004)
         #expect(model.histogram.pixelCount == 2004 * 817)
         #expect(model.viewport.imageHeight == 817 && model.viewport.mode == .fit)
+        // A crop: the histogram counts its pixels only; removing it counts the whole image again.
+        model.cropRect = PixelRect(x: 100, y: 50, width: 300, height: 200)
+        await model.waitForRendering()
+        #expect(model.histogram.pixelCount == 300 * 200)
+        model.cropRect = nil
+        await model.waitForRendering()
+        #expect(model.histogram.pixelCount == 2004 * 817)
+        // A click with the crop tool (1 × 1): the histogram stays on the whole image.
+        model.cropRect = PixelRect(x: 10, y: 10, width: 1, height: 1)
+        await model.waitForRendering()
+        #expect(model.histogram.pixelCount == 2004 * 817)
         model.pointer = PixelCoordinate(x: 100, y: 100)
         #expect(model.pixelReading?.corrected.count == 3)
     }
@@ -239,6 +250,32 @@ final class AppModelTests {
     private func model(pausedAt index: Int, gate: PreviewGate) -> AppModel {
         AppModel(virtualScanner: { try TestFixtures.scanner(pausedAt: index, gate: gate) },
                  inspector: Self.failingInspector, defaults: temporaryDefaults())
+    }
+
+    /// While a preview runs, every new slice keeps the histogram of the crop
+    /// (refreshImage computes it for the current crop), clipped to the rows received.
+    @Test func histogramFollowsTheCropWhilePreviewing() async throws {
+        let gate = PreviewGate()
+        let model = model(pausedAt: TestFixtures.scanIndex + 20, gate: gate)
+        model.startPreview()
+        await gate.waitUntilPaused()
+        // The session receives the reads asynchronously: wait until the first rows are published.
+        for _ in 0..<10_000 where model.session.image == nil { await Task.yield() }
+        model.viewSizeChanged(CGSize(width: 800, height: 600))
+        model.refreshImage()
+        await model.waitForRendering()
+        let rows = try #require(model.session.image).height
+        #expect(rows > 0 && rows < 817, "part of the image received")
+        // Taller than the image received so far: clipped to the rows received.
+        model.cropRect = PixelRect(x: 100, y: 0, width: 300, height: 817)
+        await model.waitForRendering()
+        #expect(model.histogram.pixelCount == 300 * rows)
+        await gate.release()
+        await model.session.waitUntilIdle()
+        model.refreshImage()  // a new revision: the render path, not the crop change
+        await model.waitForRendering()
+        #expect(model.cropRect == PixelRect(x: 100, y: 0, width: 300, height: 817), "same image size: crop kept")
+        #expect(model.histogram.pixelCount == 300 * 817)
     }
 
     @Test func realSourceBlocksThePreviewAndStopsARunningOne() async throws {

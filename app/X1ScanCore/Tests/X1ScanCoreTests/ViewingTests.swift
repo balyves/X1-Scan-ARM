@@ -190,6 +190,57 @@ struct ImageModelTests {
         #expect(abs(log - log1p(100) / log1p(10_000)) < 1e-12)
     }
 
+    @Test func percentileCapCutsIsolatedPeaks() {
+        // 768 non-empty bins of 100, two of them tall peaks.
+        var red = [Int](repeating: 100, count: Histogram.binCount)
+        red[10] = 1_000_000
+        let green = [Int](repeating: 100, count: Histogram.binCount)
+        var blue = [Int](repeating: 100, count: Histogram.binCount)
+        blue[200] = 2_000_000
+        let histogram = Histogram(bins: [red, green, blue], pixelCount: 0)
+        // Without a cap the 100s are invisible next to the peaks.
+        #expect(histogram.normalized(scale: .linear)[0][0] == 100.0 / 2_000_000)
+        // 0.995 of 768 non-empty bins leaves out the tallest 3: the top is 100, the peaks are cut at 1.
+        let capped = histogram.normalized(scale: .linear, peakPercentile: 0.995)
+        #expect(capped[0][0] == 1 && capped[1][5] == 1)
+        #expect(capped[0][10] == 1 && capped[2][200] == 1)
+        #expect(histogram.normalized(scale: .linear, peakPercentile: 1) == histogram.normalized(scale: .linear))
+        #expect(Histogram.empty.normalized(peakPercentile: 0.995).flatMap { $0 }.allSatisfy { $0 == 0 })
+    }
+
+    @Test func fewNonEmptyBinsAreNeverCut() {
+        // A small uniform crop: 2 bins per channel, 900 and 100 pixels. The 9:1 ratio must stay.
+        var channel = [Int](repeating: 0, count: Histogram.binCount)
+        channel[40] = 900
+        channel[41] = 100
+        let capped = Histogram(bins: [channel, channel, channel], pixelCount: 1_000)
+            .normalized(scale: .linear, peakPercentile: 0.995)
+        for values in capped {
+            #expect(values[40] == 1 && abs(values[41] - 1.0 / 9) < 1e-12)
+        }
+        // 199 non-empty bins: still under 1 in 200, nothing cut.
+        var many = [Int](repeating: 0, count: Histogram.binCount)
+        for bin in 0..<198 { many[bin] = 10 }
+        many[250] = 1_000
+        let few = Histogram(bins: [many, Array(repeating: 0, count: 256), Array(repeating: 0, count: 256)],
+                            pixelCount: 0).normalized(scale: .linear, peakPercentile: 0.995)
+        #expect(few[0][250] == 1 && few[0][0] == 0.01)
+    }
+
+    @Test func histogramOfARegion() {
+        // 2 × 2 pixels; the right column only.
+        let image = image()
+        let right = Histogram(samples: image.corrected, width: 2, region: PixelRect(x: 1, y: 0, width: 1, height: 2))
+        #expect(right.pixelCount == 2)
+        // Red of (1,0) = 65535 → bin 255; red of (1,1) = 600 → bin 2.
+        #expect(right.bins[0][255] == 1 && right.bins[0][2] == 1 && right.bins[0].reduce(0, +) == 2)
+        #expect(Histogram(samples: image.corrected, width: 2, region: nil) == Histogram(samples: image.corrected))
+        // Clipped to the image and to the rows received.
+        let beyond = Histogram(samples: image.corrected, width: 2, region: PixelRect(x: -5, y: 1, width: 100, height: 100))
+        #expect(beyond.pixelCount == 2, "row 1 only, both columns")
+        #expect(Histogram(samples: image.corrected, width: 2, region: PixelRect(x: 3, y: 3, width: 2, height: 2)).pixelCount == 0)
+    }
+
     @Test func displayImageIsLinear16BitRGB() throws {
         let cgImage = try #require(DisplayImage.make(from: image()))
         #expect(cgImage.width == 2 && cgImage.height == 2)
