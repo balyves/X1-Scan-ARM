@@ -10,8 +10,8 @@ import SwiftUI
 public enum CompactPanelMetrics {
     /// Label column, the same in every row so that controls line up.
     public static let labelWidth: CGFloat = 78
-    /// Numeric field of a slider row.
-    public static let fieldWidth: CGFloat = 52
+    /// Numeric field of a slider row: room for five digits ("10000").
+    public static let fieldWidth: CGFloat = 58
     /// Unit after the field.
     public static let unitWidth: CGFloat = 24
     /// Between the columns of a row.
@@ -110,14 +110,17 @@ public struct CompactSection<Content: View>: View {
     }
 }
 
-/// A read-only value on one row: label column, then the value.
+/// A read-only value on one row: label column, then the value. An
+/// explanation goes in the tooltip, not under the row.
 public struct CompactInfoRow: View {
     let label: String
     let value: String
+    let help: String?
 
-    public init(_ label: String, value: String) {
+    public init(_ label: String, value: String, help: String? = nil) {
         self.label = label
         self.value = value
+        self.help = help
     }
 
     public var body: some View {
@@ -132,6 +135,20 @@ public struct CompactInfoRow: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .accessibilityElement(children: .combine)
+        .modifier(OptionalHelp(text: help))
+    }
+}
+
+/// Tooltip and VoiceOver hint, only when there is a text.
+private struct OptionalHelp: ViewModifier {
+    let text: String?
+
+    func body(content: Content) -> some View {
+        if let text {
+            content.help(text).accessibilityHint(text)
+        } else {
+            content
+        }
     }
 }
 
@@ -179,7 +196,9 @@ public struct CompactSliderRow: View {
                 .onTapGesture(count: 2, perform: reset)
                 .help(texts.resetHelp)
                 .accessibilityHidden(true)  // the slider and the field carry the label
-            Slider(value: Binding(get: { value }, set: { value = format.clamped($0) }), in: format.range) {
+            // The slider moves a position (0...1), linear or logarithmic; the field keeps the exact value.
+            Slider(value: Binding(get: { format.sliderPosition(for: value) },
+                                  set: { value = format.value(forSliderPosition: $0) }), in: 0...1) {
                 Text(texts.label)
             }
             .labelsHidden()

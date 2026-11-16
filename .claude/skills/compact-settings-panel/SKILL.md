@@ -52,8 +52,12 @@ passes every string, already translated (see Text and languages).
   spacers or extra padding.
 - Numbers use `.monospacedDigit()` so that they do not jump while they
   change.
-- Notes stay short and wrap (`.fixedSize(horizontal: false, vertical: true)`);
-  long explanations belong in tooltips or the documentation, not the panel.
+- Explanations go in the tooltip of the row they explain
+  (`CompactInfoRow(_:value:help:)`, `.help(_:)` on a control), not as notes
+  under the rows. The only text left in the panel is what the user must see
+  without hovering: a warning, an error, the content of an empty tab. Such
+  text is short, in `.caption`, and wraps
+  (`.fixedSize(horizontal: false, vertical: true)`).
 
 ## Sections
 
@@ -78,10 +82,14 @@ passes every string, already translated (see Text and languages).
 - A number is a `CompactSliderRow`, on one line:
   - label on the left;
   - slider in the middle, taking the remaining width;
-  - editable field on the right, fixed width (`fieldWidth`), digits trailing
-    aligned;
+  - editable field on the right, fixed width (`fieldWidth`, room for five
+    digits), digits trailing aligned;
   - unit after the field, in its own fixed column (`unitWidth`), secondary
     colour (`ppi`, `%`, …). Empty unit: an empty column, the grid stays.
+- The slider is linear by default. For a wide range where the usual values
+  sit at one end (resolution, 50 to 10 000 ppi), it is logarithmic
+  (`CompactValueFormat(…, sliderScale: .logarithmic)`): equal ratios take
+  equal lengths. The field always shows and accepts the exact value.
 - The field accepts what people type: comma or full stop as decimal
   separator, spaces and apostrophes ignored. Return or leaving the field
   applies the value, and so does folding the section or changing tab while

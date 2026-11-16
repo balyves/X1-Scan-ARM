@@ -170,7 +170,8 @@ private struct MainTab: View {
     @Bindable var model: AppModel
 
     private static let resolutionFormat = CompactValueFormat(
-        integers: ScanSettings.resolutionRange, defaultValue: ScanSettings.defaultResolution)
+        integers: ScanSettings.resolutionRange, defaultValue: ScanSettings.defaultResolution,
+        sliderScale: .logarithmic)
     private static let scaleFormat = CompactValueFormat(
         integers: ScanSettings.scaleRange, defaultValue: ScanSettings.defaultScalePercent)
 
@@ -183,7 +184,7 @@ private struct MainTab: View {
                                          unit: String(localized: "ppi", comment: "Unit: pixels per inch"),
                                          format: Self.resolutionFormat))
             CompactInfoRow(String(localized: "Input", comment: "Panel label: input size"),
-                           value: pixels(model.inputPixelSize))
+                           value: pixels(model.inputPixelSize), help: Self.sizesNote)
             CompactSliderRow(
                 value: Binding(rounding: $model.scanSettings.scalePercent),
                 format: Self.scaleFormat,
@@ -194,13 +195,15 @@ private struct MainTab: View {
                                let scale = Double(model.scanSettings.scalePercent) / 100
                                return (Int((Double($0.width) * scale).rounded()), Int((Double($0.height) * scale).rounded()))
                            }))
-            Text("Sizes in preview pixels; millimetres once the preview resolution is confirmed. Resolution, scale and crop apply to the scan (a later step): Export Preview writes the whole preview.",
-                 comment: "Panel note under the sizes")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+                .help(Self.sizesNote)  // tooltip only: VoiceOver gets the hint once, on Input
             HistogramDisclosure(model: model)
         }
+    }
+
+    /// Tooltip of the size rows.
+    private static var sizesNote: String {
+        String(localized: "Sizes in preview pixels; millimetres once the preview resolution is confirmed. Resolution, scale and crop apply to the scan (a later step): Export Preview writes the whole preview.",
+               comment: "Tooltip and VoiceOver hint of the Input and Output size rows of the settings panel")
     }
 
     private func pixels(_ size: (width: Int, height: Int)?) -> String {

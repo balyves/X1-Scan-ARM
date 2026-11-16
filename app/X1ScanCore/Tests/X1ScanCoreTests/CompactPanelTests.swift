@@ -159,3 +159,43 @@ struct CompactPanelExpansionTests {
         #expect(stored == 8 && writes == 1)
     }
 }
+
+struct CompactSliderScaleTests {
+    @Test func linearSliderSpreadsTheRangeEvenly() {
+        let format = CompactValueFormat(integers: ScanSettings.scaleRange, defaultValue: 100)
+        #expect(format.sliderPosition(for: 1) == 0 && format.sliderPosition(for: 1_000) == 1)
+        #expect(format.value(forSliderPosition: 0.5) == 501)
+    }
+
+    @Test func logarithmicSliderGivesEqualRatiosEqualLengths() {
+        let format = CompactValueFormat(integers: ScanSettings.resolutionRange,
+                                        defaultValue: ScanSettings.defaultResolution, sliderScale: .logarithmic)
+        #expect(format.sliderPosition(for: 50) == 0 && format.sliderPosition(for: 10_000) == 1)
+        // 50 → 10 000 is a ratio of 200; 2 000 is 40 × 50: log 40 / log 200 ≈ 0.696.
+        #expect(abs(format.sliderPosition(for: 2_000) - log(40) / log(200)) < 1e-12)
+        #expect(abs(format.sliderPosition(for: 1_000) - format.sliderPosition(for: 500)
+                    - (format.sliderPosition(for: 2_000) - format.sliderPosition(for: 1_000))) < 1e-12,
+                "each doubling takes the same length")
+        #expect(format.value(forSliderPosition: 0) == 50 && format.value(forSliderPosition: 1) == 10_000)
+        #expect(format.value(forSliderPosition: 0.5) == 707, "geometric middle, rounded to the step")
+        for value in [50.0, 51, 300, 2_000, 4_000, 9_999, 10_000] {
+            #expect(format.value(forSliderPosition: format.sliderPosition(for: value)) == value, "round trip \(value)")
+        }
+    }
+
+    @Test func sliderPositionsAreClamped() {
+        let format = CompactValueFormat(integers: ScanSettings.resolutionRange,
+                                        defaultValue: ScanSettings.defaultResolution, sliderScale: .logarithmic)
+        #expect(format.value(forSliderPosition: -1) == 50 && format.value(forSliderPosition: 2) == 10_000)
+        #expect(format.value(forSliderPosition: .nan) == 2_000)
+        #expect(format.sliderPosition(for: 1) == 0 && format.sliderPosition(for: 1e9) == 1)
+        #expect(format.sliderPosition(for: .nan) == format.sliderPosition(for: 2_000), "not a number: the default")
+    }
+
+    @Test func continuousLogarithmicSlider() {
+        let format = CompactValueFormat(range: 0.1...10, defaultValue: 1, fractionDigits: 2, sliderScale: .logarithmic)
+        #expect(format.sliderPosition(for: 1) == 0.5, "1 is the geometric middle of 0.1...10")
+        #expect(format.value(forSliderPosition: 0.5) == 1)
+        #expect(format.value(forSliderPosition: 0.25) == 0.32, "√(0.1 × 1) ≈ 0.316, two digits")
+    }
+}

@@ -2041,6 +2041,7 @@
       }
     },
     "Sizes in preview pixels; millimetres once the preview resolution is confirmed. Resolution, scale and crop apply to the scan (a later step): Export Preview writes the whole preview.": {
+      "comment": "Tooltip and VoiceOver hint of the Input and Output size rows of the settings panel",
       "extractionState": "manual",
       "localizations": {
         "fr": {
