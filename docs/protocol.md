@@ -100,13 +100,29 @@ and page length.
 
 **Page 0x20 (scan status)** **[confirmed unless noted]**
 Offsets from the start of the 34-byte response.
-- bytes 19-24: three LE16 values around 1 900, one per channel? Lamp or
-  temperature readings. **[hypothesis]**
+- bytes 19-24: three LE16 values, one per channel? In the capture (after
+  several previews) 1 936 / 1 846 / 1 891; after power-on 2 048 / 2 048 /
+  2 048, the middle of a 12-bit scale. Per-channel calibration values (lamp
+  or CCD gain/offset). **[hypothesis]** They do not change during the
+  captured calibration (the same from the first read to the last), so they
+  were set earlier, or by something else.
 - bytes 27-28 (LE16): a **measured position**.
   FlexColor writes a target position into the scan window (§9, offset 50),
   the scanner reports the position reached (e.g. target 25 000 → 24 971,
   target 9 000 → 8 971), and FlexColor may send the measured value back in
   the next window. Focus or optics positioning. **[hypothesis]**
+- **Values after power-on** (test of 2026-11-16, first read after
+  `CF 00 01 80`, X1 just switched on): bytes 19-24 = 2 048 × 3, bytes 27-28
+  = 8 203, bytes 31-32 = 0. The capture, made after several previews without
+  a restart, had 1 936 / 1 846 / 1 891, 6 155 and 824 at the same point.
+  **[confirmed]**
+  That first read shows the state left by earlier use (824: the lines of the
+  previous preview; 6 155: its last position), not a new measurement.
+  **[hypothesis]** The second read, after the first calibration windows
+  (target 0), already differs (25 867, and 25 803 in another capture)
+  without any position request: the scanner moved or repositioned itself
+  during calibration, so that read is probably a measurement.
+  **[hypothesis]**
 - bytes 31-32 (LE16): **number of lines acquired** since SCAN. Increases
   during the scan. In the capture of 2026-11-12, FlexColor reads page 0x20
   once before each 20-line READ, and in 40 of the 41 cases the READ asks
@@ -163,7 +179,7 @@ little-endian fields:
 | 26 | 2 | 2 or 3 | 823 | Number of lines (preview); mode during calibration. |
 | 48 | 1 | 1 | 1 | ? |
 | 49 | 1 | 1 | 4 | Horizontal binning factor? **[hypothesis]** |
-| 50 | 2 | 0, 25 000, 9 000, 8 971 | 0, 6 250 | Target position (see page 0x20). |
+| 50 | 2 | 0, 25 000, 9 000, 8 971 | 0, 6 250 | Target position (see page 0x20); bytes 52-53 are always 0. |
 | 54 | 4 | 454 612 | 454 612 | Start position on the drum? |
 | 58 | 4 | 856 631 | 856 631 | End position on the drum? |
 | 62 | 2 | 15 500 | 15 500 | ? |

@@ -8,7 +8,8 @@ public struct PreviewConfiguration: Sendable {
     /// Longest wait for a 0xDF state.
     public var stateTimeout: Duration
     /// Largest accepted difference between a measured position (page 0x20)
-    /// and the captured one. Two captures differed by 64; to be revised.
+    /// and the captured one, checked only after a window that requests a
+    /// position (`requestsPosition`). Two captures differed by 64; to be revised.
     public var positionTolerance: Int
 
     public init(pollInterval: Duration = .milliseconds(100),
@@ -50,6 +51,10 @@ public struct PreviewRunner: Sendable {
         var capture = PreviewCapture()
         var scanSent = false
         var lastLineCount: Int?
+        // Page 0x20 reads before any window that requests a position show the
+        // state left by earlier use (defaults after power-on, or the last
+        // scan), not a measurement: no tolerance check until one has been sent.
+        var positionRequested = false
         let phases = PreviewPhase.phases(for: script)
 
         for (index, step) in script.enumerated() {
@@ -59,8 +64,9 @@ public struct PreviewRunner: Sendable {
                 if step.kind == .scan { scanSent = true }  // set before sending: the scanner may have started
                 let result = try await transport.execute(step.command)
                 try verify(result, of: step.command)
-                try handle(result, of: step, scanSent: scanSent, lastLineCount: &lastLineCount,
-                           capture: &capture, progress: progress)
+                try handle(result, of: step, scanSent: scanSent, positionRequested: positionRequested,
+                           lastLineCount: &lastLineCount, capture: &capture, progress: progress)
+                if Self.requestsPosition(step.command) { positionRequested = true }
                 if let state = step.waitUntil {
                     try await waitForState(state, honouringCancellation: true)
                 }
@@ -93,7 +99,12 @@ public struct PreviewRunner: Sendable {
         }
     }
 
-    private func handle(_ result: SCSIResult, of step: PreviewStep, scanSent: Bool,
+    /// SET WINDOW whose target position (offset 50, LE16 followed by two zero bytes in every captured window, docs/protocol.md §9) is not 0.
+    public static func requestsPosition(_ command: SCSICommand) -> Bool {
+        command.opcode == 0x24 && command.dataOut.count >= 54 && command.dataOut[50..<54].contains { $0 != 0 }
+    }
+
+    private func handle(_ result: SCSIResult, of step: PreviewStep, scanSent: Bool, positionRequested: Bool,
                         lastLineCount: inout Int?, capture: inout PreviewCapture,
                         progress: PreviewEventHandler?) throws {
         switch step.kind {
@@ -108,7 +119,7 @@ public struct PreviewRunner: Sendable {
             guard result.data == [0x00, 0x00] else { throw PreviewAnomaly.unexpectedScanResponse(result.data) }
         case .scanStatus(let captured):
             let status = try parse { try ScanStatusPage(result.data) }
-            guard abs(status.measuredPosition - captured) <= configuration.positionTolerance else {
+            guard !positionRequested || abs(status.measuredPosition - captured) <= configuration.positionTolerance else {
                 throw PreviewAnomaly.positionOutOfTolerance(captured: captured, measured: status.measuredPosition,
                                                             tolerance: configuration.positionTolerance)
             }

@@ -137,6 +137,51 @@ struct PreviewStopTests {
         #expect(await transport.commandsAfterFault.isEmpty)
     }
 
+    /// Page 0x20 reads, as non-poll command indices, with whether a window
+    /// requesting a position was sent before them.
+    private static let statusReads: [(index: Int, checked: Bool)] = {
+        var requested = false
+        var reads: [(Int, Bool)] = []
+        for (index, step) in script.enumerated() {
+            if case .scanStatus = step.kind { reads.append((index, requested)) }
+            if PreviewRunner.requestsPosition(step.command) { requested = true }
+        }
+        return reads
+    }()
+
+    /// Test of 2026-11-16 on the real X1: after power-on, the first page 0x20
+    /// read gave 8203 where the capture (made after earlier previews) had 6155.
+    @Test func readsBeforeAPositionRequestAreNotChecked() async throws {
+        let unchecked = Self.statusReads.filter { !$0.checked }.map(\.index)
+        #expect(unchecked.count == 2, "after session start, and after the first calibration windows")
+        for index in unchecked {
+            let (_, result) = try await run(faultAt: index, .shiftMeasuredPosition(by: 2048))
+            if case .failure(let error) = result { Issue.record("unexpected stop at \(index): \(error)") }
+        }
+        let firstChecked = try #require(Self.statusReads.first { $0.checked }).index
+        let (_, result) = try await run(faultAt: firstChecked, .shiftMeasuredPosition(by: 101))
+        guard case .failure(let error) = result, case .positionOutOfTolerance = error.anomaly else {
+            Issue.record("the first read after a position request must be checked")
+            return
+        }
+    }
+
+    @Test func onlyWindowsWithATargetRequestAPosition() {
+        let windows = Self.script.map(\.command).filter { $0.opcode == 0x24 }
+        let requesting = windows.filter(PreviewRunner.requestsPosition)
+        // Targets 25 000, 9 000, 8 971, 6 250 twice.
+        #expect(requesting.count == 5)
+        #expect(Set(requesting.map { Int($0.dataOut[50]) | Int($0.dataOut[51]) << 8 }) == [25_000, 9_000, 8_971, 6_250])
+    }
+
+    /// An unchecked read is still parsed and recorded.
+    @Test func uncheckedReadsAreStillRecorded() async throws {
+        let index = try #require(Self.statusReads.first { !$0.checked }).index
+        let (_, result) = try await run(faultAt: index, .shiftMeasuredPosition(by: 2048))
+        let capture = try result.get()
+        #expect(capture.scanStatuses.first?.measuredPosition == 6_155 + 2_048)
+    }
+
     @Test func positionWithinToleranceIsAccepted() async throws {
         // Two captures differed by 64 on the first measurement.
         let (_, result) = try await run(faultAt: Self.positioningIndex, .shiftMeasuredPosition(by: 64))

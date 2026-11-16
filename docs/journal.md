@@ -190,3 +190,14 @@ approved the 30 s READ timeout (10 s for other commands). Scanner
 menu: Read Identity and the source items removed (Scanner Information and
 Settings > Scanner have them). The capture of 2026-11-12 used the 6×7
 holder, reference 50200403.
+
+## 2026-11-16: first preview on the real X1 (13:14)
+
+Development Mac, ASFireWire 0.6.0, IT8.7/1 in the 6×7 holder (50200403).
+The run stopped at step 38, the first page 0x20 read after `CF 00 01 80`:
+position 8 203 against 6 155 in the capture. Nothing moved; the X1 was
+restarted. The user's analysis: that read shows the state left by earlier
+use, not a measurement. After power-on page 0x20 holds 2 048 × 3 (bytes
+19-24), 8 203 and 0 lines; the capture, made after several previews, had
+1 936 / 1 846 / 1 891, 6 155 and 824 (protocol.md §5). The position
+tolerance now applies only after a window that requests a position.
