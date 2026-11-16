@@ -57,6 +57,20 @@ Install the hooks once per clone, from the repository root:
 Check by hand: `tools/git-hooks/x1-check --staged`, `--commit SHA` or
 `--range BASE HEAD`.
 
+## run-virtual.sh
+
+Opens the latest Debug build of X1 Scan on the **virtual X1**, with a
+preview started automatically, for screenshots and checks. It never uses
+the real scanner. Quit X1 Scan first.
+
+    tools/run-virtual.sh --dark          # or --light; --fr / --en
+    tools/run-virtual.sh --build --dark  # build Debug first, into app/build
+
+It takes the most recent Debug build in Xcode's DerivedData or in
+`app/build`; `--app PATH` chooses another one. Appearance and language
+apply to that launch only; the app remembers the virtual X1 as the last
+source used.
+
 ## x1probe/ (read-only)
 
 `diag.sh` reports how macOS sees the scanner (FireWire, IOKit, drivers)

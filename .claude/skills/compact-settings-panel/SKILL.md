@@ -180,6 +180,8 @@ passes every string, already translated (see Text and languages).
 ## Checking a change
 
 - `swift test` in `app/X1ScanCore`.
+- On screen, light and dark: `tools/run-virtual.sh --light` /
+  `--dark` (add `--fr`), then a screenshot of the window (⇧⌘4, Space).
 - Build the app and take a debug snapshot (`-X1ScanSnapshot`, see
   `DebugSnapshot.swift`) with `-StartupSource virtual`, in light/English and
   dark/French (`-Appearance dark -AppleLanguages "(fr)"`). Save your
