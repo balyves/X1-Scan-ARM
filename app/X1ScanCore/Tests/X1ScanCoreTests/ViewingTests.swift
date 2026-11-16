@@ -200,12 +200,26 @@ struct ImageModelTests {
         let histogram = Histogram(bins: [red, green, blue], pixelCount: 0)
         // Without a cap the 100s are invisible next to the peaks.
         #expect(histogram.normalized(scale: .linear)[0][0] == 100.0 / 2_000_000)
-        // 0.995 of 768 non-empty bins leaves out the tallest 3: the top is 100, the peaks are cut at 1.
+        // The 99.5th percentile of the 768 bins is the 4th tallest, 100: the peaks are cut at 1.
         let capped = histogram.normalized(scale: .linear, peakPercentile: 0.995)
         #expect(capped[0][0] == 1 && capped[1][5] == 1)
         #expect(capped[0][10] == 1 && capped[2][200] == 1)
         #expect(histogram.normalized(scale: .linear, peakPercentile: 1) == histogram.normalized(scale: .linear))
         #expect(Histogram.empty.normalized(peakPercentile: 0.995).flatMap { $0 }.allSatisfy { $0 == 0 })
+    }
+
+    @Test func twoPeaksAmongAFewHundredBinsAreCut() {
+        // About 300 non-empty bins (a crop of the virtual X1's test film): two blue peaks.
+        var red = [Int](repeating: 0, count: Histogram.binCount)
+        for bin in 0..<100 { red[bin] = 50 }
+        var green = [Int](repeating: 0, count: Histogram.binCount)
+        for bin in 0..<198 { green[bin] = 80 }
+        var blue = [Int](repeating: 0, count: Histogram.binCount)
+        blue[51] = 200_000
+        blue[204] = 200_000
+        let capped = Histogram(bins: [red, green, blue], pixelCount: 0).normalized(scale: .linear, peakPercentile: 0.995)
+        #expect(capped[2][51] == 1 && capped[2][204] == 1, "both peaks cut")
+        #expect(capped[1][0] == 1 && capped[0][0] == 50.0 / 80, "the rest readable")
     }
 
     @Test func fewNonEmptyBinsAreNeverCut() {
@@ -225,6 +239,18 @@ struct ImageModelTests {
         let few = Histogram(bins: [many, Array(repeating: 0, count: 256), Array(repeating: 0, count: 256)],
                             pixelCount: 0).normalized(scale: .linear, peakPercentile: 0.995)
         #expect(few[0][250] == 1 && few[0][0] == 0.01)
+        // Exactly 200 non-empty bins: enough, the peak is cut.
+        many[198] = 10
+        let enough = Histogram(bins: [many, Array(repeating: 0, count: 256), Array(repeating: 0, count: 256)],
+                               pixelCount: 0).normalized(scale: .linear, peakPercentile: 0.995)
+        #expect(enough[0][0] == 1 && enough[0][250] == 1)
+        // Same rule for p = 0.9 (10 non-empty bins are enough despite 1 − 0.9 < 0.1 in binary).
+        var ten = [Int](repeating: 0, count: Histogram.binCount)
+        for bin in 0..<9 { ten[bin] = 10 }
+        ten[100] = 1_000
+        let zero = [Int](repeating: 0, count: Histogram.binCount)
+        let tenth = Histogram(bins: [ten, zero, zero], pixelCount: 0).normalized(scale: .linear, peakPercentile: 0.9)
+        #expect(tenth[0][100] == 1, "with 10 non-empty bins the 0.9 cap applies")
     }
 
     @Test func histogramOfARegion() {

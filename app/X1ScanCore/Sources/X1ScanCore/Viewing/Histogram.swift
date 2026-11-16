@@ -71,23 +71,29 @@ public struct Histogram: Sendable, Hashable {
     }
 
     /// Bins scaled to 0...1 for drawing. With `peakPercentile` below 1, the
-    /// top of the scale leaves out the tallest `(1 - peakPercentile)` share of
-    /// the non-empty bins of the three channels (0.995: the tallest 1 in 200),
-    /// drawn cut at 1, so that a few isolated peaks do not flatten the rest.
-    /// With fewer non-empty bins than that share needs (under 200 for 0.995,
-    /// e.g. a small uniform crop), nothing is cut: the top is the largest bin
-    /// and the ratios between bins stay true. 1, the default, never cuts.
+    /// top of the scale is that percentile of all the bins of the three
+    /// channels (nearest rank; 0.995 of 768 bins: the 4th tallest), and taller
+    /// bins are drawn cut at 1, so that a few isolated peaks do not flatten the
+    /// rest. When fewer bins are non-empty than one in `1 - peakPercentile`
+    /// (under 200 for 0.995, e.g. a small uniform crop), nothing is cut: the
+    /// top is the largest bin and the ratios between bins stay true. 1, the
+    /// default, never cuts.
     public func normalized(scale: Scale = .linear, peakPercentile: Double = 1) -> [[Double]] {
         let transform: (Int) -> Double = switch scale {
         case .linear: { Double($0) }
         case .squareRoot: { Double($0).squareRoot() }
         case .logarithmic: { log1p(Double($0)) }
         }
-        let nonEmpty = bins.flatMap { $0 }.filter { $0 > 0 }.map(transform).sorted()
-        guard let largest = nonEmpty.last, largest > 0 else { return bins.map { $0.map { _ in 0 } } }
+        let values = bins.flatMap { $0 }.map(transform).sorted()
+        guard let largest = values.last, largest > 0 else { return bins.map { $0.map { _ in 0 } } }
         let fraction = min(max(peakPercentile.isFinite ? peakPercentile : 1, 0), 1)
-        let cut = min(Int((Double(nonEmpty.count) * (1 - fraction)).rounded(.down)), nonEmpty.count - 1)
-        let top = nonEmpty[nonEmpty.count - 1 - cut]
+        var top = largest
+        let nonEmpty = values.count { $0 > 0 }
+        // Small margin: 1 − 0.9 is 0.0999…98 in binary, and 10 bins must still count as enough.
+        if fraction < 1, Double(nonEmpty) * (1 - fraction) >= 1 - 1e-9 {
+            let rank = max(Int((fraction * Double(values.count)).rounded(.up)) - 1, 0)
+            if values[rank] > 0 { top = values[rank] }
+        }
         return bins.map { $0.map { min(transform($0) / top, 1) } }
     }
 }
