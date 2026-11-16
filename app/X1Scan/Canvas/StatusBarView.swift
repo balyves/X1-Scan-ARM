@@ -59,17 +59,22 @@ private struct RGBReadout: View {
         HStack(spacing: 6) {
             if let reading = model.pixelReading {
                 ForEach(0..<3, id: \.self) { channel in
+                    let value = Strings.rgbValue(reading.corrected[channel], unit: unit)
                     HStack(spacing: 2) {
-                        Text(verbatim: ["R", "G", "B"][channel])
+                        Text(Strings.channelLetter(channel))
                             .foregroundStyle([Color.red, .green, .blue][channel])
                             .font(.caption.weight(.semibold))
-                        Text(Strings.rgbValue(reading.corrected[channel], unit: unit))
+                        Text(value)
                             .monospacedDigit()
                             .frame(minWidth: unit == .sixteenBit ? 40 : 30, alignment: .trailing)
                     }
+                    // One element per channel: "Red 149", not "R" then "149".
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(Strings.channelSpoken(channel, value: value))
                 }
             } else {
-                Text(verbatim: "R – G – B –").foregroundStyle(.tertiary)
+                Text(Strings.noPixelReading).foregroundStyle(.tertiary)
+                    .accessibilityLabel(Strings.noPixelSpoken)
             }
         }
         .help(model.pixelReading.map {

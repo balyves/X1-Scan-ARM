@@ -2597,6 +2597,150 @@
           }
         }
       }
+    },
+    "channel.red": {
+      "comment": "Bottom bar: red channel letter",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "R"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "R"
+          }
+        }
+      }
+    },
+    "channel.green": {
+      "comment": "Bottom bar: green channel letter",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "G"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "V"
+          }
+        }
+      }
+    },
+    "channel.blue": {
+      "comment": "Bottom bar: blue channel letter",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "B"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "B"
+          }
+        }
+      }
+    },
+    "channel.none": {
+      "comment": "Bottom bar: no pixel under the pointer",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "R – G – B –"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "R – V – B –"
+          }
+        }
+      }
+    },
+    "channel.red.spoken": {
+      "comment": "VoiceOver: red value under the pointer",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Red %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rouge %@"
+          }
+        }
+      }
+    },
+    "channel.green.spoken": {
+      "comment": "VoiceOver: green value under the pointer",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Green %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vert %@"
+          }
+        }
+      }
+    },
+    "channel.blue.spoken": {
+      "comment": "VoiceOver: blue value under the pointer",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blue %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bleu %@"
+          }
+        }
+      }
+    },
+    "channel.none.spoken": {
+      "comment": "VoiceOver: bottom bar without a pixel under the pointer",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No pixel under the pointer"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun pixel sous le pointeur"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

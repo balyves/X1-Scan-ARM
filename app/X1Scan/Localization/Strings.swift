@@ -259,6 +259,34 @@ enum Strings {
         return String(localized: "≈ \(size) before compression", comment: "Bottom bar: estimated export size")
     }
 
+    /// Channel letter of the bottom bar: R G B in English, R V B in French.
+    static func channelLetter(_ channel: Int) -> String {
+        switch channel {
+        case 0: String(localized: "channel.red", defaultValue: "R", comment: "Bottom bar: red channel letter")
+        case 1: String(localized: "channel.green", defaultValue: "G", comment: "Bottom bar: green channel letter")
+        default: String(localized: "channel.blue", defaultValue: "B", comment: "Bottom bar: blue channel letter")
+        }
+    }
+
+    /// VoiceOver label of one channel of the bottom bar: "Red 149".
+    static func channelSpoken(_ channel: Int, value: String) -> String {
+        switch channel {
+        case 0: String(localized: "channel.red.spoken", defaultValue: "Red \(value)", comment: "VoiceOver: red value under the pointer")
+        case 1: String(localized: "channel.green.spoken", defaultValue: "Green \(value)", comment: "VoiceOver: green value under the pointer")
+        default: String(localized: "channel.blue.spoken", defaultValue: "Blue \(value)", comment: "VoiceOver: blue value under the pointer")
+        }
+    }
+
+    /// VoiceOver label of the bottom bar without a pixel under the pointer.
+    static var noPixelSpoken: String {
+        String(localized: "channel.none.spoken", defaultValue: "No pixel under the pointer", comment: "VoiceOver: bottom bar without a pixel under the pointer")
+    }
+
+    /// Bottom bar without a pixel under the pointer.
+    static var noPixelReading: String {
+        String(localized: "channel.none", defaultValue: "R – G – B –", comment: "Bottom bar: no pixel under the pointer")
+    }
+
     static func rgbValue(_ sample: UInt16, unit: RGBUnit) -> String {
         let value = unit.value(sample)
         return switch unit {
