@@ -126,12 +126,8 @@ enum MainMenu {
                           #selector(MainWindowController.startPreview(_:)), "r"))
         menu.addItem(item(String(localized: "Stop", comment: "Menu item and toolbar button"),
                           #selector(MainWindowController.stopPreview(_:)), "."))
+        // The source is chosen in Settings > Scanner; Read Identity is in Scanner Information.
         menu.addItem(.separator())
-        menu.addItem(item(Strings.source(.virtual), #selector(MainWindowController.selectVirtualSource(_:))))
-        menu.addItem(item(Strings.source(.real), #selector(MainWindowController.selectRealSource(_:))))
-        menu.addItem(.separator())
-        menu.addItem(item(String(localized: "Read Identity", comment: "Menu item and button"),
-                          #selector(AppDelegate.readIdentity(_:))))
         menu.addItem(item(String(localized: "Scanner Information…", comment: "Menu item"),
                           #selector(AppDelegate.showScannerInformation(_:)), "i"))
         return menu

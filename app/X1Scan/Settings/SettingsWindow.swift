@@ -205,7 +205,7 @@ private struct ScannerSettings: View {
                 ForEach(ScannerSourceKind.allCases, id: \.self) { Text(Strings.source($0)).tag($0) }
             }
             .disabled(model.session.isBusy)
-            Text("Read Identity and Scanner Information (⌘I) are in the Scanner menu; the state is in the bottom bar.",
+            Text("Read Identity is in Scanner > Scanner Information (⌘I); the state is in the bottom bar.",
                  comment: "Settings > Scanner note")
                 .font(.caption)
                 .foregroundStyle(.secondary)

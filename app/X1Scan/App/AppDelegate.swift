@@ -74,22 +74,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         scannerInfoController?.showWindow(nil)
     }
 
-    /// Real X1: reads identity, state and counters (reads only, device closed
-    /// afterwards). Virtual X1: its identity comes from the fixtures. Either
-    /// way the Scanner Information window shows the result.
-    @objc func readIdentity(_ sender: Any?) {
-        guard let model else { return }
-        showScannerInformation(sender)
-        if model.source == .real { Task { await model.readRealScanner() } }
-    }
-
-    func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
-        guard let model else { return false }
-        switch menuItem.action {
-        case #selector(readIdentity(_:)): return model.source == .virtual || model.realStatus != .reading
-        default: return true
-        }
-    }
+    func validateMenuItem(_ menuItem: NSMenuItem) -> Bool { model != nil }
 
     /// A running preview is stopped first. After SCAN the stop sequence (DB,
     /// then 0xDF = 00 00) must complete before the app quits. A read of the

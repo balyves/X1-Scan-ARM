@@ -93,23 +93,66 @@ public final class PreviewSession {
     /// Starts a preview on the virtual X1. Does nothing if one is running.
     public func start(on scanner: VirtualScanner) {
         guard !isBusy else { return }
+        let made = scanner.makeTransport()
+        simulator = made.simulator
+        let runner = PreviewRunner(transport: made.transport, configuration: scanner.configuration,
+                                   script: script)
+        launch { continuation in
+            do throws(PreviewError) {
+                return .success(try await runner.run { continuation.yield($0) })
+            } catch {
+                return .failure(error)
+            }
+        }
+    }
+
+    /// Starts FlexColor's captured preview on the real X1 (step 4). `connection`
+    /// is an `IOKitTransport` in captured-sequence mode: it refuses anything that is
+    /// not the captured sequence. It is opened here and always closed at the
+    /// end. Every command and response goes to `log`. Does nothing if a
+    /// preview is running.
+    public func start(onRealScanner connection: any ScannerConnection, log: CaptureLog) {
+        guard !isBusy else { return }
+        simulator = nil
+        let runner = PreviewRunner(transport: LoggingTransport(inner: connection, log: log),
+                                   configuration: PreviewConfiguration(), script: script)
+        let firstCommand = script[0].command
+        launch { continuation in
+            defer { log.close() }
+            do {
+                try await connection.open()
+            } catch {
+                log.note("could not open the scanner: \(error)")
+                return .failure(PreviewError(stepIndex: 0, command: firstCommand,
+                                             anomaly: .couldNotOpen(String(describing: error)), emergencyStop: nil))
+            }
+            let result: Result<PreviewCapture, PreviewError>
+            do throws(PreviewError) {
+                result = .success(try await runner.run { continuation.yield($0) })
+            } catch {
+                result = .failure(error)
+            }
+            await connection.close()
+            switch result {
+            case .success: log.note("preview complete")
+            case .failure(let error): log.note(error.description)
+            }
+            return result
+        }
+    }
+
+    /// Common part of both starts: the run task, its events and the end.
+    private func launch(_ body: @escaping @Sendable (AsyncStream<PreviewEvent>.Continuation) async
+                            -> Result<PreviewCapture, PreviewError>) {
         reset()
         state = .running
         progress.stepCount = script.count
         progress.linesExpected = expectedImageLines
 
         let (events, continuation) = AsyncStream.makeStream(of: PreviewEvent.self, bufferingPolicy: .unbounded)
-        let made = scanner.makeTransport()
-        simulator = made.simulator
-        let runner = PreviewRunner(transport: made.transport, configuration: scanner.configuration,
-                                   script: script)
         let runTask = Task.detached { () -> Result<PreviewCapture, PreviewError> in
             defer { continuation.finish() }
-            do throws(PreviewError) {
-                return .success(try await runner.run { continuation.yield($0) })
-            } catch {
-                return .failure(error)
-            }
+            return await body(continuation)
         }
         self.runTask = runTask
         consumer = Task { [weak self] in

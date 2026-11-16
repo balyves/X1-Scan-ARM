@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import Foundation
 @testable import X1ScanCore
+import X1Preview
 import X1Transport
 
 /// tests/fixtures at the repository root, read in place.
@@ -17,11 +18,16 @@ enum TestFixtures {
         try VirtualScanner.load(fixturesDirectory: directory, pacing: pacing)
     }
 
-    /// Slow enough to stop at a chosen phase, fast enough for a test. The
-    /// image reads are slow (about 4 s in all) so that a stop sent after the
-    /// first lines always lands before the end, even when other tests load
-    /// the machine; the tests that use it stop early.
-    static let slow = Pacing(perCommand: .milliseconds(2), perImageRead: .milliseconds(100))
+    /// The virtual X1, paused before its `index`-th non-poll command until
+    /// `gate.release()`: stop tests do not depend on timing.
+    static func scanner(pausedAt index: Int, gate: PreviewGate) throws -> VirtualScanner {
+        var scanner = try VirtualScanner.load(fixturesDirectory: directory, pacing: .none)
+        scanner.transportWrapper = { GatedTransport(inner: $0, gate: gate, pauseAt: index) }
+        return scanner
+    }
+
+    /// Index of SCAN among the non-poll commands of the preview.
+    static let scanIndex = PreviewScript.flexColor4813.firstIndex { $0.kind == .scan }!
 }
 
 /// Waits on the main actor until `condition` holds, or fails after `timeout`.
@@ -74,5 +80,57 @@ actor FakeConnection: ScannerConnection {
         sent.append(command)
         guard let result = responses[command.cdb] else { throw TransportError.notOpen }
         return result
+    }
+}
+
+/// Holds the virtual X1 before a chosen command until the test releases it.
+actor PreviewGate {
+    private var paused = false
+    private var released = false
+    private var pauseContinuation: CheckedContinuation<Void, Never>?
+    private var waiters: [CheckedContinuation<Void, Never>] = []
+
+    /// Called by the transport before the command to pause at.
+    func pause() async {
+        paused = true
+        for waiter in waiters { waiter.resume() }
+        waiters = []
+        guard !released else { return }
+        await withCheckedContinuation { pauseContinuation = $0 }
+    }
+
+    /// Returns once the virtual X1 is paused.
+    func waitUntilPaused() async {
+        guard !paused else { return }
+        await withCheckedContinuation { waiters.append($0) }
+    }
+
+    func release() {
+        released = true
+        pauseContinuation?.resume()
+        pauseContinuation = nil
+    }
+}
+
+/// Pauses on the gate before the `pauseAt`-th non-poll command.
+actor GatedTransport: SCSITransport {
+    private let inner: any SCSITransport
+    private let gate: PreviewGate
+    private let pauseAt: Int
+    private var nonPollCount = 0
+
+    init(inner: any SCSITransport, gate: PreviewGate, pauseAt: Int) {
+        self.inner = inner
+        self.gate = gate
+        self.pauseAt = pauseAt
+    }
+
+    func execute(_ command: SCSICommand) async throws -> SCSIResult {
+        if !SimulatedX1.pollingOpcodes.contains(command.opcode) {
+            let index = nonPollCount
+            nonPollCount += 1
+            if index == pauseAt { await gate.pause() }
+        }
+        return try await inner.execute(command)
     }
 }

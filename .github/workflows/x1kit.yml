@@ -83,12 +83,18 @@ jobs:
           persist-credentials: false
 
       - name: Read-only guard
-        # The app reaches the real X1 only through IOKitTransport(policy: .readOnly).
+        # The app reaches the real X1 through IOKitTransport(policy: .readOnly),
+        # and, for the captured preview of step 4 only, through
+        # IOKitTransport(capturedSequence:), created in AppModel.swift alone.
         # Tracked files of app/ may neither ask for another policy nor call the
-        # C layer directly (which would bypass the policy). A text check, not a proof.
+        # C layer directly (which would bypass the checks). A text check, not a proof.
         run: |
           if git grep -nE 'unrestricted|allowsStateChangingCommands|CommandPolicy\(|CX1IOKit|cx1_' -- app/; then
             echo "app/ must not create a command policy other than .readOnly or use CX1IOKit" >&2
+            exit 1
+          fi
+          if git grep -nE 'capturedSequence:' -- app/ ':!app/X1ScanCore/Sources/X1ScanCore/App/AppModel.swift' ':!app/X1ScanCore/Tests/'; then
+            echo "IOKitTransport(capturedSequence:) may only be created in AppModel.swift" >&2
             exit 1
           fi
 

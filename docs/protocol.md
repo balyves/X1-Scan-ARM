@@ -67,14 +67,16 @@ READ BUFFER with buffer id 0xD8 returns ABORTED COMMAND (sense key 0xB) on the
 X1: it belongs to other models. The firmware drives the motors itself.
 
 Holder identification: the X1 may be able to identify the inserted film
-holder (20More advertises this feature for Flextight scanners; nothing yet
-shows it on the X1 in particular). No dedicated command seen; 0xD3, page
+holder (a commercial Flextight application advertises this feature for
+Flextight scanners; nothing yet shows it on the X1 in particular). No dedicated command seen; 0xD3, page
 0x27 and the 0xEE registers, whose meaning is unknown, should be compared
-with different holders inserted (read-only, `tools/x1probe`). The holder type
-used during the captures of 2026-11-12 was not recorded. **[hypothesis]**
+with different holders inserted (read-only, `tools/x1probe`). **[hypothesis]**
+The holder used for the captures of 2026-11-12 was the 6×7, reference
+50200403 (reported by the user on 2026-11-16).
 
 Holder reference: the X1 might report the **reference number** of the
-inserted holder: 20More displays "6×7 [50200420]" (an 8-digit Hasselblad
+inserted holder: a commercial Flextight application displays "6×7
+[50200420]" (an 8-digit Hasselblad
 reference; the 6×7 holder of the compatibility table is 50200403, so the
 number shown may belong to another variant). To check at the next session:
 note the reference written on the holder used, and look for it (decimal,
@@ -106,14 +108,26 @@ Offsets from the start of the 34-byte response.
   target 9 000 → 8 971), and FlexColor may send the measured value back in
   the next window. Focus or optics positioning. **[hypothesis]**
 - bytes 31-32 (LE16): **number of lines acquired** since SCAN. Increases
-  during the scan up to the total number of lines. FlexColor reads 20 lines
-  each time at least 20 are available.
+  during the scan. In the capture of 2026-11-12, FlexColor reads page 0x20
+  once before each 20-line READ, and in 40 of the 41 cases the READ asks
+  for lines the counter does not announce yet (e.g. 37 acquired, lines up
+  to 43 requested); the counter is never below the lines already delivered
+  (4 to 22 ahead). The last value read is 808, before the last READ; 822
+  lines are read in all (3 single lines, 40 × 20, 1 × 19). **[confirmed]**
+  The scanner then holds a READ until its lines exist. **[hypothesis]**
+  (The READs after SCAN are asynchronous in FlexColor; the capture has no
+  timing for them.)
 
 ## 6. Log page 0x30 (usage counters)
 
 Seven LE32 values after the 4-byte header. One of them increases by exactly 1
 per preview (about 6 950 on our unit): **total scan count**. Two others
 increase with time (operating or lamp hours?). **[hypothesis]**
+
+Observation of 2026-11-16 (read-only, on the development Mac through
+ASFireWire): counters 1 and 6 both rose by 4 between 12:11 and 12:15, about
+1 per minute, so probably **minutes of operation** (power on, or lamp);
+counter 3 is the **number of scans**. **[hypothesis]**
 
 ## 7. Scanner state (0xDF)
 
@@ -193,9 +207,10 @@ Polling of 0xEE, 0xD3 and 0xDF omitted, except where the wait matters.
 4. White and dark references at preview width: `F0 01 01 00 01` →
    5 × READ 10 lines (white); `F0 01 00 00 01` → 18 × READ 10 lines (dark).
 5. Final window (§9, preview column), `1B` SCAN, wait for `DF`.
-6. Loop: page 0x20 (lines available) → READ 20 lines, until all lines are
+6. Loop: page 0x20 (line counter) → READ 20 lines without waiting for the
+   counter (§5), until all lines are
    read (41 reads for 819 lines).
 7. `DB` stop, wait `DF = 00 00`, `CF 00 02 80`.
 
 With and without film in the holder, the sequence and the windows are
-identical. The holder type used was not recorded.
+identical. Holder: 6×7, reference 50200403 (reported on 2026-11-16).

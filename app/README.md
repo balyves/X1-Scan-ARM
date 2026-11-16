@@ -32,8 +32,11 @@ real scanner.
 - **Virtual X1** (default): replay of the captured preview. Preview, Stop and
   Export work.
 - The source is chosen in Settings > Scanner.
-- **Real X1**: only Scanner > Read Identity (INQUIRY, page 0x26, log page
-  0x30, 0xDF), shown in Scanner Information (⌘I). Before reading: **X1 on,
+- **Real X1, step 4**: FlexColor's captured preview, only with the hidden
+  setting `defaults write org.x1scanarm.X1Scan EnableRealPreview -bool YES`
+  and a confirmation before every run; see `docs/test-session.md`, part E.
+- **Real X1**: otherwise only Read Identity (INQUIRY, page 0x26, log page
+  0x30, 0xDF), in Scanner > Scanner Information (⌘I). Before reading: **X1 on,
   FlexColor closed** (only one program can open the scanner). Preview is
   disabled. The real X1 is never read at launch.
 

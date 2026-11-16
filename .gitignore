@@ -74,3 +74,6 @@ graphify-out/
 
 # Claude Code local notes (private)
 CLAUDE.local.md
+
+# Built tools (tools/x1probe: built locally, see docs/test-session.md, A3)
+tools/x1probe/x1probe

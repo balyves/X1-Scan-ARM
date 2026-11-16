@@ -27,8 +27,9 @@ why.
 
 Recorded on 2026-11-14.
 
-- **20More** (commercial, closed source) is a source of **feature ideas
-  only**. We do not reuse, disassemble or otherwise analyse its software.
+- **A commercial Flextight application** (closed source, not named here) is
+  a source of **feature ideas only**. We do not reuse, disassemble or
+  otherwise analyse its software.
 
 ## Candidate building blocks (not chosen yet)
 
@@ -116,13 +117,16 @@ Recorded on 2026-11-12.
 - **The preview runs only on the virtual X1.** `PreviewSession.start(on:)`
   takes a `VirtualScanner`, which can only be built from capture fixtures.
   Preview is disabled with the real X1, with the reason shown.
+  *Step 4 adds FlexColor's captured preview on the real X1, behind a hidden
+  setting and a guard (see "Application, step 4").*
 - **Real X1: reads only.** `ScannerInspector` opens an
   `IOKitTransport(policy: .readOnly)`, checks each command against
   `CommandPolicy.readOnly` itself as well, sends INQUIRY, MODE SENSE 0x26,
   LOG SENSE 0x30 and 0xDF, then closes the device at once so that FlexColor
   can open it. It stops after INQUIRY if the device is not a Flextight X1.
-  Reading only happens when the user chooses Scanner > Read Identity (or
-  the button in Scanner Information); never at launch (step 2b).
+  Reading only happens when the user clicks Read Identity in Scanner
+  Information (⌘I); never at launch (step 2b; the Scanner menu item was
+  removed after step 4).
   The CI (`app` job) fails if a tracked file of `app/` contains
   `unrestricted`, `allowsStateChangingCommands`, `CommandPolicy(`,
   `CX1IOKit` or `cx1_`. This is a text check, not a proof; like every
@@ -348,8 +352,9 @@ Recorded on 2026-11-14. Nothing here changes what is sent to a scanner.
   disabled because the real X1 is chosen, a sentence under the buttons
   (and their tooltip) says to choose the virtual X1 in Settings.
 - The source (virtual / real X1) is chosen in Settings > Scanner; the
-  state is in the bottom bar; Read Identity and Scanner Information (⌘I)
-  are in the Scanner menu. First launch: virtual X1.
+  state is in the bottom bar; Scanner Information (⌘I) is in the Scanner
+  menu, with its Read Identity button (the menu's Read Identity and source
+  items were removed after step 4). First launch: virtual X1.
 - Input size: the crop rectangle, or the whole preview, in pixels.
   Millimetres wait for the preview resolution to be confirmed by a
   capture. Resolution, scale and crop are saved and apply to the scan
@@ -420,6 +425,89 @@ Recorded on 2026-11-14. Nothing here changes what is sent to a scanner.
   | RGB 8-bit | 4.9 MB | 109 KB | 85 KB |
   | Grey 16-bit | 3.3 MB | 353 KB | 387 KB |
   | Grey 8-bit | 1.6 MB | 25 KB | 26 KB |
+
+## Application, step 4 (captured preview on the real X1)
+
+Recorded on 2026-11-16. The first commands that change the scanner's state
+sent by our code: only FlexColor's captured preview, byte for byte.
+
+### Guard
+
+- `CapturedSequenceGuard` (X1Transport) is built from the capture itself,
+  `tests/fixtures/preview-sequence.json`, not from `PreviewScript`; a test
+  checks that both give exactly the same commands.
+- Every command other than a poll must be, **in order**, the next captured
+  exchange: CDB, direction, length and data out, byte for byte. Polls
+  (0xEE, 0xD3, 0xDF reads of `CommandPolicy.readOnly`) are allowed between
+  steps and do not move the sequence on. After SCAN the captured page 0x20
+  read may be repeated, and `DB 00 00 00 00 00` is accepted out of order;
+  after that stop only 0xDF passes. After the last captured command only
+  polls pass. Anything else is refused before IOKit.
+- `IOKitTransport(capturedSequence:)` checks every command with the guard
+  instead of the read-only policy. It is not `.unrestricted`, and the CI
+  check of `app/` (no other policy, no `CX1IOKit`) also checks that this
+  mode is created in `AppModel.swift` only. `IOKitTransport.isReadOnly`
+  tells the two modes apart. Timeouts: 30 s for a READ, 10 s for any other
+  command (approved by the user on 2026-11-16).
+- A command's SCSI status is used only with the service response
+  TASK_COMPLETE. With SERVICE_DELIVERY_OR_TARGET_FAILURE the task status
+  gives the cause, reported as `TransportError.deliveryFailure`: 0x01 task
+  timeout, 0x02 protocol timeout (not CHECK CONDITION), 0x03 device not
+  responding, 0x04 device not present; any other service response, or none,
+  is a delivery failure too. The run then stops like any anomaly.
+- The runner is unchanged: same checks and stop rules as on the virtual X1
+  (status, length, identity, 0xDF states, position within 100 of the
+  capture, line counter; before SCAN nothing more, after SCAN only DB then
+  0xDF until `00 00`).
+
+### Reading the lines after SCAN
+
+- In the capture FlexColor sends each 20-line READ without waiting for the
+  page 0x20 line counter to announce the lines (e.g. 37 lines acquired, 23
+  read, 20 more requested) **[confirmed]**; the scanner presumably holds the
+  READ until the lines exist **[hypothesis]**. Waiting on the counter would
+  change the timing of the sequence; and the last counter value observed,
+  808, is read before the last READ, so how far it goes after it is not
+  known (protocol.md §5).
+- So the runner reads exactly as FlexColor did; the user's limit of 30 s
+  without new lines is the READ timeout, after which the run stops with
+  DB (tested with a simulated transport error after SCAN). A healthy scan
+  slower than 20 lines in 30 s would be stopped. What the scanner and
+  ASFireWire do after an IOKit timeout is not known. The guard still allows
+  page 0x20 to be read again after SCAN (the runner does not use it).
+
+### Enabling and confirming
+
+- Hidden setting, off by default, no interface:
+  `defaults write org.x1scanarm.X1Scan EnableRealPreview -bool YES`.
+  Off: Preview stays disabled on the real X1, as before.
+- On: Preview (⌘R or the panel) asks, every time, for three ticked
+  checks: the X1 is on, a holder is in place, FlexColor is closed. Start is
+  disabled until all three are ticked, and Return does not start it.
+- No identity read while a preview runs; changing the source stops a
+  preview with the usual stop rules; quitting waits for the stop sequence.
+- Any preview on the real X1 that does not complete (anomaly, Stop, change
+  of source, quit) ends with an alert: before SCAN, switch the X1 off and
+  on again (the session and modes FlexColor set may still be active);
+  after SCAN, the same before another preview (the end of session is not
+  sent on the stop path). The alert gives the log.
+- The hidden setting can also be passed as a launch argument
+  (`-EnableRealPreview YES`, argument domain); the confirmation is still
+  asked.
+
+### Log
+
+- `LoggingTransport` writes every command and response, polls included,
+  in the format of `tools/capture/cap3.py` (`CDB`, `ENV`, `FIN statut`,
+  `RAW offset`, `REP`, plus `SENSE` and `ERREUR` for refusals and errors),
+  READ data in a `.raw` file beside it: comparable with a FlexColor capture
+  and readable by `tools/decode/decode_preview.py`.
+- Each CDB line is written before the command is sent, the result after it:
+  a command that never returns is in the log.
+- Files: `~/X1-captures/<yyyy-MM-dd>/x1scan-apercu-<HHmmss>.txt` and `.raw`,
+  created exclusively (never replacing a file). A failed write does not
+  stop the run; the alert then says the log is incomplete. They hold the
+  serial number: outside the repository.
 
 ## Film holders (step 3)
 

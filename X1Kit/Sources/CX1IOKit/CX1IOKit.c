@@ -122,9 +122,11 @@ int32_t cx1_execute(cx1_device *device,
                     uint8_t *buffer, uint32_t buffer_length, int32_t direction,
                     uint32_t timeout_ms,
                     uint8_t *status, uint64_t *transferred,
-                    uint8_t *sense, uint32_t sense_size) {
+                    uint8_t *sense, uint32_t sense_size,
+                    uint8_t *service_response) {
     *status = kSCSITaskStatus_No_Status;
     *transferred = 0;
+    *service_response = kSCSIServiceResponse_Request_In_Process;
     if (!device || !device->interface) return kIOReturnNotOpen;
 
     SCSITaskDeviceInterface **interface = device->interface;
@@ -151,6 +153,15 @@ int32_t cx1_execute(cx1_device *device,
     if (result == kIOReturnSuccess) {
         (*task)->SetTimeoutDuration(task, timeout_ms);
         result = (*task)->ExecuteTaskSync(task, &sense_data, &task_status, &count);
+    }
+    if (result == kIOReturnSuccess) {
+        /* SERVICE_DELIVERY_OR_TARGET_FAILURE: task_status then tells why (timeout,
+           device not responding...), not a SCSI status: 0x02 would otherwise read
+           as CHECK CONDITION when it means a protocol timeout. */
+        SCSIServiceResponse response = kSCSIServiceResponse_Request_In_Process;
+        if ((*task)->GetSCSIServiceResponse(task, &response) == kIOReturnSuccess) {
+            *service_response = (uint8_t)response;
+        }
     }
 
     *status = (uint8_t)task_status;

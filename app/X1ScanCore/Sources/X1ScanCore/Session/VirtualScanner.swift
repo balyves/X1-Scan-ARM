@@ -17,6 +17,9 @@ public struct VirtualScanner: Sendable {
 
     /// Identity, counters and state as recorded in the capture.
     public let info: ScannerInfo
+    /// Tests only: wraps the transport of every preview (e.g. to pause the
+    /// virtual X1 at a chosen command until the test lets it go on).
+    var transportWrapper: (@Sendable (any SCSITransport) -> any SCSITransport)?
 
     public init(fixture: CaptureFixture, profile: CalibrationProfile, pacing: Pacing = .display) throws {
         self.fixture = fixture
@@ -37,7 +40,8 @@ public struct VirtualScanner: Sendable {
     /// Also returns the simulator itself, whose log the tests read.
     func makeTransport() -> (transport: any SCSITransport, simulator: SimulatedX1) {
         let simulator = SimulatedX1(fixture: fixture, profile: profile)
-        return (pacing == .none ? simulator : PacedTransport(inner: simulator, pacing: pacing), simulator)
+        let paced: any SCSITransport = pacing == .none ? simulator : PacedTransport(inner: simulator, pacing: pacing)
+        return (transportWrapper.map { $0(paced) } ?? paced, simulator)
     }
 
     /// The simulator answers at once: no delay between 0xDF polls.

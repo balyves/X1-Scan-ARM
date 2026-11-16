@@ -27,31 +27,35 @@ struct PreviewSessionTests {
         #expect(image.exportImage == batch.toRGB16())
     }
 
+    /// The virtual X1 is paused before a calibration command; the stop is
+    /// requested there, then the command goes on: deterministic.
     @Test func stopBeforeScanSendsNothingMore() async throws {
+        let gate = PreviewGate()
+        let pausedAt = 60  // a calibration command, well before SCAN
+        #expect(pausedAt < TestFixtures.scanIndex)
         let session = PreviewSession()
-        session.start(on: try TestFixtures.scanner(pacing: TestFixtures.slow))
-        try await waitUntil { session.progress.phase == .calibration }
-        let simulator = try #require(session.simulator)
-        let sentBeforeStop = await simulator.log.count
+        session.start(on: try TestFixtures.scanner(pausedAt: pausedAt, gate: gate))
+        await gate.waitUntilPaused()
         session.stop()
         #expect(session.state == .stopping)
+        await gate.release()
         await session.waitUntilIdle()
         #expect(session.state == .stopped(nil))
         #expect(session.image == nil)
-        let log = await simulator.log
+        let log = try await #require(session.simulator).log
         #expect(!log.contains { $0.opcode == 0x1B || $0.opcode == 0xDB }, "no SCAN, no stop")
-        // The count is read just before stop(), across an actor hop: the runner may
-        // send one more command in between, plus the one already handed to the
-        // transport when stop() is called. Polls of 0xDF are not counted.
-        let after = log.dropFirst(sentBeforeStop).filter { $0.opcode != 0xDF }
-        #expect(after.count <= 2)
+        // Only the command already handed to the transport (and its 0xDF polls) after the pause.
+        let nonPolls = log.filter { !SimulatedX1.pollingOpcodes.contains($0.opcode) }
+        #expect(nonPolls.count == pausedAt + 1)
     }
 
     @Test func stopAfterScanRunsTheStopSequence() async throws {
+        let gate = PreviewGate()
         let session = PreviewSession()
-        session.start(on: try TestFixtures.scanner(pacing: TestFixtures.slow))
-        try await waitUntil { (session.image?.height ?? 0) > 0 }
+        session.start(on: try TestFixtures.scanner(pausedAt: TestFixtures.scanIndex + 10, gate: gate))
+        await gate.waitUntilPaused()
         session.stop()
+        await gate.release()
         await session.waitUntilIdle()
         #expect(session.state == .stopped(.stoppedAndReady))
         let image = try #require(session.image)
@@ -61,6 +65,8 @@ struct PreviewSessionTests {
         let log = try await #require(session.simulator).log
         let stopIndex = try #require(log.firstIndex { $0.opcode == 0xDB })
         #expect(log.filter { $0.opcode == 0xDB }.count == 1)
+        let nonPollsBeforeStop = log[..<stopIndex].filter { !SimulatedX1.pollingOpcodes.contains($0.opcode) }
+        #expect(nonPollsBeforeStop.count == TestFixtures.scanIndex + 10 + 1, "DB right after the command in progress")
         #expect(log[(stopIndex + 1)...].allSatisfy { $0.opcode == 0xDF })
         #expect(!log.contains { $0.opcode == 0xCF && $0.cdb[2] == 0x02 })
     }
@@ -69,14 +75,16 @@ struct PreviewSessionTests {
         let session = PreviewSession()
         session.stop()
         #expect(session.state == .idle)
-        let scanner = try TestFixtures.scanner(pacing: TestFixtures.slow)
+        let gate = PreviewGate()
+        let scanner = try TestFixtures.scanner(pausedAt: 5, gate: gate)
         session.start(on: scanner)
-        try await waitUntil { session.progress.stepIndex > 3 }
+        await gate.waitUntilPaused()
         let step = session.progress.stepIndex
         session.start(on: scanner)  // ignored: no reset
         #expect(session.progress.stepIndex >= step)
         session.stop()
         session.stop()
+        await gate.release()
         await session.waitUntilIdle()
         #expect(session.state == .stopped(nil))
     }

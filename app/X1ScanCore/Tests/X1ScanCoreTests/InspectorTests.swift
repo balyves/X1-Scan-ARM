@@ -66,5 +66,6 @@ struct ScannerInspectorTests {
     @Test func theRealScannerConnectionIsReadOnly() {
         // Built but not opened: nothing reaches IOKit.
         #expect(ScannerInspector.realConnection().policy == .readOnly)
+        #expect(ScannerInspector.realConnection().isReadOnly, "never the captured-sequence mode")
     }
 }

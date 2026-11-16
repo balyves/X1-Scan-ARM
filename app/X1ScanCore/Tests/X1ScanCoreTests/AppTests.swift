@@ -215,11 +215,18 @@ final class AppModelTests {
         #expect(model.pixelReading?.corrected.count == 3)
     }
 
+    private func model(pausedAt index: Int, gate: PreviewGate) -> AppModel {
+        AppModel(virtualScanner: { try TestFixtures.scanner(pausedAt: index, gate: gate) },
+                 inspector: Self.failingInspector, defaults: temporaryDefaults())
+    }
+
     @Test func realSourceBlocksThePreviewAndStopsARunningOne() async throws {
-        let model = model(pacing: TestFixtures.slow)
+        let gate = PreviewGate()
+        let model = model(pausedAt: 3, gate: gate)
         model.startPreview()
-        try await waitUntil { model.session.progress.stepIndex > 2 }
+        await gate.waitUntilPaused()
         model.source = .real
+        await gate.release()
         #expect(model.session.state == .stopping)
         await model.session.waitUntilIdle()
         #expect(model.session.state == .stopped(nil))
@@ -231,11 +238,15 @@ final class AppModelTests {
 
     /// Quitting during the scan waits for the stop sequence.
     @Test func stopAndWaitReturnsOnceTheStopSequenceIsOver() async throws {
-        let model = model(pacing: TestFixtures.slow)
+        let gate = PreviewGate()
+        let model = model(pausedAt: TestFixtures.scanIndex + 10, gate: gate)
         model.startPreview()
-        try await waitUntil { (model.session.image?.height ?? 0) > 0 }
+        await gate.waitUntilPaused()
         #expect(model.isBusy)
-        await model.stopAndWait()
+        let stopping = Task { await model.stopAndWait() }
+        while model.session.state != .stopping { await Task.yield() }  // stop requested before the release
+        await gate.release()
+        await stopping.value
         #expect(!model.isBusy)
         #expect(model.session.state == .stopped(.stoppedAndReady))
         // Called again while idle: returns at once.

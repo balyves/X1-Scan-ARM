@@ -3,6 +3,7 @@ import CoreGraphics
 import Foundation
 import Observation
 import X1Image
+import X1Transport
 
 /// State of the read-only access to the real X1.
 public enum RealScannerStatus: Sendable, Hashable {
@@ -34,6 +35,38 @@ public struct ScannerStatusLine: Sendable, Hashable {
     }
 }
 
+/// The three checks the user confirms before every preview on the real X1.
+public struct RealPreviewConfirmation: Sendable, Hashable {
+    public var scannerOn = false
+    public var holderInPlace = false
+    public var flexColorClosed = false
+
+    public init(scannerOn: Bool = false, holderInPlace: Bool = false, flexColorClosed: Bool = false) {
+        self.scannerOn = scannerOn
+        self.holderInPlace = holderInPlace
+        self.flexColorClosed = flexColorClosed
+    }
+
+    public var isComplete: Bool { scannerOn && holderInPlace && flexColorClosed }
+}
+
+public enum RealPreviewError: Error, Hashable, CustomStringConvertible {
+    /// Hidden setting off, wrong source, busy, or confirmation incomplete.
+    case notAllowed
+    /// The capture (fixtures) needed for the guard is missing or unreadable.
+    case noCapturedSequence(String)
+    /// The log files could not be created; nothing was sent.
+    case log(String)
+
+    public var description: String {
+        switch self {
+        case .notAllowed: "preview on the real X1 not allowed now"
+        case .noCapturedSequence(let detail): "captured sequence unavailable: \(detail)"
+        case .log(let detail): "the log could not be created: \(detail)"
+        }
+    }
+}
+
 /// Everything the main window shows and does, without any view.
 @MainActor
 @Observable
@@ -44,7 +77,8 @@ public final class AppModel {
         didSet {
             guard source != oldValue else { return }
             defaults.set(source.rawValue, forKey: Keys.source)
-            if source == .real { session.stop() }
+            session.stop()  // a preview never goes on with another source
+            realPreviewActive = false
         }
     }
     public let virtualScanner: VirtualScanner?
@@ -95,13 +129,36 @@ public final class AppModel {
         static let source = "ScannerSource"
         static let exportSettings = "ExportSettings"
         static let scanSettings = "ScanSettings"
+        /// Hidden setting, no interface: `defaults write org.x1scanarm.X1Scan EnableRealPreview -bool YES`.
+        static let enableRealPreview = "EnableRealPreview"
     }
+
+    /// Opens the real X1 for the captured preview; replaced in tests.
+    private let realConnection: @Sendable (CapturedSequenceGuard) -> any ScannerConnection
+    /// Where preview logs on the real X1 are written (outside the repository).
+    private let captureFolder: URL
+    /// The text log of the last preview on the real X1.
+    public private(set) var lastPreviewLog: URL?
+    private var previewLog: CaptureLog?
+    /// The log of the last real preview missed writes (disk full…).
+    public var lastPreviewLogIsIncomplete: Bool { previewLog?.isIncomplete ?? false }
+    /// The session shows a preview on the real X1 (until the source changes).
+    public private(set) var realPreviewActive = false
+    /// The last preview started was on the real X1. Kept when the source
+    /// changes, so that the end of a stopped real preview is still reported.
+    public private(set) var lastPreviewWasReal = false
 
     public init(virtualScanner: () throws -> VirtualScanner,
                 inspector: ScannerInspector = .realScanner,
-                defaults: UserDefaults = .standard) {
+                defaults: UserDefaults = .standard,
+                realConnection: @escaping @Sendable (CapturedSequenceGuard) -> any ScannerConnection = {
+                    IOKitTransport(capturedSequence: $0)
+                },
+                captureFolder: URL = FileManager.default.homeDirectoryForCurrentUser.appending(path: "X1-captures")) {
         self.defaults = defaults
         self.inspector = inspector
+        self.realConnection = realConnection
+        self.captureFolder = captureFolder
         do {
             self.virtualScanner = try virtualScanner()
             virtualScannerError = nil
@@ -142,13 +199,19 @@ public final class AppModel {
 
     public var toolbar: ToolbarState {
         ToolbarState(source: source, session: session.state, virtualAvailable: virtualScanner != nil,
-                     hasImage: (session.image?.height ?? 0) > 0, hasExportFolder: exportSettings.folder != nil)
+                     hasImage: (session.image?.height ?? 0) > 0, hasExportFolder: exportSettings.folder != nil,
+                     realPreviewEnabled: realPreviewEnabled)
     }
+
+    /// The hidden setting (off by default): preview on the real X1 allowed, with a confirmation.
+    public var realPreviewEnabled: Bool { defaults.bool(forKey: Keys.enableRealPreview) }
 
     public var statusLine: ScannerStatusLine {
         switch source {
         case .virtual:
             ScannerStatusLine(source: .virtual, detail: virtualScanner == nil ? .unavailable : .session)
+        case .real where realPreviewActive:
+            ScannerStatusLine(source: .real, detail: .session)
         case .real:
             switch realStatus {
             case .notRead: ScannerStatusLine(source: .real, detail: .notRead)
@@ -174,15 +237,70 @@ public final class AppModel {
 
     // MARK: Actions
 
+    /// Preview on the virtual X1. On the real X1 use `startRealPreview(_:)`.
     public func startPreview() {
-        guard toolbar.canPreview, let virtualScanner else { return }
+        guard source == .virtual, toolbar.canPreview, let virtualScanner else { return }
+        prepareNewPreview()
+        realPreviewActive = false
+        lastPreviewWasReal = false
+        previewLog = nil
+        session.start(on: virtualScanner)
+    }
+
+    /// FlexColor's captured preview on the real X1 (step 4): only with the
+    /// hidden setting, the real source, nothing running, and all three checks
+    /// confirmed. The transport lets through only the captured sequence; every
+    /// command and response is logged under `captureFolder`. Returns the log.
+    @discardableResult
+    public func startRealPreview(_ confirmation: RealPreviewConfirmation) -> Result<URL, RealPreviewError> {
+        guard source == .real, realPreviewEnabled, confirmation.isComplete, toolbar.canPreview,
+              realStatus != .reading else { return .failure(.notAllowed) }
+        guard let fixture = virtualScanner?.fixture else {
+            return .failure(.noCapturedSequence(virtualScannerError ?? "no fixtures"))
+        }
+        let sequence: CapturedSequenceGuard
+        do {
+            sequence = try CapturedSequenceGuard(fixture: fixture)
+        } catch {
+            return .failure(.noCapturedSequence(error.description))
+        }
+        let log: CaptureLog
+        do {
+            log = try makePreviewLog(Date())
+        } catch {
+            return .failure(.log(String(describing: error)))
+        }
+        prepareNewPreview()
+        lastPreviewLog = log.textURL
+        realPreviewActive = true
+        lastPreviewWasReal = true
+        previewLog = log
+        session.start(onRealScanner: realConnection(sequence), log: log)
+        return .success(log.textURL)
+    }
+
+    private func prepareNewPreview() {
         lastExport = nil
         // Every new preview gets the zoom of Settings > Display when its first
         // rows arrive (refreshImage). The crop rectangle is kept if the size is the same.
         startupZoomPending = true
         // The session counts image revisions from 0 again: the next one must be rendered.
         renderedRevision = -1
-        session.start(on: virtualScanner)
+    }
+
+    /// `<captureFolder>/<yyyy-MM-dd>/x1scan-apercu-<HHmmss>.txt` and `.raw`.
+    private func makePreviewLog(_ date: Date) throws -> CaptureLog {
+        let parts = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
+        let day = String(format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
+        let time = String(format: "%02d%02d%02d", parts.hour ?? 0, parts.minute ?? 0, parts.second ?? 0)
+        let folder = captureFolder.appending(path: day)
+        let base = "x1scan-apercu-\(time)"
+        return try CaptureLog(textURL: folder.appending(path: base + ".txt"), rawURL: folder.appending(path: base + ".raw"),
+                              header: """
+                                X1 Scan: FlexColor 4.8.13's captured preview replayed on the real X1, \(date.ISO8601Format())
+                                Format of tools/capture/cap3.py; image data in \(base).raw.
+                                Contains the scanner's serial number: keep outside the repository.
+                                """)
     }
 
     public func stop() {
@@ -191,7 +309,8 @@ public final class AppModel {
 
     /// Reads the real X1 (reads only, device closed afterwards).
     public func readRealScanner() async {
-        guard source == .real, realStatus != .reading else { return }
+        // Never while a preview runs: the preview has the scanner open.
+        guard source == .real, realStatus != .reading, !session.isBusy else { return }
         realStatus = .reading
         do {
             realStatus = .read(try await inspector.read())

@@ -8,6 +8,9 @@ public actor FaultInjectingTransport: SCSITransport {
         /// The command fails with CHECK CONDITION. From then on this transport
         /// plays the scanner alone: DB is accepted and 0xDF answers 08 01, then 00 00.
         case checkCondition
+        /// The command throws (as an IOKit timeout would). From then on this
+        /// transport plays the scanner alone, as for `checkCondition`.
+        case transportError
         /// The command is forwarded, and the measured position (page 0x20,
         /// bytes 27-28) in its response is shifted.
         case shiftMeasuredPosition(by: Int)
@@ -62,6 +65,9 @@ public actor FaultInjectingTransport: SCSITransport {
             sense[0] = 0x70
             sense[2] = 0x04  // hardware error
             return SCSIResult(status: SCSIResult.checkCondition, sense: sense)
+        case .transportError:
+            playingAlone = true
+            throw TransportError.deliveryFailure(.taskTimeout)
         case .shiftMeasuredPosition(let delta):
             let result = try await inner.execute(command)
             var data = result.data

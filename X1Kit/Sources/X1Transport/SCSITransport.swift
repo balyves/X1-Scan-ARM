@@ -19,6 +19,44 @@ public enum TransportError: Error, Hashable, CustomStringConvertible {
     case deviceBusy
     /// IOKit returned an error.
     case ioKit(code: Int32, operation: String)
+    /// The command was not delivered or not completed (SCSI service response
+    /// SERVICE_DELIVERY_OR_TARGET_FAILURE): a timeout or a device that does not
+    /// answer, not a status from the scanner.
+    case deliveryFailure(DeliveryFailure)
+
+    public enum DeliveryFailure: Hashable, Sendable, CustomStringConvertible {
+        /// The command's timeout expired (kSCSITaskStatus_TaskTimeoutOccurred).
+        case taskTimeout
+        /// The transport's own timeout expired (kSCSITaskStatus_ProtocolTimeoutOccurred).
+        case protocolTimeout
+        case deviceNotResponding
+        case deviceNotPresent
+        case other(UInt8)
+        /// A service response other than TASK_COMPLETE and delivery failure,
+        /// or none (0: it could not be read).
+        case serviceResponse(UInt8)
+
+        public init(taskStatus: UInt8) {
+            self = switch taskStatus {
+            case 0x01: .taskTimeout
+            case 0x02: .protocolTimeout
+            case 0x03: .deviceNotResponding
+            case 0x04: .deviceNotPresent
+            default: .other(taskStatus)
+            }
+        }
+
+        public var description: String {
+            switch self {
+            case .taskTimeout: "the command timed out (IOKit task timeout)"
+            case .protocolTimeout: "the command timed out (FireWire / SBP-2 protocol timeout)"
+            case .deviceNotResponding: "the scanner did not respond"
+            case .deviceNotPresent: "the scanner is no longer connected"
+            case .other(let code): "delivery failure, task status 0x\([code].hexString)"
+            case .serviceResponse(let code): "unexpected SCSI service response \(code), no status to read"
+            }
+        }
+    }
 
     public var description: String {
         switch self {
@@ -33,6 +71,8 @@ public enum TransportError: Error, Hashable, CustomStringConvertible {
                 + "quit it and try again (IOKit 0xE00002BE, kIOReturnNoResources)"
         case .ioKit(let code, let operation):
             "IOKit error 0x\(String(UInt32(bitPattern: code), radix: 16)) during \(operation)"
+        case .deliveryFailure(let failure):
+            "not a scanner status: \(failure)"
         }
     }
 }

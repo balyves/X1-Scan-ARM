@@ -59,7 +59,9 @@ Scope: **Flextight X1 only**. Other Flextight / Imacon models are out of scope.
      0xE4, 0x1B, 0xDB, 0xCF, 0xD2, 0xE0, 0x55, 0x3B, or anything not seen in a
      capture) requires the user's **explicit approval before running**, must
      reproduce byte for byte a sequence captured from FlexColor, and must
-     stop at the first unexpected status or response.
+     stop at the first unexpected status or response. In the app, the only
+     path for such commands is `IOKitTransport(capturedSequence:)`, created
+     in `AppModel.swift`.
    - Never guess parameter values for positions, motors or exposure.
 5. **Instructions involving the scanner**: at every step, state explicitly
    the required state of the **X1 (on / off)** and of **FlexColor
@@ -98,7 +100,10 @@ available; ask.
   `swift test` runs against the simulator, never against a real scanner.
 - `app/`: macOS application. `X1Scan.xcodeproj` and `X1Scan/` (AppKit
   shell, SwiftUI settings panel and tool column, String Catalog), `X1ScanCore/` (models and view
-  models, `swift test`). The preview only runs on the virtual X1; the real X1
+  models, `swift test`). The preview runs on the virtual X1; on the real X1,
+  only FlexColor's captured preview, behind the hidden setting
+  `EnableRealPreview`, a confirmation before every run and
+  `CapturedSequenceGuard` (docs/decisions.md, step 4). Otherwise the real X1
   is only read.
 - `tools/git-hooks/`: `x1-check` (serial numbers, scan and firmware files, size,
   commit messages), run by the pre-commit and commit-msg hooks and by the CI.

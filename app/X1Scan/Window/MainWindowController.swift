@@ -52,8 +52,6 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
 
     func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
         switch menuItem.action {
-        case #selector(selectVirtualSource(_:)): menuItem.state = model.source == .virtual ? .on : .off
-        case #selector(selectRealSource(_:)): menuItem.state = model.source == .real ? .on : .off
         case #selector(selectHandTool(_:)): menuItem.state = model.tools.selected == .hand ? .on : .off
         case #selector(selectZoomTool(_:)): menuItem.state = model.tools.selected == .zoom ? .on : .off
         case #selector(selectCropTool(_:)): menuItem.state = model.tools.selected == .crop ? .on : .off
@@ -82,14 +80,27 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         case #selector(zoomToFit(_:)), #selector(zoomToFill(_:)), #selector(zoomToActualSize(_:)),
              #selector(zoomToStep(_:)):
             return model.session.image != nil
-        case #selector(selectRealSource(_:)), #selector(selectVirtualSource(_:)): return !model.session.isBusy
         default: return true
         }
     }
 
     // MARK: Actions
 
-    @objc func startPreview(_ sender: Any?) { model.startPreview() }
+    /// ⌘R and the panel's Preview button. On the real X1 (hidden setting on),
+    /// the three checks are confirmed first, every time.
+    @objc func startPreview(_ sender: Any?) {
+        guard model.toolbar.previewNeedsConfirmation else {
+            model.startPreview()
+            return
+        }
+        guard let window else { return }
+        RealPreviewConfirmationAlert.run(for: window) { [model] confirmation in
+            if case .failure(let error) = model.startRealPreview(confirmation), error != .notAllowed {
+                self.showAlert(String(localized: "The preview could not start", comment: "Alert title"),
+                               error.description)
+            }
+        }
+    }
     @objc func startScan(_ sender: Any?) {}
     @objc func stopPreview(_ sender: Any?) { model.stop() }
 
@@ -119,8 +130,6 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     @objc func selectZoomTool(_ sender: Any?) { model.tools.selected = .zoom }
     @objc func selectCropTool(_ sender: Any?) { model.tools.selected = .crop }
     @objc func toggleSettingsPanel(_ sender: Any?) { model.panel.toggleHidden() }
-    @objc func selectVirtualSource(_ sender: Any?) { model.source = .virtual }
-    @objc func selectRealSource(_ sender: Any?) { model.source = .real }
 
     // MARK: Alerts
 
@@ -131,13 +140,53 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         case .failed(let failure):
             var text = failure.description
             if let outcome = failure.emergencyStop { text += "\n\n" + Strings.emergencyStop(outcome) }
+            if model.lastPreviewWasReal {
+                switch failure.cause {
+                case .anomaly(.couldNotOpen):
+                    break  // nothing was sent: no advice to switch the scanner off
+                case .decoding:
+                    // The scanner side completed, end of session included: only the log.
+                    text += realPreviewAdvice(stoppedBeforeScan: nil)
+                case .anomaly:
+                    text += realPreviewAdvice(stoppedBeforeScan: failure.emergencyStop == nil)
+                }
+            }
             showAlert(String(localized: "The preview stopped after an anomaly", comment: "Alert title"), text)
+        case .stopped(let outcome) where model.lastPreviewWasReal:
+            // Stop, change of source or quit on the real X1: always reported, with the advice.
+            var text = outcome.map(Strings.emergencyStop)
+                ?? String(localized: "Preview stopped before SCAN; nothing more was sent.", comment: "Real preview stopped")
+            text += realPreviewAdvice(stoppedBeforeScan: outcome == nil)
+            showAlert(String(localized: "The preview on the real X1 was stopped", comment: "Alert title"), text)
         case .stopped(let outcome?) where outcome != .stoppedAndReady:
             showAlert(String(localized: "The stop sequence did not complete", comment: "Alert title"),
                       Strings.emergencyStop(outcome))
         default:
             break
         }
+    }
+
+    /// Advice and log after a preview on the real X1 that did not complete.
+    /// `stoppedBeforeScan` nil: the scanner side completed, only the log.
+    private func realPreviewAdvice(stoppedBeforeScan: Bool?) -> String {
+        var text = ""
+        if stoppedBeforeScan == true {
+            // The session and modes FlexColor set may still be active.
+            text += "\n\n" + String(localized: "Switch the X1 off and on again before anything else.",
+                                     comment: "Advice after a preview on the real X1 stopped before SCAN")
+        } else if stoppedBeforeScan == false {
+            // The end of session (CF 00 02) is not sent on the stop path.
+            text += "\n\n" + String(localized: "Switch the X1 off and on again before another preview.",
+                                     comment: "Advice after a preview on the real X1 stopped after SCAN")
+        }
+        if let log = model.lastPreviewLog {
+            text += "\n\n" + String(localized: "Log: \(log.path(percentEncoded: false))", comment: "Path of the preview log")
+            if model.lastPreviewLogIsIncomplete {
+                text += "\n" + String(localized: "Some lines could not be written: the log is incomplete.",
+                                      comment: "Preview log incomplete")
+            }
+        }
+        return text
     }
 
     private func showAlert(_ title: String, _ text: String) {
@@ -166,6 +215,60 @@ enum ExportFolderPanel {
         }
         if let window { panel.beginSheetModal(for: window, completionHandler: completion) } else {
             completion(panel.runModal())
+        }
+    }
+}
+
+/// Asked before every preview on the real X1: Start is enabled only when
+/// the three boxes are ticked.
+@MainActor
+enum RealPreviewConfirmationAlert {
+    static func run(for window: NSWindow, start: @escaping @MainActor (RealPreviewConfirmation) -> Void) {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = String(localized: "Preview on the real X1", comment: "Confirmation title")
+        alert.informativeText = String(
+            localized: "FlexColor's captured preview will be sent to the scanner, command for command. Any difference stops it; Stop (⌘. or Esc) stays available. Every command is logged.",
+            comment: "Confirmation text before a preview on the real X1")
+        let boxes = [
+            String(localized: "The X1 is on", comment: "Real preview check"),
+            String(localized: "A holder is in place", comment: "Real preview check"),
+            String(localized: "FlexColor is closed", comment: "Real preview check"),
+        ].map { NSButton(checkboxWithTitle: $0, target: nil, action: nil) }
+        let stack = NSStackView(views: boxes)
+        stack.orientation = .vertical
+        stack.alignment = .leading
+        stack.frame = NSRect(x: 0, y: 0, width: 300, height: 66)
+        alert.accessoryView = stack
+        let startButton = alert.addButton(withTitle: String(localized: "Start Preview", comment: "Confirmation button"))
+        alert.addButton(withTitle: String(localized: "Cancel", comment: "Button"))
+        startButton.isEnabled = false
+        startButton.keyEquivalent = ""  // Return must not start it by accident
+        let watcher = CheckboxWatcher(boxes: boxes, button: startButton)
+        for box in boxes {
+            box.target = watcher
+            box.action = #selector(CheckboxWatcher.changed(_:))
+        }
+        alert.beginSheetModal(for: window) { response in
+            withExtendedLifetime(watcher) {}
+            guard response == .alertFirstButtonReturn else { return }
+            let ticked = boxes.map { $0.state == .on }
+            start(RealPreviewConfirmation(scannerOn: ticked[0], holderInPlace: ticked[1], flexColorClosed: ticked[2]))
+        }
+    }
+
+    @MainActor
+    private final class CheckboxWatcher: NSObject {
+        let boxes: [NSButton]
+        let button: NSButton
+
+        init(boxes: [NSButton], button: NSButton) {
+            self.boxes = boxes
+            self.button = button
+        }
+
+        @objc func changed(_ sender: NSButton) {
+            button.isEnabled = boxes.allSatisfy { $0.state == .on }
         }
     }
 }

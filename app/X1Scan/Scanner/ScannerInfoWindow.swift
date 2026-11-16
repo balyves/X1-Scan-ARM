@@ -100,7 +100,7 @@ struct ScannerInfoView: View {
                 Button(String(localized: "Read Identity", comment: "Menu item and button")) {
                     Task { await model.readRealScanner() }
                 }
-                .disabled(model.realStatus == .reading)
+                .disabled(model.realStatus == .reading || model.session.isBusy)
                 if model.realStatus == .reading { ProgressView().controlSize(.small) }
             }
             if case .failed(let failure) = model.realStatus {
@@ -110,10 +110,12 @@ struct ScannerInfoView: View {
                     .textSelection(.enabled)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            Text(Strings.previewBlock(.realScannerReadOnly))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+            if model.toolbar.previewBlock == .realScannerReadOnly {
+                Text(Strings.previewBlock(.realScannerReadOnly))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
         .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)

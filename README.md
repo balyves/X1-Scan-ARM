@@ -94,11 +94,6 @@ scanning) depend on sequences captured from FlexColor:
   3F editor for Apple Silicon (no scanner control).
 - [mrmidi/ASFireWire](https://github.com/mrmidi/ASFireWire):
   FireWire on macOS 26 via DriverKit.
-- [20More](https://20more.dk): commercial, closed-source software for
-  Flextight scanners, including the X1, on macOS 10.13 to 15, with a web
-  interface served by the scanner Mac, according to its website (checked
-  2026-11-14). No public code or protocol documentation. X1-Scan-ARM
-  targets macOS 26 Tahoe natively and stays open source.
 
 ## What this repository never contains
 

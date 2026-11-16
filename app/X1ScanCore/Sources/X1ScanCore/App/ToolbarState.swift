@@ -30,14 +30,19 @@ public struct ToolbarState: Sendable, Hashable {
     /// Scanning is a later stage.
     public let canScan = false
 
+    /// Real X1 with the hidden setting on: Preview asks for a confirmation first (step 4).
+    public let previewNeedsConfirmation: Bool
+
+    /// `realPreviewEnabled`: the hidden setting `EnableRealPreview` (off by default).
     public init(source: ScannerSourceKind, session: PreviewSession.State, virtualAvailable: Bool,
-                hasImage: Bool, hasExportFolder: Bool) {
+                hasImage: Bool, hasExportFolder: Bool, realPreviewEnabled: Bool = false) {
         let busy = session == .running || session == .stopping
+        previewNeedsConfirmation = source == .real && realPreviewEnabled
         if busy {
             previewBlock = .busy
-        } else if source == .real {
+        } else if source == .real && !realPreviewEnabled {
             previewBlock = .realScannerReadOnly
-        } else if !virtualAvailable {
+        } else if !virtualAvailable {  // the captured sequence comes with the virtual X1's fixtures
             previewBlock = .virtualScannerUnavailable
         } else {
             previewBlock = nil

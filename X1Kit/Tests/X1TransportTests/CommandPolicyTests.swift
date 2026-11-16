@@ -157,6 +157,14 @@ struct CommandPolicyTests {
         try CommandPolicy.unrestricted.check(command)
     }
 
+    @Test func timeoutsAreNotScannerStatuses() {
+        #expect(TransportError.DeliveryFailure(taskStatus: 0x01) == .taskTimeout)
+        #expect(TransportError.DeliveryFailure(taskStatus: 0x02) == .protocolTimeout, "not CHECK CONDITION")
+        #expect(TransportError.DeliveryFailure(taskStatus: 0x03) == .deviceNotResponding)
+        #expect(TransportError.DeliveryFailure(taskStatus: 0x04) == .deviceNotPresent)
+        #expect(TransportError.deliveryFailure(.taskTimeout).description.contains("timed out"))
+    }
+
     @Test func busyScannerErrorNamesTheLikelyCause() {
         let message = TransportError.deviceBusy.description
         #expect(message.contains("already open in another program"))

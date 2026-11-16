@@ -156,7 +156,7 @@ struct HolderTests {
         #expect(Set(all.map(\.id)).count == all.count, "unique references")
         #expect(all.allSatisfy { $0.id == $0.reference })
         #expect(DefaultHolders.standardIDs == ["50200401", "50200402", "50200428"])
-        let sixBySeven = try? #require(all.first { $0.reference == "50200403" })
+        let sixBySeven = all.first { $0.reference == "50200403" }
         #expect(sixBySeven?.format == "6×7" && sixBySeven?.apertures == [HolderAperture(width: 57, height: 70)])
         #expect(all.first { $0.reference == "50200428" }?.apertures.count == 2)
         #expect(all.first { $0.reference == "50200416" }?.frames == 6)

@@ -336,13 +336,16 @@ private struct ActionButtons: View {
                 .help(Text("Stop the preview (⌘. or Esc)", comment: "Tooltip"))
             } else {
                 Button {
-                    model.startPreview()
+                    // Through the window: on the real X1 it asks for the confirmation first.
+                    NSApp.sendAction(#selector(MainWindowController.startPreview(_:)), to: nil, from: nil)
                 } label: {
                     Text("Preview", comment: "Menu item and toolbar button").frame(maxWidth: .infinity)
                 }
                 .disabled(!toolbar.canPreview)
                 .help(toolbar.previewBlock.map(Strings.previewBlockShort)
-                      ?? String(localized: "Run a preview on the virtual X1 (⌘R)", comment: "Tooltip"))
+                      ?? (toolbar.previewNeedsConfirmation
+                          ? String(localized: "Run FlexColor's captured preview on the real X1 (⌘R)", comment: "Tooltip")
+                          : String(localized: "Run a preview on the virtual X1 (⌘R)", comment: "Tooltip")))
             }
             Button {
                 NSApp.sendAction(#selector(MainWindowController.startScan(_:)), to: nil, from: nil)

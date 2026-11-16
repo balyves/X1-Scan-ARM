@@ -188,6 +188,8 @@ public enum PreviewAnomaly: Error, Hashable, CustomStringConvertible {
     case stateTimeout(waitingFor: ScannerState, last: ScannerState)
     case malformedResponse(String)
     case transport(String)
+    /// The real scanner could not be opened: nothing was sent.
+    case couldNotOpen(String)
     case cancelled
 
     public var description: String {
@@ -212,6 +214,8 @@ public enum PreviewAnomaly: Error, Hashable, CustomStringConvertible {
             "malformed response: \(detail)"
         case .transport(let detail):
             detail
+        case .couldNotOpen(let detail):
+            "the scanner could not be opened (nothing was sent): \(detail)"
         case .cancelled:
             "cancelled"
         }
@@ -236,6 +240,13 @@ public struct PreviewError: Error, CustomStringConvertible {
     public let anomaly: PreviewAnomaly
     /// Outcome of the stop sequence; nil when SCAN had not been sent.
     public let emergencyStop: EmergencyStopOutcome?
+
+    public init(stepIndex: Int, command: SCSICommand, anomaly: PreviewAnomaly, emergencyStop: EmergencyStopOutcome?) {
+        self.stepIndex = stepIndex
+        self.command = command
+        self.anomaly = anomaly
+        self.emergencyStop = emergencyStop
+    }
 
     public var description: String {
         var text = "preview stopped at step \(stepIndex) (\(command)): \(anomaly)"

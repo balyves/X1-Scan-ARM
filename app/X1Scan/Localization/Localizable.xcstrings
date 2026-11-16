@@ -2299,13 +2299,167 @@
         }
       }
     },
-    "Read Identity and Scanner Information (⌘I) are in the Scanner menu; the state is in the bottom bar.": {
+    "The preview could not start": {
       "extractionState": "manual",
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "« Lire l'identité » et « Informations sur le scanner » (⌘I) sont dans le menu Scanner ; l'état est dans la barre du bas."
+            "value": "L'aperçu n'a pas pu démarrer"
+          }
+        }
+      }
+    },
+    "Switch the X1 off and on again before anything else.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Éteignez puis rallumez le X1 avant toute autre action."
+          }
+        }
+      }
+    },
+    "Log: %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Journal : %@"
+          }
+        }
+      }
+    },
+    "Preview on the real X1": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aperçu sur le X1 réel"
+          }
+        }
+      }
+    },
+    "FlexColor's captured preview will be sent to the scanner, command for command. Any difference stops it; Stop (⌘. or Esc) stays available. Every command is logged.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L'aperçu capturé de FlexColor sera envoyé au scanner, commande par commande. Toute différence l'arrête ; Arrêter (⌘. ou Échap) reste disponible. Chaque commande est journalisée."
+          }
+        }
+      }
+    },
+    "The X1 is on": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le X1 est allumé"
+          }
+        }
+      }
+    },
+    "A holder is in place": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un porte-film est en place"
+          }
+        }
+      }
+    },
+    "FlexColor is closed": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FlexColor est fermé"
+          }
+        }
+      }
+    },
+    "Start Preview": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lancer l'aperçu"
+          }
+        }
+      }
+    },
+    "Run FlexColor's captured preview on the real X1 (⌘R)": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lancer l'aperçu capturé de FlexColor sur le X1 réel (⌘R)"
+          }
+        }
+      }
+    },
+    "Preview stopped before SCAN; nothing more was sent.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aperçu arrêté avant le SCAN ; plus rien n'a été envoyé."
+          }
+        }
+      }
+    },
+    "The preview on the real X1 was stopped": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L'aperçu sur le X1 réel a été arrêté"
+          }
+        }
+      }
+    },
+    "Switch the X1 off and on again before another preview.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Éteignez puis rallumez le X1 avant un autre aperçu."
+          }
+        }
+      }
+    },
+    "Some lines could not be written: the log is incomplete.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Certaines lignes n'ont pas pu être écrites : le journal est incomplet."
+          }
+        }
+      }
+    },
+    "Read Identity is in Scanner > Scanner Information (⌘I); the state is in the bottom bar.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "« Lire l'identité » est dans Scanner › Informations sur le scanner (⌘I) ; l'état est dans la barre du bas."
           }
         }
       }

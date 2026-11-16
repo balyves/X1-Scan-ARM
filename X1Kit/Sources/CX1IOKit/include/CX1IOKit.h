@@ -26,13 +26,17 @@ int32_t cx1_open(cx1_device *_Nullable *_Nonnull out_device,
                  char *_Nullable description, size_t description_size);
 
 /// Executes one command synchronously. Returns an IOReturn code (0 when the
-/// command was delivered; check `status` for the SCSI status).
+/// task ran). `service_response` receives the SCSIServiceResponse (0 if it
+/// could not be read): `status` is a SCSI status only when it is
+/// kSCSIServiceResponse_TASK_COMPLETE (2); with SERVICE_DELIVERY_OR_TARGET_FAILURE
+/// (1) it is the cause (0x01 task timeout, 0x02 protocol timeout, …).
 int32_t cx1_execute(cx1_device *_Nonnull device,
                     const uint8_t *_Nonnull cdb, uint8_t cdb_length,
                     uint8_t *_Nullable buffer, uint32_t buffer_length, int32_t direction,
                     uint32_t timeout_ms,
                     uint8_t *_Nonnull status, uint64_t *_Nonnull transferred,
-                    uint8_t *_Nullable sense, uint32_t sense_size);
+                    uint8_t *_Nullable sense, uint32_t sense_size,
+                    uint8_t *_Nonnull service_response);
 
 /// Releases exclusive access and closes the device.
 void cx1_close(cx1_device *_Nullable device);

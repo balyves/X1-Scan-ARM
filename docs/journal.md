@@ -81,8 +81,8 @@ floating palettes and workspaces (modelled only).
 ## 2026-11-14: roadmap and related software
 
 Roadmap gains a read-only calibration backup step (read-only commands only,
-kept outside the repository) and future ideas; 20More added to related
-projects (feature ideas only, see decisions.md); holder identification noted
+kept outside the repository) and future ideas; a commercial Flextight
+application noted as a source of feature ideas only (see decisions.md); holder identification noted
 as a hypothesis in protocol.md, where we also note that the holder type used
 during the captures was not recorded.
 
@@ -151,8 +151,8 @@ cause of the 6.25 % report); token buttons insert at the caret.
 Holder menu fed by a data file of the 21 holders of Hasselblad's
 compatibility table (reference, format, opening, frames; data only) and by
 custom holders, managed in Settings > Holders. protocol.md: the X1 might
-report the reference of the inserted holder (20More shows "6×7
-[50200420]") **[hypothesis]**, to check at the next session by noting the
+report the reference of the inserted holder (a commercial Flextight
+application shows "6×7 [50200420]") **[hypothesis]**, to check at the next session by noting the
 reference of the holder used.
 
 ## 2026-11-14: step 3 fixes after testing
@@ -164,3 +164,29 @@ its holding priority (750) was above the divider drag, and the width code
 expected two subviews where macOS 26 also counts the divider; now 260-640
 pt, restored after the first layout. Zoom shows "—" without an image and
 Fit applies when the preview arrives; no R G B without an image.
+
+## 2026-11-16: step 4, captured preview on the real X1 (code only)
+
+FlexColor's captured preview can be replayed on the real X1, behind a
+hidden setting, a confirmation before every run, and a guard that lets
+through only the captured sequence, byte for byte, built from the capture
+itself. Every command and response is logged in cap3.py's format. Not run
+on the scanner yet. Found in the capture: FlexColor reads image lines
+before the line counter announces them; the run follows it, with a 30 s
+READ timeout (pending the user's approval). Usage counters observed (counters 1 and 6 ≈ minutes of
+operation, counter 3 = scans) **[hypothesis]**. Name of the commercial
+Flextight application removed from the documents (history unchanged).
+
+## 2026-11-16: CI back to green; step 4 adjustments
+
+The CI's app job had failed since 2026-11-14 (runs X1Kit #5-#7): the stop
+tests depended on timing, and on GitHub's slower runners the preview passed
+SCAN, or ended, before the stop arrived. The virtual X1 can now be paused at
+a chosen command until the test lets it go on: the stop tests are
+deterministic (the "to do later" of 2026-11-14). IOKit timeouts and other
+delivery failures are now reported as such (SCSI service response), not
+read as a scanner status (0x02 would have read as CHECK CONDITION). The user
+approved the 30 s READ timeout (10 s for other commands). Scanner
+menu: Read Identity and the source items removed (Scanner Information and
+Settings > Scanner have them). The capture of 2026-11-12 used the 6×7
+holder, reference 50200403.

@@ -92,7 +92,8 @@ A1 to A3 and A5 are done at home; A4 is done on site, before part C.
       zsh ~/Developer/X1-Scan-ARM/tools/x1probe/diag.sh
 
 - Build and start the app; check that it launches, that a preview runs on
-  the **virtual X1**, and that Scanner > Real X1 shows "Real X1 · Not read":
+  the **virtual X1**, and that with Settings > Scanner > Source: Real X1 the
+  bottom bar shows "Real X1 · Not read":
 
       cd ~/Developer/X1-Scan-ARM/app && xcodebuild -project X1Scan.xcodeproj \
         -scheme X1Scan -configuration Debug \
@@ -165,10 +166,10 @@ is the expected outcome: it says nothing about the scanner. Note the
 
 - Machine: development Mac. **X1: on.** FlexColor: not on this Mac.
   `x1probe`: finished.
-- Open X1 Scan, choose **Scanner > Real X1**, then **Scanner > Read
-  Identity**. It sends INQUIRY, MODE SENSE page 0x26, LOG SENSE 0x30 and
-  0xDF, then closes the device. The Scanner Information window opens and
-  shows the result.
+- Open X1 Scan, choose **Settings > Scanner > Source: Real X1**, then
+  **Scanner > Scanner Information… (⌘I)** and its **Read Identity** button.
+  It sends INQUIRY, MODE SENSE page 0x26, LOG SENSE 0x30 and 0xDF, then
+  closes the device. The window shows the result.
 
 ### B5. Expected results
 
@@ -306,3 +307,115 @@ adapting first.
 
 What is learned then goes into `docs/protocol.md` (marked [confirmed] or
 [hypothesis]) and a dated entry of `docs/journal.md`.
+
+## Part E: first preview on the real X1, on the development Mac
+
+Step 4 of the application: FlexColor's captured preview replayed on the
+real X1 (docs/decisions.md, "Application, step 4"). It is the first time
+our code sends commands that move the scanner. Parts A to B must have
+passed: ASFireWire active, Read Identity working. "FlexColor: closed"
+below means: FlexColor does not run on the development Mac, and the
+reference Mac is not connected to the X1.
+
+Known risks of this first run:
+
+- No large READ has gone through ASFireWire yet (Read Identity only reads a
+  few bytes). The first READ of 47 952 bytes comes during calibration, the
+  first of 120 240 bytes with the references, those of 240 480 bytes during
+  the scan.
+- A READ cannot be interrupted while it waits: **Stop can take up to 30 s**
+  to act during the scan. After a READ that times out (30 s), the run stops
+  with the stop command.
+
+### E1. Build and enable
+
+- Machine: development Mac. **X1: off.** **FlexColor: closed.** X1 Scan:
+  closed.
+- Build the app at the step 4 commit (A3), then turn the hidden setting on:
+
+      defaults write org.x1scanarm.X1Scan EnableRealPreview -bool YES
+
+- Create the session folder if needed: `S=~/X1-captures/$(date +%F); mkdir -p "$S"`.
+  The app writes its logs there by itself.
+
+### E2. Connect and check with reads only
+
+- Machine: development Mac. **X1: off.** **FlexColor: closed.** X1 Scan:
+  closed.
+- Connect as in B1, then switch the **X1 on** and wait until it is idle.
+- Machine: development Mac. **X1: on.** **FlexColor: closed.**
+- Open X1 Scan, Settings > Scanner > Source: **Real X1**. Scanner > Scanner
+  Information… (⌘I), button **Read Identity**: expect `Imacon` / `Flextight X1` / `R185`. If this fails, stop
+  here (part B7).
+
+### E3. The original
+
+- Machine: development Mac. **X1: on.** **FlexColor: closed.**
+- Put the IT8.7/1 target in **the 6×7 holder, reference 50200403**, the one
+  of the capture of 2026-11-12, and insert it. In the panel, choose this
+  holder (Original > Holder; tick it first in Settings > Holders if needed).
+
+### E4. The preview
+
+- Machine: development Mac. **X1: on.** **FlexColor: closed.** X1 Scan:
+  open, source Real X1, nothing else open on the scanner (`x1probe`
+  finished).
+- Click **Preview** in the panel (or ⌘R). Tick the three checks (X1 on,
+  holder in place, FlexColor closed), then click **Start Preview** (Return
+  does not start it).
+- Watch the scanner. The bottom bar shows the phases (initialising,
+  calibrating, references, scanning, finishing). **Stop** (⌘. or Esc)
+  stays available: before SCAN nothing more is sent, after SCAN only the
+  stop command, then the app waits for the scanner to be ready. During the
+  scan, wait up to 30 s for Stop to act.
+- If something sounds or looks wrong and Stop has not acted after 30 s,
+  switch the X1 off, then quit X1 Scan (it may wait up to 2 minutes for a
+  ready state that will not come; force quit if needed).
+
+### E5. What can happen
+
+- **Preview complete** (X1: on). The image appears; note the duration.
+  Then E6.
+- **Stopped before SCAN**, by an anomaly or by Stop (X1: on, then off).
+  The alert gives the reason (for a position beyond the tolerance of 100,
+  the measured and the captured value) and says to switch the X1 off and on
+  again: **switch the X1 off, wait 10 seconds, on again** before anything
+  else. Do not retry until the log has been looked at.
+- **Stopped after SCAN**, by an anomaly, a READ timeout (30 s) or Stop
+  (X1: on, then off). The alert gives the outcome of the stop sequence.
+  - The scanner reported ready: switch it off and on again before another
+    preview (the end of session is not sent on the stop path).
+  - It did not report ready: **switch the X1 off**. This can be a false
+    alarm (the first state read after the stop is not one the capture shows
+    during a stop), but the scanner's state is then unknown.
+- **Refused by the guard** (alert or log line `ERREUR … refused by
+  policy`): nothing was sent for that command; same as stopped before or
+  after SCAN, depending on where it happened.
+
+### E6. After the run
+
+- Machine: development Mac. **X1: on, then off.** **FlexColor: closed.**
+- The alert and the log give the files:
+  `~/X1-captures/<date>/x1scan-apercu-<time>.txt` and `.raw`.
+- Turn the hidden setting off, set the source back to Virtual X1:
+
+      defaults delete org.x1scanarm.X1Scan EnableRealPreview
+
+- Switch the **X1 off**, then disconnect (B8).
+
+### E7. Comparing with the FlexColor capture
+
+- Machine: any, X1 not used. **FlexColor: closed.** The commands, polls
+  left out, should be the same as in the FlexColor capture (here
+  `flexcolor-apercu4.txt`):
+
+      cmds() { grep -E '^[0-9]{4} CDB' "$1" | cut -c10- | grep -vE '^(ee|d3|df) '; }
+      diff <(cmds flexcolor-apercu4.txt) <(cmds x1scan-apercu-<time>.txt)
+
+  An empty diff (or one that ends where the run stopped) is what the guard
+  enforces. Each CDB line of our log is written before the command is sent;
+  a command the guard refused has an `ERREUR … refused by policy` line under
+  it and was not sent. Compare also the `REP` lines of page 0x20 (measured
+  positions) and the 0xDF states.
+- Pass on the log with the serial number replaced by `FX1xxxxxxx` (part
+  D2), the `.raw` file, the holder reference and the duration.
