@@ -72,6 +72,18 @@ public struct ScanStatusPage: Sendable, Hashable {
     public static let powerOnChannelValues = [2048, 2048, 2048]
     public var showsPowerOnValues: Bool { channelValues == Self.powerOnChannelValues }
 
+    /// Bytes 19-24 at the first read of every session that did not start
+    /// cold (2026-11-12 and 2026-11-17): 1 911-1 945 / 1 845-1 856 /
+    /// 1 883-1 895 [confirmed], widened by 64 on each side. After such values
+    /// FlexColor sent the warm capture's sequence in five sessions and another
+    /// one in two (docs/decisions.md, "Real X1: cold or warm sequence").
+    public static let earlierUseChannelRanges: [ClosedRange<Int>] = [1847...2009, 1781...1920, 1819...1959]
+
+    /// The first read of a session shows values left by earlier use.
+    public var showsValuesLeftByEarlierUse: Bool {
+        channelValues.count == 3 && zip(channelValues, Self.earlierUseChannelRanges).allSatisfy { $1.contains($0) }
+    }
+
     public init(_ bytes: [UInt8]) throws {
         try requireLength(bytes, 33, "page 0x20")
         guard bytes[8] == Self.page else { throw ResponseError.wrongPage(expected: Self.page, received: bytes[8]) }

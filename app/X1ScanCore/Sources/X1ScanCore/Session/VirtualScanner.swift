@@ -12,9 +12,10 @@ import X1Transport
 /// is reached through `ScannerInspector`, which only sends reads.
 public struct VirtualScanner: Sendable {
     public let fixture: CaptureFixture
-    /// FlexColor's preview right after power-on (2026-11-16): the only
-    /// sequence the real X1 may receive (`PreviewScript.flexColor4813Cold`).
-    /// The virtual X1 itself replays `fixture`.
+    /// FlexColor's preview right after power-on (2026-11-16). With `fixture`,
+    /// one of the two captures the real X1's guard is built from (page 0x28
+    /// read left out; `PreviewScript.plan`). The virtual X1 itself replays
+    /// `fixture`.
     public let coldFixture: CaptureFixture
     public let profile: CalibrationProfile
     public let pacing: Pacing

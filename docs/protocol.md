@@ -102,9 +102,9 @@ and page length.
 | 0x23 | 49 | Twelve LE32 values, often round (980 000, 816 000, 514 000…): motor positions or travel lengths. **[hypothesis]** |
 | 0x25 | 12 | **Not static.** Byte 21 of the response changes over time: 0x1b then 0x1c a few minutes apart, and 0x1c / 0x1d alternating within one preview, going back and forth. **[confirmed]** A value that goes down again points to a sensor reading (temperature?) rather than a clock; it is not a firmware date. **[hypothesis]** Bytes 12-16 (`01 23 0f 0a 03`) stay constant; their meaning is unknown. |
 | 0x26 | 44 | **Identity**: 10-byte field (dashes when unset), then the serial number in ASCII (`FX1…`). This is where FlexColor gets the serial number. **[confirmed]** |
-| 0x24 | 24 | Read once per scan (32 bytes requested), just before the window of the 400-line step (§12; a page 0x20 read comes between them), never in a preview: `1b 00 00 00 00 00 00 00 24 18 00 01 00 6e 04 01 00 ab 10 01 00 ab 10 01 00 00 02 01 00 01 00 01`, the same in the three scans of 2026-11-17 (1 000, 2 000, 3 200 ppi). **[confirmed]** Meaning unknown. Not in `CommandPolicy.readOnly`. |
+| 0x24 | 24 | Read once per scan (32 bytes requested), just before the window of the 400-line step (§12; a page 0x20 read comes between them), never in a preview: `1b 00 00 00 00 00 00 00 24 18 00 01 00 6e 04 01 00 ab 10 01 00 ab 10 01 00 00 02 01 00 01 00 01`, the same in the three scans of 2026-11-17 (1 000, 2 000, 3 200 ppi). **[confirmed]** Meaning unknown. In `CommandPolicy.readOnly` since 2026-11-17 (docs/decisions.md). |
 | 0x27 | 9 | Unknown. |
-| 0x28 | 18 | Read once (30 bytes requested), only in the capture right after power-on of 2026-11-16, just before the session start: `15 00 00 00 00 00 00 00 28 12 00 58 02 00 00`, 14 × `ff`, `00`. **[confirmed]** Not read in the capture right after power-on of 2026-11-17, nor in any warm capture: not needed for the sequence after power-on. **[confirmed]** Meaning unknown; what makes FlexColor read it is unknown. Not in `CommandPolicy.readOnly`. |
+| 0x28 | 18 | Read once (30 bytes requested), only in the capture right after power-on of 2026-11-16, just before the session start: `15 00 00 00 00 00 00 00 28 12 00 58 02 00 00`, 14 × `ff`, `00`. **[confirmed]** Not read in the capture right after power-on of 2026-11-17, nor in any warm capture: not needed for the sequence after power-on. **[confirmed]** Meaning unknown; what makes FlexColor read it is unknown. Not in `CommandPolicy.readOnly`; no longer sent by our cold sequence (docs/decisions.md, 2026-11-17). |
 | 0x29 | 1 | Unknown (`07`). |
 
 **Page 0x20 (scan status)** **[confirmed unless noted]**
@@ -372,6 +372,20 @@ preview; logs outside the repository; "outside polling" means without
   left by earlier use, none the power-on values, and none is followed by
   the cold calibration. **[confirmed]** Consistent with the rule above;
   still no second cold capture besides A1 and C.
+- After values left by earlier use, FlexColor does not always send the
+  warm capture's sequence. In the preview of the 2 000 ppi run (2026-11-17)
+  it did, up to the second page 0x20 read of the session (the first
+  measurement after the target-0 windows): that read gave 24 523 where
+  every other warm session gave 25 739-25 867. FlexColor then read page
+  0x20 again and did **not** send the window with target 25 000: it went
+  on with the window with target 9 000. **[confirmed]** So the warm
+  sequence also depends on that measurement. **[hypothesis]**: 24 523 is a
+  state left by an earlier session. That preview was the first session of
+  its FlexColor run; the run before it (B, a preview) ended about 15
+  minutes earlier, and the first page 0x20 read of the session showed the
+  usual 6 155 / 824, so nothing confirms it yet. To check at the next
+  capture session. Our runner checks that read (tolerance 256) and stops before
+  the window with target 25 000 (docs/decisions.md).
 - Page 0x28 is not part of the choice: A1 is identical to C without its
   page 0x28 read (207 commands outside polling). **[confirmed]** What makes
   FlexColor read it is still unknown. The uncalibrated state of page 0x20

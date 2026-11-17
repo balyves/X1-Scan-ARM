@@ -87,14 +87,14 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     // MARK: Actions
 
     /// ⌘R and the panel's Preview button. On the real X1 (hidden setting on),
-    /// the four checks are confirmed first, every time.
+    /// the checks are confirmed first, every time.
     @objc func startPreview(_ sender: Any?) {
         guard model.toolbar.previewNeedsConfirmation else {
             model.startPreview()
             return
         }
         guard let window else { return }
-        RealPreviewConfirmationAlert.run(for: window) { [model] confirmation in
+        RealPreviewConfirmationAlert.run(for: window, askPowerCycle: model.realPreviewNeedsPowerCycle) { [model] confirmation in
             if case .failure(let error) = model.startRealPreview(confirmation), error != .notAllowed {
                 self.showAlert(String(localized: "The preview could not start", comment: "Alert title"),
                                error.description)
@@ -144,10 +144,15 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
                 switch failure.cause {
                 case .anomaly(.couldNotOpen):
                     break  // nothing was sent: no advice to switch the scanner off
-                case .anomaly(.notJustSwitchedOn):
+                case .anomaly(.unexpectedCarriagePosition):
+                    // Stopped before the window with target 25 000 (docs/decisions.md, option A).
+                    text += "\n\n" + String(localized: "Unexpected carriage position: preview stopped before the carriage was positioned. Switch the X1 off and on before starting the preview again.",
+                                             comment: "Real preview stopped at the position check before the window with target 25 000")
+                    text += realPreviewAdvice(stoppedBeforeScan: nil)
+                case .anomaly(.unrecognisedStartState):
                     // First page 0x20 read: only reads, D2 and the session start were sent.
-                    text += "\n\n" + String(localized: "On the real X1 the preview only runs right after the scanner is switched on. Only reads, the startup command and the session start were sent: no window, mode, exposure, image read or scan.",
-                                             comment: "Real preview stopped: the X1 was not just switched on")
+                    text += "\n\n" + String(localized: "The X1 showed neither its state right after power-on nor the state left by earlier use, so neither captured preview applies. Only reads, the startup command and the session start were sent: no window, mode, exposure, image read or scan.",
+                                             comment: "Real preview stopped: unrecognised scanner state at session start")
                     text += realPreviewAdvice(stoppedBeforeScan: true)
                 case .decoding:
                     // The scanner side completed, end of session included: only the log.
@@ -172,7 +177,8 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     }
 
     /// Advice and log after a preview on the real X1 that did not complete.
-    /// `stoppedBeforeScan` nil: the scanner side completed, only the log.
+    /// `stoppedBeforeScan` nil: only the log (the scanner side completed, or the
+    /// alert already gives its own advice).
     private func realPreviewAdvice(stoppedBeforeScan: Bool?) -> String {
         var text = ""
         if stoppedBeforeScan == true {
@@ -225,26 +231,32 @@ enum ExportFolderPanel {
 }
 
 /// Asked before every preview on the real X1: Start is enabled only when
-/// the four boxes are ticked.
+/// every box is ticked. The fourth box (switched off and on) is shown only
+/// after a real preview that did not complete (docs/decisions.md).
 @MainActor
 enum RealPreviewConfirmationAlert {
-    static func run(for window: NSWindow, start: @escaping @MainActor (RealPreviewConfirmation) -> Void) {
+    static func run(for window: NSWindow, askPowerCycle: Bool,
+                    start: @escaping @MainActor (RealPreviewConfirmation) -> Void) {
         let alert = NSAlert()
         alert.alertStyle = .warning
         alert.messageText = String(localized: "Preview on the real X1", comment: "Confirmation title")
         alert.informativeText = String(
-            localized: "FlexColor's captured preview will be sent to the scanner, command for command. Any difference stops it; Stop (⌘. or Esc) stays available. Every command is logged.",
+            localized: "One of FlexColor's two captured previews, chosen by the scanner's state, will be sent to the scanner command for command. Any difference stops it; Stop (⌘. or Esc) stays available. Every command is logged.",
             comment: "Confirmation text before a preview on the real X1")
-        let boxes = [
+        var titles = [
             String(localized: "The X1 is on", comment: "Real preview check"),
             String(localized: "A holder is in place", comment: "Real preview check"),
             String(localized: "FlexColor is closed", comment: "Real preview check"),
-            String(localized: "The X1 was switched off and on since the last real preview", comment: "Real preview check"),
-        ].map { NSButton(checkboxWithTitle: $0, target: nil, action: nil) }
+        ]
+        if askPowerCycle {
+            titles.append(String(localized: "The X1 has been switched off and on since the interrupted preview",
+                                 comment: "Real preview check, asked only after a real preview that did not complete"))
+        }
+        let boxes = titles.map { NSButton(checkboxWithTitle: $0, target: nil, action: nil) }
         let stack = NSStackView(views: boxes)
         stack.orientation = .vertical
         stack.alignment = .leading
-        stack.frame = NSRect(x: 0, y: 0, width: 420, height: 90)
+        stack.frame = NSRect(x: 0, y: 0, width: 420, height: stack.fittingSize.height)
         alert.accessoryView = stack
         let startButton = alert.addButton(withTitle: String(localized: "Start Preview", comment: "Confirmation button"))
         alert.addButton(withTitle: String(localized: "Cancel", comment: "Button"))
@@ -260,7 +272,7 @@ enum RealPreviewConfirmationAlert {
             guard response == .alertFirstButtonReturn else { return }
             let ticked = boxes.map { $0.state == .on }
             start(RealPreviewConfirmation(scannerOn: ticked[0], holderInPlace: ticked[1], flexColorClosed: ticked[2],
-                                          powerCycledSinceLastRealPreview: ticked[3]))
+                                          powerCycledSinceLastRealPreview: askPowerCycle && ticked[3]))
         }
     }
 

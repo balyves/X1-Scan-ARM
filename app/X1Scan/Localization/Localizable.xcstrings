@@ -2251,17 +2251,6 @@
         }
       }
     },
-    "FlexColor's captured preview will be sent to the scanner, command for command. Any difference stops it; Stop (⌘. or Esc) stays available. Every command is logged.": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "L'aperçu capturé de FlexColor sera envoyé au scanner, commande par commande. Toute différence l'arrête ; Arrêter (⌘. ou Échap) reste disponible. Chaque commande est journalisée."
-          }
-        }
-      }
-    },
     "The X1 is on": {
       "extractionState": "manual",
       "localizations": {
@@ -2368,30 +2357,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "« Lire l'identité » est dans Scanner › Informations sur le scanner (⌘I) ; l'état est dans la barre du bas."
-          }
-        }
-      }
-    },
-    "On the real X1 the preview only runs right after the scanner is switched on. Only reads, the startup command and the session start were sent: no window, mode, exposure, image read or scan.": {
-      "comment": "Real preview stopped: the X1 was not just switched on",
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sur le X1 réel, l'aperçu ne fonctionne que juste après la mise sous tension du scanner. Seules des lectures, la commande de démarrage et l'ouverture de session ont été envoyées : aucune fenêtre, aucun mode, aucune exposition, aucune lecture d'image, aucun scan."
-          }
-        }
-      }
-    },
-    "The X1 was switched off and on since the last real preview": {
-      "comment": "Real preview check",
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Le X1 a été éteint et rallumé depuis le dernier aperçu réel"
           }
         }
       }
@@ -2740,6 +2705,54 @@
           "stringUnit": {
             "state": "translated",
             "value": "Lecture de l'image"
+          }
+        }
+      }
+    },
+    "The X1 showed neither its state right after power-on nor the state left by earlier use, so neither captured preview applies. Only reads, the startup command and the session start were sent: no window, mode, exposure, image read or scan.": {
+      "comment": "Real preview stopped: unrecognised scanner state at session start",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le X1 n'a montré ni son état juste après la mise sous tension, ni l'état laissé par une utilisation précédente : aucun des aperçus capturés ne s'applique. Seules des lectures, la commande de démarrage et l'ouverture de session ont été envoyées : aucune fenêtre, aucun mode, aucune exposition, aucune lecture d'image, aucun scan."
+          }
+        }
+      }
+    },
+    "The X1 has been switched off and on since the interrupted preview": {
+      "comment": "Real preview check, asked only after a real preview that did not complete",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le X1 a été éteint et rallumé depuis l'aperçu interrompu"
+          }
+        }
+      }
+    },
+    "One of FlexColor's two captured previews, chosen by the scanner's state, will be sent to the scanner command for command. Any difference stops it; Stop (⌘. or Esc) stays available. Every command is logged.": {
+      "comment": "Confirmation text before a preview on the real X1",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L'un des deux aperçus capturés de FlexColor, choisi d'après l'état du scanner, sera envoyé au scanner commande par commande. Toute différence l'arrête ; Arrêter (⌘. ou Échap) reste disponible. Chaque commande est journalisée."
+          }
+        }
+      }
+    },
+    "Unexpected carriage position: preview stopped before the carriage was positioned. Switch the X1 off and on before starting the preview again.": {
+      "comment": "Real preview stopped at the position check before the window with target 25 000",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Position du chariot inattendue : aperçu arrêté avant le positionnement du chariot. Éteignez puis rallumez le X1 avant de relancer l'aperçu."
           }
         }
       }

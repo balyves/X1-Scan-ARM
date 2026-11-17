@@ -21,9 +21,9 @@ struct ScanFixtureTests {
         #expect(!fixture.exchanges.contains { $0.cdb.hasPrefix("5a 00 28") })
     }
 
-    /// Every read of the captures passes `CommandPolicy.readOnly`, except MODE
-    /// SENSE page 0x24, seen only in scans and not added to the policy.
-    @Test(arguments: names) func readsPassThePolicyExceptPage0x24(name: String) throws {
+    /// Every read of the captures passes `CommandPolicy.readOnly`, MODE SENSE
+    /// page 0x24 (seen only in scans) included since 2026-11-17.
+    @Test(arguments: names) func readsPassThePolicy(name: String) throws {
         let fixture = try CaptureFixture.load(from: Fixtures.directory.appending(path: name))
         var refused: Set<String> = []
         for exchange in fixture.exchanges where CommandPolicy.readOnlyCommands[exchange.cdbBytes.first ?? 0] != nil {
@@ -31,7 +31,7 @@ struct ScanFixtureTests {
                                       transferLength: exchange.length, dataOut: exchange.dataOutBytes ?? [])
             if (try? CommandPolicy.readOnly.check(command)) == nil { refused.insert(exchange.cdb) }
         }
-        #expect(refused == ["5a 00 24 01 00 00 00 00 20 00"])
+        #expect(refused.isEmpty)
     }
 
     /// SET WINDOW offset 10 = ppi × 50 000 / 3 in the image window, and

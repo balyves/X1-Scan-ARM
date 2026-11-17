@@ -5,8 +5,8 @@ import X1Transport
 /// FlexColor 4.8.13's preview sequences: after earlier previews, captured on
 /// 2026-11-12 (tests/fixtures/preview-sequence.json, `flexColor4813`), and
 /// right after power-on, captured on 2026-11-16
-/// (tests/fixtures/preview-sequence-cold.json, `flexColor4813Cold`, the one
-/// sent to the real X1). Seq numbers in comments.
+/// (tests/fixtures/preview-sequence-cold.json, `flexColor4813Cold`). The real
+/// X1 gets one or the other through `plan`. Seq numbers in comments.
 ///
 /// Every value is the captured one: windows, modes, exposure data, read
 /// sizes and the redundant page re-reads. No rule is inferred. Polling of
@@ -26,13 +26,26 @@ public enum PreviewScript {
 
     /// FlexColor 4.8.13's preview right after the X1 was switched on, as
     /// captured on 2026-11-16 (tests/fixtures/preview-sequence-cold.json, seq
-    /// numbers in comments). The only sequence used on the real X1 for now
-    /// (docs/decisions.md): its first page 0x20 read must show the power-on
-    /// values, or the preview stops before any window, mode, exposure or READ.
-    public static let flexColor4813Cold: [PreviewStep] = {
-        var builder = Builder()
-        builder.buildFlexColor4813Cold()
-        return builder.steps
+    /// numbers in comments), without the page 0x28 read of that capture
+    /// (not needed: a second cold capture, 2026-11-17, has none;
+    /// docs/protocol.md §11).
+    public static let flexColor4813Cold: [PreviewStep] = plan.steps(for: .cold)
+
+    /// Both sequences, chosen by the first page 0x20 read of the session
+    /// (docs/decisions.md, "Real X1: cold or warm sequence"). The one used on
+    /// the real X1.
+    public static let plan: PreviewPlan = {
+        var common = Builder()
+        common.initialisation()
+        common.sessionStart()
+        var cold = Builder()
+        cold.coldCalibration()
+        cold.previewAndScan()
+        var warm = Builder()
+        warm.warmCalibration()
+        warm.previewAndScan()
+        return PreviewPlan(common: common.steps, cold: cold.steps, warm: warm.steps,
+                           waitAfterChoice: [.warm: .ready])
     }()
 }
 
@@ -147,8 +160,12 @@ struct Builder {
         add(X1Command.modeSense(page: ScanStatusPage.page, length: ScanStatusPage.length),
             .scanStatus(capturedPosition: captured))
     }
-    private mutating func powerOnCheck() {
-        add(X1Command.modeSense(page: ScanStatusPage.page, length: ScanStatusPage.length), .powerOnCheck)
+    private mutating func positionGate(_ captured: Int) {
+        add(X1Command.modeSense(page: ScanStatusPage.page, length: ScanStatusPage.length),
+            .positionGate(capturedPosition: captured))
+    }
+    private mutating func sequenceChoice() {
+        add(X1Command.modeSense(page: ScanStatusPage.page, length: ScanStatusPage.length), .sequenceChoice)
     }
     private mutating func mode(_ a: UInt8, _ b: UInt8, _ c: UInt8, _ d: UInt8) { add(X1Command.setMode(a, b, c, d)) }
     private mutating func window(_ descriptor: [UInt8]) { add(X1Command.setWindow(descriptor)) }
@@ -182,7 +199,7 @@ struct Builder {
     }
 
     /// Identity, vendor pages, usage log, D2 (warm seq 1-221, cold seq 1-221).
-    private mutating func initialisation() {
+    mutating func initialisation() {
         inquiry()
         page(0x26, 56)
         pageSet()
@@ -204,14 +221,27 @@ struct Builder {
         pageSet()
         status(6155); thenWait()
 
-        // 3. Calibration at full CCD width and positioning, seq 245-303.
+        warmCalibration()
+        previewAndScan()
+    }
+
+    /// Session start up to the first page 0x20 read, identical in the warm
+    /// (seq 224-243) and cold (seq 266-285) captures; that read chooses the rest.
+    mutating func sessionStart() {
+        add(X1Command.session(.start)); thenWait()
+        pageSet()
+        sequenceChoice()
+    }
+
+    /// 3. Calibration at full CCD width and positioning, warm seq 245-303.
+    mutating func warmCalibration() {
         mode(0, 0, 1, 1); thenWait()
         page(0x27, 20)
         window(Window.calibrationA); thenWait()
         exposure(); thenWait()
         window(Window.calibrationB); thenWait()
         mode(0, 1, 1, 1); thenWait()
-        status(25867)
+        positionGate(25867)  // checked: FlexColor skipped the next window once, at 24 523
         window(Window.target25000); thenWait()
         status(24971)
         window(Window.target9000); thenWait()
@@ -227,13 +257,11 @@ struct Builder {
         calibrationLine(pixels: 8016)
         page(0x27, 20); thenWait()
         mode(0, 2, 0, 1); thenWait()
-
-        previewAndScan()
     }
 
     /// From the preview-width calibration to the end of session (warm seq
     /// 305-748, cold seq 361-821: the same commands).
-    private mutating func previewAndScan() {
+    mutating func previewAndScan() {
         // 4. Preview width, seq 305-366.
         pageSet()
         status(8971)
@@ -277,17 +305,9 @@ struct Builder {
         add(X1Command.session(.end)); thenWait()
     }
 
-    mutating func buildFlexColor4813Cold() {
-        // 1. Initialisation, cold seq 1-221 (as warm).
-        initialisation()
-        page(0x28, 30)  // cold seq 259: not in the warm capture
-
-        // 2. Session start, cold seq 266-285. The page 0x20 read must show the power-on values.
-        add(X1Command.session(.start)); thenWait()
-        pageSet()
-        powerOnCheck()
-
-        // 3. Calibration at full CCD width and positioning, cold seq 286-359.
+    /// 3. Calibration at full CCD width and positioning, cold seq 286-359.
+    /// (Cold seq 259, a page 0x28 read before the session start, is left out.)
+    mutating func coldCalibration() {
         window(Window.coldTarget10000); thenWait()
         window(Window.coldNoTarget); thenWait()
         mode(0, 0, 1, 1); thenWait()
@@ -311,8 +331,6 @@ struct Builder {
         calibrationLine(pixels: 8016)
         page(0x27, 20); thenWait()
         mode(0, 2, 0, 1); thenWait()
-
-        // 4-7. As warm, cold seq 361-821.
-        previewAndScan()
+        // 4-7: as warm, cold seq 361-821 (previewAndScan).
     }
 }

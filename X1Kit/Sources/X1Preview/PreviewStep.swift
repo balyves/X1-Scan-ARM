@@ -11,10 +11,17 @@ public struct PreviewStep: Sendable {
         case inquiry
         /// Page 0x20: the measured position must stay within the tolerance of the captured value.
         case scanStatus(capturedPosition: Int)
-        /// Page 0x20, first read of the cold sequence: bytes 19-24 must be
-        /// 2 048 × 3 (X1 just switched on), or the preview stops. Before this
-        /// read only reads, D2 and the session start have been sent.
-        case powerOnCheck
+        /// Page 0x20 always checked, even before any window requests a position:
+        /// the read before the warm sequence's window with target 25 000. In one
+        /// capture (24 523 there) FlexColor did not send that window; beyond the
+        /// tolerance the preview stops before it (docs/decisions.md, "Option A").
+        case positionGate(capturedPosition: Int)
+        /// Page 0x20, first read of the session: chooses the rest of the
+        /// sequence (`PreviewPlan`). Power-on values (2 048 × 3): the cold
+        /// sequence; values left by earlier use: the warm one; anything else
+        /// stops the preview. Before this read only reads, D2 and the session
+        /// start have been sent.
+        case sequenceChoice
         /// READ: data kept for decoding.
         case read(ReadPurpose)
         /// 0x1B SCAN: must return `00 00`. From here on, an anomaly triggers the stop sequence.
@@ -51,6 +58,42 @@ public struct PreviewStep: Sendable {
     }
 }
 
+/// The two sequences FlexColor 4.8.13 uses for a preview, which are identical
+/// up to and including the first page 0x20 read of the session
+/// (docs/protocol.md §11): `common` ends with that read (`.sequenceChoice`),
+/// then the runner goes on with `cold` or `warm`.
+public struct PreviewPlan: Sendable {
+    public enum Choice: Sendable, Hashable {
+        /// Power-on values: right after the X1 was switched on.
+        case cold
+        /// Values left by earlier use.
+        case warm
+    }
+
+    public let common: [PreviewStep]
+    public let cold: [PreviewStep]
+    public let warm: [PreviewStep]
+    /// 0xDF state to wait for right after the choice, per branch, as FlexColor
+    /// polled there (warm: until `00 00`; cold: no poll).
+    public let waitAfterChoice: [Choice: ScannerState]
+
+    public init(common: [PreviewStep], cold: [PreviewStep], warm: [PreviewStep],
+                waitAfterChoice: [Choice: ScannerState] = [:]) {
+        precondition(common.last?.kind == .sequenceChoice, "the common part ends with the choice read")
+        self.common = common
+        self.cold = cold
+        self.warm = warm
+        self.waitAfterChoice = waitAfterChoice
+    }
+
+    /// The whole sequence for one choice.
+    public func steps(for choice: Choice) -> [PreviewStep] {
+        var steps = common
+        if let state = waitAfterChoice[choice] { steps[steps.count - 1] = steps[steps.count - 1].waiting(for: state) }
+        return steps + (choice == .cold ? cold : warm)
+    }
+}
+
 /// Everything the preview reads that matters for decoding.
 public struct PreviewCapture: Sendable {
     public var calibrationLines: [[UInt8]] = []
@@ -59,6 +102,8 @@ public struct PreviewCapture: Sendable {
     public var leadIn: [[UInt8]] = []
     public var image: [[UInt8]] = []
     public var scanStatuses: [ScanStatusPage] = []
+    /// The sequence chosen after the first page 0x20 read (nil for a fixed script).
+    public var choice: PreviewPlan.Choice?
 
     public init() {}
 

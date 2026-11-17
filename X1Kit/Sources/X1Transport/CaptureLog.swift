@@ -61,7 +61,7 @@ public final class CaptureLog: Sendable {
             case .toDevice:
                 lines.append("     ->X1 \(command.transferLength) octets")
                 lines.append("   ENV " + Array(command.dataOut.prefix(128)).hexString)
-            case .none: break
+            case .none: lines.append("     -- 0 octets")
             }
             Self.append(lines, to: &state)
         }

@@ -27,7 +27,8 @@ public enum Fixtures {
     }
 
     public static func coldSimulator() throws -> SimulatedX1 {
-        try SimulatedX1(sequenceURL: coldSequenceURL, calibrationProfileURL: calibrationProfileURL)
+        try SimulatedX1(sequenceURL: coldSequenceURL, calibrationProfileURL: calibrationProfileURL,
+                        skipping: [SimulatedX1.page28Read])
     }
 
     public static func calibrationProfile() throws -> CalibrationProfile {
@@ -38,10 +39,17 @@ public enum Fixtures {
         try SimulatedX1(sequenceURL: sequenceURL, calibrationProfileURL: calibrationProfileURL)
     }
 
-    /// The captured exchanges, without the polling commands (0xEE, 0xD3, 0xDF).
+    /// The captured exchanges, without the polling commands (0xEE, 0xD3, 0xDF)
+    /// and without the cold capture's page 0x28 read (not sent by the scripts).
     public static func nonPollingExchanges(cold: Bool = false) throws -> [CaptureExchange] {
         try (cold ? coldSequence() : sequence()).exchanges.filter {
-            !SimulatedX1.pollingOpcodes.contains($0.cdbBytes.first ?? 0)
+            !SimulatedX1.pollingOpcodes.contains($0.cdbBytes.first ?? 0) && $0.cdbBytes != SimulatedX1.page28Read
         }
+    }
+
+    /// The guard the app builds for the real X1: both captures, page 0x28 left out.
+    public static func previewGuard() throws -> CapturedSequenceGuard {
+        try CapturedSequenceGuard(alternatives: [coldSequence(), sequence()],
+                                  excluding: [.read(SimulatedX1.page28Read, length: 30)])
     }
 }

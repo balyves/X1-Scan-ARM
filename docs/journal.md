@@ -335,3 +335,31 @@ real scanner.
   256; largest difference seen on a checked read: 192), page 0x24 in the
   read-only policy, 0xDF `00 06` only during a scan, and the single
   substitution of the measured position in the 400-line window.
+
+## 2026-11-17: real preview, cold or warm chosen by page 0x20 (step 2, part 1)
+
+User's decisions of the day, in docs/decisions.md ("Real X1: cold or warm
+sequence"). Nothing was sent to the real X1.
+
+- The runner sends the part common to both captured previews, reads page
+  0x20 and goes on with the cold sequence (power-on values) or the warm one
+  (values left by earlier use); anything else stops before anything moves.
+  The cold sequence no longer reads page 0x28.
+- The guard follows either capture; where they differ, the first command
+  decides.
+- Position tolerance 256 (largest difference seen on a checked read: 192).
+  The run's log notes the chosen sequence and every position that differs
+  from the capture.
+- Page 0x24 (32 bytes) joins the read-only list.
+- The "switched off and on" box is asked only after a real preview that did
+  not complete.
+- `CaptureLog` now writes `-- 0 octets` for commands without data, like
+  cap3.py: the converter could not read our own logs without it.
+- Option A (user's decision, after the review): the warm sequence's page
+  0x20 read before the window with target 25 000 is always checked
+  (tolerance 256). In the 2 000 ppi run's preview it gave 24 523 and
+  FlexColor skipped that window; we stop there instead. Why 24 523: a state
+  left by an earlier session is the **[hypothesis]** (that preview was the
+  first session of its FlexColor run), to check at the next capture
+  session.
+

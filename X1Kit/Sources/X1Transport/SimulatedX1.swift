@@ -85,8 +85,12 @@ public actor SimulatedX1: SCSITransport {
     /// Every command received, in order.
     public private(set) var log: [SCSICommand] = []
 
-    public init(fixture: CaptureFixture, profile: CalibrationProfile, film: SyntheticFilm = .testPattern) {
-        let recorded = fixture.exchanges.map { exchange in
+    /// `skipping`: CDBs left out of the replay (the cold capture's page 0x28
+    /// read, which the scripts no longer send). The polls recorded after it
+    /// are then served after the command before it.
+    public init(fixture: CaptureFixture, profile: CalibrationProfile, film: SyntheticFilm = .testPattern,
+                skipping: Set<[UInt8]> = []) {
+        let recorded = fixture.exchanges.filter { !skipping.contains($0.cdbBytes) }.map { exchange in
             Recorded(seq: exchange.seq, cdb: exchange.cdbBytes, direction: exchange.commandDirection,
                      length: exchange.length, dataOut: exchange.dataOutBytes,
                      status: UInt8(exchange.status ?? 0), response: exchange.responseBytes)
@@ -97,11 +101,15 @@ public actor SimulatedX1: SCSITransport {
         self.film = film
     }
 
-    public init(sequenceURL: URL, calibrationProfileURL: URL, film: SyntheticFilm = .testPattern) throws {
+    public init(sequenceURL: URL, calibrationProfileURL: URL, film: SyntheticFilm = .testPattern,
+                skipping: Set<[UInt8]> = []) throws {
         self.init(fixture: try CaptureFixture.load(from: sequenceURL),
                   profile: try CalibrationProfile.load(from: calibrationProfileURL),
-                  film: film)
+                  film: film, skipping: skipping)
     }
+
+    /// The cold capture's page 0x28 read (`5a 00 28 01 00 00 00 00 1e 00`).
+    public static let page28Read: [UInt8] = [0x5A, 0x00, 0x28, 0x01, 0x00, 0x00, 0x00, 0x00, 0x1E, 0x00]
 
     /// Number of image lines (READ with flag 00) served since the last SCAN.
     public var imageLinesServed: Int { imageRow }

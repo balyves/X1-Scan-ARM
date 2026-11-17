@@ -14,6 +14,10 @@ enum Capture: String, CaseIterable, Sendable, CustomTestStringConvertible {
     var script: [PreviewStep] { self == .cold ? PreviewScript.flexColor4813Cold : PreviewScript.flexColor4813 }
     func simulator() throws -> SimulatedX1 { self == .cold ? try Fixtures.coldSimulator() : try Fixtures.simulator() }
     func fixture() throws -> CaptureFixture { self == .cold ? try Fixtures.coldSequence() : try Fixtures.sequence() }
+    /// The captured exchanges, without the cold capture's page 0x28 read (not sent by the scripts).
+    func exchanges() throws -> [CaptureExchange] {
+        try fixture().exchanges.filter { $0.cdbBytes != SimulatedX1.page28Read }
+    }
     func nonPollingExchanges() throws -> [CaptureExchange] { try Fixtures.nonPollingExchanges(cold: self == .cold) }
     func run(on transport: any SCSITransport) async throws -> PreviewCapture {
         try await PreviewRunner(transport: transport, configuration: .simulator, script: script).run()
@@ -61,7 +65,7 @@ struct PreviewConformanceTests {
             return waits
         }
         let ours = waitsAfterEachCommand(await simulator.log.map(\.opcode))
-        let flexColor = waitsAfterEachCommand(try capture.fixture().exchanges.map { $0.cdbBytes[0] })
+        let flexColor = waitsAfterEachCommand(try capture.exchanges().map { $0.cdbBytes[0] })
         let captured = try capture.nonPollingExchanges()
         #expect(ours.count == flexColor.count)
         for (index, (mine, theirs)) in zip(ours, flexColor).enumerated() {
@@ -74,7 +78,7 @@ struct PreviewConformanceTests {
     func waitsEndOnTheStateFlexColorLastSaw(_ capture: Capture) throws {
         var lastState: [Int: String] = [:]
         var index = -1
-        for exchange in try capture.fixture().exchanges {
+        for exchange in try capture.exchanges() {
             let opcode = exchange.cdbBytes.first ?? 0
             if opcode == 0xDF, index >= 0 { lastState[index] = exchange.response }
             else if !SimulatedX1.pollingOpcodes.contains(opcode) { index += 1 }
@@ -108,13 +112,13 @@ struct PreviewConformanceTests {
 /// The cold sequence (2026-11-16): power-on check and busy states.
 struct ColdSequenceTests {
     private static let script = PreviewScript.flexColor4813Cold
-    private static let checkIndex = script.firstIndex { $0.kind == .powerOnCheck }!
+    private static let checkIndex = script.firstIndex { $0.kind == .sequenceChoice }!
 
     /// One power-on check, the first page 0x20 read, with nothing that moves
     /// the scanner before it: only reads, the startup D2 and the session start,
     /// as in both captures.
     @Test func thePowerOnCheckComesBeforeAnythingThatMoves() {
-        #expect(Self.script.filter { $0.kind == .powerOnCheck }.count == 1)
+        #expect(Self.script.filter { $0.kind == .sequenceChoice }.count == 1)
         let firstStatusRead = Self.script.firstIndex { $0.command.cdb.prefix(3) == [0x5A, 0x00, 0x20] }
         #expect(firstStatusRead == Self.checkIndex)
         let before = Self.script[..<Self.checkIndex].map(\.command)
@@ -134,7 +138,12 @@ struct ColdSequenceTests {
             _ = try await PreviewRunner(transport: transport, configuration: .simulator, script: Self.script).run()
             Issue.record("the preview should have stopped")
         } catch {
-            #expect(error.anomaly == .notJustSwitchedOn(channelValues: values))
+            // The fixed cold script stops on warm values, and on values it does not recognise.
+            let warm = ScanStatusPage.earlierUseChannelRanges.indices.allSatisfy {
+                ScanStatusPage.earlierUseChannelRanges[$0].contains(values[$0])
+            }
+            #expect(error.anomaly == (warm ? .notJustSwitchedOn(channelValues: values)
+                                           : .unrecognisedStartState(channelValues: values)))
             #expect(error.stepIndex == Self.checkIndex)
             #expect(error.emergencyStop == nil)
             #expect(await transport.commandsAfterFault.isEmpty, "nothing sent after the check")
@@ -248,12 +257,12 @@ struct PreviewStopTests {
     private static let positioningIndex = script.firstIndex { $0.kind == .scanStatus(capturedPosition: 8971) }!
 
     @Test func positionBeyondToleranceStops() async throws {
-        let (transport, result) = try await run(faultAt: Self.positioningIndex, .shiftMeasuredPosition(by: 101))
+        let (transport, result) = try await run(faultAt: Self.positioningIndex, .shiftMeasuredPosition(by: 257))
         guard case .failure(let error) = result else {
             Issue.record("the preview should have stopped")
             return
         }
-        #expect(error.anomaly == .positionOutOfTolerance(captured: 8971, measured: 9072, tolerance: 100))
+        #expect(error.anomaly == .positionOutOfTolerance(captured: 8971, measured: 9228, tolerance: 256))
         #expect(error.emergencyStop == nil)
         #expect(await transport.commandsAfterFault.isEmpty)
     }
@@ -274,13 +283,13 @@ struct PreviewStopTests {
     /// read gave 8203 where the capture (made after earlier previews) had 6155.
     @Test func readsBeforeAPositionRequestAreNotChecked() async throws {
         let unchecked = Self.statusReads.filter { !$0.checked }.map(\.index)
-        #expect(unchecked.count == 2, "after session start, and after the first calibration windows")
+        #expect(unchecked.count == 1, "after session start (the read after the first calibration windows is a gate)")
         for index in unchecked {
             let (_, result) = try await run(faultAt: index, .shiftMeasuredPosition(by: 2048))
             if case .failure(let error) = result { Issue.record("unexpected stop at \(index): \(error)") }
         }
         let firstChecked = try #require(Self.statusReads.first { $0.checked }).index
-        let (_, result) = try await run(faultAt: firstChecked, .shiftMeasuredPosition(by: 101))
+        let (_, result) = try await run(faultAt: firstChecked, .shiftMeasuredPosition(by: 257))
         guard case .failure(let error) = result, case .positionOutOfTolerance = error.anomaly else {
             Issue.record("the first read after a position request must be checked")
             return
@@ -311,12 +320,6 @@ struct PreviewStopTests {
 }
 
 struct PreviewEventTests {
-    private final class Recorder: @unchecked Sendable {
-        private let lock = NSLock()
-        private var stored: [PreviewEvent] = []
-        func record(_ event: PreviewEvent) { lock.withLock { stored.append(event) } }
-        var events: [PreviewEvent] { lock.withLock { stored } }
-    }
 
     /// Events do not change what is sent: the conformance test runs without
     /// them, this one checks the same command log with them.
@@ -348,6 +351,8 @@ struct PreviewEventTests {
             case .data: break
             case .scanStatus: statuses += 1
             case .stopping: Issue.record("no stop expected")
+            case .sequenceChosen: Issue.record("a fixed script chooses nothing")
+            case .positionDifference: break
             }
         }
         #expect(steps == Array(script.indices))
@@ -484,5 +489,123 @@ struct PreviewCancelDuringWaitTests {
         #expect(error.anomaly == .cancelled)
         #expect(error.emergencyStop == nil, "first busy state is before SCAN")
         #expect(await transport.commandsAfterCancel.isEmpty)
+    }
+}
+
+/// The plan used on the real X1: the first page 0x20 read chooses the cold
+/// or the warm sequence (docs/decisions.md, "Real X1: cold or warm sequence").
+struct SequenceChoiceTests {
+    private static let plan = PreviewScript.plan
+    private static let choiceIndex = plan.common.count - 1
+
+    @Test func bothSequencesShareTheCommonPartAndMatchTheCaptures() throws {
+        #expect(Self.plan.steps(for: .cold).map(\.command) == PreviewScript.flexColor4813Cold.map(\.command))
+        #expect(Self.plan.steps(for: .warm).map(\.command) == PreviewScript.flexColor4813.map(\.command))
+        // Nothing that moves the scanner before the choice.
+        let allowed: Set<[UInt8]> = [X1Command.startupD2().cdb, X1Command.session(.start).cdb]
+        for step in Self.plan.common where step.command.direction != .fromDevice {
+            #expect(allowed.contains(step.command.cdb), "\(step.command) before the choice")
+        }
+        // Waits as in each capture.
+        #expect(Self.plan.steps(for: .warm)[Self.choiceIndex].waitUntil == .ready)
+        #expect(Self.plan.steps(for: .cold)[Self.choiceIndex].waitUntil == nil)
+    }
+
+    @Test(arguments: [false, true])
+    func theCaptureDecidesThroughTheGuard(cold: Bool) async throws {
+        let sequence = try Fixtures.previewGuard()
+        let simulator = cold ? try Fixtures.coldSimulator() : try Fixtures.simulator()
+        let recorder = Recorder()
+        let capture = try await PreviewRunner(transport: GuardedTransport(inner: simulator, sequence: sequence),
+                                              configuration: .simulator, plan: Self.plan)
+            .run { recorder.record($0) }
+        let expected: PreviewPlan.Choice = cold ? .cold : .warm
+        #expect(capture.choice == expected)
+        #expect(capture.image.count == 41)
+        #expect(sequence.isComplete)
+        let chosen = recorder.events.compactMap { event -> PreviewPlan.Choice? in
+            if case .sequenceChosen(let choice) = event { choice } else { nil }
+        }
+        #expect(chosen == [expected])
+    }
+
+    @Test(arguments: [[2048, 2048, 2047], [1700, 1845, 1883], [0, 0, 0]])
+    func unrecognisedValuesStopBeforeAnythingMoves(_ values: [Int]) async throws {
+        let transport = FaultInjectingTransport(inner: try Fixtures.simulator(),
+                                                faultAtNonPollingCommand: Self.choiceIndex,
+                                                fault: .setChannelValues(values))
+        do {
+            _ = try await PreviewRunner(transport: transport, configuration: .simulator, plan: Self.plan).run()
+            Issue.record("the preview should have stopped")
+        } catch {
+            #expect(error.anomaly == .unrecognisedStartState(channelValues: values))
+            #expect(error.stepIndex == Self.choiceIndex)
+            #expect(error.emergencyStop == nil)
+            #expect(await transport.commandsAfterFault.isEmpty, "nothing sent after the choice")
+        }
+    }
+
+    /// Every page 0x20 read whose position differs from the capture is
+    /// reported, checked or not, with both values.
+    @Test func positionDifferencesAreReported() async throws {
+        let script = Self.plan.steps(for: .warm)
+        let firstStatus = try #require(script.firstIndex { if case .scanStatus = $0.kind { true } else { false } })
+        let transport = FaultInjectingTransport(inner: try Fixtures.simulator(), faultAtNonPollingCommand: firstStatus,
+                                                fault: .shiftMeasuredPosition(by: 128))
+        let recorder = Recorder()
+        _ = try await PreviewRunner(transport: transport, configuration: .simulator, plan: Self.plan)
+            .run { recorder.record($0) }
+        let differences = recorder.events.compactMap { event -> (Int, Int, Bool)? in
+            if case .positionDifference(let captured, let measured, let checked) = event { (captured, measured, checked) } else { nil }
+        }
+        #expect(differences.count == 1)
+        #expect(differences.first.map { $0.1 - $0.0 } == 128)
+        #expect(differences.first?.2 == true, "after the window with target 25 000: checked")
+    }
+}
+
+/// Collects runner events (they arrive on the runner's task).
+final class Recorder: @unchecked Sendable {
+    private let lock = NSLock()
+    private var stored: [PreviewEvent] = []
+    func record(_ event: PreviewEvent) { lock.withLock { stored.append(event) } }
+    var events: [PreviewEvent] { lock.withLock { stored } }
+}
+
+/// Option A (docs/decisions.md): the read before the warm sequence's window
+/// with target 25 000 is always checked.
+struct PositionGateTests {
+    private static let plan = PreviewScript.plan
+    private static let warm = plan.steps(for: .warm)
+    private static let gate = warm.firstIndex { $0.kind == .positionGate(capturedPosition: 25867) }!
+
+    @Test func theGateComesRightBeforeTheWindowWithTarget25000() {
+        #expect(Self.warm.filter { if case .positionGate = $0.kind { true } else { false } }.count == 1)
+        #expect(Self.warm[Self.gate + 1].command.dataOut[50...51] == [0xA8, 0x61])  // 25 000
+        #expect(!Self.warm[..<Self.gate].contains { PreviewRunner.requestsPosition($0.command) },
+                "no window had requested a position before it")
+    }
+
+    /// 24 523 (the 2 000 ppi run of 2026-11-17): stop, nothing more sent.
+    @Test func farFromTheCaptureStopsBeforeTheWindow() async throws {
+        let transport = FaultInjectingTransport(inner: try Fixtures.simulator(), faultAtNonPollingCommand: Self.gate,
+                                                fault: .shiftMeasuredPosition(by: 24523 - 25867))
+        do {
+            _ = try await PreviewRunner(transport: transport, configuration: .simulator, plan: Self.plan).run()
+            Issue.record("the preview should have stopped")
+        } catch {
+            #expect(error.anomaly == .unexpectedCarriagePosition(captured: 25867, measured: 24523, tolerance: 256))
+            #expect(error.stepIndex == Self.gate)
+            #expect(error.emergencyStop == nil)
+            #expect(await transport.commandsAfterFault.isEmpty, "the window with target 25 000 is not sent")
+        }
+    }
+
+    /// The differences seen in the captures that went on (64, 128) pass; 256 too.
+    @Test(arguments: [-128, -64, 256]) func withinTheTolerancePasses(shift: Int) async throws {
+        let transport = FaultInjectingTransport(inner: try Fixtures.simulator(), faultAtNonPollingCommand: Self.gate,
+                                                fault: .shiftMeasuredPosition(by: shift))
+        let capture = try await PreviewRunner(transport: transport, configuration: .simulator, plan: Self.plan).run()
+        #expect(capture.image.count == 41)
     }
 }

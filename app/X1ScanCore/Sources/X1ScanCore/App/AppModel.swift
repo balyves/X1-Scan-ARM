@@ -3,6 +3,7 @@ import CoreGraphics
 import Foundation
 import Observation
 import X1Image
+import X1Preview
 import X1Transport
 
 /// State of the read-only access to the real X1.
@@ -35,14 +36,16 @@ public struct ScannerStatusLine: Sendable, Hashable {
     }
 }
 
-/// The four checks the user confirms before every preview on the real X1.
+/// The checks the user confirms before every preview on the real X1.
 public struct RealPreviewConfirmation: Sendable, Hashable {
     public var scannerOn = false
     public var holderInPlace = false
     public var flexColorClosed = false
-    /// The X1 was switched off and on since the last real preview: a cold run
-    /// stopped during calibration still shows the power-on values on page
-    /// 0x20, so the power-on check alone does not catch it (docs/decisions.md).
+    /// The X1 was switched off and on since the last real preview, asked only
+    /// after a real preview that did not complete: a cold run stopped during
+    /// calibration still shows the power-on values on page 0x20, so the
+    /// automatic choice would start the cold sequence again on a scanner left
+    /// half calibrated, which no capture shows (docs/decisions.md).
     public var powerCycledSinceLastRealPreview = false
 
     public init(scannerOn: Bool = false, holderInPlace: Bool = false, flexColorClosed: Bool = false,
@@ -53,7 +56,10 @@ public struct RealPreviewConfirmation: Sendable, Hashable {
         self.powerCycledSinceLastRealPreview = powerCycledSinceLastRealPreview
     }
 
-    public var isComplete: Bool { scannerOn && holderInPlace && flexColorClosed && powerCycledSinceLastRealPreview }
+    /// Every box asked is ticked; the fourth only when `powerCycleRequired`.
+    public func isComplete(powerCycleRequired: Bool) -> Bool {
+        scannerOn && holderInPlace && flexColorClosed && (!powerCycleRequired || powerCycledSinceLastRealPreview)
+    }
 }
 
 public enum RealPreviewError: Error, Hashable, CustomStringConvertible {
@@ -141,7 +147,15 @@ public final class AppModel {
         static let scanSettings = "ScanSettings"
         /// Hidden setting, no interface: `defaults write org.x1scanarm.X1Scan EnableRealPreview -bool YES`.
         static let enableRealPreview = "EnableRealPreview"
+        /// Set when a real preview starts, cleared when it completes: true
+        /// after a stop, an anomaly or a quit during a real preview.
+        static let realPreviewInterrupted = "RealPreviewInterrupted"
     }
+
+    /// The last real preview did not complete (stopped, anomaly, app quit or
+    /// crashed while it ran): the next one asks for the X1 to be switched off
+    /// and on. Kept between launches.
+    public var realPreviewNeedsPowerCycle: Bool { defaults.bool(forKey: Keys.realPreviewInterrupted) }
 
     /// Opens the real X1 for the captured preview; replaced in tests.
     private let realConnection: @Sendable (CapturedSequenceGuard) -> any ScannerConnection
@@ -260,19 +274,23 @@ public final class AppModel {
     }
 
     /// FlexColor's captured preview on the real X1 (step 4): only with the
-    /// hidden setting, the real source, nothing running, and all four checks
-    /// confirmed. The transport lets through only the captured sequence; every
+    /// hidden setting, the real source, nothing running, and every check asked
+    /// confirmed (`RealPreviewConfirmation`). The transport lets through only the captured sequence; every
     /// command and response is logged under `captureFolder`. Returns the log.
     @discardableResult
     public func startRealPreview(_ confirmation: RealPreviewConfirmation) -> Result<URL, RealPreviewError> {
-        guard source == .real, realPreviewEnabled, confirmation.isComplete, toolbar.canPreview,
+        guard source == .real, realPreviewEnabled,
+              confirmation.isComplete(powerCycleRequired: realPreviewNeedsPowerCycle), toolbar.canPreview,
               realStatus != .reading else { return .failure(.notAllowed) }
-        guard let fixture = virtualScanner?.coldFixture else {
+        guard let cold = virtualScanner?.coldFixture, let warm = virtualScanner?.fixture else {
             return .failure(.noCapturedSequence(virtualScannerError ?? "no fixtures"))
         }
         let sequence: CapturedSequenceGuard
         do {
-            sequence = try CapturedSequenceGuard(fixture: fixture)
+            // Both captured sequences, without the cold capture's page 0x28 read
+            // (docs/decisions.md, "Real X1: cold or warm sequence").
+            sequence = try CapturedSequenceGuard(alternatives: [cold, warm],
+                                                 excluding: [.read(SimulatedX1.page28Read, length: 30)])
         } catch {
             return .failure(.noCapturedSequence(error.description))
         }
@@ -287,7 +305,23 @@ public final class AppModel {
         realPreviewActive = true
         lastPreviewWasReal = true
         previewLog = log
-        session.start(onRealScanner: realConnection(sequence), log: log)
+        let interruptedBefore = realPreviewNeedsPowerCycle
+        defaults.set(true, forKey: Keys.realPreviewInterrupted)
+        session.start(onRealScanner: realConnection(sequence), log: log) { [defaults] state in
+            // The scanner side completed (end of session sent): no power cycle needed,
+            // even if decoding the image failed.
+            if state == .finished {
+                defaults.set(false, forKey: Keys.realPreviewInterrupted)
+            } else if case .failed(let failure) = state {
+                switch failure.cause {
+                case .decoding: defaults.set(false, forKey: Keys.realPreviewInterrupted)
+                // Nothing was sent: back to the state before this run.
+                case .anomaly(.couldNotOpen):
+                    defaults.set(interruptedBefore, forKey: Keys.realPreviewInterrupted)
+                case .anomaly: break
+                }
+            }
+        }
         return .success(log.textURL)
     }
 
@@ -300,17 +334,27 @@ public final class AppModel {
         renderedRevision = -1
     }
 
-    /// `<captureFolder>/<yyyy-MM-dd>/x1scan-apercu-<HHmmss>.txt` and `.raw`.
+    /// `<captureFolder>/<yyyy-MM-dd>/x1scan-apercu-<HHmmss>.txt` and `.raw`;
+    /// `-2`, `-3`… are added when a log of that second already exists.
     private func makePreviewLog(_ date: Date) throws -> CaptureLog {
         let parts = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
         let day = String(format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
         let time = String(format: "%02d%02d%02d", parts.hour ?? 0, parts.minute ?? 0, parts.second ?? 0)
         let folder = captureFolder.appending(path: day)
-        let base = "x1scan-apercu-\(time)"
+        var base = "x1scan-apercu-\(time)"
+        var suffix = 2
+        while FileManager.default.fileExists(atPath: folder.appending(path: base + ".txt").path)
+                || FileManager.default.fileExists(atPath: folder.appending(path: base + ".raw").path) {
+            base = "x1scan-apercu-\(time)-\(suffix)"
+            suffix += 1
+        }
         return try CaptureLog(textURL: folder.appending(path: base + ".txt"), rawURL: folder.appending(path: base + ".raw"),
                               header: """
                                 X1 Scan: FlexColor 4.8.13's captured preview replayed on the real X1, \(date.ISO8601Format())
-                                Sequence: capture right after power-on (2026-11-16, preview-sequence-cold.json).
+                                Sequences: right after power-on (preview-sequence-cold.json, without its page 0x28
+                                read) or after earlier use (preview-sequence.json), chosen by the first page 0x20 read.
+                                Position tolerance \(PreviewConfiguration.defaultPositionTolerance); every position
+                                that differs from the capture is noted below.
                                 Format of tools/capture/cap3.py; image data in \(base).raw.
                                 Contains the scanner's serial number: keep outside the repository.
                                 """)

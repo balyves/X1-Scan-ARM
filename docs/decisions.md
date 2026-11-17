@@ -567,11 +567,13 @@ seen:
 | 0xEE | read register | in | `ee 00 00 00 01 AA 00 00 01 00`, AA = 0x04-0x19 | 1 |
 
 MODE SENSE pages and lengths seen in the captures: 0x20 (34), 0x21 (12,
-100), 0x23 (12, 60), 0x25 (24), 0x26 (56), 0x27 (20), 0x29 (14). The CDBs of
+100), 0x23 (12, 60), 0x24 (32, scans only, since 2026-11-17), 0x25 (24),
+0x26 (56), 0x27 (20), 0x29 (14). The CDBs of
 INQUIRY, LOG SENSE, MODE SENSE, 0xD3, 0xDF and 0xEE come from the FlexColor
 capture; those of TEST UNIT READY and REQUEST SENSE from `tools/x1probe`, to
 which a real X1 answered. A test checks that every read of the read-only
-list in `tests/fixtures/preview-sequence.json` passes.
+list in `tests/fixtures/preview-sequence.json` and
+`tests/fixtures/scan-sequence-2000ppi.json` passes.
 
 Everything else is refused unless `CommandPolicy.unrestricted` is chosen
 explicitly. It is only for runs the user has approved (CLAUDE.md, rule 4).
@@ -586,10 +588,10 @@ explicitly. It is only for runs the user has approved (CLAUDE.md, rule 4).
   sometimes sends the measured value (8 971), sometimes another one (6 443
   measured, 6 250 sent). We send the captured values. On a real scanner, the
   preview stops if a measurement differs from the captured one by more than
-  **100**. Until 2026-11-16, two captures differed by 64 on the first
+  **256** since 2026-11-17 (100 before; "Position tolerance" below). Until 2026-11-16, two captures differed by 64 on the first
   measurement (25 803 / 25 867) and the others were identical; on
   2026-11-17, a warm capture differed by 128 on that same read (25 739) and
-  a cold one by 192 on two checked reads (below). **Threshold to revise.**
+  a cold one by 192 on two checked reads (below).
   Since 2026-11-16 (user's rule, after the first real test) the check
   applies only to page 0x20 reads made after a window that requests a
   position (SET WINDOW offset 50 not 0); the reads before it are logged and
@@ -640,7 +642,78 @@ explicitly. It is only for runs the user has approved (CLAUDE.md, rule 4).
 - **Nothing in the test suite talks to a real scanner.** `IOKitTransport` is
   only tested unopened.
 
+## Real X1: cold or warm sequence, chosen by page 0x20 (2026-11-17)
+
+Replaces the cold-only rule of 2026-11-16 (next section), after the
+captures of 2026-11-17 (protocol.md §11). User's decisions.
+
+- **Choice.** The warm and cold sequences are the same up to and including
+  the first page 0x20 read after `CF 00 01 80`, once the cold capture's page
+  0x28 read is left out (a second cold capture has none). The runner sends
+  that common part, then reads bytes 19-24:
+  - 2 048 × 3 (power-on values): the cold sequence;
+  - values left by earlier use, each channel within the range seen at
+    that read in every session that did not start cold (2026-11-12 and
+    2026-11-17: 1 911-1 945 / 1 845-1 856 / 1 883-1 895), widened by 64
+    (1 847-2 009 / 1 781-1 920 / 1 819-1 959): the warm sequence. After such
+    values FlexColor sent the warm capture's sequence in five sessions (W,
+    B, the previews of the 1 000 and 3 200 ppi runs); in two it sent
+    something else (A2, a second preview in the same FlexColor session;
+    the preview of the 2 000 ppi run, below);
+  - anything else: stop (`unrecognisedStartState`), before any window,
+    mode, exposure, image read or SCAN.
+  That FlexColor decides from this read is a **[hypothesis]** consistent
+  with every capture; both sequences are FlexColor's own.
+- **Guard.** Built from both captures (`preview-sequence-cold.json`
+  without its page 0x28 read, and `preview-sequence.json`): each command
+  must be the next one of a captured sequence; where they differ, the first
+  command sent decides which one is followed. The runner's choice and the
+  guard are independent: the guard only lets through what one capture did.
+- **Page 0x28** is no longer sent.
+- **Page 0x24** (32 bytes, read once per scan by FlexColor) joins
+  `CommandPolicy.readOnly`: a MODE SENSE like the others, captured three
+  times with the same response.
+- **Position tolerance: 256** (user's decision). The check is meant for
+  gross anomalies (differences in the thousands). The largest difference
+  seen on a checked read is 192, in one capture right after power-on (A1,
+  two reads); every other checked read of every capture matched exactly;
+  differences come in steps of 64. 256 leaves one step of margin without
+  losing what the check is for. Every page 0x20 read whose position differs
+  from the captured one, checked or not, is written to the run's log
+  (captured, measured, difference) so that the tolerance can be revised
+  with later sessions.
+- **Option A: the read before the window with target 25 000** (user's
+  decision). In the warm sequence, the page 0x20 read right after the
+  first calibration windows (target 0) is now always checked, with the
+  same tolerance (256), although no window has requested a position yet.
+  Reason: in the preview of the 2 000 ppi run it gave 24 523 (25 739-25 867
+  in the five other warm sessions) and FlexColor then did not send the
+  window with target 25 000 (protocol.md §11). Beyond the tolerance the
+  preview stops there (`unexpectedCarriagePosition`) and nothing else is
+  sent; the alert says: "Unexpected carriage position: preview stopped
+  before the carriage was positioned. Switch the X1 off and on before
+  starting the preview again." The log has the read, expected and
+  difference. As after any other stop (the session and modes may still be
+  active), the next preview asks for the switched-off-and-on box: no
+  exception (user's decision).
+  FlexColor's other path (no window with target 25 000) is not reproduced:
+  one capture only.
+- **Confirmation.** The fourth box ("the X1 was switched off and on")
+  is asked only after a real preview that did not complete (stop, anomaly,
+  quit or crash; a flag kept between launches, cleared by a run whose
+  scanner side completed, and put back as it was when the scanner could
+  not be opened). Limit: the flag belongs to one Mac (its preferences). A
+  real preview interrupted on another Mac, or a FlexColor run interrupted
+  on the reference Mac, is not known: after such a run, switch the X1 off
+  and on before the next preview (test-session.md, part E). Reason: a cold run stopped
+  during calibration still shows 2 048 × 3, so the choice would start the
+  cold sequence again on a scanner left half calibrated, which no capture
+  shows. After a complete preview, page 0x20 is enough.
+
 ## Real X1: the sequence right after power-on only (2026-11-16)
+
+Superseded on 2026-11-17 by the section above (cold or warm, chosen by
+page 0x20); kept for the reasoning.
 
 - The first real tests stopped at the first page 0x20 read (position 8 203
   against 6 155), then at a wait on 0xDF (`08 07`). FlexColor's capture

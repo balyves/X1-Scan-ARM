@@ -43,7 +43,7 @@ Scope: **Flextight X1 only**. Other Flextight / Imacon models are out of scope.
      - 0x4D LOG SENSE, page 0x30 only: `4d 00 30 00 00 00 00 00 34 00` (52);
      - 0x5A MODE SENSE `5a 00 PP 01 00 00 00 LL LL 00`, only the captured
        pages and lengths: 0x20 (34), 0x21 (12, 100), 0x23 (12, 60),
-       0x25 (24), 0x26 (56), 0x27 (20), 0x29 (14);
+       0x24 (32), 0x25 (24), 0x26 (56), 0x27 (20), 0x29 (14);
      - 0xD3 status / sensors `d3 00 00 00 02 00` (2);
      - 0xDF scanner state `df 00 00 00 02 00` (2);
      - 0xEE register, bank 1, addresses 0x04-0x19 only:
@@ -53,7 +53,7 @@ Scope: **Flextight X1 only**. Other Flextight / Imacon models are out of scope.
      seen in a capture (next point). See `docs/decisions.md`, "Read-only
      guard".
 
-     `tools/x1probe` sends a subset of these reads (no 0xDF, no page 0x20,
+     `tools/x1probe` sends a subset of these reads (no 0xDF, no page 0x20, no page 0x24,
      only the longest read of pages 0x21 and 0x23).
    - **Any command that moves the scanner or changes its state** (0x24, 0xF0,
      0xE4, 0x1B, 0xDB, 0xCF, 0xD2, 0xE0, 0x55, 0x3B, or anything not seen in a
@@ -101,8 +101,9 @@ available; ask.
 - `tests/fixtures/`: FlexColor captures (anonymised; of image data, only the first
   64 bytes of each read).
   `preview-sequence.json` (warm, after earlier previews) is replayed by the
-  virtual X1; `preview-sequence-cold.json` (right after power-on) is the
-  only sequence sent to the real X1; `preview-sequence-warm-2.json` is a
+  virtual X1; `preview-sequence-cold.json` (right after power-on, without
+  its page 0x28 read) and `preview-sequence.json` are the two sequences
+  sent to the real X1; `preview-sequence-warm-2.json` is a
   second warm preview; `scan-sequence-1000ppi.json`, `-2000ppi`, `-3200ppi`
   are a preview then a scan each (docs/protocol.md §12), replayed only by
   the simulator in tests. See `tests/fixtures/README.md`.
@@ -115,11 +116,11 @@ available; ask.
   shell, SwiftUI settings panel and tool column, String Catalog), `X1ScanCore/` (models and view
   models, plus the reusable views of the compact settings panel in `UI/`,
   `swift test`). The preview runs on the virtual X1; on the real X1,
-  only FlexColor's captured preview, behind the hidden setting
-  `EnableRealPreview`, a confirmation before every run and
-  `CapturedSequenceGuard` built from the cold capture (docs/decisions.md,
-  step 4 and "Real X1: the sequence right after power-on only"). Otherwise the real X1
-  is only read.
+  only FlexColor's captured preview (cold or warm, chosen by the first page
+  0x20 read), behind the hidden setting `EnableRealPreview`, a confirmation
+  before every run and `CapturedSequenceGuard` built from both captures
+  (docs/decisions.md, step 4 and "Real X1: cold or warm sequence").
+  Otherwise the real X1 is only read.
 - `tools/git-hooks/`: `x1-check` (serial numbers, scan and firmware files, size,
   commit messages), run by the pre-commit and commit-msg hooks and by the CI.
 - `.claude/agents/x1-reviewer.md`: pre-commit review subagent.

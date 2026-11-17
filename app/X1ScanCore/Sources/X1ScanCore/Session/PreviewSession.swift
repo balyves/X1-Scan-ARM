@@ -70,6 +70,9 @@ public final class PreviewSession {
     public let script: [PreviewStep]
     private var runTask: Task<Result<PreviewCapture, PreviewError>, Never>?
     private var consumer: Task<Void, Never>?
+    /// Called once with the final state of a run on the real X1, before
+    /// anyone waiting on `waitUntilIdle` resumes.
+    private var realRunFinished: (@MainActor (State) -> Void)?
     private var white: [[UInt8]] = []
     private var dark: [[UInt8]] = []
     private var decoder: IncrementalPreviewDecoder?
@@ -81,11 +84,11 @@ public final class PreviewSession {
         self.script = script
     }
 
-    /// The only script sent to the real X1: FlexColor's preview right after
-    /// power-on, which stops at its first page 0x20 read (before any window,
-    /// mode, exposure or READ) if the X1 was not just switched on
-    /// (docs/decisions.md). Same image reads as the warm one.
-    public static let realScannerScript = PreviewScript.flexColor4813Cold
+    /// What the real X1 receives: FlexColor's cold or warm preview, chosen by
+    /// the first page 0x20 read; anything else stops there, before any window,
+    /// mode, exposure or READ (docs/decisions.md, "Real X1: cold or warm
+    /// sequence"). Both have the same image reads.
+    public static let realScannerPlan = PreviewScript.plan
 
     /// Image lines the script reads (819 for FlexColor 4.8.13's preview).
     public var expectedImageLines: Int { Self.imageLines(in: script) }
@@ -119,12 +122,14 @@ public final class PreviewSession {
     /// not the captured sequence. It is opened here and always closed at the
     /// end. Every command and response goes to `log`. Does nothing if a
     /// preview is running.
-    public func start(onRealScanner connection: any ScannerConnection, log: CaptureLog) {
+    public func start(onRealScanner connection: any ScannerConnection, log: CaptureLog,
+                      finished: (@MainActor (State) -> Void)? = nil) {
         guard !isBusy else { return }
+        realRunFinished = finished
         simulator = nil
-        let script = Self.realScannerScript
         let runner = PreviewRunner(transport: LoggingTransport(inner: connection, log: log),
-                                   configuration: PreviewConfiguration(), script: script)
+                                   configuration: PreviewConfiguration(), plan: Self.realScannerPlan)
+        let script = runner.script
         let firstCommand = script[0].command
         launch(script: script) { continuation in
             defer { log.close() }
@@ -137,7 +142,10 @@ public final class PreviewSession {
             }
             let result: Result<PreviewCapture, PreviewError>
             do throws(PreviewError) {
-                result = .success(try await runner.run { continuation.yield($0) })
+                result = .success(try await runner.run { event in
+                    Self.note(event, in: log)
+                    continuation.yield(event)
+                })
             } catch {
                 result = .failure(error)
             }
@@ -147,6 +155,20 @@ public final class PreviewSession {
             case .failure(let error): log.note(error.description)
             }
             return result
+        }
+    }
+
+    /// The choice of sequence, and every position that differs from the
+    /// capture (to revise the tolerance with later sessions; docs/decisions.md).
+    nonisolated static func note(_ event: PreviewEvent, in log: CaptureLog) {
+        switch event {
+        case .sequenceChosen(let choice):
+            log.note("sequence chosen by the first page 0x20 read: \(choice == .cold ? "cold" : "warm")")
+        case .positionDifference(let captured, let measured, let checked):
+            log.note("position: captured \(captured), measured \(measured), difference \(measured - captured)"
+                     + (checked ? "" : " (not checked)"))
+        default:
+            break
         }
     }
 
@@ -200,7 +222,7 @@ public final class PreviewSession {
             progress.stepIndex = index
             progress.stepCount = count
             progress.phase = phase
-        case .scanStatus:
+        case .scanStatus, .sequenceChosen, .positionDifference:
             break
         case .stopping:
             state = .stopping
@@ -252,5 +274,8 @@ public final class PreviewSession {
             state = .failed(PreviewFailure(cause: .anomaly(error.anomaly), stepIndex: error.stepIndex,
                                            emergencyStop: error.emergencyStop, description: error.description))
         }
+        let finished = realRunFinished
+        realRunFinished = nil
+        finished?(state)
     }
 }

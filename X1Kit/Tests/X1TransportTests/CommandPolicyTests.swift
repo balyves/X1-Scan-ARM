@@ -60,10 +60,11 @@ struct CommandPolicyTests {
         #expect(throws: TransportError.self) { try CommandPolicy.readOnly.check(command) }
     }
 
-    /// Every read of the read-only list in preview-sequence.json passes, with
-    /// its captured CDB, direction and length.
+    /// Every read of the read-only list in preview-sequence.json and in a scan
+    /// capture (for page 0x24) passes, with its captured CDB, direction and length.
     @Test func readOnlyPolicyAllowsEveryCapturedRead() throws {
-        let reads = try Fixtures.sequence().exchanges.filter {
+        let scan = try CaptureFixture.load(from: Fixtures.directory.appending(path: "scan-sequence-2000ppi.json"))
+        let reads = try (Fixtures.sequence().exchanges + scan.exchanges).filter {
             CommandPolicy.readOnlyCommands[$0.cdbBytes.first ?? 0xFF] != nil
         }
         #expect(reads.count > 600)

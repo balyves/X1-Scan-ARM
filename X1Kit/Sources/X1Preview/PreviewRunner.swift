@@ -9,12 +9,17 @@ public struct PreviewConfiguration: Sendable {
     public var stateTimeout: Duration
     /// Largest accepted difference between a measured position (page 0x20)
     /// and the captured one, checked only after a window that requests a
-    /// position (`requestsPosition`). Two captures differed by 64; to be revised.
+    /// position (`requestsPosition`). 256 (docs/decisions.md, "Position
+    /// tolerance"): the check is for gross anomalies (thousands); the largest
+    /// difference seen on a checked read is 192, in one capture, and
+    /// differences come in steps of 64.
     public var positionTolerance: Int
+
+    public static let defaultPositionTolerance = 256
 
     public init(pollInterval: Duration = .milliseconds(100),
                 stateTimeout: Duration = .seconds(120),
-                positionTolerance: Int = 100) {
+                positionTolerance: Int = defaultPositionTolerance) {
         self.pollInterval = pollInterval
         self.stateTimeout = stateTimeout
         self.positionTolerance = positionTolerance
@@ -32,14 +37,36 @@ public struct PreviewConfiguration: Sendable {
 public struct PreviewRunner: Sendable {
     public let transport: any SCSITransport
     public let configuration: PreviewConfiguration
-    public let script: [PreviewStep]
+    /// A fixed script, or a plan whose first page 0x20 read chooses the rest.
+    private let plan: PreviewPlan?
+    private let fixedScript: [PreviewStep]
 
     public init(transport: any SCSITransport,
                 configuration: PreviewConfiguration = PreviewConfiguration(),
                 script: [PreviewStep] = PreviewScript.flexColor4813) {
         self.transport = transport
         self.configuration = configuration
-        self.script = script
+        self.plan = nil
+        self.fixedScript = script
+    }
+
+    /// Runs `plan`: the common part, then the cold or warm sequence according
+    /// to the first page 0x20 read of the session (`.sequenceChoice`).
+    public init(transport: any SCSITransport,
+                configuration: PreviewConfiguration = PreviewConfiguration(),
+                plan: PreviewPlan) {
+        self.transport = transport
+        self.configuration = configuration
+        self.plan = plan
+        self.fixedScript = []
+    }
+
+    /// The steps known before the run: the fixed script, or the longer of
+    /// the plan's two sequences (the cold one).
+    public var script: [PreviewStep] {
+        guard let plan else { return fixedScript }
+        let cold = plan.steps(for: .cold), warm = plan.steps(for: .warm)
+        return cold.count >= warm.count ? cold : warm
     }
 
     /// Runs the script. `progress`, if given, receives a `PreviewEvent` for
@@ -55,19 +82,27 @@ public struct PreviewRunner: Sendable {
         // state left by earlier use (defaults after power-on, or the last
         // scan), not a measurement: no tolerance check until one has been sent.
         var positionRequested = false
-        let phases = PreviewPhase.phases(for: script)
+        var steps = plan?.common ?? fixedScript
+        var phases = PreviewPhase.phases(for: script)
+        var index = 0
 
-        for (index, step) in script.enumerated() {
+        while index < steps.count {
+            let step = steps[index]
             do {
                 if Task.isCancelled { throw PreviewAnomaly.cancelled }
-                progress?(.step(index: index, count: script.count, phase: phases[index]))
+                progress?(.step(index: index, count: phases.count, phase: phases[min(index, phases.count - 1)]))
                 if step.kind == .scan { scanSent = true }  // set before sending: the scanner may have started
                 let result = try await transport.execute(step.command)
                 try verify(result, of: step.command)
                 try handle(result, of: step, scanSent: scanSent, positionRequested: positionRequested,
                            lastLineCount: &lastLineCount, capture: &capture, progress: progress)
+                if step.kind == .sequenceChoice, let plan, let choice = capture.choice {
+                    steps = plan.steps(for: choice)
+                    phases = PreviewPhase.phases(for: steps)
+                    progress?(.sequenceChosen(choice))
+                }
                 if Self.requestsPosition(step.command) { positionRequested = true }
-                if let state = step.waitUntil {
+                if let state = steps[index].waitUntil {
                     try await waitForState(state, honouringCancellation: true)
                 }
             } catch {
@@ -84,6 +119,7 @@ public struct PreviewRunner: Sendable {
                 }
                 throw PreviewError(stepIndex: index, command: step.command, anomaly: anomaly, emergencyStop: stop)
             }
+            index += 1
         }
         return capture
     }
@@ -117,15 +153,40 @@ public struct PreviewRunner: Sendable {
             }
         case .scan:
             guard result.data == [0x00, 0x00] else { throw PreviewAnomaly.unexpectedScanResponse(result.data) }
-        case .powerOnCheck:
+        case .sequenceChoice:
             let status = try parse { try ScanStatusPage(result.data) }
-            guard status.showsPowerOnValues else {
+            let choice: PreviewPlan.Choice
+            if status.showsPowerOnValues {
+                choice = .cold
+            } else if status.showsValuesLeftByEarlierUse {
+                choice = .warm
+            } else {
+                throw PreviewAnomaly.unrecognisedStartState(channelValues: status.channelValues)
+            }
+            // A fixed script must get the state it was written for.
+            if plan == nil, choice != .cold {
                 throw PreviewAnomaly.notJustSwitchedOn(channelValues: status.channelValues)
+            }
+            capture.choice = choice
+            capture.scanStatuses.append(status)
+            progress?(.scanStatus(status))
+        case .positionGate(let captured):
+            let status = try parse { try ScanStatusPage(result.data) }
+            if status.measuredPosition != captured {
+                progress?(.positionDifference(captured: captured, measured: status.measuredPosition, checked: true))
+            }
+            guard abs(status.measuredPosition - captured) <= configuration.positionTolerance else {
+                throw PreviewAnomaly.unexpectedCarriagePosition(captured: captured, measured: status.measuredPosition,
+                                                                tolerance: configuration.positionTolerance)
             }
             capture.scanStatuses.append(status)
             progress?(.scanStatus(status))
         case .scanStatus(let captured):
             let status = try parse { try ScanStatusPage(result.data) }
+            if status.measuredPosition != captured {
+                progress?(.positionDifference(captured: captured, measured: status.measuredPosition,
+                                              checked: positionRequested))
+            }
             guard !positionRequested || abs(status.measuredPosition - captured) <= configuration.positionTolerance else {
                 throw PreviewAnomaly.positionOutOfTolerance(captured: captured, measured: status.measuredPosition,
                                                             tolerance: configuration.positionTolerance)
@@ -202,8 +263,13 @@ public enum PreviewAnomaly: Error, Hashable, CustomStringConvertible {
     case unexpectedIdentity(vendor: String, product: String)
     case unexpectedScanResponse([UInt8])
     case positionOutOfTolerance(captured: Int, measured: Int, tolerance: Int)
-    /// The first page 0x20 read of the cold sequence does not show the power-on values.
+    /// The read before the warm sequence's window with target 25 000 is too far
+    /// from the capture: stopped before that window.
+    case unexpectedCarriagePosition(captured: Int, measured: Int, tolerance: Int)
+    /// A fixed cold script was run and the first page 0x20 read does not show the power-on values.
     case notJustSwitchedOn(channelValues: [Int])
+    /// The first page 0x20 read shows neither the power-on values nor values left by earlier use.
+    case unrecognisedStartState(channelValues: [Int])
     case lineCounterWentBack(previous: Int, current: Int)
     case unexpectedState(ScannerState, waitingFor: ScannerState)
     case stateTimeout(waitingFor: ScannerState, last: ScannerState)
@@ -227,6 +293,13 @@ public enum PreviewAnomaly: Error, Hashable, CustomStringConvertible {
             "the X1 is not in its power-on state (page 0x20 bytes 19-24: "
                 + values.map(String.init).joined(separator: " / ")
                 + ", expected 2048 / 2048 / 2048): switch it off and on again, then start the preview again"
+        case .unrecognisedStartState(let values):
+            "unexpected scanner state at session start (page 0x20 bytes 19-24: "
+                + values.map(String.init).joined(separator: " / ")
+                + "): neither the power-on values nor values left by earlier use"
+        case .unexpectedCarriagePosition(let captured, let measured, let tolerance):
+            "unexpected carriage position: read \(measured), expected \(captured), difference \(measured - captured) "
+                + "(tolerance \(tolerance)); stopped before the window with target 25 000"
         case .positionOutOfTolerance(let captured, let measured, let tolerance):
             "measured position \(measured), captured \(captured) (tolerance \(tolerance))"
         case .lineCounterWentBack(let previous, let current):

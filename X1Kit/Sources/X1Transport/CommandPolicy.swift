@@ -47,6 +47,8 @@ public struct CommandPolicy: Sendable, Hashable {
         0x20: [34],
         0x21: [12, 100],
         0x23: [12, 60],
+        // Read by FlexColor once per scan, never in a preview (2026-11-17; docs/protocol.md §5).
+        0x24: [32],
         0x25: [24],
         0x26: [56],
         0x27: [20],

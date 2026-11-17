@@ -192,10 +192,11 @@ struct CaptureLogTests {
     }
 }
 
-/// The guard built from the cold capture (2026-11-16), the one used on the real X1.
+/// The guard built from the cold capture (2026-11-16) alone, page 0x28 left out.
 struct ColdCapturedSequenceGuardTests {
     private func makeGuard() throws -> CapturedSequenceGuard {
-        try CapturedSequenceGuard(fixture: Fixtures.coldSequence())
+        try CapturedSequenceGuard(alternatives: [Fixtures.coldSequence()],
+                                  excluding: [.read(SimulatedX1.page28Read, length: 30)])
     }
 
     private static let cold = PreviewScript.flexColor4813Cold.map(\.command)
@@ -215,12 +216,14 @@ struct ColdCapturedSequenceGuardTests {
         #expect(sequence.isComplete)
     }
 
-    /// The warm sequence cannot run through the cold guard: it is refused at
-    /// its first difference, the session start without the page 0x28 read.
+    /// The warm sequence cannot run through the cold guard alone: it is
+    /// refused at its first difference, right after the first page 0x20 read.
     @Test func theWarmSequenceIsRefused() async throws {
         let sequence = try makeGuard()
         let firstDifference = Self.cold.indices.first { Self.warm[$0] != Self.cold[$0] }!
-        #expect(Self.cold[firstDifference] == X1Command.modeSense(page: 0x28, length: 30))
+        let choice = PreviewScript.flexColor4813Cold.firstIndex { $0.kind == .sequenceChoice }!
+        #expect(firstDifference == choice + 1)
+        #expect(Self.warm[firstDifference] == X1Command.setMode(0, 0, 1, 1))
         let transport = GuardedTransport(inner: try Fixtures.simulator(), sequence: sequence)
         do {
             _ = try await PreviewRunner(transport: transport, configuration: .simulator).run()
@@ -235,7 +238,7 @@ struct ColdCapturedSequenceGuardTests {
     /// After the power-on check, the next warm command (F0) is refused.
     @Test func noWarmCommandAfterThePowerOnCheck() throws {
         let sequence = try makeGuard()
-        let check = PreviewScript.flexColor4813Cold.firstIndex { $0.kind == .powerOnCheck }!
+        let check = PreviewScript.flexColor4813Cold.firstIndex { $0.kind == .sequenceChoice }!
         for command in Self.cold.prefix(check + 1) { try sequence.check(command) }
         let warmCheck = Self.warm.firstIndex { $0.cdb.prefix(3) == [0x5A, 0x00, 0x20] }!
         #expect(throws: TransportError.self) { try sequence.check(Self.warm[warmCheck + 1]) }
@@ -262,7 +265,7 @@ struct ColdCapturedSequenceGuardTests {
 
     /// A stop before SCAN (here: not just switched on) sends nothing more.
     @Test func powerOnCheckFailureSendsNothingMore() async throws {
-        let check = PreviewScript.flexColor4813Cold.firstIndex { $0.kind == .powerOnCheck }!
+        let check = PreviewScript.flexColor4813Cold.firstIndex { $0.kind == .sequenceChoice }!
         let sequence = try makeGuard()
         let faulty = FaultInjectingTransport(inner: try Fixtures.coldSimulator(), faultAtNonPollingCommand: check,
                                              fault: .setChannelValues([1928, 1843, 1882]))
@@ -276,5 +279,60 @@ struct ColdCapturedSequenceGuardTests {
         }
         #expect(await faulty.commandsAfterFault.isEmpty)
         #expect(sequence.position == check + 1)
+    }
+}
+
+/// The guard the app builds: both captures, page 0x28 left out.
+struct TwoSequenceGuardTests {
+    private static let cold = PreviewScript.plan.steps(for: .cold).map(\.command)
+    private static let warm = PreviewScript.plan.steps(for: .warm).map(\.command)
+    private static let choice = PreviewScript.plan.common.count - 1
+
+    /// After the choice, the first command of one sequence locks it: the
+    /// other one's commands are refused from then on.
+    @Test(arguments: [false, true])
+    func theFirstDifferentCommandLocksTheSequence(chooseWarm: Bool) throws {
+        let sequence = try Fixtures.previewGuard()
+        let (chosen, other) = chooseWarm ? (Self.warm, Self.cold) : (Self.cold, Self.warm)
+        for command in chosen.prefix(Self.choice + 2) { try sequence.check(command) }
+        #expect(throws: TransportError.self) { try sequence.check(other[Self.choice + 1]) }
+        #expect(sequence.expected == chosen)
+        for command in chosen.dropFirst(Self.choice + 2) { try sequence.check(command) }
+        #expect(sequence.isComplete)
+    }
+
+    /// Not complete while the commands of neither sequence have all gone through.
+    @Test func notCompleteHalfWay() throws {
+        let sequence = try Fixtures.previewGuard()
+        for command in Self.warm.prefix(Self.warm.count - 1) { try sequence.check(command) }
+        #expect(!sequence.isComplete)
+    }
+
+    /// The emergency stop after SCAN goes through the two-sequence guard, on either sequence.
+    @Test(arguments: [false, true])
+    func emergencyStopPassesAfterScan(cold: Bool) async throws {
+        let sequence = try Fixtures.previewGuard()
+        let commands = cold ? Self.cold : Self.warm
+        let scan = commands.firstIndex { $0.opcode == 0x1B }!
+        let faulty = FaultInjectingTransport(inner: cold ? try Fixtures.coldSimulator() : try Fixtures.simulator(),
+                                             faultAtNonPollingCommand: scan + 10, fault: .checkCondition)
+        let runner = PreviewRunner(transport: GuardedTransport(inner: faulty, sequence: sequence),
+                                   configuration: .simulator, plan: PreviewScript.plan)
+        do {
+            _ = try await runner.run()
+            Issue.record("the preview should have stopped")
+        } catch {
+            #expect(error.emergencyStop == .stoppedAndReady)
+        }
+        #expect(await faulty.commandsAfterFault.first == X1Command.stop())
+    }
+
+    /// Two alternatives identical up to after SCAN (the warm capture twice):
+    /// the stop is still accepted after SCAN.
+    @Test func stopAfterScanWithIdenticalAlternatives() throws {
+        let sequence = try CapturedSequenceGuard(alternatives: [Fixtures.sequence(), Fixtures.sequence()])
+        let scan = Self.warm.firstIndex { $0.opcode == 0x1B }!
+        for command in PreviewScript.flexColor4813.map(\.command).prefix(scan + 1) { try sequence.check(command) }
+        try sequence.check(X1Command.stop())
     }
 }

@@ -320,10 +320,12 @@ What is learned then goes into `docs/protocol.md` (marked [confirmed] or
 ## Part E: first preview on the real X1, on the development Mac
 
 Step 4 of the application: FlexColor's captured preview replayed on the
-real X1 (docs/decisions.md, "Application, step 4"). Since 2026-11-16 the
-app sends only the sequence FlexColor sends **right after power-on**: the
-X1 must be switched on just before each preview (docs/decisions.md, "Real
-X1: the sequence right after power-on only"). It is the first time
+real X1 (docs/decisions.md, "Application, step 4"). Since 2026-11-17 the
+app sends FlexColor's sequence **right after power-on** or its sequence
+**after earlier use**, chosen by the scanner's first status read; any
+other state stops the preview before anything moves (docs/decisions.md,
+"Real X1: cold or warm sequence"). Switching the X1 on just before the
+first preview of the day remains the simplest start. It was the first time
 our code sends commands that move the scanner. Parts A to B must have
 passed: ASFireWire active, Read Identity working. "FlexColor: closed"
 below means: FlexColor does not run on the development Mac, and the
@@ -387,10 +389,13 @@ Known risks, as written before the first run:
 - Machine: development Mac. **X1: on.** **FlexColor: closed.** X1 Scan:
   open, source Real X1, nothing else open on the scanner (`x1probe`
   finished).
-- Click **Preview** in the panel (or ⌘R). Tick the four checks (X1 on,
-  holder in place, FlexColor closed, X1 switched off and on since the last
-  real preview; for the first run of the day, the X1 switched on in E2
-  counts), then click **Start Preview** (Return does not start it).
+- Click **Preview** in the panel (or ⌘R). Tick the checks (X1 on, holder
+  in place, FlexColor closed; after a real preview that did not complete, a
+  fourth one: the X1 was switched off and on since), then click **Start
+  Preview** (Return does not start it). The app only knows about its own
+  runs on this Mac: if a preview was interrupted on the other Mac, or in
+  FlexColor, switch the X1 off and on first. The log says which sequence was
+  chosen, and notes every position that differs from the capture.
 - Watch the scanner. The bottom bar shows the phases (initialising,
   calibrating, reading references, then "Preview: n of m lines" while the
   image is read, finishing). **Stop** (⌘. or Esc)
