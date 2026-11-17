@@ -790,7 +790,7 @@ User's decisions; nothing has been sent to the real X1.
     read comes before or after the 400-line step depending on the
     resolution):
     calibration, "Focusing: n of 400 lines", "White and black
-    reference", "Image: n of 1 064 lines" (priming lines included).
+    references", "Image: n of 1 064 lines" (priming lines included).
     "Focusing" names the 400-line step after its **[hypothesis]**
     (protocol.md §12). Stop as for the preview. The image is shown at
     the end only, once decoded.

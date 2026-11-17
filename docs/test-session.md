@@ -502,7 +502,7 @@ left in place.
   nothing moved; the capture's frame and resolution: 609 × 614 pixels at
   2 000 ppi), then **Start Scan**.
 - The bottom bar shows the phases: calibration, "Focusing: n of 400
-  lines", "White and black reference", "Image: n of 1 064 lines".
+  lines", "White and black references", "Image: n of 1 064 lines".
   Stop (⌘. or Esc) as for the preview.
 - At the end the image replaces the preview and the TIFF is saved in the
   export folder; the bottom bar gives its name.

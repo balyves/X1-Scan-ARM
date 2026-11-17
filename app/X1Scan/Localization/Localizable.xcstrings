@@ -2776,7 +2776,7 @@
         }
       }
     },
-    "White and black reference": {
+    "White and black references": {
       "comment": "Status while the scan reads its white and black reference lines",
       "extractionState": "manual",
       "localizations": {
