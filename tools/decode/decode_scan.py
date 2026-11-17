@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 """Decode a Flextight X1 scan captured with tools/capture/cap3.py.
 
-Usage: decode_scan.py capture.txt capture.raw out.png [--gap N] [--compare flexcolor.tif]
+Usage: decode_scan.py capture.txt capture.raw out.png [--gap N] [--compare flexcolor.tif] [--export DIR]
 
 - capture.txt : lldb log written by cap3.py (commands, window data, READ offsets)
 - capture.raw : data appended by cap3.py (every READ, in order)
@@ -29,6 +29,12 @@ Steps:
    5/3 × j + 0.25 (PHASE): the phase that matched FlexColor's TIFF best at
    2 000 ppi (0 to 0.33 differ by less than 0.001 in correlation).
 5. Gamma 2.2 for display, 8-bit PNG. No colour profile is applied.
+
+--export writes, in DIR, what the Swift decoder's optional test reads
+(X1Kit ScanDecodeTests, X1_SCAN_CHECK_DIR): calibration.bin and image.bin
+(the READ data as captured), geometry.txt ("first_column width binning
+priming calibration_width") and expected.f32 (the linear output before
+gamma, float32). Keep DIR outside the repository: it holds image data.
 
 --compare reads FlexColor's TIFF of the same scan (needs the tifffile
 package) and prints the correlation of log values per channel: FlexColor
@@ -80,8 +86,9 @@ def main():
     try:
         compare = args[args.index("--compare") + 1] if "--compare" in args else None
         gap_option = int(args[args.index("--gap") + 1]) if "--gap" in args else None
+        export = args[args.index("--export") + 1] if "--export" in args else None
     except (IndexError, ValueError):
-        sys.exit("--gap needs a whole number of lines, --compare a TIFF file")
+        sys.exit("--gap needs a whole number of lines, --compare a TIFF file, --export a folder")
     log_path, raw_path, out_path = args[:3]
     raw = np.memmap(raw_path, dtype="<u2", mode="r")
     events = parse(log_path)
@@ -131,6 +138,20 @@ def main():
           f"{priming} priming lines (gap {gap}); {n - priming} image lines read -> {lines} lines")
 
     Image.fromarray((out ** (1 / 2.2) * 255).astype(np.uint8)).save(out_path, format="PNG")
+
+    if export:
+        import os
+        os.makedirs(export, exist_ok=True)
+        data = np.asarray(raw).view(np.uint8)
+        with open(os.path.join(export, "calibration.bin"), "wb") as f:
+            for e in calibration:
+                f.write(data[e["off"]:e["off"] + e["size"]].tobytes())
+        with open(os.path.join(export, "image.bin"), "wb") as f:
+            for e in image_reads:
+                f.write(data[e["off"]:e["off"] + e["size"]].tobytes())
+        with open(os.path.join(export, "geometry.txt"), "w") as f:
+            f.write(f"{first_column} {width} {binning} {priming} {full}\n")
+        out.astype("<f4").tofile(os.path.join(export, "expected.f32"))
 
     if compare:
         import tifffile

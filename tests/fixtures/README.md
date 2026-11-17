@@ -2,7 +2,9 @@
 
 Recorded from a real Flextight X1 driven by FlexColor 4.8.13 (Mac, Mojave),
 2026-11-12, with `tools/capture/cap3.py`. The scanner serial number is
-anonymised (`FX1xxxxxxx`). No image data from the scan is included.
+anonymised (`FX1xxxxxxx`). Of the image data, only the first 64 bytes of
+each read are kept (`response_head`): mostly dark margin pixels, a few
+pixels of the frame at most.
 
 ## preview-sequence.json
 

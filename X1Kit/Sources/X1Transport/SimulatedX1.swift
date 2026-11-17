@@ -10,10 +10,19 @@ import Foundation
 /// - Polling commands (0xEE, 0xD3, 0xDF) are answered with the responses
 ///   recorded between the previous and the next non-polling exchange, in
 ///   order; when they run out, the last one is repeated.
-/// - READ (0x28) data is synthesised: white and dark references from the
-///   calibration profile, image lines from `SyntheticFilm` with the CCD line
-///   gap applied, and a constant level for full-width calibration lines
-///   (the capture has no reference for those).
+/// - READ (0x28) data is synthesised. Lines of the preview's width (2 004
+///   pixels): white and dark references from the calibration profile, image
+///   lines from `SyntheticFilm` with the CCD line gap applied.
+/// - Lines of any other width (the full-CCD calibration of a preview, and
+///   everything in a scan, protocol.md §12): synthetic per-column levels
+///   (`scanWhite` after `F0 01 01 00 01`, `scanDark` after `F0 01 00 00 01`,
+///   `constantLevel` for other calibration lines), image lines from
+///   `SyntheticFilm` over those levels; the first pixels of every line, beyond the
+///   width the last window asked for, are dark (the margin, §10); the line gap
+///   of each SCAN is (priming lines − 1) / 2, the priming lines being the
+///   one-line reads FlexColor made right after that SCAN in the capture. The
+///   lines of the 400-line step (after `1b 00 08 06 01 00`) are film lines
+///   like the image's; they are not checked.
 /// - A stop (`DB 00 00 00 00 00`) received after SCAN but before its captured
 ///   place (an emergency stop) is accepted: the replay jumps to the captured
 ///   `DB`, so the following 0xDF polls get the states FlexColor saw after its
@@ -69,6 +78,10 @@ public actor SimulatedX1: SCSITransport {
     private var pollCursor: [[UInt8]: Int] = [:]
     private var lastMode: [UInt8] = []
     private var imageRow = 0
+    /// Data of the last SET WINDOW.
+    private var lastWindow: [UInt8] = []
+    /// Line gap of the current SCAN (1 for the preview).
+    private var lineGap = 1
     /// Every command received, in order.
     public private(set) var log: [SCSICommand] = []
 
@@ -90,7 +103,7 @@ public actor SimulatedX1: SCSITransport {
                   film: film)
     }
 
-    /// Number of image lines (READ with flag 00) served so far.
+    /// Number of image lines (READ with flag 00) served since the last SCAN.
     public var imageLinesServed: Int { imageRow }
 
     public func execute(_ command: SCSICommand) throws -> SCSIResult {
@@ -113,6 +126,11 @@ public actor SimulatedX1: SCSITransport {
         next += 1
         pollCursor.removeAll()
         if command.opcode == 0xF0 { lastMode = Array(command.cdb[2...5]) }
+        if command.opcode == 0x24 { lastWindow = command.dataOut }
+        if command.opcode == Self.scanOpcode {
+            imageRow = 0
+            lineGap = (primingReads(after: next) - 1) / 2
+        }
 
         guard command.direction == .fromDevice else { return SCSIResult(status: expected.status) }
         let data = command.opcode == 0x28 ? synthesizeRead(command) : (expected.response ?? [])
@@ -131,6 +149,35 @@ public actor SimulatedX1: SCSITransport {
         guard command.cdb == Self.stopCDB,
               nonPolling[..<next].contains(where: { exchanges[$0].cdb.first == Self.scanOpcode }) else { return nil }
         return (next..<nonPolling.count).first { exchanges[nonPolling[$0]].cdb == Self.stopCDB }
+    }
+
+    /// Number of one-line image reads right after the captured command before
+    /// `nonPolling[index]` (a SCAN), before any other command.
+    private func primingReads(after index: Int) -> Int {
+        var count = 0
+        for position in index..<nonPolling.count {
+            let recorded = exchanges[nonPolling[position]]
+            guard recorded.cdb.first == 0x28, recorded.cdb[4] == 1, recorded.cdb[5] == 0 else { break }
+            count += 1
+        }
+        return max(count, 1)
+    }
+
+    /// Synthetic white level of a full-width CCD column in a scan: a fixed
+    /// pattern, so that a wrong column mapping shows up in tests.
+    public static func scanWhite(column: Int, channel: Int) -> Double {
+        Double(48_000 + (column % 97) * 40 - channel * 2_000)
+    }
+
+    /// Synthetic dark level of a full-width CCD column in a scan.
+    public static func scanDark(column: Int, channel: Int) -> Double {
+        Double(240 + (column % 13) * 3 + channel)
+    }
+
+    /// Little-endian 16-bit window field (protocol.md §9).
+    private func windowField(_ offset: Int, _ size: Int) -> Int {
+        guard lastWindow.count >= offset + size else { return 0 }
+        return (0..<size).reduce(0) { $0 | Int(lastWindow[offset + $1]) << (8 * $1) }
     }
 
     private func matches(_ command: SCSICommand, _ expected: Recorded) -> Bool {
@@ -173,12 +220,15 @@ public actor SimulatedX1: SCSITransport {
         var samples: [UInt16] = []
         samples.reserveCapacity(command.transferLength / 2)
 
+        if pixels != profile.width {
+            return littleEndian(synthesizeScanLines(lines: lines, pixels: pixels, isCalibration: isCalibration))
+        }
         for _ in 0..<lines {
             if isCalibration {
                 // In the capture, white lines follow F0 01 01 00 01 and dark lines F0 01 00 00 01.
-                if pixels == profile.width && lastMode == [1, 1, 0, 1] {
+                if lastMode == [1, 1, 0, 1] {
                     for column in 0..<pixels { for channel in 0..<3 { samples.append(UInt16(profile.white[column][channel])) } }
-                } else if pixels == profile.width && lastMode == [1, 0, 0, 1] {
+                } else if lastMode == [1, 0, 0, 1] {
                     for column in 0..<pixels { for channel in 0..<3 { samples.append(UInt16(profile.dark[column][channel])) } }
                 } else {
                     samples.append(contentsOf: repeatElement(Self.constantLevel, count: pixels * 3))
@@ -186,14 +236,10 @@ public actor SimulatedX1: SCSITransport {
             } else {
                 let row = imageRow
                 imageRow += 1
-                guard pixels == profile.width else {
-                    samples.append(contentsOf: repeatElement(Self.constantLevel, count: pixels * 3))
-                    continue
-                }
                 for column in 0..<pixels {
                     for channel in 0..<3 {
-                        // CCD line gap (protocol.md §10): red leads green by one line, blue trails by one.
-                        let filmRow = row + (channel == 0 ? -1 : channel == 2 ? 1 : 0)
+                        // CCD line gap (protocol.md §10): `lineGap` lines (1 in the preview), as decoded by LineGap.
+                        let filmRow = row + (channel == 0 ? -lineGap : channel == 2 ? lineGap : 0)
                         let t = film.transmission(row: filmRow, column: column, channel: channel, width: pixels)
                         let dark = Double(profile.dark[column][channel])
                         let white = Double(profile.white[column][channel])
@@ -203,6 +249,46 @@ public actor SimulatedX1: SCSITransport {
                 }
             }
         }
+        return littleEndian(samples)
+    }
+
+    /// Lines of a scan (protocol.md §10, §12). Column c of a line is CCD
+    /// column c of the full-width calibration when the line is full width;
+    /// in an image line, column margin + i is CCD column margin + window
+    /// offset 14 + i. The first `margin` pixels are dark.
+    private func synthesizeScanLines(lines: Int, pixels: Int, isCalibration: Bool) -> [UInt16] {
+        let requested = windowField(22, 2)
+        let margin = max(pixels - requested, 0)
+        let firstColumn = isCalibration ? 0 : windowField(14, 2)
+        var samples: [UInt16] = []
+        samples.reserveCapacity(lines * pixels * 3)
+        for _ in 0..<lines {
+            let row = imageRow
+            if !isCalibration { imageRow += 1 }
+            for pixel in 0..<pixels {
+                let ccd = pixel < margin ? pixel : margin + firstColumn + (pixel - margin)
+                for channel in 0..<3 {
+                    let dark = Self.scanDark(column: ccd, channel: channel)
+                    let value: Double
+                    if pixel < margin {
+                        value = dark
+                    } else if isCalibration {
+                        value = lastMode == [1, 1, 0, 1] ? Self.scanWhite(column: ccd, channel: channel)
+                            : lastMode == [1, 0, 0, 1] ? dark : Double(Self.constantLevel)
+                    } else {
+                        let filmRow = row + (channel == 0 ? -lineGap : channel == 2 ? lineGap : 0)
+                        let t = film.transmission(row: filmRow, column: pixel - margin, channel: channel,
+                                                  width: requested)
+                        value = dark + t * (Self.scanWhite(column: ccd, channel: channel) - dark)
+                    }
+                    samples.append(UInt16(min(max(value.rounded(), 0), 65_535)))
+                }
+            }
+        }
+        return samples
+    }
+
+    private func littleEndian(_ samples: [UInt16]) -> [UInt8] {
         var bytes: [UInt8] = []
         bytes.reserveCapacity(samples.count * 2)
         for sample in samples {

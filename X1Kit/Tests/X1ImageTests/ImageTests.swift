@@ -227,3 +227,102 @@ struct TIFFExportTests {
         #expect(ICCProfiles.graySRGB.count % 4 == 0)
     }
 }
+
+struct ScanDecodeTests {
+    /// Replays a scan capture on the simulator (non-polling commands only),
+    /// decodes the scan and compares it with the synthetic film.
+    @Test(arguments: ["scan-sequence-1000ppi.json", "scan-sequence-2000ppi.json", "scan-sequence-3200ppi.json"])
+    func decodedScanMatchesTheSyntheticFilm(name: String) async throws {
+        let fixture = try CaptureFixture.load(from: Fixtures.directory.appending(path: name))
+        let simulator = SimulatedX1(fixture: fixture, profile: try Fixtures.calibrationProfile())
+        let commands = fixture.exchanges.filter { !SimulatedX1.pollingOpcodes.contains($0.cdbBytes.first ?? 0) }
+        let lastSession = try #require(commands.lastIndex { $0.cdb == "cf 00 01 80 00 00" })
+        let scan = try #require(commands.lastIndex { $0.cdb == "1b 00 00 01 01 00" })
+
+        var calibration: [[UInt8]] = []
+        var image: [[UInt8]] = []
+        var window: [UInt8] = []
+        for (index, exchange) in commands.enumerated() {
+            let command = SCSICommand(cdb: exchange.cdbBytes, direction: try #require(exchange.commandDirection),
+                                      transferLength: exchange.length, dataOut: exchange.dataOutBytes ?? [])
+            let result = try await simulator.execute(command)
+            if exchange.cdbBytes.first == 0x24, index < scan { window = command.dataOut }
+            guard exchange.cdbBytes.first == 0x28, index > lastSession else { continue }
+            if exchange.cdbBytes[5] == 1 { calibration.append(result.data) }
+            if index > scan { image.append(result.data) }
+        }
+        let geometry = try #require(ScanGeometry(windowData: window))
+        let priming = commands[(scan + 1)...].prefix { $0.cdbBytes.first == 0x28 && $0.cdbBytes[4] == 1 }.count
+        let calibrationWidth = calibration[0].count / 6 / 10
+        let linear = try ScanDecoding.decode(calibration: calibration, calibrationWidth: calibrationWidth,
+                                             image: image, geometry: geometry, primingLines: priming)
+
+        let gap = ScanDecoding.lineGap(primingLines: priming)
+        let read = image.reduce(0) { $0 + $1.count } / (geometry.pixelsPerLine * 6)
+        #expect(linear.width == geometry.width)
+        #expect(linear.height == (read - 2 * gap) * 3 / 5)
+
+        // Aligned row a is film row a + gap; output row j is aligned row 5/3 × j + phase.
+        let film = simulator.film
+        var worst: Double = 0
+        for row in 0..<linear.height {
+            let position = ScanDecoding.linesPerOutputLine * Double(row) + ScanDecoding.phase
+            let lower = Int(position)
+            let fraction = position - Double(lower)
+            for column in stride(from: 0, to: linear.width, by: 7) {
+                for channel in 0..<3 {
+                    func t(_ r: Int) -> Double {
+                        film.transmission(row: r + gap, column: column, channel: channel, width: geometry.width)
+                    }
+                    let expected = t(lower) + (t(lower + 1) - t(lower)) * fraction
+                    let value = Double(linear.values[(row * linear.width + column) * 3 + channel])
+                    worst = max(worst, abs(value - expected))
+                }
+            }
+        }
+        #expect(worst < 0.001, "largest error \(worst)")
+    }
+
+    @Test func geometryFromWindowData() throws {
+        var window = [UInt8](repeating: 0, count: 68)
+        window[14] = 0xD5; window[15] = 0x07  // 2 005
+        window[22] = 0x61; window[23] = 0x02  // 609
+        window[49] = 1
+        let geometry = try #require(ScanGeometry(windowData: window))
+        #expect(geometry == ScanGeometry(firstColumn: 2005, width: 609, binning: 1))
+        #expect(geometry.margin == 24 && geometry.pixelsPerLine == 633)
+        #expect(ScanGeometry(firstColumn: 354, width: 345, binning: 3).pixelsPerLine == 353)
+        #expect(ScanDecoding.lineGap(primingLines: 41) == 20)
+        #expect(ScanDecoding.lineGap(primingLines: 15) == 7)
+        #expect(ScanDecoding.lineGap(primingLines: 3) == 1)
+        window[49] = 0
+        #expect(ScanGeometry(windowData: window) == nil)
+    }
+
+    /// Optional check against a real capture, outside the repository: set
+    /// X1_SCAN_CHECK_DIR to a folder written by
+    /// `tools/decode/decode_scan.py capture.txt capture.raw out.png --export DIR`
+    /// (calibration.bin and image.bin, the READ data as captured; geometry.txt;
+    /// expected.f32, the Python decoder's linear output). Skipped otherwise
+    /// (and in CI).
+    @Test(.enabled(if: ProcessInfo.processInfo.environment["X1_SCAN_CHECK_DIR"] != nil))
+    func sameResultAsThePythonDecoderOnARealScan() throws {
+        let directory = URL(filePath: ProcessInfo.processInfo.environment["X1_SCAN_CHECK_DIR"]!)
+        let numbers = try String(contentsOf: directory.appending(path: "geometry.txt"), encoding: .utf8)
+            .split(whereSeparator: \.isWhitespace).compactMap { Int($0) }
+        try #require(numbers.count == 5)
+        let geometry = ScanGeometry(firstColumn: numbers[0], width: numbers[1], binning: numbers[2])
+        let linear = try ScanDecoding.decode(
+            calibration: [Array(try Data(contentsOf: directory.appending(path: "calibration.bin")))],
+            calibrationWidth: numbers[4],
+            image: [Array(try Data(contentsOf: directory.appending(path: "image.bin")))],
+            geometry: geometry, primingLines: numbers[3])
+        let expected = try Data(contentsOf: directory.appending(path: "expected.f32"))
+            .withUnsafeBytes { Array($0.bindMemory(to: Float.self)) }
+        try #require(expected.count == linear.values.count)
+        // decode_scan.py clips at 1e-4 where ScanDecoding clips at 0.
+        let worst = zip(linear.values, expected).map { abs(max($0, 1e-4) - $1) }.max() ?? 0
+        // Python clips before interpolating, the test after: up to 1e-4 apart, plus rounding.
+        #expect(worst < 2e-4, "largest difference \(worst)")
+    }
+}

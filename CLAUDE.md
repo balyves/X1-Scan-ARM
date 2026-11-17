@@ -98,13 +98,19 @@ available; ask.
 - `tools/x1probe/`: read-only probe (C, IOKit SCSITaskUserClient).
 - `tools/capture/`: lldb capture script for FlexColor on Mojave, and its
   converter to fixtures.
-- `tests/fixtures/`: FlexColor captures. `preview-sequence.json` (warm,
-  after earlier previews) is replayed by the virtual X1;
-  `preview-sequence-cold.json` (right after power-on) is the only sequence
-  sent to the real X1.
-- `tools/decode/`: preview decoder (Python, numpy, Pillow).
-- `X1Kit/`: Swift package (transport, protocol, preview sequence, image);
-  `swift test` runs against the simulator, never against a real scanner.
+- `tests/fixtures/`: FlexColor captures (anonymised; of image data, only the first
+  64 bytes of each read).
+  `preview-sequence.json` (warm, after earlier previews) is replayed by the
+  virtual X1; `preview-sequence-cold.json` (right after power-on) is the
+  only sequence sent to the real X1; `preview-sequence-warm-2.json` is a
+  second warm preview; `scan-sequence-1000ppi.json`, `-2000ppi`, `-3200ppi`
+  are a preview then a scan each (docs/protocol.md §12), replayed only by
+  the simulator in tests. See `tests/fixtures/README.md`.
+- `tools/decode/`: preview and scan decoders (Python, numpy, Pillow;
+  `decode_scan.py --compare` also needs tifffile).
+- `X1Kit/`: Swift package (transport, protocol, preview sequence, image,
+  scan decoding in `X1Image/ScanDecoding.swift`); `swift test` runs against
+  the simulator, never against a real scanner.
 - `app/`: macOS application. `X1Scan.xcodeproj` and `X1Scan/` (AppKit
   shell, SwiftUI settings panel and tool column, String Catalog), `X1ScanCore/` (models and view
   models, plus the reusable views of the compact settings panel in `UI/`,

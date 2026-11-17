@@ -312,3 +312,26 @@ protocol.md §9, §10 and §12. **[confirmed]** unless noted:
 - A scan cannot be a pure replay of a capture: its windows carry the frame
   and a position measured during the same session.
 
+
+## 2026-11-17: scan decoding in Swift, scans on the virtual X1 (step 1)
+
+First step of the plan for real scans (decided today, docs/decisions.md
+to follow with step 2): everything on the virtual X1, nothing sent to the
+real scanner.
+
+- `X1Image/ScanDecoding.swift`: the steps of `tools/decode/decode_scan.py`
+  (margin, flat field from the full-width calibration, R/B gap from the
+  priming lines, 5/3 → 1 resampling). On the three real scans of
+  2026-11-17 it gives the same linear values as the Python decoder (largest
+  difference below 1e-4 on every pixel, once Python's clip at 1e-4 is
+  applied; optional test `sameResultAsThePythonDecoderOnARealScan`, fed by
+  `decode_scan.py --export`, run locally with the captures, which stay
+  outside the repository).
+- The simulator now serves scans: synthetic per-column white and dark,
+  dark margin pixels, the line gap of each SCAN taken from the capture's
+  priming lines. A test replays each scan fixture and checks the decoded
+  image against the synthetic film.
+- Still open before a real scan (step 2): the position tolerance (192 or
+  256; largest difference seen on a checked read: 192), page 0x24 in the
+  read-only policy, 0xDF `00 06` only during a scan, and the single
+  substitution of the measured position in the 400-line window.
