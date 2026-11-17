@@ -24,7 +24,8 @@ public struct PreviewStep: Sendable {
         case sequenceChoice
         /// Page 0x20, first read of a session whose script fits only one state
         /// (a scan: no scan right after power-on was captured). Any other state
-        /// stops before anything moves.
+        /// stops before any window, mode, exposure or READ (only the session
+        /// start and reads come before it).
         case startState(PreviewPlan.Choice)
         /// SET WINDOW whose target position (offset 50, LE16) is replaced by the
         /// position of the last page 0x20 read, as FlexColor did (the window of

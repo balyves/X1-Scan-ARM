@@ -104,7 +104,7 @@ struct ScanRunTests {
     }
 
     /// The scan needs a scanner used before: power-on values stop it at the
-    /// first page 0x20 read, before anything moves.
+    /// first page 0x20 read: only the session start and reads come before it.
     @Test func aScannerJustSwitchedOnIsRefused() async throws {
         let choice = Self.script.firstIndex { $0.kind == .startState(.warm) }!
         let faulty = FaultInjectingTransport(inner: try Self.simulator(), faultAtNonPollingCommand: choice,

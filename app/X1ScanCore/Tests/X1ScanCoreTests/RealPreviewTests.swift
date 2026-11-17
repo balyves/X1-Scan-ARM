@@ -155,7 +155,8 @@ final class RealPreviewTests {
     }
 
     /// Neither the power-on values nor values left by earlier use: the
-    /// preview stops at the first page 0x20 read, before anything moves, and
+    /// preview stops at the first page 0x20 read (only reads, D2 and the session
+    /// start sent before it; no window, mode, exposure or READ), and
     /// the next one asks for the X1 to be switched off and on.
     @Test func stopsOnAnUnrecognisedStartState() async throws {
         let model = try model(enabled: true, channelValues: [2048, 2048, 2047])

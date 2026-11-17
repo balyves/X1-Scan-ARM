@@ -323,7 +323,9 @@ Step 4 of the application: FlexColor's captured preview replayed on the
 real X1 (docs/decisions.md, "Application, step 4"). Since 2026-11-17 the
 app sends FlexColor's sequence **right after power-on** or its sequence
 **after earlier use**, chosen by the scanner's first status read; any
-other state stops the preview before anything moves (docs/decisions.md,
+other state stops the preview before any window, mode, exposure or image
+read; only reads, the startup command and the session start come before
+it (docs/decisions.md,
 "Real X1: cold or warm sequence"). Switching the X1 on just before the
 first preview of the day remains the simplest start. It was the first time
 our code sends commands that move the scanner. Parts A to B must have

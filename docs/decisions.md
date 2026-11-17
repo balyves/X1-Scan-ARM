@@ -732,7 +732,8 @@ User's decisions; nothing has been sent to the real X1.
   the captured one; anything else is refused. Rule 4 of CLAUDE.md says so.
 - **Start state.** The session must start warm: no scan right after
   power-on was captured. Its first page 0x20 read must show values left by
-  earlier use (`startStateMismatch` otherwise), before anything moves.
+  earlier use (`startStateMismatch` otherwise); before that read only the
+  session start and reads are sent.
 - **0xDF `00 06`.** The wait after `1b 00 08 06 01 00` ends on `00 06`,
   where FlexColor started its one-line reads. It is a wait target of the
   scan script only, never a busy state, so a preview never accepts it.

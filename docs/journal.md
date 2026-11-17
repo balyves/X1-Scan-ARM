@@ -343,7 +343,9 @@ sequence"). Nothing was sent to the real X1.
 
 - The runner sends the part common to both captured previews, reads page
   0x20 and goes on with the cold sequence (power-on values) or the warm one
-  (values left by earlier use); anything else stops before anything moves.
+  (values left by earlier use); anything else stops there, before any
+  window, mode, exposure or READ (only reads, D2 and the session start
+  come before it).
   The cold sequence no longer reads page 0x28.
 - The guard follows either capture; where they differ, the first command
   decides.
