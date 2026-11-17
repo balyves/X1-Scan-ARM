@@ -46,7 +46,7 @@ at every power-up; the X1 does not.)
 | 0x12 | INQUIRY | in | 96 | `Imacon` / `Flextight X1` / `R185`. Bytes 36-95 are zero. **[confirmed]** |
 | 0x00 | TEST UNIT READY | - | 0 | GOOD when idle. **[confirmed]** |
 | 0x03 | REQUEST SENSE | in | 18 | Fixed format. **[confirmed]** |
-| 0x5A | MODE SENSE(10) | in | 12-100 | Vendor pages 0x20, 0x21, 0x23, 0x25, 0x26, 0x27, 0x28 and 0x29 (the only ones seen), CDB `5a 00 PP 01 00 00 00 LL LL 00`. See §5. **[confirmed]** |
+| 0x5A | MODE SENSE(10) | in | 12-100 | Vendor pages 0x20, 0x21, 0x23, 0x24 (scans only), 0x25, 0x26, 0x27, 0x28 and 0x29 (the only ones seen), CDB `5a 00 PP 01 00 00 00 LL LL 00`. See §5. **[confirmed]** |
 | 0x4D | LOG SENSE(10) | in | 52 | Vendor page 0x30, CDB `4d 00 30 00 00 00 00 00 34 00`. See §6. **[confirmed]** |
 | 0xEE | read register | in | 1 | CDB `ee 00 00 00 01 AA 00 00 01 00`, AA = 0x04-0x19. Polled continuously. **[confirmed]** |
 | 0xD3 | status / sensors | in | 2 | `00 0e` at rest, other values during activity. Possibly the scan button plus sensors. **[hypothesis]** |
@@ -57,7 +57,7 @@ at every power-up; the X1 does not.)
 | 0x24 | SET WINDOW | out | 68 | See §9. |
 | 0xE4 | CCD exposure | out | 12 | `05 04 10 00 05 04 20 00 05 04 30 00`: three LE16 values (0x0405) followed by a channel id 0x10/0x20/0x30 (R/G/B). **[hypothesis]** |
 | 0xE1 | ? | in | 4 | Read once during calibration (`04 c5 ff ff`). |
-| 0x1B | SCAN | in | 2 | `1b 00 00 01 01 00`, returns `00 00`. Starts the acquisition. **[confirmed]** |
+| 0x1B | SCAN | in | 2 | `1b 00 00 01 01 00`, returns `00 00`. Starts the acquisition. **[confirmed]** Before the image of a scan (not a preview), also `1b 00 08 06 01 00`, returns `00 00`, followed by 400 one-line reads (§12). **[confirmed]** |
 | 0x28 | READ(10) | in | n | See §10. **[confirmed]** |
 | 0xDB | stop | - | 0 | `db 00 00 00 00 00`, end of scan. **[confirmed]** |
 
@@ -102,6 +102,7 @@ and page length.
 | 0x23 | 49 | Twelve LE32 values, often round (980 000, 816 000, 514 000…): motor positions or travel lengths. **[hypothesis]** |
 | 0x25 | 12 | **Not static.** Byte 21 of the response changes over time: 0x1b then 0x1c a few minutes apart, and 0x1c / 0x1d alternating within one preview, going back and forth. **[confirmed]** A value that goes down again points to a sensor reading (temperature?) rather than a clock; it is not a firmware date. **[hypothesis]** Bytes 12-16 (`01 23 0f 0a 03`) stay constant; their meaning is unknown. |
 | 0x26 | 44 | **Identity**: 10-byte field (dashes when unset), then the serial number in ASCII (`FX1…`). This is where FlexColor gets the serial number. **[confirmed]** |
+| 0x24 | 24 | Read once per scan (32 bytes requested), just before the window of the 400-line step (§12; a page 0x20 read comes between them), never in a preview: `1b 00 00 00 00 00 00 00 24 18 00 01 00 6e 04 01 00 ab 10 01 00 ab 10 01 00 00 02 01 00 01 00 01`, the same in the three scans of 2026-11-17 (1 000, 2 000, 3 200 ppi). **[confirmed]** Meaning unknown. Not in `CommandPolicy.readOnly`. |
 | 0x27 | 9 | Unknown. |
 | 0x28 | 18 | Read once (30 bytes requested), only in the capture right after power-on of 2026-11-16, just before the session start: `15 00 00 00 00 00 00 00 28 12 00 58 02 00 00`, 14 × `ff`, `00`. **[confirmed]** Not read in the capture right after power-on of 2026-11-17, nor in any warm capture: not needed for the sequence after power-on. **[confirmed]** Meaning unknown; what makes FlexColor read it is unknown. Not in `CommandPolicy.readOnly`. |
 | 0x29 | 1 | Unknown (`07`). |
@@ -131,6 +132,11 @@ Offsets from the start of the 34-byte response.
   without any position request: the scanner moved or repositioned itself
   during calibration, so that read is probably a measurement.
   **[hypothesis]**
+  The captures of 2026-11-17 support it: the first read of the session
+  after a scan shows that scan's state. After the 2 000 ppi scan (window of
+  1 065 lines, last position 16 651) the next session starts with position
+  16 651 and 1 066 lines; after the 1 000 ppi scan (582 lines), with 583
+  lines. **[confirmed]**
 - bytes 31-32 (LE16): **number of lines acquired** since SCAN. Increases
   during the scan. In the capture of 2026-11-12, FlexColor reads page 0x20
   once before each 20-line READ, and in 40 of the 41 cases the READ asks
@@ -160,8 +166,9 @@ counter 3 is the **number of scans**. **[hypothesis]**
 | `00 00` | ready |
 | `08 01` | busy (after F0, SCAN, stop): mechanical movement **[hypothesis]** |
 | `08 40` | busy, other phase, often follows `08 01` |
-| `08 02`, `08 03`, `08 06`, `08 07` | busy; seen only right after power-on (2026-11-16): after the first `F0` FlexColor read `08 07`, `08 06`, `08 02`, `08 06`, `08 40`, then `00 00`; `08 03` after the first `F0 01 01 01 01` |
-| `00 01` | seen once right after SCAN; FlexColor starts reading image lines on this value **[confirmed]** |
+| `08 02`, `08 03`, `08 06`, `08 07` | busy. Right after power-on (2026-11-16): after the first `F0` FlexColor read `08 07`, `08 06`, `08 02`, `08 06`, `08 40`, then `00 00`; `08 03` after the first `F0 01 01 01 01`. In warm scan sessions (2026-11-17), `08 06` and `08 02` also follow the SCAN commands (§12). **[confirmed]** |
+| `00 01` | seen once right after `1b 00 00 01 01 00`; FlexColor starts reading image lines on this value **[confirmed]** |
+| `00 06` | seen once right after `1b 00 08 06 01 00` (the 400-line step of a scan, §12), after `08 06` / `08 02` / `08 01`; FlexColor starts its one-line reads on this value. After that step's `DB`, a single `00 00`, then the next window. **[confirmed]** (three scans) |
 
 Our own preview of 2026-11-16 on the real X1 (sequence right after
 power-on, journal) saw the same busy states, `08 01`, `08 02`, `08 03`,
@@ -202,6 +209,38 @@ little-endian fields:
 | 58 | 4 | 856 631 | 856 631 | End position on the drum? |
 | 62 | 2 | 15 500 | 15 500 | ? |
 
+**Scan windows** (captures of 2026-11-17: one scan each at 1 000, 2 000 and
+3 200 ppi of a small frame; `tests/fixtures/scan-sequence-*.json`). Lists
+of three values are in capture order: 2 000, 1 000 and 3 200 ppi.
+
+- **Offset 10 = resolution × 50 000 / 3** (truncated): 16 666 666 at
+  1 000 ppi, 33 333 333 at 2 000 ppi, 53 333 333 at 3 200 ppi.
+  **[confirmed]** (three resolutions, each with FlexColor's TIFF). The
+  formula would make the preview's 2 666 666 160 ppi, but preview lines
+  need an aspect factor of 3 (§10), not the 5/3 of the scans:
+  **[hypothesis]**. The 400-line window of every scan (§12) has 21 674 665
+  whatever the scan resolution (**[confirmed]**); by the formula,
+  1 300.48 ppi (**[hypothesis]**).
+- Offset 14 (LE16): first pixel of the frame across the CCD, in pixels at
+  the scan resolution (2 005, 354, 722): image column *i* is calibration
+  column margin + offset 14 + *i* (§10). **[confirmed]** (the flat field is
+  right only with that mapping).
+- Offset 18 (LE16): 770, 456, 1 145; 0 in the 400-line window. Start of the
+  frame along the drum? **[hypothesis]**
+- Offset 22: pixels per line = width of the frame in pixels (609, 345,
+  1 148), the same as FlexColor's TIFF. **[confirmed]**
+- Offset 26: lines read + 1 (1 065, 582, 2 070; §10). 401 in the
+  400-line window (400 lines read). **[confirmed]**
+- Byte 49: 1 at 2 000 and 3 200 ppi, 3 at 1 000 ppi, 4 in the preview:
+  horizontal binning. **[hypothesis]**, consistent with the margins (§10).
+- Offset 50 in the 400-line window: the position just read on page 0x20
+  (16 651, 8 081, 24 971). **[confirmed]** Offset 62 there: 26 560, 28 259,
+  27 156 (15 500 elsewhere); origin unknown.
+- Offsets 54 and 58: in the 400-line window 10 000 more than in the windows
+  before it; in the image window, 850, 700 and 900 less than before the
+  400-line step. **[confirmed]** Values computed by FlexColor from the frame
+  and from measurements, not constants. **[hypothesis]**
+
 ## 10. READ(10) and image data
 
 CDB `28 00 01 00 NN FF LL LL LL 00`:
@@ -227,6 +266,42 @@ Corrections the host must apply **[confirmed on a preview]**:
 
 `tools/decode/decode_preview.py` applies these steps and reproduces
 FlexColor's preview geometry exactly (colour profile not applied).
+
+**Scan data** (2026-11-17, 1 000, 2 000 and 3 200 ppi; decoded with
+`tools/decode/decode_scan.py`) **[confirmed unless noted]**:
+
+- **Width margin**: every line has 24 more pixels than the window asks for
+  (633 for 609, 1 172 for 1 148; 8 016 for the full CCD's 7 992), 8 more at
+  1 000 ppi (353 for 345; 2 672 for 2 664). The extra pixels come first and
+  are dark in the image lines (level ~230-260, like the dark lines). In
+  the white calibration lines the last few of them are lit (at 2 000 ppi,
+  columns 20-23 about 460, 4 980, 45 000, 46 200; at 1 000 ppi column 7
+  about 34 200), so they are not all masked pixels. **[confirmed]** Margin
+  = 24 / binning, which also fits the preview (2 004 = 1 998 + 6, binning
+  4). **[hypothesis]** (three binnings seen).
+- **White and dark**: one full-width calibration read of 230 lines (23 ×
+  10 lines, CDB byte 5 = 01) per scan: 50 white lines (~53 000), then 180
+  dark ones (~250-300). Image column *i* uses calibration column margin +
+  window offset 14 + *i*.
+- **Priming lines**: after `1b 00 00 01 01 00`, FlexColor reads one line at
+  a time 41 times (2 000 and 3 200 ppi) or 15 times (1 000 ppi), then
+  20-line blocks. Priming = 2 × the R/B gap + 1.
+- **R/B gap**: 20 lines at 2 000 and 3 200 ppi, 7 at 1 000 ppi (1 in the
+  preview), in the same direction as the preview. The gap does not grow
+  with the resolution between 2 000 and 3 200 ppi. **[confirmed]** Why is
+  unknown.
+- **Lines**: FlexColor reads 5/3 lines per line of its TIFF: 1 023 for 614,
+  566 for 340, 2 028 for 1 217, that is floor(TIFF lines × 5/3), plus the
+  priming lines. After R/B realignment, resampling by 3/5 gives FlexColor's
+  geometry: correlation of log values with its TIFF 0.997-0.999 at 2 000
+  and 3 200 ppi (R, G, B), 0.94-0.98 at 1 000 ppi. Same orientation, no
+  flip. Why 1 000 ppi matches less well is unknown: excluding clipped
+  pixels, or changing the gap, the resampling phase or the column offset,
+  does not improve it.
+- FlexColor's TIFF is not linear: against the flat-fielded data, its log
+  values follow a slope of about 0.51-0.55 (a gamma near 1/2) with a
+  residual of about 4 % (its curve and colour profile). Exact pixel values
+  are therefore not reproduced; the geometry is.
 
 ## 11. Preview sequence (FlexColor 4.8.13)
 
@@ -292,6 +367,11 @@ preview; logs outside the repository; "outside polling" means without
   before A2, which is warm.
   **[confirmed]** FlexColor chooses the sequence from that page 0x20 read.
   **[hypothesis]**
+- The three scan captures of the same day (§12) add six warm sessions
+  (three previews, three scans): each first page 0x20 read shows values
+  left by earlier use, none the power-on values, and none is followed by
+  the cold calibration. **[confirmed]** Consistent with the rule above;
+  still no second cold capture besides A1 and C.
 - Page 0x28 is not part of the choice: A1 is identical to C without its
   page 0x28 read (207 commands outside polling). **[confirmed]** What makes
   FlexColor read it is still unknown. The uncalibrated state of page 0x20
@@ -322,3 +402,52 @@ preview; logs outside the repository; "outside polling" means without
   checked. B's difference is on the read before any window requests a
   position, which is not checked: B would have passed. **[confirmed]** (the
   runner's rule applied to the captured responses).
+
+## 12. Scan sequence (FlexColor 4.8.13)
+
+Captures of 2026-11-17 (`tests/fixtures/scan-sequence-1000ppi.json`,
+`-2000ppi`, `-3200ppi`): X1 warm, in each FlexColor run one preview, then
+one scan of a small frame (0.77 × 0.78 cm at 2 000 ppi, 0.88 × 0.86 cm at
+1 000 ppi, 0.91 × 0.97 cm at 3 200 ppi) in RGB 16-bit, each in its own
+session (`CF 00 01 80` … `CF 00 02 80`). All captured statuses 0x00 (the
+asynchronous image reads have no captured status); no page 0x28 read.
+**[confirmed]**
+
+Every scan session starts like a warm preview session (same reads; first
+page 0x20 with values left by earlier use, see §5 and §11), then:
+
+1. **Calibration at the scan resolution**: windows at full CCD width
+   (7 992 or 2 664 pixels), `E4`, `F0` modes, then the full-width white and
+   dark read (230 lines, §10): the 50 white lines after
+   `F0 00 01 01 00 01`, the 180 dark lines after `F0 00 01 00 00 01` (§8).
+2. **400-line step** (focus, **[hypothesis]**, below): page 0x20, MODE
+   SENSE page 0x24, page 0x20, a window with offset 10 = 21 674 665, 401
+   lines and the measured position as target (§9),
+   then `1b 00 08 06 01 00` and 400 one-line reads, then `DB`. These lines
+   are not dark: they show the film, at the middle of the frame along the
+   drum (after flat field, their mean profile best matches image line
+   522 of 1 064, 284 of 581, 1 018 of 2 069, about 49 %; r = 0.87-0.996),
+   nearly constant from line to line, and the
+   sharpness of each line (mean difference between neighbouring pixels)
+   rises to a single maximum near line 200 and falls again, in all three
+   scans. **[confirmed]** A focus sweep: the scanner reads one line while
+   moving the focus, and FlexColor picks the sharpest position.
+   **[hypothesis]**, strongly supported.
+3. **Image**: the window of the frame (resolution, offset 14, width,
+   lines), `1b 00 00 01 01 00`, priming lines, 20-line blocks with a page
+   0x20 read before each, a last shorter block, `DB`, `CF 00 02 80`.
+
+The order of steps 1 and 2 is not fixed: at 1 000 and 3 200 ppi the
+white/dark read comes before the 400-line step; at 2 000 ppi it comes after
+it, with a single full-width window before the white/dark read (two at
+3 200 ppi, with target 25 000). The 1 000 ppi
+session also skips the `F0 00 00 00 01 01` that follows the first page
+0x20 read in the others, and starts with a window at 600 ppi (ratio
+10 000 000, binning 3). **[confirmed]** What decides the order is unknown.
+
+Unlike the preview, a scan cannot be replayed byte for byte from a capture
+in general: the image window carries the frame (offsets 14, 18, 22, 26)
+and the resolution, and the 400-line window carries the position measured
+just before (offset 50) and values not explained yet (54, 58, 62).
+**[confirmed]** for offset 50; **[hypothesis]** for the others.
+

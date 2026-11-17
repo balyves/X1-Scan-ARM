@@ -14,7 +14,11 @@ No Hasselblad code or file is reproduced in this repository.
 - The scanner logic is a large SCSI scanner class with methods for set
   window, read data, vendor mode pages (around 45 typed pages: drum, focus,
   CCD, motors, calibration, scanner status, EEPROM…), calibration (dark,
-  white, light, focus, positions) and firmware/FPGA download. On the X1, the
+  white, light, focus, positions) and firmware/FPGA download. The focus
+  calibration matches what the scan captures of 2026-11-17 show: before
+  each scan, FlexColor reads 400 lines of the film at one place after
+  `1b 00 08 06 01 00`, and their sharpness peaks once in the middle
+  (protocol.md §12; that this is the focus step is a **[hypothesis]**). On the X1, the
   firmware download path is not used during a normal preview (see
   protocol.md §2).
 - A model table selects the protocol variant per model. The X1 shares its

@@ -53,6 +53,17 @@ length) are identical to `preview-sequence.json`; its responses differ,
 notably the first measured position (25 739 instead of 25 867), which shows
 how much the scanner's measurements vary between sessions.
 
+## scan-sequence-1000ppi.json, scan-sequence-2000ppi.json, scan-sequence-3200ppi.json
+
+Three FlexColor runs of 2026-11-17, X1 warm, 6×7 holder 50200403: one
+preview, then one scan of a small frame (0.8 to 1 cm a side, RGB 16-bit)
+at 1 000, 2 000 and 3 200 ppi (1 655, 1 778 and 1 938 exchanges).
+Converted like the cold fixture (14 long responses completed from
+`preview-sequence.json`). They document the scan sequence (docs/protocol.md
+§12); nothing replays them. MODE SENSE page 0x24, read once per scan, is
+not in `CommandPolicy.readOnly` (`ScanFixtureTests`). Not copied into the
+app.
+
 ## preview-calibration-profile.json
 
 Per-column white and dark reference levels (2004 px × RGB, 16-bit) from the

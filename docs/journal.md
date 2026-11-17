@@ -280,3 +280,35 @@ the two fixtures (protocol.md §11):
   the one sent to the real X1: the threshold has to be decided again
   (decisions.md).
 
+## 2026-11-17: first scans captured (1 000, 2 000, 3 200 ppi)
+
+Three FlexColor runs by the user, each a preview then a scan of a small
+frame, plus FlexColor's 16-bit TIFF of each scan (all outside the
+repository). Fixtures `scan-sequence-1000ppi.json`, `-2000ppi`,
+`-3200ppi`; new decoder `tools/decode/decode_scan.py`. Details in
+protocol.md §9, §10 and §12. **[confirmed]** unless noted:
+
+- SET WINDOW offset 10 = resolution × 50 000 / 3 at 1 000, 2 000 and
+  3 200 ppi (that the preview is 160 ppi is a **[hypothesis]**).
+- Lines have 24 more pixels than asked (8 at 1 000 ppi, binning 3), at
+  the start of the line, dark in the image.
+- A scan reads its own white and dark at full width (50 + 180 lines), then
+  a 400-line step after `1b 00 08 06 01 00`. Those 400 lines are not dark:
+  one place of the film, at the middle of the frame along the drum, read
+  over and over, with a sharpness peak in the middle: a focus sweep
+  (**[hypothesis]**, strongly supported). The order of the two steps
+  changes between captures. 0xDF shows a new state, `00 06`, before that
+  step's reads.
+- The image follows `1b 00 00 01 01 00`: 41 one-line priming reads (15 at
+  1 000 ppi) = 2 × the R/B gap (20, or 7) + 1, then 20-line blocks.
+- FlexColor reads exactly floor(TIFF lines × 5/3) image lines. Decoded,
+  realigned and resampled by 3/5, our image matches FlexColor's TIFF
+  (correlation of log values 0.997-0.999 at 2 000 and 3 200 ppi). The
+  "about 1.7" factor is 5/3.
+- MODE SENSE page 0x24 (32 bytes) appears, once per scan; not in the
+  read-only policy.
+- No cold session in these runs; all six sessions are warm and follow the
+  page 0x20 rule. No page 0x28.
+- A scan cannot be a pure replay of a capture: its windows carry the frame
+  and a position measured during the same session.
+
