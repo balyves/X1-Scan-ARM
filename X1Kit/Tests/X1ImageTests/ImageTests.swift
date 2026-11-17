@@ -326,3 +326,40 @@ struct ScanDecodeTests {
         #expect(worst < 2e-4, "largest difference \(worst)")
     }
 }
+
+struct ScanRunDecodeTests {
+    /// The scan script run on the simulator (scan session of the 2 000 ppi
+    /// capture), decoded: 609 × 614 pixels matching the synthetic film.
+    @Test func runAndDecodeTheScan() async throws {
+        let fixture = try CaptureFixture.load(from: Fixtures.directory.appending(path: "scan-sequence-2000ppi.json"))
+        let simulator = SimulatedX1(fixture: fixture, profile: try Fixtures.calibrationProfile(), fromSeq: 834)
+        let script = ScanScript.flexColor4813Scan2000ppi
+        let capture = try await PreviewRunner(transport: simulator, configuration: .simulator, script: script).run()
+        let scan = try #require(script.lastIndex { $0.kind == .scan })
+        let window = try #require(script[..<scan].last { $0.command.opcode == 0x24 }?.command.dataOut)
+        let geometry = try #require(ScanGeometry(windowData: window))
+        let linear = try ScanDecoding.decode(calibration: capture.scanReference,
+                                             calibrationWidth: ScanScript.calibrationPixelsPerLine,
+                                             image: capture.leadIn + capture.image, geometry: geometry,
+                                             primingLines: capture.leadIn.count)
+        #expect(linear.width == 609 && linear.height == 614, "FlexColor's TIFF of that scan: 609 × 614")
+
+        let gap = ScanDecoding.lineGap(primingLines: capture.leadIn.count)
+        var worst: Double = 0
+        for row in stride(from: 0, to: linear.height, by: 3) {
+            let position = ScanDecoding.linesPerOutputLine * Double(row) + ScanDecoding.phase
+            let lower = Int(position)
+            let fraction = position - Double(lower)
+            for column in stride(from: 0, to: linear.width, by: 5) {
+                for channel in 0..<3 {
+                    func t(_ r: Int) -> Double {
+                        simulator.film.transmission(row: r + gap, column: column, channel: channel, width: 609)
+                    }
+                    let expected = t(lower) + (t(lower + 1) - t(lower)) * fraction
+                    worst = max(worst, abs(Double(linear.values[(row * linear.width + column) * 3 + channel]) - expected))
+                }
+            }
+        }
+        #expect(worst < 0.001, "largest error \(worst)")
+    }
+}

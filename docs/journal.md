@@ -363,3 +363,16 @@ sequence"). Nothing was sent to the real X1.
   first session of its FlexColor run), to check at the next capture
   session.
 
+## 2026-11-17: the 2 000 ppi scan on the simulator (step 2, part 2)
+
+- `ScanScript.flexColor4813Scan2000ppi`: FlexColor's scan session of the
+  2 000 ppi capture, command for command, with its 0xDF waits (including
+  the windows, after which FlexColor polled 0xDF too), `00 06` after
+  `1b 00 08 06 01 00`.
+- The runner fills the window of the 400-line step with the position read
+  just before, within the tolerance; the scan guard accepts that one
+  difference only (docs/decisions.md, "Real X1: scan"; CLAUDE.md rule 4).
+- On the simulator, the run goes through the guard and the decoded image
+  is 609 × 614 pixels, FlexColor's size for that scan. Nothing was sent to
+  the real X1; the app does not run scans yet.
+

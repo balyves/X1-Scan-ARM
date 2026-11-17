@@ -88,9 +88,11 @@ public actor SimulatedX1: SCSITransport {
     /// `skipping`: CDBs left out of the replay (the cold capture's page 0x28
     /// read, which the scripts no longer send). The polls recorded after it
     /// are then served after the command before it.
+    /// `fromSeq`: replay only from that captured exchange on (a scan session
+    /// that follows a preview in the same capture).
     public init(fixture: CaptureFixture, profile: CalibrationProfile, film: SyntheticFilm = .testPattern,
-                skipping: Set<[UInt8]> = []) {
-        let recorded = fixture.exchanges.filter { !skipping.contains($0.cdbBytes) }.map { exchange in
+                skipping: Set<[UInt8]> = [], fromSeq: Int = 0) {
+        let recorded = fixture.exchanges.filter { !skipping.contains($0.cdbBytes) && $0.seq >= fromSeq }.map { exchange in
             Recorded(seq: exchange.seq, cdb: exchange.cdbBytes, direction: exchange.commandDirection,
                      length: exchange.length, dataOut: exchange.dataOutBytes,
                      status: UInt8(exchange.status ?? 0), response: exchange.responseBytes)

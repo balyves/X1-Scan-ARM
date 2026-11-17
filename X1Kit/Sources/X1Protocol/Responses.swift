@@ -149,6 +149,10 @@ public struct ScannerState: Sendable, Hashable, CustomStringConvertible {
     public static let busyOtherPhase = ScannerState(rawValue: 0x0840)
     /// `00 01` seen once, right after SCAN; FlexColor then starts reading image lines. [confirmed]
     public static let afterScan = ScannerState(rawValue: 0x0001)
+    /// `00 06` seen once right after `1b 00 08 06 01 00` (the 400-line step of
+    /// a scan); FlexColor then starts its one-line reads [confirmed, three
+    /// scans]. A wait target of the scan script only: never accepted as busy.
+    public static let afterFocusSweep = ScannerState(rawValue: 0x0006)
 
     /// The `08 xx` states seen while FlexColor waited for `00 00` or `00 01`:
     /// 08 01 and 08 40 (2026-11-12), 08 02, 08 03, 08 06, 08 07 (right after

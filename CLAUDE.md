@@ -62,6 +62,16 @@ Scope: **Flextight X1 only**. Other Flextight / Imacon models are out of scope.
      stop at the first unexpected status or response. In the app, the only
      path for such commands is `IOKitTransport(capturedSequence:)`, created
      in `AppModel.swift`.
+   - **One exception to "byte for byte", for the scan only** (user's
+     decision of 2026-11-17, docs/decisions.md, "Real X1: scan"): the
+     target position (bytes 50-51) of the window right before `1b 00 08 06
+     01 00` carries the position read on page 0x20 just before, as FlexColor
+     does, only if it is within the position tolerance (256) of the captured
+     one; otherwise the scan stops before that window. Every other byte of
+     every command stays the captured one, and the guard
+     (`CapturedSequenceGuard.scan`) accepts no other difference. The 0xDF
+     state `00 06` is accepted only as the wait after that command, in the
+     scan script.
    - Never guess parameter values for positions, motors or exposure.
 5. **Instructions involving the scanner**: at every step, state explicitly
    the required state of the **X1 (on / off)** and of **FlexColor

@@ -106,6 +106,12 @@ public enum X1Command {
         .read(CDB.make(0x1B, parameter: 0x01, length: 0x01), length: 2)
     }
 
+    /// 0x1B `1b 00 08 06 01 00`, before the image of a scan: 400 one-line reads
+    /// follow, after 0xDF reads `00 06` (docs/protocol.md §12). Returns `00 00`. [confirmed]
+    public static func focusSweep() -> SCSICommand {
+        .read(CDB.make(0x1B, parameter: 0x0806, length: 0x01), length: 2)
+    }
+
     /// 0x28 READ(10) `28 00 01 00 NN FF LL LL LL 00`: NN lines, FF = 01 calibration / 00 image. [confirmed]
     public static func read(lines: UInt8, calibration: Bool, bytes: Int) -> SCSICommand {
         let parameter = 0x0100_0000 | UInt32(lines) << 8 | (calibration ? 0x01 : 0x00)

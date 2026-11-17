@@ -710,6 +710,44 @@ captures of 2026-11-17 (protocol.md §11). User's decisions.
   cold sequence again on a scanner left half calibrated, which no capture
   shows. After a complete preview, page 0x20 is enough.
 
+## Real X1: scan (2026-11-17, step 2; simulator only so far)
+
+User's decisions; nothing has been sent to the real X1.
+
+- **What is sent.** FlexColor's scan session of the 2 000 ppi capture
+  (`tests/fixtures/scan-sequence-2000ppi.json`, seq 834-1760;
+  `ScanScript.flexColor4813Scan2000ppi`): same holder, same frame
+  (609 × 614 pixels), same resolution. Every value is the captured one,
+  except one.
+- **The one substitution.** The window right before `1b 00 08 06 01 00`
+  (the 400-line step, protocol.md §12) carries at offset 50 the position
+  just read on page 0x20, as FlexColor did (16 651 in the capture). The
+  runner sends it only if it is within the position tolerance (256) of the
+  captured 16 651; otherwise it stops before that window. At 2 000 ppi only
+  16 651 was observed there (8 081 and 24 971 come from the other two
+  scans, other resolutions and frames): the range 16 395-16 907 is the
+  user's choice, not values FlexColor was seen sending. The
+  guard (`CapturedSequenceGuard.scan`) accepts that window with another
+  value in the same range only, at that place only, every other byte being
+  the captured one; anything else is refused. Rule 4 of CLAUDE.md says so.
+- **Start state.** The session must start warm: no scan right after
+  power-on was captured. Its first page 0x20 read must show values left by
+  earlier use (`startStateMismatch` otherwise), before anything moves.
+- **0xDF `00 06`.** The wait after `1b 00 08 06 01 00` ends on `00 06`,
+  where FlexColor started its one-line reads. It is a wait target of the
+  scan script only, never a busy state, so a preview never accepts it.
+- **Page 0x24** is read (read-only list since the same day).
+- **Stop.** `1b 00 08 06 01 00` counts as SCAN for the stop rules: after
+  it, an anomaly sends `DB` then waits for `00 00`.
+- **Tested on the simulator**: the script is the captured session command
+  for command, with FlexColor's waits; the run goes through the guard;
+  the decoded image matches the synthetic film (609 × 614); positions
+  within the tolerance are substituted and accepted, beyond it nothing more
+  is sent; a scanner just switched on is refused; a fault during the
+  400-line step sends the stop.
+- **Not done yet**: the app (a button, its confirmation, its log), which
+  will be proposed before it is written.
+
 ## Real X1: the sequence right after power-on only (2026-11-16)
 
 Superseded on 2026-11-17 by the section above (cold or warm, chosen by

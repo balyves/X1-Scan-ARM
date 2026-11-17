@@ -9,7 +9,8 @@ public struct PreviewConfiguration: Sendable {
     public var stateTimeout: Duration
     /// Largest accepted difference between a measured position (page 0x20)
     /// and the captured one, checked only after a window that requests a
-    /// position (`requestsPosition`). 256 (docs/decisions.md, "Position
+    /// position (`requestsPosition`), at a `.positionGate` read, and for the
+    /// substituted position of a `.positionWindow`. 256 (docs/decisions.md, "Position
     /// tolerance"): the check is for gross anomalies (thousands); the largest
     /// difference seen on a checked read is 192, in one capture, and
     /// differences come in steps of 64.
@@ -83,6 +84,8 @@ public struct PreviewRunner: Sendable {
         // scan), not a measurement: no tolerance check until one has been sent.
         var positionRequested = false
         var steps = plan?.common ?? fixedScript
+        // Position of the last page 0x20 read, for `.positionWindow`.
+        var lastPosition: Int?
         var phases = PreviewPhase.phases(for: script)
         var index = 0
 
@@ -91,17 +94,25 @@ public struct PreviewRunner: Sendable {
             do {
                 if Task.isCancelled { throw PreviewAnomaly.cancelled }
                 progress?(.step(index: index, count: phases.count, phase: phases[min(index, phases.count - 1)]))
-                if step.kind == .scan { scanSent = true }  // set before sending: the scanner may have started
-                let result = try await transport.execute(step.command)
-                try verify(result, of: step.command)
+                if step.kind == .scan {
+                    scanSent = true  // set before sending: the scanner may have started
+                    lastLineCount = nil  // page 0x20 counts the lines since this SCAN
+                }
+                let command = try substituted(step, lastPosition: lastPosition, progress: progress)
+                let result = try await transport.execute(command)
+                try verify(result, of: command)
                 try handle(result, of: step, scanSent: scanSent, positionRequested: positionRequested,
                            lastLineCount: &lastLineCount, capture: &capture, progress: progress)
+                if command.opcode == 0x5A, command.cdb[2] == ScanStatusPage.page,
+                   let status = try? ScanStatusPage(result.data) {
+                    lastPosition = status.measuredPosition
+                }
                 if step.kind == .sequenceChoice, let plan, let choice = capture.choice {
                     steps = plan.steps(for: choice)
                     phases = PreviewPhase.phases(for: steps)
                     progress?(.sequenceChosen(choice))
                 }
-                if Self.requestsPosition(step.command) { positionRequested = true }
+                if Self.requestsPosition(command) { positionRequested = true }
                 if let state = steps[index].waitUntil {
                     try await waitForState(state, honouringCancellation: true)
                 }
@@ -125,6 +136,29 @@ public struct PreviewRunner: Sendable {
     }
 
     // MARK: Checks
+
+    /// The command to send for `step`: the captured one, or for
+    /// `.positionWindow` the captured window with the last measured position
+    /// at offset 50, if it is within the tolerance of the captured position.
+    private func substituted(_ step: PreviewStep, lastPosition: Int?,
+                             progress: PreviewEventHandler?) throws -> SCSICommand {
+        guard case .positionWindow(let captured) = step.kind else { return step.command }
+        guard let measured = lastPosition else { throw PreviewAnomaly.malformedResponse("no position read before the window") }
+        if measured != captured {
+            progress?(.positionDifference(captured: captured, measured: measured, checked: true))
+        }
+        guard abs(measured - captured) <= configuration.positionTolerance, (0...0xFFFF).contains(measured) else {
+            throw PreviewAnomaly.positionOutOfTolerance(captured: captured, measured: measured,
+                                                        tolerance: configuration.positionTolerance)
+        }
+        var data = step.command.dataOut
+        guard data.count >= 54, Int(data[50]) | Int(data[51]) << 8 == captured, data[52] == 0, data[53] == 0 else {
+            throw PreviewAnomaly.malformedResponse("the window does not carry the captured position")
+        }
+        data[50] = UInt8(measured & 0xFF)
+        data[51] = UInt8(measured >> 8)
+        return X1Command.setWindow(data)
+    }
 
     private func verify(_ result: SCSIResult, of command: SCSICommand) throws {
         guard result.isGood else {
@@ -181,6 +215,18 @@ public struct PreviewRunner: Sendable {
             }
             capture.scanStatuses.append(status)
             progress?(.scanStatus(status))
+        case .startState(let required):
+            let status = try parse { try ScanStatusPage(result.data) }
+            let state: PreviewPlan.Choice? = status.showsPowerOnValues ? .cold
+                : status.showsValuesLeftByEarlierUse ? .warm : nil
+            guard state == required else {
+                throw PreviewAnomaly.startStateMismatch(required: required, channelValues: status.channelValues)
+            }
+            capture.choice = required
+            capture.scanStatuses.append(status)
+            progress?(.scanStatus(status))
+        case .positionWindow:
+            break  // checked before sending (`substituted`)
         case .scanStatus(let captured):
             let status = try parse { try ScanStatusPage(result.data) }
             if status.measuredPosition != captured {
@@ -270,6 +316,8 @@ public enum PreviewAnomaly: Error, Hashable, CustomStringConvertible {
     case notJustSwitchedOn(channelValues: [Int])
     /// The first page 0x20 read shows neither the power-on values nor values left by earlier use.
     case unrecognisedStartState(channelValues: [Int])
+    /// A script that fits one state only (a scan: warm) found another one.
+    case startStateMismatch(required: PreviewPlan.Choice, channelValues: [Int])
     case lineCounterWentBack(previous: Int, current: Int)
     case unexpectedState(ScannerState, waitingFor: ScannerState)
     case stateTimeout(waitingFor: ScannerState, last: ScannerState)
@@ -297,6 +345,10 @@ public enum PreviewAnomaly: Error, Hashable, CustomStringConvertible {
             "unexpected scanner state at session start (page 0x20 bytes 19-24: "
                 + values.map(String.init).joined(separator: " / ")
                 + "): neither the power-on values nor values left by earlier use"
+        case .startStateMismatch(let required, let values):
+            "the sequence needs the scanner "
+                + (required == .warm ? "used before (values left by earlier use)" : "just switched on")
+                + "; page 0x20 bytes 19-24: " + values.map(String.init).joined(separator: " / ")
         case .unexpectedCarriagePosition(let captured, let measured, let tolerance):
             "unexpected carriage position: read \(measured), expected \(captured), difference \(measured - captured) "
                 + "(tolerance \(tolerance)); stopped before the window with target 25 000"

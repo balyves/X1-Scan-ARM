@@ -22,6 +22,16 @@ public struct PreviewStep: Sendable {
         /// stops the preview. Before this read only reads, D2 and the session
         /// start have been sent.
         case sequenceChoice
+        /// Page 0x20, first read of a session whose script fits only one state
+        /// (a scan: no scan right after power-on was captured). Any other state
+        /// stops before anything moves.
+        case startState(PreviewPlan.Choice)
+        /// SET WINDOW whose target position (offset 50, LE16) is replaced by the
+        /// position of the last page 0x20 read, as FlexColor did (the window of
+        /// a scan's 400-line step, docs/protocol.md §9). The only substitution
+        /// allowed: the position must be within the tolerance of the captured
+        /// one, or the run stops before sending the window (docs/decisions.md).
+        case positionWindow(capturedPosition: Int)
         /// READ: data kept for decoding.
         case read(ReadPurpose)
         /// 0x1B SCAN: must return `00 00`. From here on, an anomaly triggers the stop sequence.
@@ -35,8 +45,13 @@ public struct PreviewStep: Sendable {
         case whiteReference
         /// Dark reference lines at preview width.
         case darkReference
-        /// The single lines FlexColor reads right after SCAN. Role unknown; not decoded.
+        /// The single lines FlexColor reads right after SCAN. Not decoded in a
+        /// preview; in a scan, the first lines of the image (priming lines).
         case leadIn
+        /// Scan: the full-width white then dark lines (10 per read).
+        case scanReference
+        /// Scan: one line of the 400-line step (focus sweep, [hypothesis]).
+        case focusLine
         /// Image lines.
         case image
     }
@@ -101,6 +116,8 @@ public struct PreviewCapture: Sendable {
     public var darkReference: [[UInt8]] = []
     public var leadIn: [[UInt8]] = []
     public var image: [[UInt8]] = []
+    public var scanReference: [[UInt8]] = []
+    public var focusLines: [[UInt8]] = []
     public var scanStatuses: [ScanStatusPage] = []
     /// The sequence chosen after the first page 0x20 read (nil for a fixed script).
     public var choice: PreviewPlan.Choice?
@@ -114,6 +131,8 @@ public struct PreviewCapture: Sendable {
         case .darkReference: darkReference.append(data)
         case .leadIn: leadIn.append(data)
         case .image: image.append(data)
+        case .scanReference: scanReference.append(data)
+        case .focusLine: focusLines.append(data)
         }
     }
 }

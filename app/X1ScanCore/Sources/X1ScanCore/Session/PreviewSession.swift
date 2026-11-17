@@ -231,7 +231,7 @@ public final class PreviewSession {
             case .whiteReference: white.append(bytes)
             case .darkReference: dark.append(bytes)
             case .image: appendImage(bytes)
-            case .calibrationLine, .leadIn: break
+            case .calibrationLine, .leadIn, .scanReference, .focusLine: break  // the app runs no scan yet
             }
         }
     }
