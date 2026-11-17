@@ -382,3 +382,15 @@ sequence"). Nothing was sent to the real X1.
   the position after that window stays constant: at the target at 2 000
   and 3 200 ppi, 83 below it at 1 000 ppi (8 081 sent, 7 998 read).
 
+## 2026-11-17: scan in the app, on the virtual X1 (step 2, part 3)
+
+Interface validated by the user before it was written (docs/decisions.md,
+"Real X1: scan", "In the app"). On the virtual X1 the Scan button replays
+FlexColor's 2 000 ppi scan session, decodes it (609 × 614 px) and saves a
+16-bit TIFF at 2 000 ppi in the export folder. On the real X1 it is behind
+`EnableRealScan`, a complete real preview and a two-box confirmation;
+tested only against the simulator behind the scan guard. Phases come from
+the commands sent ("Focusing" for the 400-line step, a **[hypothesis]**).
+The run log is now closed after the end of the session, so that it can
+note the file saved. Nothing was sent to the real X1.
+

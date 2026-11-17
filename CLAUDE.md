@@ -131,7 +131,10 @@ available; ask.
   0x20 read), behind the hidden setting `EnableRealPreview`, a confirmation
   before every run and `CapturedSequenceGuard` built from both captures
   (docs/decisions.md, step 4 and "Real X1: cold or warm sequence").
-  Otherwise the real X1 is only read.
+  Scan: FlexColor's 2 000 ppi scan session (`ScanScript`), on the virtual
+  X1, and on the real X1 behind the hidden setting `EnableRealScan`, after a
+  complete real preview, with a confirmation and `CapturedSequenceGuard.scan`
+  (docs/decisions.md, "Real X1: scan"). Otherwise the real X1 is only read.
 - `tools/git-hooks/`: `x1-check` (serial numbers, scan and firmware files, size,
   commit messages), run by the pre-commit and commit-msg hooks and by the CI.
 - `.claude/agents/x1-reviewer.md`: pre-commit review subagent.

@@ -2,40 +2,61 @@
 import X1Protocol
 import X1Transport
 
-/// Broad stage of the preview sequence, for progress display. Derived from the
-/// script itself (docs/protocol.md §11), never sent to the scanner.
+/// Broad stage of a preview or scan sequence, for progress display. Derived
+/// from the commands of the script themselves, not from a fixed order (in
+/// FlexColor's scans the white/dark read comes before or after the 400-line
+/// step depending on the resolution; docs/protocol.md §11, §12). Never sent
+/// to the scanner.
 public enum PreviewPhase: Sendable, Hashable, CaseIterable {
     /// Identity, vendor pages, usage log, before the session starts.
     case initialisation
-    /// From session start (`CF 00 01 80`) to the first white reference read.
+    /// From session start (`CF 00 01 80`): windows, modes, exposure, positions.
     case calibration
-    /// White and dark references at preview width, up to SCAN.
+    /// White and dark references (preview width, or full width in a scan).
     case references
-    /// From SCAN to the stop command.
+    /// Scan only: from `1b 00 08 06 01 00` to its stop, the 400-line step
+    /// (focus, [hypothesis]).
+    case focus
+    /// From the image SCAN (`1b 00 00 01 01 00`) to the stop command.
     case scanning
-    /// Stop (`DB`) and end of session.
+    /// Stop (`DB`) after the image, and end of session.
     case finishing
 
     /// The phase of every step of `script`, in order.
     public static func phases(for script: [PreviewStep]) -> [PreviewPhase] {
         let sessionStart = X1Command.session(.start)
+        let sessionEnd = X1Command.session(.end)
         let stop = X1Command.stop()
+        let focusSweep = X1Command.focusSweep()
+        let imageScan = X1Command.scan()
         var phase = PreviewPhase.initialisation
         return script.map { step in
-            switch (phase, step.kind) {
-            case (.initialisation, _) where step.command == sessionStart:
+            let command = step.command
+            switch phase {
+            case .initialisation where command == sessionStart:
                 phase = .calibration
-            case (.calibration, .read(.whiteReference)):
-                phase = .references
-            case (.references, .scan):
-                phase = .scanning
-            case (.scanning, _) where step.command == stop:
+            case .calibration, .references:
+                if command == focusSweep { phase = .focus }
+                else if command == imageScan { phase = .scanning }
+                else if case .read(.whiteReference) = step.kind { phase = .references }
+                else if case .read(.scanReference) = step.kind { phase = .references }
+                else if phase == .references, command.opcode == 0xF0 || command.opcode == 0xE4,
+                        !isReferenceMode(command) { phase = .calibration }
+            case .focus where command == stop:
+                phase = .calibration
+            case .scanning where command == stop || command == sessionEnd:
                 phase = .finishing
             default:
                 break
             }
             return phase
         }
+    }
+
+    /// The modes around the white and dark reads (`F0 00 01 x 0 01`): they
+    /// belong to the references phase.
+    private static func isReferenceMode(_ command: SCSICommand) -> Bool {
+        command.opcode == 0xF0 && command.cdb[2] == 0x01 && command.cdb[4] == 0x00
     }
 }
 

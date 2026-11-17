@@ -49,6 +49,7 @@ enum Strings {
         case .initialisation: String(localized: "Initialising", comment: "Preview phase")
         case .calibration: String(localized: "Calibrating", comment: "Preview phase")
         case .references: String(localized: "Reading references", comment: "Preview phase: white and dark references")
+        case .focus: String(localized: "Focusing", comment: "Scan phase: the 400-line step before the image")
         // Not shown today: sessionStatus shows "Preview: n of m lines" for this phase.
         case .scanning: String(localized: "Reading the image", comment: "Preview phase: image lines are read")
         case .finishing: String(localized: "Finishing", comment: "Preview phase")
@@ -80,14 +81,15 @@ enum Strings {
 
     /// Status line of the window.
     @MainActor
-    static func sessionStatus(_ session: PreviewSession) -> String {
+    static func sessionStatus(_ session: PreviewSession, scanSave: Result<URL, ExportError>? = nil) -> String {
+        if session.kind == .scan { return scanStatus(session, save: scanSave) }
         switch session.state {
         case .idle:
             return String(localized: "Ready", comment: "Status")
         case .running:
             guard let phase = session.progress.phase else { return String(localized: "Starting", comment: "Status") }
             if phase == .scanning {
-                // The only session today is a preview; a real scan will say "Scanning: …".
+                // A scan has its own texts (scanStatus).
                 return String(localized: "Preview: \(session.progress.linesReceived) of \(session.progress.linesExpected) lines",
                               comment: "Status while the preview reads the image lines")
             }
@@ -101,6 +103,63 @@ enum Strings {
             return emergencyStop(outcome)
         case .failed:
             return String(localized: "Preview stopped after an anomaly", comment: "Status")
+        }
+    }
+
+    /// Status line of the window during and after a scan.
+    @MainActor
+    static func scanStatus(_ session: PreviewSession, save: Result<URL, ExportError>?) -> String {
+        let progress = session.progress
+        switch session.state {
+        case .idle:
+            return String(localized: "Ready", comment: "Status")
+        case .running:
+            switch progress.phase {
+            case nil:
+                return String(localized: "Starting", comment: "Status")
+            case .focus?:
+                return String(localized: "Focusing: \(progress.focusLinesReceived) of \(progress.focusLinesExpected) lines",
+                              comment: "Status while the scan reads the 400-line step")
+            case .references?:
+                return String(localized: "White and dark", comment: "Status while the scan reads its white and dark lines")
+            case .scanning?, .finishing?:
+                return String(localized: "Image: \(progress.linesReceived) of \(progress.linesExpected) lines",
+                              comment: "Status while the scan reads the image lines")
+            case let phase?:
+                return Self.phase(phase)
+            }
+        case .stopping:
+            return String(localized: "Stopping…", comment: "Status while the stop sequence runs")
+        case .finished:
+            switch save {
+            case .success(let url)?:
+                return String(localized: "Scan complete: \(url.lastPathComponent)", comment: "Status, with the file saved")
+            case .failure?:
+                return String(localized: "Scan complete, not saved", comment: "Status: the TIFF could not be written")
+            case nil:
+                return String(localized: "Scan complete", comment: "Status")
+            }
+        case .stopped(let outcome):
+            guard let outcome else { return String(localized: "Scan stopped", comment: "Status, stopped before SCAN") }
+            return emergencyStop(outcome)
+        case .failed:
+            return String(localized: "Scan stopped after an anomaly", comment: "Status")
+        }
+    }
+
+    /// Why Scan is disabled (tooltip).
+    static func scanBlock(_ block: ToolbarState.ScanBlock) -> String {
+        switch block {
+        case .busy:
+            String(localized: "A preview or scan is in progress.", comment: "Why Scan is disabled")
+        case .noScanCapture:
+            String(localized: "The captured scan could not be loaded.", comment: "Why Scan is disabled")
+        case .noExportFolder:
+            String(localized: "Choose an export folder first: the scan is saved there.", comment: "Why Scan is disabled")
+        case .realScanDisabled:
+            String(localized: "Scanning on the real X1 is not enabled.", comment: "Why Scan is disabled")
+        case .needsCompletePreview:
+            String(localized: "Run a complete real preview first.", comment: "Why Scan is disabled")
         }
     }
 
@@ -167,15 +226,17 @@ enum Strings {
 
     /// Bottom bar: "Virtual X1 · Ready".
     @MainActor
-    static func statusLine(_ line: ScannerStatusLine, session: PreviewSession) -> String {
-        "\(source(line.source)) · \(statusDetail(line, session: session))"
+    static func statusLine(_ line: ScannerStatusLine, session: PreviewSession,
+                           scanSave: Result<URL, ExportError>? = nil) -> String {
+        "\(source(line.source)) · \(statusDetail(line, session: session, scanSave: scanSave))"
     }
 
     /// The state alone: "Ready", "Identity read"…
     @MainActor
-    static func statusDetail(_ line: ScannerStatusLine, session: PreviewSession) -> String {
+    static func statusDetail(_ line: ScannerStatusLine, session: PreviewSession,
+                             scanSave: Result<URL, ExportError>? = nil) -> String {
         switch line.detail {
-        case .session: sessionStatus(session)
+        case .session: sessionStatus(session, scanSave: scanSave)
         case .unavailable: String(localized: "Unavailable", comment: "Status: virtual X1 fixtures missing")
         case .notRead: String(localized: "Not read", comment: "Scanner state")
         case .reading: String(localized: "Reading…", comment: "Status: reading the real X1")

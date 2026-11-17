@@ -19,6 +19,10 @@ public struct VirtualScanner: Sendable {
     public let coldFixture: CaptureFixture
     public let profile: CalibrationProfile
     public let pacing: Pacing
+    /// FlexColor's preview then 2 000 ppi scan (2026-11-17): the virtual X1
+    /// replays its scan session, and the real X1's scan guard is built from
+    /// it (`ScanScript.flexColor4813Scan2000ppi`). Nil if not bundled: no scan.
+    public let scanFixture: CaptureFixture?
 
     /// Identity, counters and state as recorded in the capture.
     public let info: ScannerInfo
@@ -27,22 +31,39 @@ public struct VirtualScanner: Sendable {
     var transportWrapper: (@Sendable (any SCSITransport) -> any SCSITransport)?
 
     public init(fixture: CaptureFixture, coldFixture: CaptureFixture, profile: CalibrationProfile,
-                pacing: Pacing = .display) throws {
+                scanFixture: CaptureFixture? = nil, pacing: Pacing = .display) throws {
         self.fixture = fixture
         self.coldFixture = coldFixture
+        self.scanFixture = scanFixture
         self.profile = profile
         self.pacing = pacing
         info = try Self.recordedInfo(in: fixture)
     }
 
-    /// Loads `preview-sequence.json`, `preview-sequence-cold.json` and
-    /// `preview-calibration-profile.json` from `directory`.
+    /// Loads `preview-sequence.json`, `preview-sequence-cold.json`,
+    /// `preview-calibration-profile.json` and, if present,
+    /// `scan-sequence-2000ppi.json` from `directory`.
     public static func load(fixturesDirectory directory: URL, pacing: Pacing = .display) throws -> VirtualScanner {
-        try VirtualScanner(
+        let scanURL = directory.appending(path: "scan-sequence-2000ppi.json")
+        let scan = FileManager.default.fileExists(atPath: scanURL.path) ? try CaptureFixture.load(from: scanURL) : nil
+        return try VirtualScanner(
             fixture: CaptureFixture.load(from: directory.appending(path: "preview-sequence.json")),
             coldFixture: CaptureFixture.load(from: directory.appending(path: "preview-sequence-cold.json")),
             profile: CalibrationProfile.load(from: directory.appending(path: "preview-calibration-profile.json")),
-            pacing: pacing)
+            scanFixture: scan, pacing: pacing)
+    }
+
+    /// First exchange of the scan session in `scanFixture` (its last `CF 00 01 80`).
+    var scanSessionSeq: Int? {
+        scanFixture?.exchanges.last { $0.cdb == "cf 00 01 80 00 00" }?.seq
+    }
+
+    /// A fresh replay of the scan session, for one scan.
+    func makeScanTransport() -> (transport: any SCSITransport, simulator: SimulatedX1)? {
+        guard let scanFixture, let start = scanSessionSeq else { return nil }
+        let simulator = SimulatedX1(fixture: scanFixture, profile: profile, fromSeq: start)
+        let paced: any SCSITransport = pacing == .none ? simulator : PacedTransport(inner: simulator, pacing: pacing)
+        return (transportWrapper.map { $0(paced) } ?? paced, simulator)
     }
 
     /// A fresh replay, from the start of the capture. One per preview.

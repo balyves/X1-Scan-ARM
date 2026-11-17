@@ -36,6 +36,21 @@ public struct ScannerStatusLine: Sendable, Hashable {
     }
 }
 
+/// The checks the user confirms before every scan on the real X1.
+public struct RealScanConfirmation: Sendable, Hashable {
+    /// Same holder as the capture (6x7, 50200403), film in place, nothing moved since the preview.
+    public var sameHolderNothingMoved = false
+    /// The capture's frame and resolution are used, not the panel's.
+    public var captureFrameUnderstood = false
+
+    public init(sameHolderNothingMoved: Bool = false, captureFrameUnderstood: Bool = false) {
+        self.sameHolderNothingMoved = sameHolderNothingMoved
+        self.captureFrameUnderstood = captureFrameUnderstood
+    }
+
+    public var isComplete: Bool { sameHolderNothingMoved && captureFrameUnderstood }
+}
+
 /// The checks the user confirms before every preview on the real X1.
 public struct RealPreviewConfirmation: Sendable, Hashable {
     public var scannerOn = false
@@ -150,7 +165,16 @@ public final class AppModel {
         /// Set when a real preview starts, cleared when it completes: true
         /// after a stop, an anomaly or a quit during a real preview.
         static let realPreviewInterrupted = "RealPreviewInterrupted"
+        /// Hidden setting, no interface: `defaults write org.x1scanarm.X1Scan EnableRealScan -bool YES`.
+        static let enableRealScan = "EnableRealScan"
     }
+
+    /// A real preview completed (scanner side) since launch, with no real run
+    /// interrupted since: the X1 is in the state the scan needs. Not kept
+    /// between launches.
+    public private(set) var realPreviewCompletedThisLaunch = false
+    /// The TIFF saved after the last scan, or why it could not be.
+    public private(set) var lastScanSave: Result<URL, ExportError>?
 
     /// The last real preview did not complete (stopped, anomaly, app quit or
     /// crashed while it ran): the next one asks for the X1 to be switched off
@@ -226,8 +250,14 @@ public final class AppModel {
     public var toolbar: ToolbarState {
         ToolbarState(source: source, session: session.state, virtualAvailable: virtualScanner != nil,
                      hasImage: (session.image?.height ?? 0) > 0, hasExportFolder: exportSettings.folder != nil,
-                     realPreviewEnabled: realPreviewEnabled)
+                     realPreviewEnabled: realPreviewEnabled, scanAvailable: virtualScanner?.scanFixture != nil,
+                     scanHasExportFolder: exportSettings.folder != nil,
+                     realScanEnabled: realScanEnabled,
+                     realScanReady: realPreviewCompletedThisLaunch && !realPreviewNeedsPowerCycle)
     }
+
+    /// The hidden setting (off by default): scan on the real X1 allowed, with a confirmation.
+    public var realScanEnabled: Bool { defaults.bool(forKey: Keys.enableRealScan) }
 
     /// The hidden setting (off by default): preview on the real X1 allowed, with a confirmation.
     public var realPreviewEnabled: Bool { defaults.bool(forKey: Keys.enableRealPreview) }
@@ -305,24 +335,136 @@ public final class AppModel {
         realPreviewActive = true
         lastPreviewWasReal = true
         previewLog = log
-        let interruptedBefore = realPreviewNeedsPowerCycle
+        realPreviewCompletedThisLaunch = false
+        let interrupted = beginRealRun()
+        session.start(onRealScanner: realConnection(sequence), log: log) { [weak self] state in
+            guard let self else { return }
+            self.realPreviewCompletedThisLaunch = self.endRealRun(state, interruptedBefore: interrupted)
+        }
+        return .success(log.textURL)
+    }
+
+    /// Marks a real run as started (interrupted until it completes); returns
+    /// the flag as it was.
+    private func beginRealRun() -> Bool {
+        let before = realPreviewNeedsPowerCycle
         defaults.set(true, forKey: Keys.realPreviewInterrupted)
-        session.start(onRealScanner: realConnection(sequence), log: log) { [defaults] state in
-            // The scanner side completed (end of session sent): no power cycle needed,
-            // even if decoding the image failed.
-            if state == .finished {
+        return before
+    }
+
+    /// Updates the interrupted flag at the end of a real run. True when the
+    /// scanner side completed (end of session sent), even if decoding failed:
+    /// no power cycle is needed then.
+    @discardableResult
+    private func endRealRun(_ state: PreviewSession.State, interruptedBefore: Bool) -> Bool {
+        if state == .finished {
+            defaults.set(false, forKey: Keys.realPreviewInterrupted)
+            return true
+        }
+        if case .failed(let failure) = state {
+            switch failure.cause {
+            case .decoding:
                 defaults.set(false, forKey: Keys.realPreviewInterrupted)
-            } else if case .failed(let failure) = state {
-                switch failure.cause {
-                case .decoding: defaults.set(false, forKey: Keys.realPreviewInterrupted)
+                return true
+            case .anomaly(.couldNotOpen):
                 // Nothing was sent: back to the state before this run.
-                case .anomaly(.couldNotOpen):
-                    defaults.set(interruptedBefore, forKey: Keys.realPreviewInterrupted)
-                case .anomaly: break
-                }
+                defaults.set(interruptedBefore, forKey: Keys.realPreviewInterrupted)
+            case .anomaly:
+                break
+            }
+        }
+        return false
+    }
+
+    /// FlexColor's captured 2 000 ppi scan on the virtual X1; the TIFF is
+    /// saved in the export folder at the end.
+    public func startScan() {
+        guard source == .virtual, toolbar.canScan, let virtualScanner else { return }
+        prepareNewPreview()
+        realPreviewActive = false
+        lastPreviewWasReal = false
+        previewLog = nil
+        lastScanSave = nil
+        session.startScan(on: virtualScanner) { [weak self] state in
+            if state == .finished { self?.saveScan(Date()) }
+        }
+    }
+
+    /// FlexColor's captured 2 000 ppi scan on the real X1 (docs/decisions.md,
+    /// "Real X1: scan"): only with `EnableRealScan`, the real source, a real
+    /// preview completed since launch with nothing interrupted since, and both
+    /// checks confirmed. The guard lets through only the scan session with its
+    /// one substitution; every command is logged. The TIFF is saved at the end.
+    @discardableResult
+    public func startRealScan(_ confirmation: RealScanConfirmation) -> Result<URL, RealPreviewError> {
+        guard source == .real, confirmation.isComplete, toolbar.canScan, realStatus != .reading else {
+            return .failure(.notAllowed)
+        }
+        guard let fixture = virtualScanner?.scanFixture else {
+            return .failure(.noCapturedSequence(virtualScannerError ?? "no scan capture"))
+        }
+        let sequence: CapturedSequenceGuard
+        do {
+            sequence = try CapturedSequenceGuard.scan(fixture: fixture,
+                                                      positionTolerance: PreviewConfiguration.defaultPositionTolerance)
+        } catch {
+            return .failure(.noCapturedSequence(error.description))
+        }
+        let date = Date()
+        let tolerance = PreviewConfiguration.defaultPositionTolerance
+        let log: CaptureLog
+        do {
+            log = try makeLog(date, prefix: "x1scan-scan", header: [
+                "X1 Scan: FlexColor 4.8.13's captured 2 000 ppi scan replayed on the real X1, \(date.ISO8601Format())",
+                "Sequence: scan session of scan-sequence-2000ppi.json (frame 609 x 614 px at 2 000 ppi).",
+                "One substitution: the target position of the 400-line step's window is the position read",
+                "just before, within \(tolerance) of the captured 16 651; later positions are compared with",
+                "the target sent. Every position that differs is noted below.",
+            ])
+        } catch {
+            return .failure(.log(String(describing: error)))
+        }
+        prepareNewPreview()
+        lastPreviewLog = log.textURL
+        realPreviewActive = true
+        lastPreviewWasReal = true
+        previewLog = log
+        lastScanSave = nil
+        let interrupted = beginRealRun()
+        session.startScan(onRealScanner: realConnection(sequence), log: log) { [weak self] state in
+            guard let self else { return }
+            self.endRealRun(state, interruptedBefore: interrupted)
+            // Every real scan needs a complete real preview just before it, as in the
+            // captures (each is one preview, then one scan); scan after scan was never captured.
+            self.realPreviewCompletedThisLaunch = false
+            guard state == .finished else { return }
+            self.saveScan(Date())
+            switch self.lastScanSave {
+            case .success(let url)?:
+                let size = "\(self.session.image?.width ?? 0) x \(self.session.image?.height ?? 0) px"
+                log.note("saved: \(url.path(percentEncoded: false)) (\(size))")
+            case .failure(let error)?:
+                log.note("not saved: \(error)")
+            case nil:
+                break
             }
         }
         return .success(log.textURL)
+    }
+
+    /// Saves the scan as a 16-bit RGB TIFF (linear, no profile) in the export
+    /// folder, named by the export template, with the scan's resolution.
+    /// Nothing else goes into the file: no serial number, no description.
+    /// The same name rules as Export (roll name validated, frame number moved on).
+    private func saveScan(_ date: Date) {
+        if exportSettings.needsRollValidation { exportSettings.validateRoll() }
+        var settings = exportSettings
+        settings.format = .rgb16
+        let result = Result { () throws(ExportError) -> URL in
+            try ExportService.export(session.image, settings: settings, date: date, resolution: ScanScript.resolution)
+        }
+        lastScanSave = result
+        if case .success = result, exportSettings.incrementsFrame { exportSettings.frame += 1 }
     }
 
     private func prepareNewPreview() {
@@ -334,30 +476,37 @@ public final class AppModel {
         renderedRevision = -1
     }
 
-    /// `<captureFolder>/<yyyy-MM-dd>/x1scan-apercu-<HHmmss>.txt` and `.raw`;
-    /// `-2`, `-3`… are added when a log of that second already exists.
     private func makePreviewLog(_ date: Date) throws -> CaptureLog {
+        try makeLog(date, prefix: "x1scan-apercu", header: [
+            "X1 Scan: FlexColor 4.8.13's captured preview replayed on the real X1, \(date.ISO8601Format())",
+            "Sequences: right after power-on (preview-sequence-cold.json, without its page 0x28",
+            "read) or after earlier use (preview-sequence.json), chosen by the first page 0x20 read.",
+            "Position tolerance \(PreviewConfiguration.defaultPositionTolerance); every position",
+            "that differs from the capture is noted below.",
+        ])
+    }
+
+    /// `<captureFolder>/<yyyy-MM-dd>/<prefix>-<HHmmss>.txt` and `.raw`; `-2`,
+    /// `-3`… are added when a log of that second already exists. The header
+    /// lines are followed by the format and the serial-number warning.
+    private func makeLog(_ date: Date, prefix: String, header: [String]) throws -> CaptureLog {
         let parts = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
         let day = String(format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
         let time = String(format: "%02d%02d%02d", parts.hour ?? 0, parts.minute ?? 0, parts.second ?? 0)
         let folder = captureFolder.appending(path: day)
-        var base = "x1scan-apercu-\(time)"
+        var base = "\(prefix)-\(time)"
         var suffix = 2
         while FileManager.default.fileExists(atPath: folder.appending(path: base + ".txt").path)
                 || FileManager.default.fileExists(atPath: folder.appending(path: base + ".raw").path) {
-            base = "x1scan-apercu-\(time)-\(suffix)"
+            base = "\(prefix)-\(time)-\(suffix)"
             suffix += 1
         }
+        let lines = header + [
+            "Format of tools/capture/cap3.py; image data in \(base).raw.",
+            "Contains the scanner's serial number: keep outside the repository.",
+        ]
         return try CaptureLog(textURL: folder.appending(path: base + ".txt"), rawURL: folder.appending(path: base + ".raw"),
-                              header: """
-                                X1 Scan: FlexColor 4.8.13's captured preview replayed on the real X1, \(date.ISO8601Format())
-                                Sequences: right after power-on (preview-sequence-cold.json, without its page 0x28
-                                read) or after earlier use (preview-sequence.json), chosen by the first page 0x20 read.
-                                Position tolerance \(PreviewConfiguration.defaultPositionTolerance); every position
-                                that differs from the capture is noted below.
-                                Format of tools/capture/cap3.py; image data in \(base).raw.
-                                Contains the scanner's serial number: keep outside the repository.
-                                """)
+                              header: lines.joined(separator: "\n"))
     }
 
     public func stop() {

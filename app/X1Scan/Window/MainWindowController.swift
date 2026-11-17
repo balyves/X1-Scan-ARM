@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import AppKit
+import X1Preview
 import X1ScanCore
 
 /// The main window: no toolbar (Preview, Stop and Scan are in the settings
@@ -101,7 +102,22 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
             }
         }
     }
-    @objc func startScan(_ sender: Any?) {}
+    /// Scan: on the virtual X1 at once; on the real X1 after the confirmation.
+    @objc func startScan(_ sender: Any?) {
+        let toolbar = model.toolbar
+        guard toolbar.canScan else { return }
+        guard toolbar.scanNeedsConfirmation else {
+            model.startScan()
+            return
+        }
+        guard let window else { return }
+        RealScanConfirmationAlert.run(for: window) { [model] confirmation in
+            if case .failure(let error) = model.startRealScan(confirmation), error != .notAllowed {
+                self.showAlert(String(localized: "The scan could not start", comment: "Alert title"),
+                               error.description)
+            }
+        }
+    }
     @objc func stopPreview(_ sender: Any?) { model.stop() }
 
     /// Esc (and ⌘. through the menu): stop.
@@ -149,6 +165,11 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
                     text += "\n\n" + String(localized: "Unexpected carriage position: preview stopped before the carriage was positioned. Switch the X1 off and on before starting the preview again.",
                                              comment: "Real preview stopped at the position check before the window with target 25 000")
                     text += realPreviewAdvice(stoppedBeforeScan: nil)
+                case .anomaly(.startStateMismatch):
+                    // Scan: first page 0x20 read; only reads and the session start were sent.
+                    text += "\n\n" + String(localized: "The scan needs an X1 that has already been used: switch the X1 off and on, then run a complete real preview. Only reads and the session start were sent: no window, mode, exposure, image read or scan.",
+                                             comment: "Real scan stopped: the X1 was not in the state the scan needs")
+                    text += realPreviewAdvice(stoppedBeforeScan: nil)
                 case .anomaly(.unrecognisedStartState):
                     // First page 0x20 read: only reads, D2 and the session start were sent.
                     text += "\n\n" + String(localized: "The X1 showed neither its state right after power-on nor the state left by earlier use, so neither captured preview applies. Only reads, the startup command and the session start were sent: no window, mode, exposure, image read or scan.",
@@ -161,7 +182,21 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
                     text += realPreviewAdvice(stoppedBeforeScan: failure.emergencyStop == nil)
                 }
             }
-            showAlert(String(localized: "The preview stopped after an anomaly", comment: "Alert title"), text)
+            showAlert(model.session.kind == .scan
+                      ? String(localized: "The scan stopped after an anomaly", comment: "Alert title")
+                      : String(localized: "The preview stopped after an anomaly", comment: "Alert title"), text)
+        case .finished where model.session.kind == .scan:
+            if case .failure(let error) = model.lastScanSave {
+                showAlert(String(localized: "The scan could not be saved", comment: "Alert title"),
+                          Strings.exportError(error))
+            }
+        case .stopped(let outcome) where model.lastPreviewWasReal && model.session.kind == .scan:
+            // Stop, change of source or quit during a scan on the real X1. `1b 00 08 06 01 00`
+            // counts as SCAN: after it, the stop command was sent.
+            var text = outcome.map(Strings.emergencyStop)
+                ?? String(localized: "Scan stopped before its first SCAN; nothing more was sent.", comment: "Real scan stopped")
+            text += realPreviewAdvice(stoppedBeforeScan: outcome == nil)
+            showAlert(String(localized: "The scan on the real X1 was stopped", comment: "Alert title"), text)
         case .stopped(let outcome) where model.lastPreviewWasReal:
             // Stop, change of source or quit on the real X1: always reported, with the advice.
             var text = outcome.map(Strings.emergencyStop)
@@ -226,6 +261,60 @@ enum ExportFolderPanel {
         }
         if let window { panel.beginSheetModal(for: window, completionHandler: completion) } else {
             completion(panel.runModal())
+        }
+    }
+}
+
+/// Asked before every scan on the real X1: Start is enabled only when both
+/// boxes are ticked. The frame and resolution are those of the capture.
+@MainActor
+enum RealScanConfirmationAlert {
+    static func run(for window: NSWindow, start: @escaping @MainActor (RealScanConfirmation) -> Void) {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = String(localized: "Scan on the real X1", comment: "Confirmation title")
+        alert.informativeText = String(
+            localized: "FlexColor's captured 2 000 ppi scan will be sent to the scanner command for command. One value changes: the carriage position of the 400-line step, read on the scanner just before (within \(PreviewConfiguration.defaultPositionTolerance) of the capture). Any other difference stops it; Stop (⌘. or Esc) stays available. Every command is logged.\n\nThe capture's frame and resolution are used, not the panel's: 609 × 614 pixels at 2 000 ppi (7.7 × 7.8 mm), at the captured place. The panel's crop and resolution are ignored.\n\nHolder of the capture: 6×7, reference 50200403. Do not move it after the preview.",
+            comment: "Confirmation text before a scan on the real X1")
+        let boxes = [
+            String(localized: "Same holder as the capture, film in place, nothing moved",
+                   comment: "Real scan check"),
+            String(localized: "Understood: the capture's frame and resolution", comment: "Real scan check"),
+        ].map { NSButton(checkboxWithTitle: $0, target: nil, action: nil) }  // short titles: one line each
+        let stack = NSStackView(views: boxes)
+        stack.orientation = .vertical
+        stack.alignment = .leading
+        stack.frame = NSRect(x: 0, y: 0, width: max(460, stack.fittingSize.width), height: stack.fittingSize.height)
+        alert.accessoryView = stack
+        let startButton = alert.addButton(withTitle: String(localized: "Start Scan", comment: "Confirmation button"))
+        alert.addButton(withTitle: String(localized: "Cancel", comment: "Button"))
+        startButton.isEnabled = false
+        startButton.keyEquivalent = ""  // Return must not start it by accident
+        let watcher = ScanCheckboxWatcher(boxes: boxes, button: startButton)
+        for box in boxes {
+            box.target = watcher
+            box.action = #selector(ScanCheckboxWatcher.changed(_:))
+        }
+        alert.beginSheetModal(for: window) { response in
+            withExtendedLifetime(watcher) {}
+            guard response == .alertFirstButtonReturn else { return }
+            start(RealScanConfirmation(sameHolderNothingMoved: boxes[0].state == .on,
+                                       captureFrameUnderstood: boxes[1].state == .on))
+        }
+    }
+
+    @MainActor
+    private final class ScanCheckboxWatcher: NSObject {
+        let boxes: [NSButton]
+        let button: NSButton
+
+        init(boxes: [NSButton], button: NSButton) {
+            self.boxes = boxes
+            self.button = button
+        }
+
+        @objc func changed(_ sender: NSButton) {
+            button.isEnabled = boxes.allSatisfy { $0.state == .on }
         }
     }
 }

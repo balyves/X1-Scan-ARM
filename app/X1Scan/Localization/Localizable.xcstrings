@@ -706,17 +706,6 @@
         }
       }
     },
-    "Scanning comes in a later version.": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La numérisation viendra dans une version ultérieure."
-          }
-        }
-      }
-    },
     "Select All": {
       "extractionState": "manual",
       "localizations": {
@@ -2753,6 +2742,354 @@
           "stringUnit": {
             "state": "translated",
             "value": "Position du chariot inattendue : aperçu arrêté avant le positionnement du chariot. Éteignez puis rallumez le X1 avant de relancer l'aperçu."
+          }
+        }
+      }
+    },
+    "Focusing": {
+      "comment": "Scan phase: the 400-line step before the image",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mise au point"
+          }
+        }
+      }
+    },
+    "Focusing: %lld of %lld lines": {
+      "comment": "Status while the scan reads the 400-line step",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mise au point : %1$lld lignes sur %2$lld"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Focusing: %1$lld of %2$lld lines"
+          }
+        }
+      }
+    },
+    "White and dark": {
+      "comment": "Status while the scan reads its white and dark lines",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blanc et noir"
+          }
+        }
+      }
+    },
+    "Image: %lld of %lld lines": {
+      "comment": "Status while the scan reads the image lines",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Image : %1$lld lignes sur %2$lld"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Image: %1$lld of %2$lld lines"
+          }
+        }
+      }
+    },
+    "Scan complete: %@": {
+      "comment": "Status, with the file saved",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Numérisation terminée : %@"
+          }
+        }
+      }
+    },
+    "Scan complete, not saved": {
+      "comment": "Status: the TIFF could not be written",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Numérisation terminée, non enregistrée"
+          }
+        }
+      }
+    },
+    "Scan complete": {
+      "comment": "Status",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Numérisation terminée"
+          }
+        }
+      }
+    },
+    "Scan stopped": {
+      "comment": "Status, stopped before SCAN",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Numérisation arrêtée"
+          }
+        }
+      }
+    },
+    "Scan stopped after an anomaly": {
+      "comment": "Status",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Numérisation arrêtée après une anomalie"
+          }
+        }
+      }
+    },
+    "A preview or scan is in progress.": {
+      "comment": "Why Scan is disabled",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un aperçu ou une numérisation est en cours."
+          }
+        }
+      }
+    },
+    "The captured scan could not be loaded.": {
+      "comment": "Why Scan is disabled",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La numérisation capturée n'a pas pu être chargée."
+          }
+        }
+      }
+    },
+    "Scanning on the real X1 is not enabled.": {
+      "comment": "Why Scan is disabled",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La numérisation sur le X1 réel n'est pas activée."
+          }
+        }
+      }
+    },
+    "Run a complete real preview first.": {
+      "comment": "Why Scan is disabled",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Faites d'abord un aperçu réel complet."
+          }
+        }
+      }
+    },
+    "The scan could not start": {
+      "comment": "Alert title",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La numérisation n'a pas pu démarrer"
+          }
+        }
+      }
+    },
+    "The scan stopped after an anomaly": {
+      "comment": "Alert title",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La numérisation s'est arrêtée après une anomalie"
+          }
+        }
+      }
+    },
+    "The scan could not be saved": {
+      "comment": "Alert title",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La numérisation n'a pas pu être enregistrée"
+          }
+        }
+      }
+    },
+    "Scan on the real X1": {
+      "comment": "Confirmation title",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Numérisation sur le X1 réel"
+          }
+        }
+      }
+    },
+    "Understood: the capture's frame and resolution": {
+      "comment": "Real scan check",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compris : cadre et résolution de la capture"
+          }
+        }
+      }
+    },
+    "Start Scan": {
+      "comment": "Confirmation button",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lancer la numérisation"
+          }
+        }
+      }
+    },
+    "Run FlexColor's captured 2 000 ppi scan on the real X1": {
+      "comment": "Tooltip",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lancer la numérisation capturée de FlexColor (2 000 ppi) sur le X1 réel"
+          }
+        }
+      }
+    },
+    "Run FlexColor's captured 2 000 ppi scan on the virtual X1": {
+      "comment": "Tooltip",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lancer la numérisation capturée de FlexColor (2 000 ppi) sur le X1 virtuel"
+          }
+        }
+      }
+    },
+    "Choose an export folder first: the scan is saved there.": {
+      "comment": "Why Scan is disabled",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez d'abord un dossier d'export : la numérisation y est enregistrée."
+          }
+        }
+      }
+    },
+    "Scan stopped before its first SCAN; nothing more was sent.": {
+      "comment": "Real scan stopped",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Numérisation arrêtée avant son premier SCAN ; rien d'autre n'a été envoyé."
+          }
+        }
+      }
+    },
+    "The scan on the real X1 was stopped": {
+      "comment": "Alert title",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La numérisation sur le X1 réel a été arrêtée"
+          }
+        }
+      }
+    },
+    "Stop the scan (⌘. or Esc)": {
+      "comment": "Tooltip",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêter la numérisation (⌘. ou Échap)"
+          }
+        }
+      }
+    },
+    "The scan needs an X1 that has already been used: switch the X1 off and on, then run a complete real preview. Only reads and the session start were sent: no window, mode, exposure, image read or scan.": {
+      "comment": "Real scan stopped: the X1 was not in the state the scan needs",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La numérisation demande un X1 déjà utilisé : éteignez puis rallumez le X1, puis faites un aperçu réel complet. Seules des lectures et l'ouverture de session ont été envoyées : aucune fenêtre, aucun mode, aucune exposition, aucune lecture d'image, aucun scan."
+          }
+        }
+      }
+    },
+    "Same holder as the capture, film in place, nothing moved": {
+      "comment": "Real scan check",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Même porte-film que la capture, film en place, rien bougé"
+          }
+        }
+      }
+    },
+    "FlexColor's captured 2 000 ppi scan will be sent to the scanner command for command. One value changes: the carriage position of the 400-line step, read on the scanner just before (within %lld of the capture). Any other difference stops it; Stop (⌘. or Esc) stays available. Every command is logged.\n\nThe capture's frame and resolution are used, not the panel's: 609 × 614 pixels at 2 000 ppi (7.7 × 7.8 mm), at the captured place. The panel's crop and resolution are ignored.\n\nHolder of the capture: 6×7, reference 50200403. Do not move it after the preview.": {
+      "comment": "Confirmation text before a scan on the real X1",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La numérisation capturée de FlexColor (2 000 ppi) sera envoyée au scanner commande par commande. Une seule valeur change : la position du chariot du pas de 400 lignes, lue sur le scanner juste avant (à %lld près de la capture). Toute autre différence l'arrête ; Arrêter (⌘. ou Échap) reste disponible. Chaque commande est journalisée.\n\nLe cadre et la résolution sont ceux de la capture, pas ceux du panneau : 609 × 614 pixels à 2 000 ppi (7,7 × 7,8 mm), à l'emplacement capturé. Le recadrage et la résolution du panneau sont ignorés.\n\nPorte-film de la capture : 6×7, référence 50200403. Ne le déplacez pas après l'aperçu."
           }
         }
       }

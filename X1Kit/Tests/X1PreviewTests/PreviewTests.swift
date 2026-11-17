@@ -356,7 +356,7 @@ struct PreviewEventTests {
             }
         }
         #expect(steps == Array(script.indices))
-        #expect(phases == PreviewPhase.allCases)
+        #expect(phases == [.initialisation, .calibration, .references, .scanning, .finishing], "no focus step in a preview")
         #expect(imageBlocks == capture.image)
         #expect(statuses == capture.scanStatuses.count)
     }

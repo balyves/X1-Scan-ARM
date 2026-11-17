@@ -272,14 +272,14 @@ public enum ExportService {
     /// `settings`: 16 bits raw and linear without profile; 8 bits with the
     /// sRGB curve and an sRGB profile (grey: the grey profile with the sRGB
     /// curve). Provisional until the IT8 input profile (docs/decisions.md).
-    public static func tiffData(for image: PreviewImage, settings: ExportSettings) -> Data {
+    public static func tiffData(for image: PreviewImage, settings: ExportSettings, resolution: Int = 72) -> Data {
         let profile: Data? = switch settings.format {
         case .rgb8: ExportService.srgbProfile
         case .gray8: ICCProfiles.graySRGB
         case .rgb16, .gray16: nil
         }
         return TIFFWriter.data(for: image.exportImage, format: settings.format, compression: settings.compression,
-                               iccProfile: profile)
+                               iccProfile: profile, resolution: resolution)
     }
 
     /// ColorSync's sRGB profile. 8 bits is never written without it: if it were
@@ -312,8 +312,10 @@ public enum ExportService {
     }
 
     /// Writes `image` into the settings' folder and returns the file's URL.
+    /// `resolution`: pixels per inch written in the file (72 for a preview,
+    /// the scan's resolution for a scan).
     public static func export(_ image: PreviewImage?, settings: ExportSettings, date: Date = Date(),
-                              fileManager: FileManager = .default) throws(ExportError) -> URL {
+                              resolution: Int = 72, fileManager: FileManager = .default) throws(ExportError) -> URL {
         guard let folder = settings.folder else { throw .noFolder }
         guard let image, image.height > 0 else { throw .noImage }
         var isDirectory: ObjCBool = false
@@ -326,7 +328,7 @@ public enum ExportService {
         let url = folder.appending(path: name)
         do {
             // If a file appeared in between, fail rather than replace it (cannot be combined with .atomic).
-            try tiffData(for: image, settings: settings).write(to: url, options: .withoutOverwriting)
+            try tiffData(for: image, settings: settings, resolution: resolution).write(to: url, options: .withoutOverwriting)
         } catch {
             throw .write(error.localizedDescription)
         }

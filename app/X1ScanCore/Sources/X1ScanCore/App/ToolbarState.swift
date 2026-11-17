@@ -27,15 +27,36 @@ public struct ToolbarState: Sendable, Hashable {
     /// True while the stop sequence runs: Stop is shown, but pressing it again does nothing.
     public var isStopping: Bool
     public var canExport: Bool
-    /// Scanning is a later stage.
-    public let canScan = false
+
+    public enum ScanBlock: Sendable, Hashable {
+        /// A preview or scan is running or stopping.
+        case busy
+        /// The scan capture is not available.
+        case noScanCapture
+        /// No export folder: the scan would not be saved.
+        case noExportFolder
+        /// Real X1 without the hidden setting `EnableRealScan`.
+        case realScanDisabled
+        /// Real X1: a real preview must have completed just before, with no
+        /// real run since (each captured scan follows one preview).
+        case needsCompletePreview
+    }
+
+    public var canScan: Bool { scanBlock == nil }
+    public let scanBlock: ScanBlock?
+    /// Real X1: Scan asks for a confirmation first.
+    public let scanNeedsConfirmation: Bool
 
     /// Real X1 with the hidden setting on: Preview asks for a confirmation first (step 4).
     public let previewNeedsConfirmation: Bool
 
     /// `realPreviewEnabled`: the hidden setting `EnableRealPreview` (off by default).
+    /// `realScanEnabled`: `EnableRealScan` (off by default); `realScanReady`: a
+    /// real preview completed just before, with no real run since.
     public init(source: ScannerSourceKind, session: PreviewSession.State, virtualAvailable: Bool,
-                hasImage: Bool, hasExportFolder: Bool, realPreviewEnabled: Bool = false) {
+                hasImage: Bool, hasExportFolder: Bool, realPreviewEnabled: Bool = false,
+                scanAvailable: Bool = false, scanHasExportFolder: Bool = true, realScanEnabled: Bool = false,
+                realScanReady: Bool = false) {
         let busy = session == .running || session == .stopping
         previewNeedsConfirmation = source == .real && realPreviewEnabled
         if busy {
@@ -50,6 +71,20 @@ public struct ToolbarState: Sendable, Hashable {
         canStop = session == .running
         isStopping = session == .stopping
         canExport = !busy && hasImage && hasExportFolder
+        scanNeedsConfirmation = source == .real
+        if busy {
+            scanBlock = .busy
+        } else if !scanAvailable {
+            scanBlock = .noScanCapture
+        } else if !scanHasExportFolder {
+            scanBlock = .noExportFolder
+        } else if source == .real && !realScanEnabled {
+            scanBlock = .realScanDisabled
+        } else if source == .real && !realScanReady {
+            scanBlock = .needsCompletePreview
+        } else {
+            scanBlock = nil
+        }
     }
 }
 

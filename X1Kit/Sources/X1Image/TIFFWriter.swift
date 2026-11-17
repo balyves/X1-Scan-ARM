@@ -92,8 +92,9 @@ public enum TIFFWriter {
         data(for: image, format: .rgb16, compression: .none, iccProfile: nil)
     }
 
+    /// `resolution`: pixels per inch written in XResolution / YResolution (72 by default).
     public static func data(for image: RGB16Image, format: TIFFFormat, compression: TIFFCompression,
-                            iccProfile: Data?) -> Data {
+                            iccProfile: Data?, resolution: Int = 72) -> Data {
         let samples = ExportConversion.samples(of: image, as: format)
         var pixels = bytes(of: samples, bitsPerSample: format.bitsPerSample)
         if compression != .none {
@@ -106,7 +107,7 @@ public enum TIFFWriter {
         case .deflate: Zlib.compress(pixels)
         }
         return container(width: image.width, height: image.height, format: format, compression: compression,
-                         strip: strip, iccProfile: iccProfile)
+                         strip: strip, iccProfile: iccProfile, resolution: UInt32(max(resolution, 1)))
     }
 
     public static func write(_ image: RGB16Image, to url: URL) throws {
@@ -155,7 +156,7 @@ public enum TIFFWriter {
     }
 
     private static func container(width: Int, height: Int, format: TIFFFormat, compression: TIFFCompression,
-                                  strip: Data, iccProfile: Data?) -> Data {
+                                  strip: Data, iccProfile: Data?, resolution: UInt32) -> Data {
         // Layout: header | IFD | BitsPerSample (RGB) | XResolution | YResolution | ICC profile | strip
         var entries: [(tag: UInt16, type: UInt16, count: UInt32, value: UInt32, extra: Data?)] = []
         func short(_ tag: UInt16, _ value: UInt16) { entries.append((tag, 3, 1, UInt32(value), nil)) }
@@ -178,8 +179,8 @@ public enum TIFFWriter {
         short(277, UInt16(format.channels))                              // SamplesPerPixel
         long(278, UInt32(height))                                        // RowsPerStrip
         long(279, UInt32(strip.count))                                   // StripByteCounts
-        block(282, 5, 1, le32(72) + le32(1))                             // XResolution
-        block(283, 5, 1, le32(72) + le32(1))                             // YResolution
+        block(282, 5, 1, le32(resolution) + le32(1))                     // XResolution
+        block(283, 5, 1, le32(resolution) + le32(1))                     // YResolution
         short(284, 1)                                                    // PlanarConfiguration: interleaved
         short(296, 2)                                                    // ResolutionUnit: inch
         if compression != .none { short(317, 2) }                       // Predictor: horizontal

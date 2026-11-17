@@ -21,7 +21,6 @@
 				"preview-sequence-warm-2.json",
 				README.md,
 				"scan-sequence-1000ppi.json",
-				"scan-sequence-2000ppi.json",
 				"scan-sequence-3200ppi.json",
 			);
 			target = A10000000000000000007001 /* X1Scan */;

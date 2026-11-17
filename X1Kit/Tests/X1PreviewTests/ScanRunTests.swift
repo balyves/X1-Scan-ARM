@@ -185,6 +185,23 @@ struct ScanRunTests {
         #expect(after.dropFirst().allSatisfy { $0 == X1Command.scannerState() })
     }
 
+    /// Phases follow the commands: 400-line step, then (at 2 000 ppi) white
+    /// and dark, then the image.
+    @Test func phasesFollowTheCommands() {
+        let phases = PreviewPhase.phases(for: Self.script)
+        var order: [PreviewPhase] = []
+        for phase in phases where order.last != phase { order.append(phase) }
+        #expect(order == [.calibration, .focus, .calibration, .references, .scanning, .finishing])
+        let sweep = Self.script.firstIndex { $0.command == X1Command.focusSweep() }!
+        #expect(phases[sweep] == .focus && phases[sweep + 400] == .focus)
+        // The other order (white/dark first, as at 1 000 and 3 200 ppi) is derived the same way.
+        let reordered = Array(Self.script[0..<sweep - 4]) + Self.script[(sweep + 402)...].prefix(26)
+            + Array(Self.script[(sweep - 4)...(sweep + 401)])
+        var other: [PreviewPhase] = []
+        for phase in PreviewPhase.phases(for: reordered) where other.last != phase { other.append(phase) }
+        #expect(other == [.calibration, .references, .focus, .calibration])
+    }
+
     /// `00 06` is a wait target of the scan script only, never a busy state.
     @Test func state0006OnlyInTheScan() {
         #expect(!ScannerState.afterFocusSweep.isBusy)

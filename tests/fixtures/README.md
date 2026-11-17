@@ -62,9 +62,10 @@ preview, then one scan of a small frame (0.8 to 1 cm a side, RGB 16-bit)
 at 1 000, 2 000 and 3 200 ppi (1 655, 1 778 and 1 938 exchanges).
 Converted like the cold fixture (14 long responses completed from
 `preview-sequence.json`). They document the scan sequence (docs/protocol.md
-§12); nothing replays them. MODE SENSE page 0x24, read once per scan, is
-not in `CommandPolicy.readOnly` (`ScanFixtureTests`). Not copied into the
-app.
+§12). MODE SENSE page 0x24, read once per scan, is in
+`CommandPolicy.readOnly` since 2026-11-17. `scan-sequence-2000ppi.json` is
+copied into the app: the virtual X1 replays its scan session, and the real
+X1's scan guard is built from it; the other two are not copied.
 
 ## preview-calibration-profile.json
 

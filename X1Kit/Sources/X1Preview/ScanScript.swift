@@ -20,6 +20,8 @@ public enum ScanScript {
     public static let pixelsPerLine = 633
     /// Pixels per full-width calibration line: 7 992 + 24.
     public static let calibrationPixelsPerLine = 8016
+    /// Resolution of the scan: window offset 10 = 33 333 333 = 2 000 × 50 000 / 3.
+    public static let resolution = 2000
     /// Position captured just before the 400-line window, and its target there.
     public static let capturedFocusPosition = 16651
 

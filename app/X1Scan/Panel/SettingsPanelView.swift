@@ -304,7 +304,9 @@ private struct ActionButtons: View {
                 }
                 .tint(toolbar.stopIsProminent ? .red : nil)
                 .disabled(toolbar.isStopping)
-                .help(Text("Stop the preview (⌘. or Esc)", comment: "Tooltip"))
+                .help(model.session.kind == .scan
+                      ? String(localized: "Stop the scan (⌘. or Esc)", comment: "Tooltip")
+                      : String(localized: "Stop the preview (⌘. or Esc)", comment: "Tooltip"))
             } else {
                 Button {
                     // Through the window: on the real X1 it asks for the confirmation first.
@@ -326,7 +328,10 @@ private struct ActionButtons: View {
             }
             .disabled(!toolbar.canScan)
             .tint(toolbar.canScan ? nil : .gray)  // a disabled prominent button stays tinted in dark mode
-            .help(Text("Scanning comes in a later version.", comment: "Tooltip"))
+            .help(toolbar.scanBlock.map(Strings.scanBlock)
+                  ?? (toolbar.scanNeedsConfirmation
+                      ? String(localized: "Run FlexColor's captured 2 000 ppi scan on the real X1", comment: "Tooltip")
+                      : String(localized: "Run FlexColor's captured 2 000 ppi scan on the virtual X1", comment: "Tooltip")))
         }
         .controlSize(.large)
         .buttonStyle(.borderedProminent)

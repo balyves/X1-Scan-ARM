@@ -13,8 +13,9 @@ struct StatusBarView: View {
             if session.state == .stopping {
                 ProgressView().controlSize(.small)
             }
-            Text(Strings.statusLine(model.statusLine, session: session))
+            Text(Strings.statusLine(model.statusLine, session: session, scanSave: model.lastScanSave))
                 .lineLimit(1)
+                .truncationMode(.middle)  // keeps the end of a saved file's name
                 .foregroundStyle(statusColor(session.state))
             if session.state == .running {
                 ProgressView(value: session.progress.fraction)

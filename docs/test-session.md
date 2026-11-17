@@ -473,3 +473,47 @@ Known risks, as written before the first run:
   about 314 / 288 / 305 (R/G/B).
 - The log stays outside the repository (part D1). Details in
   docs/journal.md.
+
+## Part F: first scan on the real X1, on the development Mac
+
+FlexColor's captured 2 000 ppi scan replayed on the real X1
+(docs/decisions.md, "Real X1: scan"). Not done yet: to be planned with the
+user. The scan needs a complete real preview first (part E) and the
+**same holder as the capture** (6×7, reference 50200403), with the film
+left in place.
+
+### F1. Enable
+
+- Machine: development Mac. **X1: off.** **FlexColor: closed** (it does not
+  run on Tahoe; the reference Mac must not be connected to the X1). X1
+  Scan: closed.
+- Turn the hidden setting on, in addition to `EnableRealPreview`:
+
+      defaults write org.x1scanarm.X1Scan EnableRealScan -bool YES
+
+### F2. Preview, then scan
+
+- Machine: development Mac. **X1: on.** **FlexColor: closed.** X1 Scan:
+  open, source Real X1.
+- Run a complete real preview (part E4). Scan stays disabled until one has
+  completed, and again after every scan: one complete preview before each
+  scan, as in the captures. An export folder must be chosen.
+- Do not move the holder. Click **Scan**, tick both boxes (same holder,
+  nothing moved; the capture's frame and resolution: 609 × 614 pixels at
+  2 000 ppi), then **Start Scan**.
+- The bottom bar shows the phases: calibration, "Focusing: n of 400
+  lines", "White and dark", "Image: n of 1 064 lines". Stop (⌘. or Esc) as
+  for the preview.
+- At the end the image replaces the preview and the TIFF is saved in the
+  export folder; the bottom bar gives its name.
+
+### F3. After the scan
+
+- Machine: development Mac. **X1: on.** **FlexColor: closed.**
+- Keep the log `~/X1-captures/<date>/x1scan-scan-<HHmmss>.txt` and `.raw`
+  (outside the repository; it holds the serial number). Check the
+  "position:" lines, and decode it if needed:
+  `tools/decode/decode_scan.py <log>.txt <log>.raw out.png`.
+- If the scan stopped: switch the X1 off and on; the next preview asks for
+  it, and Scan needs a new complete preview.
+

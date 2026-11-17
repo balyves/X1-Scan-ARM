@@ -10,9 +10,13 @@ public struct PreviewProgress: Sendable, Hashable {
     public var phase: PreviewPhase?
     public var stepIndex = 0
     public var stepCount = 0
-    /// Image lines received (READ with flag 00, lead-in lines excluded).
+    /// Image lines received (READ with flag 00; in a preview without the
+    /// lead-in lines, in a scan with the priming lines).
     public var linesReceived = 0
     public var linesExpected = 0
+    /// Scan only: lines of the 400-line step received, and expected.
+    public var focusLinesReceived = 0
+    public var focusLinesExpected = 0
 
     public init() {}
 
@@ -61,7 +65,15 @@ public final class PreviewSession {
         case failed(PreviewFailure)
     }
 
+    public enum Kind: Sendable, Hashable {
+        case preview
+        /// FlexColor's captured scan (`ScanScript`); the image is decoded at the end.
+        case scan
+    }
+
     public private(set) var state: State = .idle
+    /// What the current or last run is.
+    public private(set) var kind: Kind = .preview
     public private(set) var progress = PreviewProgress()
     public private(set) var image: PreviewImage?
     /// Increases every time `image` gains rows.
@@ -70,13 +82,21 @@ public final class PreviewSession {
     public let script: [PreviewStep]
     private var runTask: Task<Result<PreviewCapture, PreviewError>, Never>?
     private var consumer: Task<Void, Never>?
-    /// Called once with the final state of a run on the real X1, before
-    /// anyone waiting on `waitUntilIdle` resumes.
+    /// Called once with the final state of a run on the real X1 (or of a scan
+    /// on the virtual X1), before anyone waiting on `waitUntilIdle` resumes.
     private var realRunFinished: (@MainActor (State) -> Void)?
+    /// The log of the run on the real X1, closed once `realRunFinished` has
+    /// run (it may note the saved file).
+    private var runLog: CaptureLog?
     private var white: [[UInt8]] = []
     private var dark: [[UInt8]] = []
     private var decoder: IncrementalPreviewDecoder?
     private var decodingError: String?
+    /// Scan: the full-width white and dark reads, and the image reads
+    /// (priming lines first) kept until the end.
+    private var scanReference: [[UInt8]] = []
+    private var scanImage: [[UInt8]] = []
+    private var scanPriming = 0
     /// The simulator of the last run, for tests.
     private(set) var simulator: SimulatedX1?
 
@@ -93,10 +113,42 @@ public final class PreviewSession {
     /// Image lines the script reads (819 for FlexColor 4.8.13's preview).
     public var expectedImageLines: Int { Self.imageLines(in: script) }
 
-    private static func imageLines(in script: [PreviewStep]) -> Int {
+    private static func imageLines(in script: [PreviewStep], kind: Kind = .preview) -> Int {
         script.reduce(0) { total, step in
-            step.kind == .read(.image) ? total + Int(step.command.cdb[4]) : total
+            step.kind == .read(.image) || (kind == .scan && step.kind == .read(.leadIn))
+                ? total + Int(step.command.cdb[4]) : total
         }
+    }
+
+    /// The scan the app runs: FlexColor's 2 000 ppi scan session.
+    public static let scanScript = ScanScript.flexColor4813Scan2000ppi
+
+    /// Starts FlexColor's captured scan on the virtual X1 (replay of its scan
+    /// session). Does nothing if a run is going on or the scan capture is missing.
+    public func startScan(on scanner: VirtualScanner, finished: (@MainActor (State) -> Void)? = nil) {
+        guard !isBusy, let made = scanner.makeScanTransport() else { return }
+        realRunFinished = finished
+        simulator = made.simulator
+        let runner = PreviewRunner(transport: made.transport, configuration: scanner.configuration,
+                                   script: Self.scanScript)
+        launch(script: Self.scanScript, kind: .scan) { continuation in
+            do throws(PreviewError) {
+                return .success(try await runner.run { continuation.yield($0) })
+            } catch {
+                return .failure(error)
+            }
+        }
+    }
+
+    /// Starts FlexColor's captured scan on the real X1, as
+    /// `start(onRealScanner:log:finished:)` does for the preview: `connection`
+    /// lets through only the scan session with its one substitution.
+    public func startScan(onRealScanner connection: any ScannerConnection, log: CaptureLog,
+                          finished: (@MainActor (State) -> Void)? = nil) {
+        guard !isBusy else { return }
+        let runner = PreviewRunner(transport: LoggingTransport(inner: connection, log: log),
+                                   configuration: PreviewConfiguration(), script: Self.scanScript)
+        startReal(runner: runner, kind: .scan, connection: connection, log: log, finished: finished)
     }
 
     public var isBusy: Bool { state == .running || state == .stopping }
@@ -125,14 +177,21 @@ public final class PreviewSession {
     public func start(onRealScanner connection: any ScannerConnection, log: CaptureLog,
                       finished: (@MainActor (State) -> Void)? = nil) {
         guard !isBusy else { return }
-        realRunFinished = finished
-        simulator = nil
         let runner = PreviewRunner(transport: LoggingTransport(inner: connection, log: log),
                                    configuration: PreviewConfiguration(), plan: Self.realScannerPlan)
+        startReal(runner: runner, kind: .preview, connection: connection, log: log, finished: finished)
+    }
+
+    /// Common part of both runs on the real X1: open, run, log, always close.
+    private func startReal(runner: PreviewRunner, kind: Kind, connection: any ScannerConnection, log: CaptureLog,
+                           finished: (@MainActor (State) -> Void)?) {
+        realRunFinished = finished
+        runLog = log
+        simulator = nil
         let script = runner.script
         let firstCommand = script[0].command
-        launch(script: script) { continuation in
-            defer { log.close() }
+        let name = kind == .scan ? "scan" : "preview"
+        launch(script: script, kind: kind) { continuation in
             do {
                 try await connection.open()
             } catch {
@@ -151,7 +210,7 @@ public final class PreviewSession {
             }
             await connection.close()
             switch result {
-            case .success: log.note("preview complete")
+            case .success: log.note("\(name) complete")
             case .failure(let error): log.note(error.description)
             }
             return result
@@ -173,13 +232,17 @@ public final class PreviewSession {
     }
 
     /// Common part of both starts: the run task, its events and the end.
-    private func launch(script: [PreviewStep],
+    private func launch(script: [PreviewStep], kind: Kind = .preview,
                         _ body: @escaping @Sendable (AsyncStream<PreviewEvent>.Continuation) async
                             -> Result<PreviewCapture, PreviewError>) {
         reset()
+        self.kind = kind
         state = .running
         progress.stepCount = script.count
-        progress.linesExpected = Self.imageLines(in: script)
+        progress.linesExpected = Self.imageLines(in: script, kind: kind)
+        if kind == .scan {
+            progress.focusLinesExpected = script.filter { $0.kind == .read(.focusLine) }.count
+        }
 
         let (events, continuation) = AsyncStream.makeStream(of: PreviewEvent.self, bufferingPolicy: .unbounded)
         let runTask = Task.detached { () -> Result<PreviewCapture, PreviewError> in
@@ -214,6 +277,9 @@ public final class PreviewSession {
         dark = []
         decoder = nil
         decodingError = nil
+        scanReference = []
+        scanImage = []
+        scanPriming = 0
     }
 
     private func handle(_ event: PreviewEvent) {
@@ -226,12 +292,22 @@ public final class PreviewSession {
             break
         case .stopping:
             state = .stopping
+        case .data(let bytes, let purpose) where kind == .scan:
+            switch purpose {
+            case .focusLine: progress.focusLinesReceived += 1
+            case .scanReference: scanReference.append(bytes)
+            case .leadIn, .image:
+                if purpose == .leadIn { scanPriming += 1 }
+                scanImage.append(bytes)
+                progress.linesReceived += bytes.count / (ScanScript.pixelsPerLine * PreviewScript.bytesPerPixel)
+            case .calibrationLine, .whiteReference, .darkReference: break
+            }
         case .data(let bytes, let purpose):
             switch purpose {
             case .whiteReference: white.append(bytes)
             case .darkReference: dark.append(bytes)
             case .image: appendImage(bytes)
-            case .calibrationLine, .leadIn, .scanReference, .focusLine: break  // the app runs no scan yet
+            case .calibrationLine, .leadIn, .scanReference, .focusLine: break
             }
         }
     }
@@ -258,9 +334,29 @@ public final class PreviewSession {
         }
     }
 
+    /// The scan, decoded (docs/protocol.md §10): linear, flat field, lines
+    /// realigned and resampled. The screen and the TIFF show the same values.
+    private func decodeScan() throws -> PreviewImage {
+        let scan = try Self.scanGeometry()
+        let linear = try ScanDecoding.decode(calibration: scanReference,
+                                             calibrationWidth: ScanScript.calibrationPixelsPerLine,
+                                             image: scanImage, geometry: scan, primingLines: scanPriming)
+        let samples = linear.toRGB16().samples
+        return PreviewImage(width: linear.width, corrected: samples, raw: samples)
+    }
+
     private func finish(_ result: Result<PreviewCapture, PreviewError>) {
         runTask = nil
         switch result {
+        case .success where kind == .scan:
+            do {
+                image = try decodeScan()
+                imageRevision += 1
+                state = .finished
+            } catch {
+                state = .failed(PreviewFailure(cause: .decoding(String(describing: error)), stepIndex: nil,
+                                               emergencyStop: nil, description: "scan decoding: \(error)"))
+            }
         case .success:
             if let decodingError {
                 state = .failed(PreviewFailure(cause: .decoding(decodingError), stepIndex: nil, emergencyStop: nil,
@@ -277,5 +373,20 @@ public final class PreviewSession {
         let finished = realRunFinished
         realRunFinished = nil
         finished?(state)
+        runLog?.close()
+        runLog = nil
     }
 }
+
+extension PreviewSession {
+    /// Geometry of the scan's image window (the last window before its SCAN).
+    static func scanGeometry() throws -> ScanGeometry {
+        guard let scan = scanScript.lastIndex(where: { $0.kind == .scan }),
+              let window = scanScript[..<scan].last(where: { $0.command.opcode == 0x24 }),
+              let geometry = ScanGeometry(windowData: window.command.dataOut) else {
+            throw ImageError.noLines
+        }
+        return geometry
+    }
+}
+

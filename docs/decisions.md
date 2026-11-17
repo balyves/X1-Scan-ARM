@@ -767,8 +767,47 @@ User's decisions; nothing has been sent to the real X1.
   within the tolerance are substituted and accepted, beyond it nothing more
   is sent; a scanner just switched on is refused; a fault during the
   400-line step sends the stop.
-- **Not done yet**: the app (a button, its confirmation, its log), which
-  will be proposed before it is written.
+- **In the app** (user's decisions, interface validated before it was
+  written):
+  - **Scan button**: on the virtual X1, available whenever nothing runs
+    and an export folder is chosen (replay of the scan session). On the real X1, only with the hidden
+    setting `EnableRealScan` (separate from `EnableRealPreview`), nothing
+    running, an export folder, and a real preview whose scanner side
+    completed just before, with no real run since: **a new complete preview
+    before every real scan**, as in the captures (each is one preview, then
+    one scan; scan after scan was never captured). Otherwise disabled, with
+    the reason in its tooltip.
+  - **Confirmation** before every real scan, two boxes (short titles, one
+    line each; the holder reference is in the text above them): same holder
+    as the capture (6×7, 50200403), film in place, nothing moved since the
+    preview; the capture's frame and resolution (609 × 614 px at
+    2 000 ppi) are used, not the panel's. No "FlexColor is closed" box:
+    FlexColor does not run on Tahoe, and another client holding the scanner
+    already gives a clear error. Start is enabled only when both are ticked;
+    Return does not start it.
+  - **During the scan**: the bottom bar shows the phase derived from the
+    command being sent, not from a fixed order (the white/dark read comes
+    before or after the 400-line step depending on the resolution):
+    calibration, "Focusing: n of 400 lines", "White and dark", "Image: n of
+    1 064 lines" (priming lines included). "Focusing" names the 400-line
+    step after its **[hypothesis]** (protocol.md §12). Stop as for the
+    preview. The image is shown at the end only, once decoded.
+  - **File**: a 16-bit RGB TIFF, linear, without profile, 2 000 ppi in its
+    resolution tags, saved in the export folder with the export name
+    template. Nothing else goes into it: no description, no serial number.
+    The values are not FlexColor's (it applies its own curve and profile);
+    the geometry is.
+  - **Log**: `x1scan-scan-<HHmmss>.txt` and `.raw` in the capture folder
+    (outside the repository), cap3 format, readable by
+    `tools/decode/decode_scan.py`: header, every command and response, the
+    positions that differ from what is expected, the result and the file
+    saved. Only this log holds the serial number (page 0x26 response).
+  - A scan that does not complete counts as an interrupted real run: the
+    next preview asks for the power cycle. After any real scan, complete or
+    not, Scan stays disabled until a new complete preview.
+  - The confirmation names the substituted value for what it is: the
+    carriage position of the 400-line step, read just before (within the
+    tolerance of the capture).
 
 ## Real X1: the sequence right after power-on only (2026-11-16)
 
