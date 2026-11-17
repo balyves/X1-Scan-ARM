@@ -15,6 +15,8 @@ public enum Fixtures {
     /// Right after power-on (2026-11-16).
     public static let coldSequenceURL = directory.appending(path: "preview-sequence-cold.json")
     public static let calibrationProfileURL = directory.appending(path: "preview-calibration-profile.json")
+    /// A second warm capture (2026-11-17), same commands as `sequenceURL`, other responses.
+    public static let secondWarmSequenceURL = directory.appending(path: "preview-sequence-warm-2.json")
 
     public static func sequence() throws -> CaptureFixture {
         try CaptureFixture.load(from: sequenceURL)

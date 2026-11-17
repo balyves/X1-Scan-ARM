@@ -43,6 +43,16 @@ responses were read with `tools/x1probe`; their first 64 bytes are
 identical. Those exchanges carry `"completed_from"`. This is the only
 sequence sent to the real X1 (docs/decisions.md).
 
+## preview-sequence-warm-2.json
+
+A second warm preview, 2026-11-17: FlexColor restarted with the X1 still
+warm from earlier previews (6×7 holder 50200403), 766 exchanges, converted
+like the cold fixture (11 long responses completed from
+`preview-sequence.json`). Its commands outside polling (CDB, data_out,
+length) are identical to `preview-sequence.json`; its responses differ,
+notably the first measured position (25 739 instead of 25 867), which shows
+how much the scanner's measurements vary between sessions.
+
 ## preview-calibration-profile.json
 
 Per-column white and dark reference levels (2004 px × RGB, 16-bit) from the

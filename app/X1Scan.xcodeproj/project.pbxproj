@@ -18,6 +18,7 @@
 		A1000000000000000000E001 /* Exceptions for "Fixtures" folder in "X1Scan" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				"preview-sequence-warm-2.json",
 				README.md,
 			);
 			target = A10000000000000000007001 /* X1Scan */;

@@ -252,3 +252,31 @@ repository.
 Also observed today (once): after the FireWire cable was moved from one Mac
 to the other, the X1 was detected only once it had been switched off and on
 again. Test-session now asks for it wherever the cable changes Mac.
+
+## 2026-11-17: what makes FlexColor choose the cold or the warm sequence
+
+Two more FlexColor captures by the user (logs outside the repository): A,
+the X1 just switched on, two previews in one FlexColor session; B,
+FlexColor restarted with the X1 still warm, one preview. Analysed against
+the two fixtures (protocol.md §11):
+
+- The warm and cold sequences are identical up to the first page 0x20 read
+  after the session start, apart from the page 0x28 read, and diverge right
+  after it; that read shows the power-on values before both cold runs and
+  values left by earlier use before the warm ones. **[confirmed]** It is the
+  only response that separates cold from warm runs in all five sessions
+  (the 0xD3 activity also comes before a warm one). FlexColor choosing from
+  it is a **[hypothesis]**.
+- Page 0x28 was not read this time: the cold run A1 is the cold fixture
+  without it. **[confirmed]** It is not what selects the sequence.
+- B is command for command the warm fixture of 2026-11-12; it becomes a
+  second warm fixture, `preview-sequence-warm-2.json`. **[confirmed]**
+- A second preview in the same FlexColor session is a third, shorter
+  sequence, with a window and a READ found in neither fixture (calibration
+  partly reused **[hypothesis]**).
+- Measured positions differ between captures by 128 (B) and 192 (A1). With
+  the tolerance of 100 our runner would have stopped A1 (checked reads) but
+  not B (the difference is on the unchecked read). A1 is the cold sequence,
+  the one sent to the real X1: the threshold has to be decided again
+  (decisions.md).
+

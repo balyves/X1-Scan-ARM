@@ -103,7 +103,7 @@ and page length.
 | 0x25 | 12 | **Not static.** Byte 21 of the response changes over time: 0x1b then 0x1c a few minutes apart, and 0x1c / 0x1d alternating within one preview, going back and forth. **[confirmed]** A value that goes down again points to a sensor reading (temperature?) rather than a clock; it is not a firmware date. **[hypothesis]** Bytes 12-16 (`01 23 0f 0a 03`) stay constant; their meaning is unknown. |
 | 0x26 | 44 | **Identity**: 10-byte field (dashes when unset), then the serial number in ASCII (`FX1…`). This is where FlexColor gets the serial number. **[confirmed]** |
 | 0x27 | 9 | Unknown. |
-| 0x28 | 18 | Read once (30 bytes requested), only in the capture right after power-on (2026-11-16), just before the session start: `15 00 00 00 00 00 00 00 28 12 00 58 02 00 00`, 14 × `ff`, `00`. **[confirmed]** Meaning unknown; what makes FlexColor read it is unknown. Not in `CommandPolicy.readOnly`. |
+| 0x28 | 18 | Read once (30 bytes requested), only in the capture right after power-on of 2026-11-16, just before the session start: `15 00 00 00 00 00 00 00 28 12 00 58 02 00 00`, 14 × `ff`, `00`. **[confirmed]** Not read in the capture right after power-on of 2026-11-17, nor in any warm capture: not needed for the sequence after power-on. **[confirmed]** Meaning unknown; what makes FlexColor read it is unknown. Not in `CommandPolicy.readOnly`. |
 | 0x29 | 1 | Unknown (`07`). |
 
 **Page 0x20 (scan status)** **[confirmed unless noted]**
@@ -264,7 +264,61 @@ restart). **[confirmed]**
 - From the window with ratio 8 000 000 (preview-width calibration) to the
   end of session, the commands are the same as in the warm capture.
 - 821 commands in all (766 warm), all with status 0x00.
-What triggers the page 0x28 read and the other calibration is unknown: one
-capture of each kind. Two **[hypothesis]**: the uncalibrated state seen on
-page 0x20 (2 048 × 3), or the holder being inserted while FlexColor waited
-(the 0xD3 activity, §4, surrounds that read).
+
+**Choice between the two sequences** (captures of 2026-11-17 added:
+`essai-A`, X1 just switched on, two previews in one FlexColor session, A1
+then A2; `essai-B`, FlexColor restarted with the X1 still warm, one
+preview; logs outside the repository; "outside polling" means without
+0xEE, 0xD3 and 0xDF):
+
+- In the four full captures (warm W of 2026-11-12, cold C of 2026-11-16,
+  cold A1 and warm B of 2026-11-17), the commands outside polling are
+  identical up to and including the first page 0x20 read after
+  `CF 00 01 80` (39 commands), apart from C's page 0x28 read; they diverge
+  at the next command (warm: `F0 00 00 00 01 01`; cold: the window with
+  ratio 62 500). **[confirmed]**
+- That page 0x20 read gives the power-on values (2 048 × 3, position
+  8 203, 0 lines) before both cold sequences (C, A1), and values left by
+  earlier use before the warm ones (W 1 936 / 1 846 / 1 891, B 1 921 /
+  1 845 / 1 883, A2 1 911 / 1 845 / 1 883; position 6 155, 824 lines).
+  **[confirmed]** A2's bytes 19-24 and position equal those of A1's last
+  page 0x20 read (lines 824 against 808). **[confirmed]** The state left by
+  the previous preview, not a new measurement (§5): **[hypothesis]**,
+  strongly supported.
+- Other responses also differ before the divergence (0xD3 polling, byte 21
+  of page 0x25, log page 0x30), but page 0x20 is the only one that
+  separates the cold runs from the warm ones in all five sessions: the
+  0xD3 activity (`00 c6` before C, A1 and A2, and `00 d9` in C) also comes
+  before A2, which is warm.
+  **[confirmed]** FlexColor chooses the sequence from that page 0x20 read.
+  **[hypothesis]**
+- Page 0x28 is not part of the choice: A1 is identical to C without its
+  page 0x28 read (207 commands outside polling). **[confirmed]** What makes
+  FlexColor read it is still unknown. The uncalibrated state of page 0x20
+  is ruled out (A1 has it without the read); the holder being inserted
+  while FlexColor waited (the 0xD3 activity, §4) is weakened: A1 and A2
+  show the same 0xD3 activity without a page 0x28 read. **[hypothesis]**
+- B is identical, command for command (CDB, data_out, length; 206 outside
+  polling, all status 0x00), to W. **[confirmed]**
+  (`tests/fixtures/preview-sequence-warm-2.json`.)
+- A second preview in the same FlexColor session (A2) is a third sequence,
+  not a subset of the warm one: 168 commands outside polling from the
+  session start (183 in W and B), with fewer full-CCD calibration steps
+  (6 `F0`, 7 windows, 3 `E4` instead of 9, 12 and 5). Against W: 13
+  commands (full-CCD windows with ratio 125 000, `E4`, `F0`, page 0x20,
+  two READs…) are replaced by a single window found in neither fixture
+  (ratio 31 250, 1 998 pixels); one READ is replaced by a one-line READ of
+  12 024 bytes, also in neither fixture (`28 00 01 00 01 01 00 2e f8 00`);
+  3 commands are left out (the full-CCD window with ratio 31 250, an `E4`,
+  `F0 00 01 01 01`). 183 − 13 + 1 − 3 = 168. It also measures a position
+  (6 059) that no fixture has. **[confirmed]** FlexColor keeps part of the
+  calibration of the first preview. **[hypothesis]**
+- Measured positions (page 0x20, bytes 27-28) differ between captures of
+  the same sequence; the three differences observed are multiples of 64:
+  64 (two warm captures of 2026-11-12), 128 (B against W, 25 739 / 25 867),
+  192 (A1 against C, 14 027 / 14 219, twice). **[confirmed]** With the
+  tolerance of 100 (docs/decisions.md), our runner would have stopped in
+  A1: those two reads come after the window with target 10 000, so they are
+  checked. B's difference is on the read before any window requests a
+  position, which is not checked: B would have passed. **[confirmed]** (the
+  runner's rule applied to the captured responses).

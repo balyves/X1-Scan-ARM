@@ -586,8 +586,10 @@ explicitly. It is only for runs the user has approved (CLAUDE.md, rule 4).
   sometimes sends the measured value (8 971), sometimes another one (6 443
   measured, 6 250 sent). We send the captured values. On a real scanner, the
   preview stops if a measurement differs from the captured one by more than
-  **100**. Two captures differed by 64 on the first measurement (25 803 /
-  25 867); the others were identical. **Threshold to revise.**
+  **100**. Until 2026-11-16, two captures differed by 64 on the first
+  measurement (25 803 / 25 867) and the others were identical; on
+  2026-11-17, a warm capture differed by 128 on that same read (25 739) and
+  a cold one by 192 on two checked reads (below). **Threshold to revise.**
   Since 2026-11-16 (user's rule, after the first real test) the check
   applies only to page 0x20 reads made after a window that requests a
   position (SET WINDOW offset 50 not 0); the reads before it are logged and
@@ -595,10 +597,13 @@ explicitly. It is only for runs the user has approved (CLAUDE.md, rule 4).
   unchecked. The first, after session start, shows the state left by
   earlier use (8 203 after power-on, where the capture had 6 155). The
   second, after the first calibration windows (target 0), is probably a
-  measurement (protocol.md §5): it is the one that differed by 64 between
-  two captures, left unchecked by choice. The threshold of 100 therefore
-  rests on no checked read that varied: all checked reads were identical
-  between captures. Between that read and the first checked one, only the
+  measurement (protocol.md §5): it is the one that differed by 64, then
+  128, between captures, left unchecked by choice. Until 2026-11-16 the threshold of
+  100 rested on no checked read that varied. The captures of 2026-11-17
+  contradict that: in a new cold run (A1) two checked reads differed by 192
+  from the cold capture (14 027 / 14 219), so the runner would have stopped
+  that preview before SCAN (safe, but the threshold is to be decided again;
+  protocol.md §11). Between that read and the first checked one, only the
   captured window with target 25 000 is sent. Everything else in the guard
   and the runner is unchanged.
 - **Waits on 0xDF.** We poll 0xDF after exactly the commands where FlexColor
