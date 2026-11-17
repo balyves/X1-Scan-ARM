@@ -377,4 +377,8 @@ sequence"). Nothing was sent to the real X1.
 - On the simulator, the run goes through the guard and the decoded image
   is 609 × 614 pixels, FlexColor's size for that scan. Nothing was sent to
   the real X1; the app does not run scans yet.
+- After the substituted window, page 0x20 reads are compared with the
+  position sent, not the captured one (user's decision). In the captures
+  the position after that window stays constant: at the target at 2 000
+  and 3 200 ppi, 83 below it at 1 000 ppi (8 081 sent, 7 998 read).
 

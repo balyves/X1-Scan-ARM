@@ -203,7 +203,7 @@ final class RealPreviewTests {
         #expect(!sent.contains { $0.opcode == 0x24 && $0.dataOut[50...51] == [0xA8, 0x61] }, "no window with target 25 000")
         #expect(model.realPreviewNeedsPowerCycle)
         let text = try String(contentsOf: try #require(model.lastPreviewLog), encoding: .utf8)
-        #expect(text.contains("# position: captured 25867, measured 24523, difference -1344"))
+        #expect(text.contains("# position: expected 25867, measured 24523, difference -1344"))
     }
 
     /// The scanner could not be opened: nothing sent, the flag stays as it was.

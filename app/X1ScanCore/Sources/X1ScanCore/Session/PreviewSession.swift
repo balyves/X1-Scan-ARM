@@ -164,8 +164,8 @@ public final class PreviewSession {
         switch event {
         case .sequenceChosen(let choice):
             log.note("sequence chosen by the first page 0x20 read: \(choice == .cold ? "cold" : "warm")")
-        case .positionDifference(let captured, let measured, let checked):
-            log.note("position: captured \(captured), measured \(measured), difference \(measured - captured)"
+        case .positionDifference(let expected, let measured, let checked):
+            log.note("position: expected \(expected), measured \(measured), difference \(measured - expected)"
                      + (checked ? "" : " (not checked)"))
         default:
             break

@@ -67,7 +67,8 @@ Scope: **Flextight X1 only**. Other Flextight / Imacon models are out of scope.
      target position (bytes 50-51) of the window right before `1b 00 08 06
      01 00` carries the position read on page 0x20 just before, as FlexColor
      does, only if it is within the position tolerance (256) of the captured
-     one; otherwise the scan stops before that window. Every other byte of
+     one; otherwise the scan stops before that window. Later page 0x20
+     reads are compared with the position sent (tolerance 256). Every other byte of
      every command stays the captured one, and the guard
      (`CapturedSequenceGuard.scan`) accepts no other difference. The 0xDF
      state `00 06` is accepted only as the wait after that command, in the

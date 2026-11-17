@@ -86,6 +86,33 @@ struct ScanRunTests {
         #expect(Array(window.dataOut[52...]) == Array(Self.script[Self.windowIndex].command.dataOut[52...]))
     }
 
+    /// After the substitution, later reads are compared with the position sent
+    /// (the carriage must have reached it), not with the captured 16 651.
+    @Test func laterReadsAreComparedWithThePositionSent() async throws {
+        let windowRead = Self.statusReadsBeforeWindow  // the read just before the window
+        // Sent 16 851 (+200); a later read at 16 551 is 300 from what was sent, 100 from the capture: stop.
+        let shifted = StatusShifting(inner: CapturedFocusWindow(inner: try Self.simulator()),
+                                     shifts: [windowRead: 200, windowRead + 1: -100])
+        let stopping = Self.runner(GuardedTransport(inner: shifted, sequence: try Self.scanGuard()))
+        do {
+            _ = try await stopping.run()
+            Issue.record("the scan should have stopped")
+        } catch {
+            #expect(error.anomaly == .positionOutOfTolerance(expected: 16851, measured: 16551, tolerance: 256))
+            #expect(error.emergencyStop == .stoppedAndReady, "after SCAN: the stop command")
+        }
+        // Sent 16 851; a later read at 16 951 is 100 from it (300 from the capture): accepted.
+        let accepted = StatusShifting(inner: CapturedFocusWindow(inner: try Self.simulator()),
+                                      shifts: [windowRead: 200, windowRead + 1: 300])
+        let capture = try await Self.runner(GuardedTransport(inner: accepted, sequence: try Self.scanGuard())).run()
+        #expect(capture.image.count == 52)
+    }
+
+    /// Number (1-based) of the page 0x20 read right before the substituted window.
+    static let statusReadsBeforeWindow = script[..<windowIndex].filter {
+        $0.command.opcode == 0x5A && $0.command.cdb[2] == 0x20
+    }.count
+
     /// Beyond it, the run stops before that window: nothing more is sent.
     @Test(arguments: [257, -300, 8000])
     func beyondTheToleranceNothingMoreIsSent(shift: Int) async throws {
@@ -96,7 +123,7 @@ struct ScanRunTests {
             _ = try await runner.run()
             Issue.record("the scan should have stopped")
         } catch {
-            #expect(error.anomaly == .positionOutOfTolerance(captured: 16651, measured: 16651 + shift, tolerance: 256))
+            #expect(error.anomaly == .positionOutOfTolerance(expected: 16651, measured: 16651 + shift, tolerance: 256))
             #expect(error.stepIndex == Self.windowIndex)
             #expect(error.emergencyStop == nil)
             #expect(await faulty.commandsAfterFault.allSatisfy { $0.opcode == 0xDF }, "only the wait after that read")
@@ -234,5 +261,28 @@ actor CapturedFocusWindow: SCSITransport {
         data[50] = 0x0B
         data[51] = 0x41  // 16 651
         return try await inner.execute(X1Command.setWindow(data))
+    }
+}
+
+/// Adds a shift to the measured position of given page 0x20 reads (1-based).
+actor StatusShifting: SCSITransport {
+    let inner: any SCSITransport
+    let shifts: [Int: Int]
+    private var reads = 0
+    init(inner: any SCSITransport, shifts: [Int: Int]) {
+        self.inner = inner
+        self.shifts = shifts
+    }
+
+    func execute(_ command: SCSICommand) async throws -> SCSIResult {
+        let result = try await inner.execute(command)
+        guard command.opcode == 0x5A, command.cdb[2] == 0x20 else { return result }
+        reads += 1
+        guard let shift = shifts[reads] else { return result }
+        var data = result.data
+        let position = Int(data[27]) | Int(data[28]) << 8 + shift
+        data[27] = UInt8(position & 0xFF)
+        data[28] = UInt8(position >> 8)
+        return SCSIResult(status: result.status, data: data)
     }
 }

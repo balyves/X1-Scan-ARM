@@ -459,6 +459,12 @@ session also skips the `F0 00 00 00 01 01` that follows the first page
 0x20 read in the others, and starts with a window at 600 ppi (ratio
 10 000 000, binning 3). **[confirmed]** What decides the order is unknown.
 
+**Position around the 400-line step** (page 0x20, bytes 27-28): the
+window of that step targets the position read just before it (16 651,
+8 081, 24 971), and every later read of the session gives one constant
+value: the target at 2 000 and 3 200 ppi, 83 below it at 1 000 ppi
+(7 998 for 8 081). **[confirmed]** (three scans)
+
 Unlike the preview, a scan cannot be replayed byte for byte from a capture
 in general: the image window carries the frame (offsets 14, 18, 22, 26)
 and the resolution, and the 400-line window carries the position measured

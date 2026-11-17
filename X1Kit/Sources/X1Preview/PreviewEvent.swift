@@ -49,10 +49,11 @@ public enum PreviewEvent: Sendable {
     case scanStatus(ScanStatusPage)
     /// The first page 0x20 read chose the cold or the warm sequence.
     case sequenceChosen(PreviewPlan.Choice)
-    /// A page 0x20 read whose measured position differs from the captured one
-    /// (sent before the tolerance check). `checked`: after a window that
-    /// requests a position, so the tolerance applies.
-    case positionDifference(captured: Int, measured: Int, checked: Bool)
+    /// A page 0x20 read whose measured position differs from the expected one
+    /// (sent before the tolerance check). `expected`: the captured position,
+    /// or after a substituted window the position sent.
+    /// `checked`: the tolerance applies to this read.
+    case positionDifference(expected: Int, measured: Int, checked: Bool)
     /// READ data received and accepted.
     case data([UInt8], purpose: PreviewStep.ReadPurpose)
     /// An anomaly or a cancellation happened after SCAN: the stop sequence

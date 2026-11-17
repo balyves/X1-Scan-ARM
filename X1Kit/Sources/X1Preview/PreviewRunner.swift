@@ -86,6 +86,10 @@ public struct PreviewRunner: Sendable {
         var steps = plan?.common ?? fixedScript
         // Position of the last page 0x20 read, for `.positionWindow`.
         var lastPosition: Int?
+        // After a `.positionWindow`: the target sent. Every later page 0x20
+        // read is compared with it (the carriage must have reached it), not
+        // with the captured value (user's decision, docs/decisions.md).
+        var positionSent: Int?
         var phases = PreviewPhase.phases(for: script)
         var index = 0
 
@@ -99,9 +103,11 @@ public struct PreviewRunner: Sendable {
                     lastLineCount = nil  // page 0x20 counts the lines since this SCAN
                 }
                 let command = try substituted(step, lastPosition: lastPosition, progress: progress)
+                if case .positionWindow = step.kind { positionSent = Self.targetPosition(command) }
                 let result = try await transport.execute(command)
                 try verify(result, of: command)
                 try handle(result, of: step, scanSent: scanSent, positionRequested: positionRequested,
+                           positionSent: positionSent,
                            lastLineCount: &lastLineCount, capture: &capture, progress: progress)
                 if command.opcode == 0x5A, command.cdb[2] == ScanStatusPage.page,
                    let status = try? ScanStatusPage(result.data) {
@@ -145,10 +151,10 @@ public struct PreviewRunner: Sendable {
         guard case .positionWindow(let captured) = step.kind else { return step.command }
         guard let measured = lastPosition else { throw PreviewAnomaly.malformedResponse("no position read before the window") }
         if measured != captured {
-            progress?(.positionDifference(captured: captured, measured: measured, checked: true))
+            progress?(.positionDifference(expected: captured, measured: measured, checked: true))
         }
         guard abs(measured - captured) <= configuration.positionTolerance, (0...0xFFFF).contains(measured) else {
-            throw PreviewAnomaly.positionOutOfTolerance(captured: captured, measured: measured,
+            throw PreviewAnomaly.positionOutOfTolerance(expected: captured, measured: measured,
                                                         tolerance: configuration.positionTolerance)
         }
         var data = step.command.dataOut
@@ -169,13 +175,19 @@ public struct PreviewRunner: Sendable {
         }
     }
 
+    /// Target position of a SET WINDOW (offset 50, LE16).
+    static func targetPosition(_ command: SCSICommand) -> Int {
+        precondition(command.opcode == 0x24 && command.dataOut.count >= 54, "not a 68-byte window")
+        return Int(command.dataOut[50]) | Int(command.dataOut[51]) << 8
+    }
+
     /// SET WINDOW whose target position (offset 50, LE16 followed by two zero bytes in every captured window, docs/protocol.md §9) is not 0.
     public static func requestsPosition(_ command: SCSICommand) -> Bool {
         command.opcode == 0x24 && command.dataOut.count >= 54 && command.dataOut[50..<54].contains { $0 != 0 }
     }
 
     private func handle(_ result: SCSIResult, of step: PreviewStep, scanSent: Bool, positionRequested: Bool,
-                        lastLineCount: inout Int?, capture: inout PreviewCapture,
+                        positionSent: Int?, lastLineCount: inout Int?, capture: inout PreviewCapture,
                         progress: PreviewEventHandler?) throws {
         switch step.kind {
         case .command:
@@ -207,7 +219,7 @@ public struct PreviewRunner: Sendable {
         case .positionGate(let captured):
             let status = try parse { try ScanStatusPage(result.data) }
             if status.measuredPosition != captured {
-                progress?(.positionDifference(captured: captured, measured: status.measuredPosition, checked: true))
+                progress?(.positionDifference(expected: captured, measured: status.measuredPosition, checked: true))
             }
             guard abs(status.measuredPosition - captured) <= configuration.positionTolerance else {
                 throw PreviewAnomaly.unexpectedCarriagePosition(captured: captured, measured: status.measuredPosition,
@@ -227,14 +239,15 @@ public struct PreviewRunner: Sendable {
             progress?(.scanStatus(status))
         case .positionWindow:
             break  // checked before sending (`substituted`)
-        case .scanStatus(let captured):
+        case .scanStatus(let capturedPosition):
             let status = try parse { try ScanStatusPage(result.data) }
-            if status.measuredPosition != captured {
-                progress?(.positionDifference(captured: captured, measured: status.measuredPosition,
+            let expected = positionSent ?? capturedPosition
+            if status.measuredPosition != expected {
+                progress?(.positionDifference(expected: expected, measured: status.measuredPosition,
                                               checked: positionRequested))
             }
-            guard !positionRequested || abs(status.measuredPosition - captured) <= configuration.positionTolerance else {
-                throw PreviewAnomaly.positionOutOfTolerance(captured: captured, measured: status.measuredPosition,
+            guard !positionRequested || abs(status.measuredPosition - expected) <= configuration.positionTolerance else {
+                throw PreviewAnomaly.positionOutOfTolerance(expected: expected, measured: status.measuredPosition,
                                                             tolerance: configuration.positionTolerance)
             }
             if scanSent {
@@ -308,7 +321,7 @@ public enum PreviewAnomaly: Error, Hashable, CustomStringConvertible {
     case wrongLength(expected: Int, received: Int)
     case unexpectedIdentity(vendor: String, product: String)
     case unexpectedScanResponse([UInt8])
-    case positionOutOfTolerance(captured: Int, measured: Int, tolerance: Int)
+    case positionOutOfTolerance(expected: Int, measured: Int, tolerance: Int)
     /// The read before the warm sequence's window with target 25 000 is too far
     /// from the capture: stopped before that window.
     case unexpectedCarriagePosition(captured: Int, measured: Int, tolerance: Int)
@@ -352,8 +365,8 @@ public enum PreviewAnomaly: Error, Hashable, CustomStringConvertible {
         case .unexpectedCarriagePosition(let captured, let measured, let tolerance):
             "unexpected carriage position: read \(measured), expected \(captured), difference \(measured - captured) "
                 + "(tolerance \(tolerance)); stopped before the window with target 25 000"
-        case .positionOutOfTolerance(let captured, let measured, let tolerance):
-            "measured position \(measured), captured \(captured) (tolerance \(tolerance))"
+        case .positionOutOfTolerance(let expected, let measured, let tolerance):
+            "measured position \(measured), expected \(expected) (tolerance \(tolerance))"
         case .lineCounterWentBack(let previous, let current):
             "line counter went back from \(previous) to \(current)"
         case .unexpectedState(let state, let target):

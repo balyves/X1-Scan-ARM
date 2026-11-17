@@ -679,8 +679,9 @@ captures of 2026-11-17 (protocol.md §11). User's decisions.
   two reads); every other checked read of every capture matched exactly;
   differences come in steps of 64. 256 leaves one step of margin without
   losing what the check is for. Every page 0x20 read whose position differs
-  from the captured one, checked or not, is written to the run's log
-  (captured, measured, difference) so that the tolerance can be revised
+  from the expected one (the captured one; in a scan, after the substituted
+  window, the position sent), checked or not, is written to the run's log
+  (expected, measured, difference) so that the tolerance can be revised
   with later sessions.
 - **Option A: the read before the window with target 25 000** (user's
   decision). In the warm sequence, the page 0x20 read right after the
@@ -730,6 +731,26 @@ User's decisions; nothing has been sent to the real X1.
   guard (`CapturedSequenceGuard.scan`) accepts that window with another
   value in the same range only, at that place only, every other byte being
   the captured one; anything else is refused. Rule 4 of CLAUDE.md says so.
+- **Two position checks around that window** (user's decision):
+  1. *Before it*: the position read just before must be within 256 of the
+     captured 16 651, or nothing more is sent (the window is not sent).
+  2. *After it*: every later page 0x20 read of the session is compared with
+     the position **sent** in that window, not with 16 651: the carriage
+     must have reached the target it was given, within 256. Otherwise the
+     scan stops (`DB` if after the step's SCAN).
+  The log notes every read that differs from what is expected (expected,
+  measured, difference).
+- **Observed in the three scans** (2026-11-17), page 0x20 position:
+
+  | Scan | Read before the window | Sent in the window | Reads after it |
+  |---|---|---|---|
+  | 2 000 ppi | 16 651 | 16 651 | 16 651 (54 reads) |
+  | 1 000 ppi | 8 081 | 8 081 | 7 998 (29 reads), -83 from the target |
+  | 3 200 ppi | 24 971 (25 547 before the two windows with target 25 000) | 24 971 | 24 971 (102 reads) |
+
+  The target sent was always the position read just before; after it the
+  position stayed constant for the whole session, at the target or 83
+  below it. **[confirmed]**
 - **Start state.** The session must start warm: no scan right after
   power-on was captured. Its first page 0x20 read must show values left by
   earlier use (`startStateMismatch` otherwise); before that read only the

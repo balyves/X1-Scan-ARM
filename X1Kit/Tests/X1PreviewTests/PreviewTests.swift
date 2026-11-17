@@ -262,7 +262,7 @@ struct PreviewStopTests {
             Issue.record("the preview should have stopped")
             return
         }
-        #expect(error.anomaly == .positionOutOfTolerance(captured: 8971, measured: 9228, tolerance: 256))
+        #expect(error.anomaly == .positionOutOfTolerance(expected: 8971, measured: 9228, tolerance: 256))
         #expect(error.emergencyStop == nil)
         #expect(await transport.commandsAfterFault.isEmpty)
     }
@@ -556,7 +556,7 @@ struct SequenceChoiceTests {
         _ = try await PreviewRunner(transport: transport, configuration: .simulator, plan: Self.plan)
             .run { recorder.record($0) }
         let differences = recorder.events.compactMap { event -> (Int, Int, Bool)? in
-            if case .positionDifference(let captured, let measured, let checked) = event { (captured, measured, checked) } else { nil }
+            if case .positionDifference(let expected, let measured, let checked) = event { (expected, measured, checked) } else { nil }
         }
         #expect(differences.count == 1)
         #expect(differences.first.map { $0.1 - $0.0 } == 128)
