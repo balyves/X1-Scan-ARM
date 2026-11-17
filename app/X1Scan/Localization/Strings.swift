@@ -121,7 +121,7 @@ enum Strings {
                 return String(localized: "Focusing: \(progress.focusLinesReceived) of \(progress.focusLinesExpected) lines",
                               comment: "Status while the scan reads the 400-line step")
             case .references?:
-                return String(localized: "White and dark", comment: "Status while the scan reads its white and dark lines")
+                return String(localized: "White and black reference", comment: "Status while the scan reads its white and black reference lines")
             case .scanning?, .finishing?:
                 return String(localized: "Image: \(progress.linesReceived) of \(progress.linesExpected) lines",
                               comment: "Status while the scan reads the image lines")

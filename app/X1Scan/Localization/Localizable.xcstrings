@@ -2776,14 +2776,14 @@
         }
       }
     },
-    "White and dark": {
-      "comment": "Status while the scan reads its white and dark lines",
+    "White and black reference": {
+      "comment": "Status while the scan reads its white and black reference lines",
       "extractionState": "manual",
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Blanc et noir"
+            "value": "Références blanc et noir"
           }
         }
       }
