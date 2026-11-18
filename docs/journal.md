@@ -678,3 +678,5 @@ contributors"; every commit so far is by the user's account. The rest of
 the MIT text is unchanged. CLAUDE.md rules 2 and 3, the reviewer's
 instructions and decisions.md allow the holder's name in `LICENSE` on
 that line only.
+The About panel's copyright line follows: "© 2026 <holder>. Code: MIT
+licence; icon not under the MIT licence" (and in French).

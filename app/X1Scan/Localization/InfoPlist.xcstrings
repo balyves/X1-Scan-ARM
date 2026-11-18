@@ -2,19 +2,19 @@
   "sourceLanguage" : "en",
   "strings" : {
     "NSHumanReadableCopyright" : {
-      "comment" : "About panel: copyright line. The icon is not under the MIT licence.",
+      "comment" : "About panel: copyright line. The code is MIT; the icon is not.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Code: MIT licence. Icon © 2026 BBH Solutions Visuelles Sàrl, not under the MIT licence (see the licences above)."
+            "value" : "© 2026 BBH Solutions Visuelles Sàrl. Code: MIT licence; icon not under the MIT licence"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Code : licence MIT. Icône © 2026 BBH Solutions Visuelles Sàrl, hors licence MIT (voir les licences ci‑dessus)."
+            "value" : "© 2026 BBH Solutions Visuelles Sàrl. Code : licence MIT ; icône hors licence MIT"
           }
         }
       }

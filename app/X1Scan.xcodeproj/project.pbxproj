@@ -247,7 +247,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "X1 Scan";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.photography";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "Code: MIT licence. Icon © 2026 BBH Solutions Visuelles Sàrl, not under the MIT licence (see the licences above).";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 BBH Solutions Visuelles Sàrl. Code: MIT licence; icon not under the MIT licence";
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -276,7 +276,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "X1 Scan";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.photography";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "Code: MIT licence. Icon © 2026 BBH Solutions Visuelles Sàrl, not under the MIT licence (see the licences above).";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 BBH Solutions Visuelles Sàrl. Code: MIT licence; icon not under the MIT licence";
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
