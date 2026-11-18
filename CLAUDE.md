@@ -110,18 +110,23 @@ available; ask.
 - `tools/capture/`: lldb capture script for FlexColor on Mojave, and its
   converter to fixtures.
 - `tests/fixtures/`: FlexColor captures (anonymised; of image data, only the first
-  64 bytes of each read).
+  64 bytes of each read, except the seven holder code lines of
+  `holders/holder-code-lines.json`, user's decision of 2026-11-18).
   `preview-sequence.json` (warm, after earlier previews) is replayed by the
   virtual X1; `preview-sequence-cold.json` (right after power-on, without
   its page 0x28 read) and `preview-sequence.json` are the two sequences
   sent to the real X1; `preview-sequence-warm-2.json` is a
   second warm preview; `scan-sequence-1000ppi.json`, `-2000ppi`, `-3200ppi`
   are a preview then a scan each (docs/protocol.md §12), replayed only by
-  the simulator in tests. See `tests/fixtures/README.md`.
+  the simulator in tests; `scan-sequence-2000ppi-twice.json` (two scans
+  without a preview between them), `preview-sequence-warm-3` to `-5` and
+  `holders/` (one preview per holder, and the holder code lines, §13)
+  document FlexColor; tests read `-warm-3` to `-5` and the code lines. See `tests/fixtures/README.md`.
 - `tools/decode/`: preview and scan decoders (Python, numpy, Pillow;
   `decode_scan.py --compare` also needs tifffile).
 - `X1Kit/`: Swift package (transport, protocol, preview sequence, image,
-  scan decoding in `X1Image/ScanDecoding.swift`); `swift test` runs against
+  scan decoding in `X1Image/ScanDecoding.swift`, holder code in
+  `X1Image/HolderCode.swift`); `swift test` runs against
   the simulator, never against a real scanner.
 - `app/`: macOS application. `X1Scan.xcodeproj` and `X1Scan/` (AppKit
   shell, SwiftUI settings panel and tool column, String Catalog), `X1ScanCore/` (models and view

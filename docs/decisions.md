@@ -530,6 +530,13 @@ sent by our code: only FlexColor's captured preview, byte for byte.
 
 Recorded on 2026-11-14.
 
+- **Holder code lines in the repository** (user's decision, 2026-11-18):
+  an exception to "no raw image files" (CLAUDE.md rule 2), limited to the
+  seven one-line reads that show a holder's code on its leading edge
+  (`tests/fixtures/holders/holder-code-lines.json`, raw pixels, no serial
+  number). No other image data; the calibration line of the first session
+  of that run, which shows no code, is not kept.
+
 - The default list is a versioned data file,
   `app/X1ScanCore/Sources/X1ScanCore/Resources/holders.json`: reference,
   format, opening in mm, number of frames, series, from Hasselblad's holder

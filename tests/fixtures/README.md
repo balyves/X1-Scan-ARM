@@ -4,7 +4,8 @@ Recorded from a real Flextight X1 driven by FlexColor 4.8.13 (Mac, Mojave),
 2026-11-12, with `tools/capture/cap3.py`. The scanner serial number is
 anonymised (`FX1xxxxxxx`). Of the image data, only the first 64 bytes of
 each read are kept (`response_head`): mostly dark margin pixels, a few
-pixels of the frame at most.
+pixels of the frame at most. One exception: the seven holder code lines of
+`holders/holder-code-lines.json` (below; docs/decisions.md).
 
 ## preview-sequence.json
 
@@ -91,6 +92,13 @@ FlexColor's initialisation), `-2-6x6x2`, `-3-24x36`, `-4-4x5`,
 `-5-24x36x6`, `-6-6x9`, `-7-24x36x4`, `-8-6x6-6x45-again`, named after the
 format FlexColor showed. The file names and `seq` numbers keep the order of
 the run. Converted like the cold fixture (53 long responses completed).
+
+`holders/holder-code-lines.json`: the raw pixels of the first one-line
+read of sessions 2-8, which shows the holder code on the leading edge
+(docs/protocol.md §13). The user agreed on 2026-11-18 to keep these code
+lines, and no other image data (docs/decisions.md). Base64 of
+little-endian UInt16 RGB, extracted from the raw data with the RAW offsets
+of the cap3.py log.
 
 ## preview-calibration-profile.json
 

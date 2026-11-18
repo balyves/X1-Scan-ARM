@@ -534,3 +534,15 @@ Captures on the Mojave Mac with FlexColor 4.8.13 (fixtures in
   send the 6×7 sequences.
 
 Nothing was sent to the real X1.
+
+## 2026-11-18: holder code decoder
+
+`X1Image.HolderCode` decodes the holder code from one line of raw pixels:
+bright runs (runs much shorter than the typical bar ignored), pitch from
+the span of slots 0-16, slots rounded to the pitch, one bar per slot;
+the frame slots (0-3, 5, 6, 16 bright, 4 dark) must be there, and the code
+is the set of bright slots 7-15. It gives the seven codes of the holder
+previews and nothing for a line without the holder edge
+(`HolderCodeTests`, on the seven code lines kept in
+`tests/fixtures/holders/holder-code-lines.json` with the user's
+agreement). Not used by the app yet; nothing was sent to the X1.

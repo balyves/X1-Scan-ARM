@@ -624,8 +624,8 @@ leading edge. Counting positions in pitches from the first bar, slots 0-3,
 | 24×36×6 | 7, 12, 13 |
 
 **[confirmed]** for the seven holders read, decoded from the raw image
-data of the capture (outside the repository: the fixtures keep only the
-first 64 bytes of each read) (the pitch and bar width scale
+data of the capture (the fixtures keep only the first 64 bytes of each
+read, except the seven code lines below) (the pitch and bar width scale
 with the ratio of that window: about 50 / 26 pixels at 8 000 000). That
 window takes offsets 54 / 58 of the previous session's preview window, and
 its ratio is 3 times that preview's in sessions 2 to 5 and 7, not in 6
@@ -635,7 +635,13 @@ last digits of the references of those formats in `holders.json`
 (50200401, 50200402, 50200404; the references of the holders used were
 not noted); the others do not follow that rule (6×6 / 6×4.5 gives 10, its
 reference is 50200428). Meaning of the bits: **[hypothesis]**; a lookup table of the
-observed codes is enough to recognise these seven holders. The first
+observed codes is enough to recognise these seven holders.
+`X1Image.HolderCode` decodes such a line (frame slots 0-3, 5, 6, 16 bright
+and 4 dark, code slots 7-15); `HolderCodeTests` checks it on the seven
+code lines kept in `tests/fixtures/holders/holder-code-lines.json` (raw
+pixels of those one-line reads only), and on changed copies of them (an
+edge pixel, a hot pixel, slot 4 bright, a frame slot dark, a wider bar, a
+bar off the grid). The first
 preview of the run is different: it starts like the warm capture, and its
 first one-line read (full CCD width, during the calibration) is bright
 across the whole CCD, with no code. **[confirmed]**
