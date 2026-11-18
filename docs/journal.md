@@ -657,3 +657,14 @@ lines, warm-3 to -5, two scans in a row, the window fixture) are no longer
 copied into the app bundle. The About panel shows both licences, copied
 into the app; the copyright line is in English and French. The CI pins
 Xcode 26.5 and checks the icon and the licences in the built app.
+
+## 2026-11-18: standard MIT LICENSE; icon option D
+
+With a line excluding the icon, GitHub no longer recognised `LICENSE` as
+MIT ("Other", `NOASSERTION`). `LICENSE` is the standard MIT text again;
+the exclusion stays in `LICENSE-ICON`, the README's licence section and
+the About panel (CLAUDE.md rule 3, decisions.md).
+
+The user chose option D of the icon among four renders (kept outside the
+repository): the blue gradient also in the dark appearance, and a
+14-unit stroke on the "X1" for the 16 and 32 px sizes.

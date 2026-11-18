@@ -923,7 +923,9 @@ page 0x20); kept for the reasoning.
 
 User's decision: the app icon belongs to the icon's copyright holder
 (named in `LICENSE-ICON`) and is **not** under the MIT licence
-(`LICENSE-ICON`, `LICENSE`, README; CLAUDE.md rule 3).
+(`LICENSE-ICON`, README's licence section, About; CLAUDE.md rule 3).
+`LICENSE` stays the standard MIT text (user's decision, 2026-11-18): with a
+line excluding the icon, GitHub no longer recognised it as MIT ("Other").
 
 - **Name of the copyright holder** (user's decision, 2026-11-18): an
   exception to "no client or studio names" (CLAUDE.md rule 2), only in
@@ -955,3 +957,10 @@ holds an identical copy of the "X1" layer and the `.icon`'s fill repeats
 the background colours: change both together. The About panel's
 copyright line (English and French, `InfoPlist.xcstrings`) names both
 licences.
+
+- **Option D** (user's decision, 2026-11-18, after comparing four
+  renders): the dark appearance keeps the blue gradient (a fill
+  specialization for `dark` equal to the default fill, instead of Icon
+  Composer's neutral dark), and the "X1" outline has a 14-unit white
+  stroke (round joins) in the source layer and in the `.icon`, for the 16
+  and 32 px sizes. The four renders stay outside the repository.

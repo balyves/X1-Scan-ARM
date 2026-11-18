@@ -38,7 +38,9 @@ Scope: **Flextight X1 only**. Other Flextight / Imacon models are out of scope.
    commit.
 3. **Licence**: the project is MIT, except the application icon
    (`app/X1Scan/Icon/`, `LICENSE-ICON`; docs/decisions.md, "Application
-   icon"). Do not copy code from GPL projects
+   icon"). `LICENSE` stays the standard MIT text, unchanged, so that GitHub
+   recognises it; the icon's exclusion is stated in `LICENSE-ICON`, the
+   README's licence section and the About panel. Do not copy code from GPL projects
    (notably eigenshell/flextight-shenanigans). Their documentation can be
    read as a reference; the code must be our own.
 4. **Scanner safety**:
