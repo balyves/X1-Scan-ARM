@@ -27,7 +27,9 @@ Scope: **Flextight X1 only**. Other Flextight / Imacon models are out of scope.
    Describing behaviour observed in captures or static analysis is fine.
 2. **No personal data**: no scanner serial number (use `FX1xxxxxxx`), no
    client or studio names, no IPTC credits from scan files, no capture logs or
-   raw image files. Check before every commit.
+   raw image files (one exception: the seven holder code lines of
+   `tests/fixtures/holders/holder-code-lines.json`, docs/decisions.md, "Film
+   holders"). Check before every commit.
 3. **Licence**: the project is MIT. Do not copy code from GPL projects
    (notably eigenshell/flextight-shenanigans). Their documentation can be
    read as a reference; the code must be our own.

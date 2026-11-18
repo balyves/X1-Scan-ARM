@@ -726,11 +726,15 @@ captures of 2026-11-17 (protocol.md §11). User's decisions.
   (expected, measured, difference) so that the tolerance can be revised
   with later sessions. FlexColor captures of 2026-11-18: before the window
   with target 25 000, +64, +128, +64, +64 against the captured 25 867,
-  all on the same side, 128 below the limit at most; the cold preview of
-  that day read 25 675 where our cold sequence expects 14 219, and would
-  stop there (protocol.md §12): FlexColor then sent the window with
-  target 25 000 and calibration windows with ratio 32 000 000, where our
-  cold sequence has 16 000 000.
+  all on the same side, 128 below the limit at most. The cold preview of
+  that day read 25 675 where our cold sequence expects 14 219, but it had
+  already sent other windows (ratio 32 000 000 and offsets 54 / 58 =
+  454 612 / 856 631 instead of 16 000 000 and 354 583 / 576 354) before
+  that read (protocol.md §12): our cold sequence sends those of
+  2026-11-16, with which that read gave 14 027 to 14 219 in every capture
+  and every real preview so far. **Only the cold
+  sequence of 2026-11-16** (user's decision, 2026-11-18): no second cold
+  variant.
 - **Option A: the read before the window with target 25 000** (user's
   decision). In the warm sequence, the page 0x20 read right after the
   first calibration windows (target 0) is now always checked, with the

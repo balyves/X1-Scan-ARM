@@ -538,3 +538,81 @@ left in place.
   pixels are shown square.
 - `EnableRealPreview` and `EnableRealScan` were turned off afterwards.
 
+
+## Part G: captures for the window calculator and the holder previews
+
+FlexColor captures on the reference Mac (Mojave), one log per FlexColor
+launch, kept outside the repository (they hold the serial number). Purpose: the rules behind the scan windows (docs/protocol.md §9,
+§12) and one first preview per holder (§13). Nothing is sent by X1 Scan.
+
+Before starting:
+
+- Machine: reference Mac (Mojave). Connect as in C1: **X1: off**, cable
+  on the reference Mac, then **X1: on**. **FlexColor: closed.**
+- Every "launch FlexColor" below means: FlexColor **open under lldb with
+  `cap3.py`** as in C2, with a new name `N` each time (`N=essai-I`,
+  `N=essai-J1`… : a name used again overwrites its log and its `.raw`),
+  and `X1CAP_SCAN_MB` set for the scans. Quitting FlexColor ends that
+  capture.
+- The X1 must have made at least one preview since it was switched on;
+  otherwise the preview of step 1 is a cold one (first page 0x20 read
+  2 048 × 3): it is still useful, note it.
+- For every scan, keep FlexColor's TIFF and note the frame FlexColor shows
+  (X, Y, width, height) and the resolution; a screenshot is enough. TIFFs
+  and screenshots stay outside the repository; check that no serial number
+  or client name shows on the screenshots (C3).
+- Note the reference printed on each holder.
+- Never touch FlexColor's Format menu.
+- At the end: as in C4 (FlexColor closed, X1 off).
+
+### G1. Window calculator: 6×7 holder, same film, one capture ("essai-I")
+
+**X1: on.** FlexColor: launched once at step 1, closed at step 14. The
+scans follow each other without a new preview (as in
+`scan-sequence-2000ppi-twice.json`).
+
+1. Launch FlexColor, make a preview.
+2. Frame 1.0 × 1.0 cm **at the centre** of the opening: scan at 600 ppi.
+3. Same frame: 1 000 ppi.
+4. Same frame: 1 500 ppi.
+5. Same frame: 2 000 ppi.
+6. Same frame: 2 500 ppi.
+7. Same frame: 3 200 ppi.
+8. 1.0 × 1.0 cm at 2 000 ppi, frame about 5 mm from the **left edge** of
+   the opening.
+9. The same, about 5 mm from the **right edge**.
+10. The same, about 5 mm from the **top**.
+11. The same, about 5 mm from the **bottom**.
+12. Centred frame of **3.0 × 1.0 cm** (wide) at 2 000 ppi.
+13. Centred frame of **1.0 × 3.0 cm** (tall) at 2 000 ppi.
+14. Quit FlexColor.
+
+### G2. One first preview per holder (FlexColor launched each time)
+
+**X1: on** throughout. For each step: FlexColor **closed**, change the
+holder, launch FlexColor, make a preview, quit FlexColor. Note the format
+FlexColor shows. The 6×7 is already captured
+(`preview-sequence-warm-3.json` to `-5`).
+
+15. 6×6 / 6×4.5 → essai-J1 (already a first preview in
+    `holders/holder-preview-1-6x6-6x45.json`, after another holder; here
+    after the 6×7).
+16. 6×6×2 → essai-J2.
+17. 24×36 → essai-J3; before quitting, **also** a scan of a centred
+    1.0 × 1.0 cm frame at 1 000 ppi.
+18. 4×5 → essai-J4; before quitting, **also** the same scan at 1 000 ppi.
+19. 24×36×6 → essai-J5.
+20. 6×9 → essai-J6.
+21. 24×36×4 → essai-J7.
+
+The scans of steps 17 and 18, against step 3 (1 000 ppi, 6×7), show how
+offsets 54 / 58 depend on the holder.
+
+### G3. Optional: cold start
+
+22. FlexColor **closed**, **X1: off**. Switch the X1 on, launch FlexColor,
+    make a preview with the 6×7 holder → essai-K. Note which holder was
+    used last in FlexColor. It shows which cold calibration windows
+    FlexColor sends: ratio 16 000 000 and offsets 54 / 58 = 354 583 /
+    576 354 (as on 2026-11-16), or 32 000 000 and 454 612 / 856 631 (as on
+    2026-11-18, protocol.md §12).

@@ -546,3 +546,18 @@ previews and nothing for a line without the holder edge
 (`HolderCodeTests`, on the seven code lines kept in
 `tests/fixtures/holders/holder-code-lines.json` with the user's
 agreement). Not used by the app yet; nothing was sent to the X1.
+
+## 2026-11-18: one cold sequence only
+
+The two cold FlexColor captures diverge at the first window after the
+first page 0x20 read (ratio 16 000 000 and offsets 54 / 58 = 354 583 /
+576 354 on 2026-11-16; 32 000 000 and 454 612 / 856 631 on 2026-11-18),
+before the read that gave 14 219 and 25 675. With the windows of
+2026-11-16, which our cold sequence sends, that read gave 14 027 to
+14 219 in every capture and real preview (14 219 on 2026-11-16, 14 027 and
+14 155 on 2026-11-18). The earlier note that our sequence "would stop" on
+a run like the second capture was wrong: that case came from FlexColor's
+own windows. User's decision: keep only the cold sequence of 2026-11-16
+(protocol.md §12, decisions.md). The exception for the seven holder code
+lines is now in CLAUDE.md rule 2 and the reviewer's instructions;
+test-session.md part G lists the next capture session.

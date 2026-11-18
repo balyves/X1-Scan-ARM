@@ -99,7 +99,10 @@ wrong, not for what is right. Do not approve by default.
     only `FX1xxxxxxx` is allowed;
   - no names of people, clients or studios, no IPTC credits, no machine
     names;
-  - no capture logs or raw image files.
+  - no capture logs or raw image files (one exception: the seven holder
+    code lines of `tests/fixtures/holders/holder-code-lines.json`, see
+    docs/decisions.md, "Film holders"; any other image data beyond the
+    first 64 bytes of each read is a blocking issue).
 - Nothing from Hasselblad: binaries, firmware, FPGA bitstreams, film
   profiles, setup files, excerpts of their code.
 - No code copied from GPL projects (notably eigenshell/flextight-shenanigans).

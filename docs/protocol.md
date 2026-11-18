@@ -590,11 +590,22 @@ In all 11 sessions captured with that read, the window with target 25 000
 follows a position above 25 000 (25 675 to 25 995) and is missing after
 24 523 and 14 219. **[confirmed]** So FlexColor sends it only when the
 carriage is beyond 25 000; the cold/warm choice of the first page 0x20
-read does not decide it. **[hypothesis]**, strongly supported. Our cold
-sequence checks that read against 14 219 (tolerance 256): a run like this
-one would stop there, before anything else is sent. What sets the ratio
-of the calibration windows is unknown (an earlier holder or setting of
-FlexColor). **[hypothesis]**
+read does not decide it. **[hypothesis]**, strongly supported. The two
+cold captures diverge before that read, at the first window after the
+first page 0x20 read: the windows already sent differ (ratio 16 000 000
+and offsets 54 / 58 = 354 583 / 576 354 on 2026-11-16; 32 000 000 and
+454 612 / 856 631 here). **[confirmed]** That these windows set where the
+carriage stops: **[hypothesis]**. Our cold sequence sends the windows of
+2026-11-16: with them that read gave 14 219 and 14 027 in FlexColor's two
+captures, 14 219 in our real preview of 2026-11-16 and 14 027 or 14 155 in
+those of 2026-11-18, never above 25 000 **[confirmed]**. It is not
+expected to meet this capture's case, which came from FlexColor's own
+windows **[hypothesis]**, strongly supported; if that read ever gave such
+a value, the runner would stop there (tolerance 256 around 14 219),
+before the window with target 9 000 **[confirmed]** (script). The cold sequence of 2026-11-16 stays the
+only one (user's decision, 2026-11-18). What made FlexColor choose
+32 000 000 is unknown (an earlier holder or setting of FlexColor).
+**[hypothesis]**
 
 ## 13. Holder detection (FlexColor 4.8.13)
 
