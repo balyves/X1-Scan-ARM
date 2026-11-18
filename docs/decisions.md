@@ -156,7 +156,10 @@ Recorded on 2026-11-12.
   wide. The factor is one documented parameter,
   `X1Image.PreviewGeometry.pixelAspectRatio`, to be adjusted with captures of
   real scans. It is display only: decoded and exported images keep the
-  scanner's pixels.
+  scanner's pixels. Scans are shown with square pixels
+  (`X1Image.ScanDecoding.pixelAspectRatio` = 1): the decoder resamples their
+  lines by 3/5, and FlexColor's TIFF is 2 000 ppi both ways (protocol.md
+  §10; journal, 2026-11-18, first real scan).
 - The Info palette shows the corrected values (as exported) in large and the
   raw CCD samples behind the same pixel in small.
 

@@ -477,8 +477,8 @@ Known risks, as written before the first run:
 ## Part F: first scan on the real X1, on the development Mac
 
 FlexColor's captured 2 000 ppi scan replayed on the real X1
-(docs/decisions.md, "Real X1: scan"). Not done yet: to be planned with the
-user. The scan needs a complete real preview first (part E) and the
+(docs/decisions.md, "Real X1: scan"). Done on 2026-11-18 (F4). The scan
+needs a complete real preview first (part E) and the
 **same holder as the capture** (6×7, reference 50200403), with the film
 left in place.
 
@@ -516,4 +516,25 @@ left in place.
   `tools/decode/decode_scan.py <log>.txt <log>.raw out.png`.
 - If the scan stopped: switch the X1 off and on; the next preview asks for
   it, and Scan needs a new complete preview.
+
+### F4. Result of 2026-11-18, 08:39: success
+
+- macOS 26 Tahoe, cold preview, then the scan. Log
+  `x1scan-scan-083930.txt` (outside the repository): 746 exchanges, no
+  error status. Focus step: measured position 16 779, 128 above the
+  captured 16 651, substituted within the tolerance (256).
+- TIFF 609 × 614 pixels, RGB 16-bit, 2 000 ppi; image correct, checked
+  outside the app.
+- Three corrections were needed that morning, each after a stopped run
+  (docs/journal.md):
+  1. 0xDF `08 00` right after the final `DB` of a preview: accepted after
+     a final or emergency `DB`;
+  2. 0xDF `08 00` after `08 01` in a wait of the cold preview (step 81):
+     accepted in every wait right after an accepted `08 xx`;
+  3. page 0x20 line counter going from 11 to 10 during the scan's white
+     and black references (step 458): checked in the image phase only.
+- In the app the scanned image was shown stretched vertically (the
+  preview's pixel aspect ratio of 3 applied to the scan); fixed, scan
+  pixels are shown square.
+- `EnableRealPreview` and `EnableRealScan` were turned off afterwards.
 

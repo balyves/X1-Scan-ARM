@@ -610,8 +610,12 @@ public final class AppModel {
             renderTask?.cancel()
             return
         }
-        if viewport.imageWidth != image.width || viewport.imageHeight != image.expectedHeight {
-            viewport.setImageSize(width: image.width, height: image.expectedHeight)
+        // Preview pixels are 3 times taller than wide; a scan's are square
+        // (2 000 ppi both ways, docs/protocol.md §10).
+        let aspect = session.kind == .scan ? ScanDecoding.pixelAspectRatio : PreviewGeometry.pixelAspectRatio
+        if viewport.imageWidth != image.width || viewport.imageHeight != image.expectedHeight
+            || viewport.pixelAspectRatio != aspect {
+            viewport.setImage(width: image.width, height: image.expectedHeight, pixelAspectRatio: aspect)
             cropRect = nil
         }
         if startupZoomPending {

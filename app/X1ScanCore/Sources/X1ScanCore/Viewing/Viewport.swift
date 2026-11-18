@@ -17,7 +17,7 @@ public enum ZoomMode: String, Sendable, Hashable, Codable {
 ///
 /// The image is shown in a "document" whose size is the image size with the
 /// height multiplied by `pixelAspectRatio`: preview pixels are taller than
-/// wide. Magnification 1 shows one image pixel across one point
+/// wide (3), scan pixels square (1). Magnification 1 shows one image pixel across one point
 /// ("actual size"). The aspect correction is display only.
 public struct Viewport: Sendable, Hashable {
     /// Zoom steps for Zoom In / Zoom Out: 6.25 % to 1600 %.
@@ -79,6 +79,13 @@ public struct Viewport: Sendable, Hashable {
         imageWidth = width
         imageHeight = height
         recompute()
+    }
+
+    /// The image changed size or pixel shape (a preview, then a scan).
+    public mutating func setImage(width: Int, height: Int, pixelAspectRatio: Double) {
+        precondition(pixelAspectRatio > 0)
+        self.pixelAspectRatio = pixelAspectRatio
+        setImageSize(width: width, height: height)
     }
 
     public mutating func fit() {

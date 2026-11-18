@@ -63,6 +63,28 @@ final class ScanTests {
         #expect(data.range(of: Data("FX1".utf8)) == nil, "no serial number in the file")
     }
 
+    /// A scan is shown with square pixels (609 × 614 points at 100 %), a
+    /// preview with pixels 3 times taller than wide; a preview after a scan
+    /// goes back to 3.
+    @Test func scanPixelsAreShownSquare() async throws {
+        let model = try model()
+        model.startPreview()
+        await model.session.waitUntilIdle()
+        model.refreshImage()
+        #expect(model.viewport.pixelAspectRatio == 3)
+
+        model.startScan()
+        await model.session.waitUntilIdle()
+        model.refreshImage()
+        #expect(model.viewport.pixelAspectRatio == 1)
+        #expect(model.viewport.documentSize == CGSize(width: 609, height: 614))
+
+        model.startPreview()
+        await model.session.waitUntilIdle()
+        model.refreshImage()
+        #expect(model.viewport.pixelAspectRatio == 3)
+    }
+
     @Test func scanButtonConditionsOnTheRealX1() async throws {
         let disabled = try model(realScan: false, realPreview: true)
         disabled.source = .real

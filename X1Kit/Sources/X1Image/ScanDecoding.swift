@@ -46,6 +46,9 @@ public enum ScanDecoding {
     /// Input line of output line 0: best match with FlexColor's TIFF at
     /// 2 000 ppi (0 to 0.33 differ by less than 0.001 in correlation).
     public static let phase = 0.25
+    /// Pixel aspect of a decoded scan: square, the lines being resampled by
+    /// 3/5 to the resolution across (2 000 ppi both ways in FlexColor's TIFF).
+    public static let pixelAspectRatio: Double = 1
 
     /// Line gap of the three CCD rows, from the number of priming lines
     /// (one-line reads right after SCAN): priming = 2 × gap + 1. [confirmed]

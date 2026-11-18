@@ -473,3 +473,23 @@ only goes up between the image SCAN `1b 00 00 01 01 00` and the next
 only, preview and scan; elsewhere, not at all (nothing we send depends
 on it). Its meaning outside the image phase is a **[hypothesis]**
 (`LineCounterTests`, protocol.md §5).
+
+## 2026-11-18: first real scan, complete
+
+At 08:39 X1 Scan ran FlexColor's captured 2 000 ppi scan on the real X1,
+on macOS 26 Tahoe, after a complete cold preview: 746 exchanges, no error
+status. The focus step measured 16 779, 128 above the captured 16 651,
+and that position was substituted (within the tolerance of 256). The
+TIFF is 609 × 614 pixels, RGB 16-bit, 2 000 ppi, and the image is
+correct (checked outside the app) **[confirmed]**.
+
+Three corrections that morning, each after a stopped run (entries
+above): 0xDF `08 00` accepted after a final or emergency `DB`; `08 00`
+accepted in every wait right after an accepted `08 xx`; page 0x20's line
+counter checked in the image phase only.
+
+One display bug: the app showed the scan stretched vertically, with the
+preview's pixel aspect ratio of 3. Scans are now shown with square
+pixels (`Viewport.setImage(width:height:pixelAspectRatio:)`). The hidden
+settings `EnableRealPreview` and `EnableRealScan` were turned off
+afterwards (test-session.md F4).
