@@ -40,6 +40,19 @@ struct StateAfterStopTests {
         #expect(!after.contains(X1Command.stop()), "no second DB")
     }
 
+    /// After the final DB, several `08 00` in a row are accepted, read first
+    /// included (unlike in other waits, `TransientStateTests.twoInARowStop`).
+    @Test func afterTheFinalStopSeveral0800AreAccepted() async throws {
+        let plan = PreviewScript.plan
+        let steps = plan.steps(for: .cold)
+        let stop = try #require(steps.lastIndex { $0.command == X1Command.stop() })
+        let transport = AnswerStates(inner: try Fixtures.coldSimulator(), afterNonPolling: stop,
+                                     states: [Self.state0800, Self.state0800, ScannerState(rawValue: 0x0801)])
+        let capture = try await PreviewRunner(transport: transport, configuration: .simulator, plan: plan).run()
+        #expect(capture.choice == .cold)
+        #expect(await transport.answered == 3)
+    }
+
     /// The scan's final DB: same rule.
     @Test func theScanCompletesWith0800AfterItsFinalStop() async throws {
         let script = ScanRunTests.script
@@ -126,6 +139,32 @@ private actor StateAfterSecondStop: SCSITransport {
         if command == X1Command.stop() { stops += 1 }
         if stops == 2, !answered, command == X1Command.scannerState() {
             answered = true
+            return SCSIResult(data: [UInt8(state.rawValue >> 8), UInt8(state.rawValue & 0xFF)])
+        }
+        return try await inner.execute(command)
+    }
+}
+
+/// Answers `states` to the first 0xDF reads after non-polling command
+/// `afterNonPolling` (0-based), then forwards everything to `inner`.
+private actor AnswerStates: SCSITransport {
+    private let inner: any SCSITransport
+    private let index: Int
+    private var pending: [ScannerState]
+    private var nonPolling = 0
+    private(set) var answered = 0
+
+    init(inner: any SCSITransport, afterNonPolling index: Int, states: [ScannerState]) {
+        self.inner = inner
+        self.index = index
+        self.pending = states
+    }
+
+    func execute(_ command: SCSICommand) async throws -> SCSIResult {
+        if ![0xDF, 0xEE, 0xD3].contains(command.opcode) { nonPolling += 1 }
+        if nonPolling == index + 1, command == X1Command.scannerState(), !pending.isEmpty {
+            let state = pending.removeFirst()
+            answered += 1
             return SCSIResult(data: [UInt8(state.rawValue >> 8), UInt8(state.rawValue & 0xFF)])
         }
         return try await inner.execute(command)

@@ -159,9 +159,10 @@ public struct ScannerState: Sendable, Hashable, CustomStringConvertible {
     /// power-on, 2026-11-16). Busy [confirmed]. The global list, accepted in
     /// every wait. Busy is also [confirmed] for `08 80`, accepted only in one
     /// wait of the warm preview (`PreviewStep.alsoBusy`), and for `08 04`,
-    /// accepted nowhere (1 000 ppi scan only). `08 00` is accepted only after
-    /// a final or emergency DB (user's decision; `busyAfterStop`). Any other
-    /// state stops the run.
+    /// accepted nowhere (1 000 ppi scan only). `08 00` is accepted in any
+    /// wait after a final or emergency DB (`isBusyAfterStop`), and elsewhere
+    /// only right after another accepted `08 xx` (`isTransientAfter`); user's
+    /// decisions. Any other state stops the run.
     public static let observedBusyStates: Set<ScannerState> = [
         ScannerState(rawValue: 0x0801), ScannerState(rawValue: 0x0802), ScannerState(rawValue: 0x0803),
         ScannerState(rawValue: 0x0806), ScannerState(rawValue: 0x0807), ScannerState(rawValue: 0x0840),
@@ -178,18 +179,37 @@ public struct ScannerState: Sendable, Hashable, CustomStringConvertible {
     /// capture does not show it, and we run no 3 200 ppi scan.
     public static let busy0880 = ScannerState(rawValue: 0x0880)
 
-    /// `08 00` seen once [confirmed], on the real X1 on 2026-11-18, as the
-    /// first 0xDF state after the final DB of a preview (FlexColor's captures
-    /// show `08 01` there, then `00 00`). The runner then stopped and sent its
-    /// emergency DB, after which the X1 answered `08 01`, then `00 00`; that
-    /// `08 00` ends by itself is a [hypothesis]. Accepted as busy (user's
-    /// decision) only while waiting after the final DB of a sequence or after
-    /// the emergency DB.
+    /// `08 00` seen twice on the real X1 on 2026-11-18 [confirmed], never in
+    /// FlexColor's captures. First as the first 0xDF state after the final DB
+    /// of a preview (the captures show `08 01` there, then `00 00`); the runner
+    /// then stopped and sent its emergency DB, after which the X1 answered
+    /// `08 01`, then `00 00`; that `08 00` ends by itself is a [hypothesis].
+    /// Then after `08 01` in a wait of the cold preview (`isTransientAfter`).
+    /// Accepted (user's decisions): even first in the wait after a final or
+    /// emergency DB (`isBusyAfterStop`); in any other wait only right after
+    /// another accepted `08 xx`.
     public static let busyAfterStop = ScannerState(rawValue: 0x0800)
 
     /// Busy while waiting after a final or emergency DB: the observed busy
     /// states, plus `08 00`.
     public var isBusyAfterStop: Bool { isBusy || self == Self.busyAfterStop }
+
+    /// `08 00` right after an `08 xx` state other than `08 00`, accepted in the
+    /// same wait. Seen a second time on 2026-11-18 [confirmed], in the cold
+    /// preview's wait after
+    /// its first `f0 00 01 01 01 01`: `08 07`, `08 03`, `08 01` ×6, then
+    /// `08 00`. [hypothesis]: the first byte `08` means busy and the second
+    /// the activity in progress; `08 00` is a short transition between two
+    /// activities, which FlexColor, polling more slowly, never caught.
+    /// Accepted as busy in every wait, preview and scan, only after such a
+    /// state (user's decision, 2026-11-18). Two `08 00` in a row were never
+    /// seen: outside the wait after a final or emergency DB (where
+    /// `isBusyAfterStop` accepts them), the second one stops the run (after
+    /// SCAN, the emergency DB goes at once instead of after up to 120 s).
+    public func isTransientAfter(_ previous: ScannerState?) -> Bool {
+        guard self == Self.busyAfterStop, let previous, previous != Self.busyAfterStop else { return false }
+        return previous.rawValue >> 8 == 0x08
+    }
 
     public var description: String { [UInt8(rawValue >> 8), UInt8(rawValue & 0xFF)].hexString }
 }

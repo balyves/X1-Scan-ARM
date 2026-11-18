@@ -613,7 +613,7 @@ explicitly. It is only for runs the user has approved (CLAUDE.md, rule 4).
   after SCAN. Only the global list of busy states is accepted in every
   wait: `08 01`, `08 40` (2026-11-12), `08 02`, `08 03`, `08 06`,
   `08 07` (right after power-on, 2026-11-16). Any other state stops the
-  run, except `08 80` in one wait and `08 00` after a DB (below). The wait after an emergency stop (DB) uses the same set (plus `08 00`
+  run, except `08 80` in one wait and `08 00` (below). The wait after an emergency stop (DB) uses the same set (plus `08 00`
   since 2026-11-18, below), although
   both captures show only `08 01` there: this changes nothing that is sent
   (only 0xDF after DB, the guard allows nothing else), only how long the
@@ -622,8 +622,19 @@ explicitly. It is only for runs the user has approved (CLAUDE.md, rule 4).
   cold preview of that day saw `08 00` right after its final DB, where the
   captures show `08 01` (protocol.md §7). `08 00` is now accepted as busy
   in the wait after the final DB of the preview or of the scan, and in the
-  wait after the emergency DB; nowhere else, not even after the scan's
-  middle DB. Nothing new is sent: only 0xDF until `00 00`.
+  wait after the emergency DB, even as the first state read; elsewhere,
+  including after the scan's middle DB, only right after another accepted
+  `08 xx` (next point). Nothing new is sent: only 0xDF until `00 00`.
+  **`08 00` right after an accepted `08 xx`** (user's decision, 2026-11-18,
+  after a second stop on `08 00`, cold preview step 81: `08 07`, `08 03`,
+  `08 01` ×6, `08 00`): in every 0xDF wait, preview and scan, `08 00` is
+  accepted as busy when the state read just before in that wait was an
+  accepted `08 xx` other than `08 00`. In any other wait than the one
+  after a final or emergency DB, `08 00` read first, or right after
+  another `08 00` (two in a row were never seen; after SCAN this sends the
+  emergency DB at once rather than after up to 120 s), still stops the
+  run. `08 80` in the scan and `08 04` stay refused. Only 0xDF reads, same time limit (120 s). The meaning of
+  the bytes is a **[hypothesis]** (protocol.md §7).
   **States of the scan captures** (user's decision, 2026-11-18): a state
   seen only in a scan capture is accepted only in the wait where it
   appears there, not added to the global list. `08 80`: in the wait after

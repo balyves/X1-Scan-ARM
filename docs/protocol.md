@@ -169,7 +169,7 @@ counter 3 is the **number of scans**. **[hypothesis]**
 | `08 02`, `08 03`, `08 06`, `08 07` | busy. Right after power-on (2026-11-16): after the first `F0` FlexColor read `08 07`, `08 06`, `08 02`, `08 06`, `08 40`, then `00 00`; `08 03` after the first `F0 01 01 01 01`. In warm scan sessions (2026-11-17), `08 06` and `08 02` also follow the SCAN commands (§12). **[confirmed]** |
 | `08 80` | busy, seen in two captures of 2026-11-17, each time after `08 01` and polled many times in a row (69 and 96 reads), then `08 40`, `00 00` **[confirmed]**: after the first `f0 00 01 01 01 01` of the warm preview captured before the 2 000 ppi scan (seq 325), and after the `f0 00 01 01 01 01` of the 3 200 ppi scan session (seq 809, the step of seq 876 at 2 000 ppi). Accepted only in the warm preview's wait (`PreviewStep.alsoBusy`); not in the 2 000 ppi scan, whose capture does not show it at that step (there: `08 07`, `08 03`, `08 02`, `08 40`, `00 00`) |
 | `08 04` | busy, seen once **[confirmed]**: 1 000 ppi scan session, after its first `f0 00 01 01 01 01` (seq 803; `08 06`, `08 04`, `08 40`, `00 00`), a step the 2 000 ppi scan does not have. Not accepted anywhere: we run no 1 000 ppi scan |
-| `08 00` | seen once, on the real X1 (our cold preview of 2026-11-18): first state after the preview's final `DB`, where every FlexColor capture shows `08 01` then `00 00` **[confirmed]** (observed once). Our runner then stopped and sent its emergency `DB`; the X1 answered `08 01`, then `00 00`. That `08 00` ends by itself, without that second `DB`, is a **[hypothesis]**. Accepted as busy only while waiting after a final or emergency `DB` |
+| `08 00` | seen twice on the real X1, 2026-11-18 **[confirmed]**. First in our cold preview: first state after the preview's final `DB`, where every FlexColor capture shows `08 01` then `00 00`. Our runner then stopped and sent its emergency `DB`; the X1 answered `08 01`, then `00 00`. That `08 00` ends by itself, without that second `DB`, is a **[hypothesis]**. Then in our second cold preview of the day, wait after its first `f0 00 01 01 01 01` (step 81): `08 07`, `08 03`, `08 01` ×6, then `08 00`. Never in FlexColor's captures. Accepted as busy after a final or emergency `DB`, and in every wait right after an accepted `08 xx` state (below) |
 | `00 01` | seen once right after `1b 00 00 01 01 00`; FlexColor starts reading image lines on this value **[confirmed]** |
 | `00 06` | seen once right after `1b 00 08 06 01 00` (the 400-line step of a scan, §12), after `08 06` / `08 02` / `08 01`; FlexColor starts its one-line reads on this value. After that step's `DB`, a single `00 00`, then the next window. **[confirmed]** (three scans) |
 
@@ -184,12 +184,28 @@ these and for `08 80` and `08 04` as well: FlexColor went on polling until
 `00 00` (or `00 01` after SCAN) each time. `08 80` and `08 04` are not in
 the global list: each is accepted only in a wait where a capture of the
 script we run shows it (table above). `08 00`
-is accepted as busy only in the wait after the final `DB` of the preview
-or of the scan, and after the emergency `DB` (user's decision,
-2026-11-18); anywhere else, including after the scan's middle `DB` (which
-the captures follow directly with `00 00`), it stops the run like any
-state not observed. The
-meaning of the low byte is unknown.
+is accepted as busy (user's decisions, 2026-11-18):
+
+- in the wait after the final `DB` of the preview or of the scan, and
+  after the emergency `DB`, even as the first state read;
+- in every wait, preview and scan, when the state read just before in
+  that wait was an accepted `08 xx` state other than `08 00` (the global
+  list, or `08 80` where it is accepted). In any other wait than the one
+  after a final or emergency `DB`, `08 00` read first, or right after
+  another `08 00` (never seen), still stops the run; alternating `08 01`,
+  `08 00`, `08 01`… is accepted until the 120 s limit. `08 80` (in the
+  scan) and `08 04` stay refused.
+
+**[hypothesis]**: the first byte `08` means busy and the second byte the
+activity in progress; `08 00` would be a short transition between two
+activities, which FlexColor, polling more slowly, never caught. The
+meaning of the low byte is otherwise unknown.
+
+Our polling: one 0xDF read, then a pause of 100 ms
+(`PreviewConfiguration.pollInterval`) before the next, so a little more
+than 100 ms between two reads; at most 120 s per wait (`stateTimeout`),
+then the run stops. FlexColor's interval is not known (the captures have
+no timestamps).
 
 FlexColor polls 0xDF after most actions and waits for `00 00` before the next
 step, except after SCAN, where it goes on as soon as it reads `00 01`.

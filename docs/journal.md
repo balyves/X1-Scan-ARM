@@ -436,3 +436,22 @@ it. `08 80` is accepted in the warm preview's wait after its first
 accepted nowhere. The warm previews before the scans, the cold preview
 and the 2 000 ppi scan session are now walked against the scripts in the
 tests: every state they show is accepted at its step.
+
+## 2026-11-18: second stop on 0xDF `08 00`, in the middle of the cold preview
+
+A second real cold preview stopped at step 81, in the wait after the
+first `f0 00 01 01 01 01`: `08 07`, `08 03`, `08 01` ×6, then `08 00`
+(before SCAN, so no emergency `DB`). Second observation of `08 00` that
+day **[confirmed]**; FlexColor's captures never show it.
+
+User's hypothesis, noted as **[hypothesis]**: `08` = busy, the second
+byte = the activity in progress, and `08 00` a short transition between
+two activities that FlexColor, polling more slowly, never caught.
+
+User's decision: in every 0xDF wait, preview and scan, `08 00` is
+accepted as busy when it follows an `08 xx` state accepted in that wait
+(`ScannerState.isTransientAfter`, `TransientStateTests`). Not after
+another `08 00`: two in a row were never seen, and after SCAN that would
+delay the emergency `DB` by up to 120 s. Only 0xDF
+reads, same time limit; `08 80` (scan) and `08 04` stay refused. Our
+polling interval: 100 ms pause after each read, at most 120 s per wait.

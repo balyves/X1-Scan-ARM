@@ -120,8 +120,9 @@ public struct PreviewRunner: Sendable {
                 }
                 if Self.requestsPosition(command) { positionRequested = true }
                 if let state = steps[index].waitUntil {
-                    // 08 00 is accepted after the final DB of the sequence only (2026-11-18),
-                    // and after the emergency DB (see `emergencyStop`).
+                    // 08 00 read first in a wait is accepted only after the final DB of the
+                    // sequence and after the emergency DB (see `emergencyStop`); elsewhere
+                    // only right after another accepted 08 xx (2026-11-18).
                     let finalStop = command == X1Command.stop()
                         && !steps[(index + 1)...].contains { $0.command == X1Command.stop() }
                     try await waitForState(state, honouringCancellation: true, afterStop: finalStop,
@@ -278,19 +279,26 @@ public struct PreviewRunner: Sendable {
     /// Polls 0xDF until `target`. Only the observed busy states
     /// (`ScannerState.observedBusyStates`) are accepted meanwhile, plus `08 00`
     /// when the wait follows the sequence's final DB or the emergency DB
-    /// (`afterStop`), plus the step's own `alsoBusy` states.
+    /// (`afterStop`), plus the step's own `alsoBusy` states. `08 00` is also
+    /// accepted when the state read just before in this wait was an accepted
+    /// `08 xx` (`ScannerState.isTransientAfter`; user's decision, 2026-11-18).
+    /// One read every `pollInterval` (100 ms) plus the time of the read itself,
+    /// for at most `stateTimeout` (120 s).
     private func waitForState(_ target: ScannerState, honouringCancellation: Bool,
                               afterStop: Bool = false, alsoBusy: Set<ScannerState> = []) async throws {
         let clock = ContinuousClock()
         let deadline = clock.now + configuration.stateTimeout
         let command = X1Command.scannerState()
+        var previous: ScannerState?  // last state read in this wait, if it was accepted
         while true {
             let result = try await transport.execute(command)
             try verify(result, of: command)
             let state = try parse { try ScannerState(result.data) }
             if state == target { return }
             let accepted = (afterStop ? state.isBusyAfterStop : state.isBusy) || alsoBusy.contains(state)
+                || state.isTransientAfter(previous)
             guard accepted else { throw PreviewAnomaly.unexpectedState(state, waitingFor: target) }
+            previous = state
             guard clock.now < deadline else { throw PreviewAnomaly.stateTimeout(waitingFor: target, last: state) }
             if configuration.pollInterval > .zero {
                 if honouringCancellation {
