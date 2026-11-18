@@ -99,7 +99,9 @@ wrong, not for what is right. Do not approve by default.
     only `FX1xxxxxxx` is allowed;
   - no names of people, clients or studios, no IPTC credits, no machine
     names (one exception: the name of the icon's copyright holder, only in
-    `LICENSE`, `LICENSE-ICON`, the licence section of `README.md`, the
+    `LICENSE` (its copyright line only: `Copyright (c) 2026 <holder>`; any
+    other change to `LICENSE` is a blocking issue, CLAUDE.md rule 3),
+    `LICENSE-ICON`, the licence section of `README.md`, the
     app's copyright line in `app/X1Scan.xcodeproj/project.pbxproj` and
     `app/X1Scan/Localization/InfoPlist.xcstrings`, and the files of
     `app/X1Scan/Icon/`; anywhere else it is a blocking issue; see

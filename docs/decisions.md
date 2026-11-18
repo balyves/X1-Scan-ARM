@@ -929,7 +929,10 @@ line excluding the icon, GitHub no longer recognised it as MIT ("Other").
 
 - **Name of the copyright holder** (user's decision, 2026-11-18): an
   exception to "no client or studio names" (CLAUDE.md rule 2), only in
-  `LICENSE`, `LICENSE-ICON`, the licence section of `README.md`, the app's
+  `LICENSE` (its copyright line only, `Copyright (c) 2026 <holder>`, part
+  of the standard MIT text; user's decision, 2026-11-18: the same holder
+  as in the About panel, replacing the author's name and "the X1-Scan-ARM
+  contributors"), `LICENSE-ICON`, the licence section of `README.md`, the app's
   copyright line (`INFOPLIST_KEY_NSHumanReadableCopyright` in
   `project.pbxproj`, `InfoPlist.xcstrings`; About) and the files of
   `app/X1Scan/Icon/`. Everywhere else: "the icon's copyright holder".

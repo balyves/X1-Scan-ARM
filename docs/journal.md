@@ -668,3 +668,13 @@ the About panel (CLAUDE.md rule 3, decisions.md).
 The user chose option D of the icon among four renders (kept outside the
 repository): the blue gradient also in the dark appearance, and a
 14-unit stroke on the "X1" for the 16 and 32 px sizes.
+
+## 2026-11-18: LICENSE copyright line
+
+GitHub recognises `LICENSE` as MIT again after the standard text was put
+back. Its copyright line now names the same holder as the About panel
+(user's decision), instead of the project's author "and the X1-Scan-ARM
+contributors"; every commit so far is by the user's account. The rest of
+the MIT text is unchanged. CLAUDE.md rules 2 and 3, the reviewer's
+instructions and decisions.md allow the holder's name in `LICENSE` on
+that line only.

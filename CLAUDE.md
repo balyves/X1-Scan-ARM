@@ -30,7 +30,9 @@ Scope: **Flextight X1 only**. Other Flextight / Imacon models are out of scope.
    raw image files (one exception: the eight holder code lines of
    `tests/fixtures/holders/holder-code-lines.json`, docs/decisions.md, "Film
    holders"). One exception for names: the name of the icon's copyright
-   holder, **only** in `LICENSE`, `LICENSE-ICON`, the licence section of
+   holder, **only** in `LICENSE` (its copyright line,
+   `Copyright (c) 2026 <holder>`, part of the standard MIT text),
+   `LICENSE-ICON`, the licence section of
    `README.md`, the app's copyright line (Info.plist / About:
    `project.pbxproj`, `InfoPlist.xcstrings`) and the icon files of
    `app/X1Scan/Icon/`; everywhere else, write "the icon's copyright
@@ -38,9 +40,10 @@ Scope: **Flextight X1 only**. Other Flextight / Imacon models are out of scope.
    commit.
 3. **Licence**: the project is MIT, except the application icon
    (`app/X1Scan/Icon/`, `LICENSE-ICON`; docs/decisions.md, "Application
-   icon"). `LICENSE` stays the standard MIT text, unchanged, so that GitHub
-   recognises it; the icon's exclusion is stated in `LICENSE-ICON`, the
-   README's licence section and the About panel. Do not copy code from GPL projects
+   icon"). `LICENSE` stays the standard MIT text, unchanged except its
+   copyright line (rule 2), so that GitHub recognises it; the icon's
+   exclusion is stated in `LICENSE-ICON`, the README's licence section and
+   the About panel. Do not copy code from GPL projects
    (notably eigenshell/flextight-shenanigans). Their documentation can be
    read as a reference; the code must be our own.
 4. **Scanner safety**:
