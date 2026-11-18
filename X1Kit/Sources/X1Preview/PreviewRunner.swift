@@ -120,7 +120,11 @@ public struct PreviewRunner: Sendable {
                 }
                 if Self.requestsPosition(command) { positionRequested = true }
                 if let state = steps[index].waitUntil {
-                    try await waitForState(state, honouringCancellation: true)
+                    // 08 00 is accepted after the final DB of the sequence only (2026-11-18),
+                    // and after the emergency DB (see `emergencyStop`).
+                    let finalStop = command == X1Command.stop()
+                        && !steps[(index + 1)...].contains { $0.command == X1Command.stop() }
+                    try await waitForState(state, honouringCancellation: true, afterStop: finalStop)
                 }
             } catch {
                 // A cancelled Task.sleep (0xDF wait, or a transport delay) is a cancellation too.
@@ -271,8 +275,11 @@ public struct PreviewRunner: Sendable {
     // MARK: Waiting on 0xDF
 
     /// Polls 0xDF until `target`. Only the observed busy states
-    /// (`ScannerState.observedBusyStates`) are accepted meanwhile.
-    private func waitForState(_ target: ScannerState, honouringCancellation: Bool) async throws {
+    /// (`ScannerState.observedBusyStates`) are accepted meanwhile, plus `08 00`
+    /// when the wait follows the sequence's final DB or the emergency DB
+    /// (`afterStop`).
+    private func waitForState(_ target: ScannerState, honouringCancellation: Bool,
+                              afterStop: Bool = false) async throws {
         let clock = ContinuousClock()
         let deadline = clock.now + configuration.stateTimeout
         let command = X1Command.scannerState()
@@ -281,7 +288,8 @@ public struct PreviewRunner: Sendable {
             try verify(result, of: command)
             let state = try parse { try ScannerState(result.data) }
             if state == target { return }
-            guard state.isBusy else { throw PreviewAnomaly.unexpectedState(state, waitingFor: target) }
+            let accepted = afterStop ? state.isBusyAfterStop : state.isBusy
+            guard accepted else { throw PreviewAnomaly.unexpectedState(state, waitingFor: target) }
             guard clock.now < deadline else { throw PreviewAnomaly.stateTimeout(waitingFor: target, last: state) }
             if configuration.pollInterval > .zero {
                 if honouringCancellation {
@@ -306,7 +314,7 @@ public struct PreviewRunner: Sendable {
         }
         do {
             // Keep waiting even if the task was cancelled: the scanner is moving.
-            try await waitForState(.ready, honouringCancellation: false)
+            try await waitForState(.ready, honouringCancellation: false, afterStop: true)
             return .stoppedAndReady
         } catch {
             return .notReadyAfterStop(String(describing: error))

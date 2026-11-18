@@ -167,6 +167,7 @@ counter 3 is the **number of scans**. **[hypothesis]**
 | `08 01` | busy (after F0, SCAN, stop): mechanical movement **[hypothesis]** |
 | `08 40` | busy, other phase, often follows `08 01` |
 | `08 02`, `08 03`, `08 06`, `08 07` | busy. Right after power-on (2026-11-16): after the first `F0` FlexColor read `08 07`, `08 06`, `08 02`, `08 06`, `08 40`, then `00 00`; `08 03` after the first `F0 01 01 01 01`. In warm scan sessions (2026-11-17), `08 06` and `08 02` also follow the SCAN commands (§12). **[confirmed]** |
+| `08 00` | seen once, on the real X1 (our cold preview of 2026-11-18): first state after the preview's final `DB`, where every FlexColor capture shows `08 01` then `00 00` **[confirmed]** (observed once). Our runner then stopped and sent its emergency `DB`; the X1 answered `08 01`, then `00 00`. That `08 00` ends by itself, without that second `DB`, is a **[hypothesis]**. Accepted as busy only while waiting after a final or emergency `DB` |
 | `00 01` | seen once right after `1b 00 00 01 01 00`; FlexColor starts reading image lines on this value **[confirmed]** |
 | `00 06` | seen once right after `1b 00 08 06 01 00` (the 400-line step of a scan, §12), after `08 06` / `08 02` / `08 01`; FlexColor starts its one-line reads on this value. After that step's `DB`, a single `00 00`, then the next window. **[confirmed]** (three scans) |
 
@@ -176,7 +177,12 @@ power-on, journal) saw the same busy states, `08 01`, `08 02`, `08 03`,
 **[confirmed]**.
 
 `08 xx` = busy is **[confirmed]** for the six values above only: FlexColor
-went on polling until `00 00` (or `00 01` after SCAN) each time. The
+went on polling until `00 00` (or `00 01` after SCAN) each time. `08 00`
+is accepted as busy only in the wait after the final `DB` of the preview
+or of the scan, and after the emergency `DB` (user's decision,
+2026-11-18); anywhere else, including after the scan's middle `DB` (which
+the captures follow directly with `00 00`), it stops the run like any
+state not observed. The
 meaning of the low byte is unknown.
 
 FlexColor polls 0xDF after most actions and waits for `00 00` before the next

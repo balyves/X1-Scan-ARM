@@ -165,5 +165,18 @@ public struct ScannerState: Sendable, Hashable, CustomStringConvertible {
 
     public var isBusy: Bool { Self.observedBusyStates.contains(self) }
 
+    /// `08 00` seen once [confirmed], on the real X1 on 2026-11-18, as the
+    /// first 0xDF state after the final DB of a preview (FlexColor's captures
+    /// show `08 01` there, then `00 00`). The runner then stopped and sent its
+    /// emergency DB, after which the X1 answered `08 01`, then `00 00`; that
+    /// `08 00` ends by itself is a [hypothesis]. Accepted as busy (user's
+    /// decision) only while waiting after the final DB of a sequence or after
+    /// the emergency DB.
+    public static let busyAfterStop = ScannerState(rawValue: 0x0800)
+
+    /// Busy while waiting after a final or emergency DB: the observed busy
+    /// states, plus `08 00`.
+    public var isBusyAfterStop: Bool { isBusy || self == Self.busyAfterStop }
+
     public var description: String { [UInt8(rawValue >> 8), UInt8(rawValue & 0xFF)].hexString }
 }

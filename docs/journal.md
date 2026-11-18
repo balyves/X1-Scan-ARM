@@ -394,3 +394,20 @@ the commands sent ("Focusing" for the 400-line step, a **[hypothesis]**).
 The run log is now closed after the end of the session, so that it can
 note the file saved. Nothing was sent to the real X1.
 
+
+## 2026-11-18: 0xDF `08 00` after the final DB of a real preview
+
+First real preview of the day: the cold sequence was chosen by the first
+page 0x20 read, the position differences were -64 (within 256) and the
+image was complete. Right after the final `DB`, 0xDF answered `08 00`, a
+state never seen before (FlexColor's captures show `08 01`, then `00 00`).
+The runner stopped at that step (step 205), sent its emergency `DB`, and
+the X1 answered `08 01`, then `00 00`. The state is **[confirmed]**
+(observed once); that it ends by itself without the second `DB` is a
+**[hypothesis]**.
+
+Fix (user's decision): `08 00` is accepted as busy only during the wait
+that follows the final `DB` of the preview or of the scan, and the wait
+after the emergency `DB`. Anywhere else, including after the scan's
+middle `DB`, it still stops the run (`ScannerState.isBusyAfterStop`,
+`StateAfterStopTests`; protocol.md §7, decisions.md "Waits on 0xDF").
