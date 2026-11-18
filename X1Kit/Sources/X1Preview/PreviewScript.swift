@@ -40,10 +40,10 @@ public enum PreviewScript {
         common.sessionStart()
         var cold = Builder()
         cold.coldCalibration()
-        cold.previewAndScan()
+        cold.previewAndScan(warm: false)
         var warm = Builder()
         warm.warmCalibration()
-        warm.previewAndScan()
+        warm.previewAndScan(warm: true)
         return PreviewPlan(common: common.steps, cold: cold.steps, warm: warm.steps,
                            waitAfterChoice: [.warm: .ready])
     }()
@@ -150,8 +150,8 @@ struct Builder {
     }
 
     /// Poll 0xDF after the last step until `state`.
-    private mutating func thenWait(_ state: ScannerState = .ready) {
-        steps[steps.count - 1] = steps[steps.count - 1].waiting(for: state)
+    private mutating func thenWait(_ state: ScannerState = .ready, alsoBusy: Set<ScannerState> = []) {
+        steps[steps.count - 1] = steps[steps.count - 1].waiting(for: state, alsoBusy: alsoBusy)
     }
 
     private mutating func inquiry() { add(X1Command.inquiry(), .inquiry) }
@@ -222,7 +222,7 @@ struct Builder {
         status(6155); thenWait()
 
         warmCalibration()
-        previewAndScan()
+        previewAndScan(warm: true)
     }
 
     /// Session start up to the first page 0x20 read, identical in the warm
@@ -261,7 +261,10 @@ struct Builder {
 
     /// From the preview-width calibration to the end of session (warm seq
     /// 305-748, cold seq 361-821: the same commands).
-    mutating func previewAndScan() {
+    /// `warm`: accept `08 80` in the wait after the first
+    /// `f0 00 01 01 01 01`, as a warm preview captured before a scan showed
+    /// there (scan-sequence-2000ppi.json seq 325; never in a cold capture).
+    mutating func previewAndScan(warm: Bool) {
         // 4. Preview width, seq 305-366.
         pageSet()
         status(8971)
@@ -269,7 +272,7 @@ struct Builder {
         page(0x27, 20)
         window(Window.calibrationRatio8M); thenWait()
         exposure(); thenWait()
-        mode(1, 1, 1, 1); thenWait()
+        mode(1, 1, 1, 1); thenWait(alsoBusy: warm ? [ScannerState.busy0880] : [])
         window(Window.preview); thenWait()
         window(Window.preview); thenWait()
         exposure(); thenWait()

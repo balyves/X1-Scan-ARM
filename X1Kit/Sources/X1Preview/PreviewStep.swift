@@ -62,15 +62,21 @@ public struct PreviewStep: Sendable {
     /// If set, poll 0xDF after this step until the scanner reports this state,
     /// as FlexColor did at this point of the capture.
     public let waitUntil: ScannerState?
+    /// Busy states accepted in this wait only, besides
+    /// `ScannerState.observedBusyStates`: states not in that list that a
+    /// capture shows at this step (docs/protocol.md §7).
+    public let alsoBusy: Set<ScannerState>
 
-    public init(command: SCSICommand, kind: Kind = .command, waitUntil: ScannerState? = nil) {
+    public init(command: SCSICommand, kind: Kind = .command, waitUntil: ScannerState? = nil,
+                alsoBusy: Set<ScannerState> = []) {
         self.command = command
         self.kind = kind
         self.waitUntil = waitUntil
+        self.alsoBusy = alsoBusy
     }
 
-    func waiting(for state: ScannerState) -> PreviewStep {
-        PreviewStep(command: command, kind: kind, waitUntil: state)
+    func waiting(for state: ScannerState, alsoBusy: Set<ScannerState> = []) -> PreviewStep {
+        PreviewStep(command: command, kind: kind, waitUntil: state, alsoBusy: alsoBusy)
     }
 }
 

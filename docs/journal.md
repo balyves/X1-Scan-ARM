@@ -411,3 +411,25 @@ that follows the final `DB` of the preview or of the scan, and the wait
 after the emergency `DB`. Anywhere else, including after the scan's
 middle `DB`, it still stops the run (`ScannerState.isBusyAfterStop`,
 `StateAfterStopTests`; protocol.md §7, decisions.md "Waits on 0xDF").
+
+## 2026-11-18: 0xDF states of the scan captures
+
+Before the first real scan, every 0xDF state of the three scan captures
+was checked against the wait where it appears (`ObservedStatesTests`).
+The 2 000 ppi scan session itself shows only states already accepted.
+Two states are outside the global list, both **[confirmed]**:
+
+- `08 80`, after `08 01` and for a long time (69 and 96 reads), then
+  `08 40`, `00 00`: after the first `f0 00 01 01 01 01` of the warm
+  preview before the 2 000 ppi scan (seq 325), and after the
+  `f0 00 01 01 01 01` of the 3 200 ppi scan session (seq 809).
+- `08 04`, once: 1 000 ppi scan session, seq 803, a step without
+  equivalent in the 2 000 ppi scan.
+
+User's decision: accept a state only in the waits where a capture shows
+it. `08 80` is accepted in the warm preview's wait after its first
+`f0 00 01 01 01 01` only; not in the cold preview, and not in the
+2 000 ppi scan (at that step only the 3 200 ppi capture shows it). `08 04` is
+accepted nowhere. The warm previews before the scans, the cold preview
+and the 2 000 ppi scan session are now walked against the scripts in the
+tests: every state they show is accepted at its step.

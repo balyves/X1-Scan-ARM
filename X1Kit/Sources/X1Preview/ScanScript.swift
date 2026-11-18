@@ -75,8 +75,8 @@ struct ScanBuilder {
         steps.append(PreviewStep(command: command, kind: kind))
     }
 
-    private mutating func thenWait(_ state: ScannerState = .ready) {
-        steps[steps.count - 1] = steps[steps.count - 1].waiting(for: state)
+    private mutating func thenWait(_ state: ScannerState = .ready, alsoBusy: Set<ScannerState> = []) {
+        steps[steps.count - 1] = steps[steps.count - 1].waiting(for: state, alsoBusy: alsoBusy)
     }
 
     private mutating func page(_ page: UInt8, _ length: Int) { add(X1Command.modeSense(page: page, length: length)) }

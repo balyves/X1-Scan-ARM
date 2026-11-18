@@ -124,7 +124,8 @@ public struct PreviewRunner: Sendable {
                     // and after the emergency DB (see `emergencyStop`).
                     let finalStop = command == X1Command.stop()
                         && !steps[(index + 1)...].contains { $0.command == X1Command.stop() }
-                    try await waitForState(state, honouringCancellation: true, afterStop: finalStop)
+                    try await waitForState(state, honouringCancellation: true, afterStop: finalStop,
+                                           alsoBusy: steps[index].alsoBusy)
                 }
             } catch {
                 // A cancelled Task.sleep (0xDF wait, or a transport delay) is a cancellation too.
@@ -277,9 +278,9 @@ public struct PreviewRunner: Sendable {
     /// Polls 0xDF until `target`. Only the observed busy states
     /// (`ScannerState.observedBusyStates`) are accepted meanwhile, plus `08 00`
     /// when the wait follows the sequence's final DB or the emergency DB
-    /// (`afterStop`).
+    /// (`afterStop`), plus the step's own `alsoBusy` states.
     private func waitForState(_ target: ScannerState, honouringCancellation: Bool,
-                              afterStop: Bool = false) async throws {
+                              afterStop: Bool = false, alsoBusy: Set<ScannerState> = []) async throws {
         let clock = ContinuousClock()
         let deadline = clock.now + configuration.stateTimeout
         let command = X1Command.scannerState()
@@ -288,7 +289,7 @@ public struct PreviewRunner: Sendable {
             try verify(result, of: command)
             let state = try parse { try ScannerState(result.data) }
             if state == target { return }
-            let accepted = afterStop ? state.isBusyAfterStop : state.isBusy
+            let accepted = (afterStop ? state.isBusyAfterStop : state.isBusy) || alsoBusy.contains(state)
             guard accepted else { throw PreviewAnomaly.unexpectedState(state, waitingFor: target) }
             guard clock.now < deadline else { throw PreviewAnomaly.stateTimeout(waitingFor: target, last: state) }
             if configuration.pollInterval > .zero {

@@ -624,6 +624,15 @@ explicitly. It is only for runs the user has approved (CLAUDE.md, rule 4).
   in the wait after the final DB of the preview or of the scan, and in the
   wait after the emergency DB; nowhere else, not even after the scan's
   middle DB. Nothing new is sent: only 0xDF until `00 00`.
+  **States of the scan captures** (user's decision, 2026-11-18): a state
+  seen only in a scan capture is accepted only in the wait where it
+  appears there, not added to the global list. `08 80`: in the wait after
+  the first `f0 00 01 01 01 01` of the warm preview (seen before the
+  2 000 ppi scan). Not in the cold preview, and not in the 2 000 ppi
+  scan: only the 3 200 ppi scan capture shows it at that step (seq 809),
+  not the 2 000 ppi one. `08 04` (1 000 ppi scan, a step our
+  2 000 ppi scan does not have): nowhere. The 2 000 ppi scan session itself
+  shows only states of the global list (protocol.md §7).
 - **Stop at the first unexpected response**:
   - a status other than GOOD;
   - a wrong number of bytes;

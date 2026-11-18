@@ -165,6 +165,15 @@ public struct ScannerState: Sendable, Hashable, CustomStringConvertible {
 
     public var isBusy: Bool { Self.observedBusyStates.contains(self) }
 
+    /// `08 80` seen in two captures, each time after `08 01`, many times
+    /// in a row, then `08 40` and `00 00`, in the wait after the first
+    /// `f0 00 01 01 01 01` [confirmed]: of a warm preview (2026-11-17, before
+    /// the 2 000 ppi scan, seq 325) and of the 3 200 ppi scan session (seq
+    /// 809, the step of the 2 000 ppi scan's seq 876). Accepted only in the
+    /// warm preview's wait (`PreviewStep.alsoBusy`): the 2 000 ppi scan
+    /// capture does not show it, and we run no 3 200 ppi scan.
+    public static let busy0880 = ScannerState(rawValue: 0x0880)
+
     /// `08 00` seen once [confirmed], on the real X1 on 2026-11-18, as the
     /// first 0xDF state after the final DB of a preview (FlexColor's captures
     /// show `08 01` there, then `00 00`). The runner then stopped and sent its
