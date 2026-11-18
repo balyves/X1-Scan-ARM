@@ -545,6 +545,26 @@ FlexColor captures on the reference Mac (Mojave), one log per FlexColor
 launch, kept outside the repository (they hold the serial number). Purpose: the rules behind the scan windows (docs/protocol.md §9,
 §12) and one first preview per holder (§13). Nothing is sent by X1 Scan.
 
+**Guided**: `tools/capture/guided-session.sh` (copy the `tools/capture/`
+folder to the reference Mac) walks through steps 1-22. It starts each
+FlexColor run under lldb with `cap3.py` and a new name (`essai-I`,
+`essai-J1`…, `-2` added if the name exists), waits for FlexColor to be
+quit, shows each step in French with the state of the X1 and FlexColor,
+notes the time of each step in `essai-notes.txt`, takes screenshots (the
+whole screen and every FlexColor window), and puts everything in `~/Desktop/captures-<date>/`.
+`--from N` resumes at step N (a new FlexColor run, with a preview first
+if N is in the middle of essai-I; on another day, give the first day's
+folder with `X1GUIDE_DIR`); `--list` lists the steps;
+`X1GUIDE_DRY_RUN=1` tries it without FlexColor, in a separate folder. It
+sends nothing to the X1: only FlexColor talks to the scanner. It checks
+that `cap3.py` set its breakpoints and its image limit, tells when
+FlexColor or lldb ended abnormally, and a Ctrl-C stops the guide only
+(lldb runs in its own process group). If it stops, check that FlexColor
+has been quit before resuming. Unlike the manual C2, lldb runs in batch
+mode: if FlexColor stopped on a signal, lldb would quit (and end
+FlexColor) instead of waiting for `continue`; none of the captures so far
+had such a stop. Not yet tried on the reference Mac.
+
 Before starting:
 
 - Machine: reference Mac (Mojave). Connect as in C1: **X1: off**, cable

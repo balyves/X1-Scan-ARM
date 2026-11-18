@@ -22,7 +22,7 @@ def parse(log_path):
     reads, scan_started, cdb = [], False, None
     for line in open(log_path, errors="replace"):
         line = line.strip()
-        m = re.match(r"^\d{4} CDB (.*)$", line)
+        m = re.match(r"^\d+ CDB (.*?)(?:\s+t=\S+)?$", line)
         if m:
             cdb = m.group(1).split()
             if cdb[0] == "1b":

@@ -55,7 +55,7 @@ def parse(log_path):
     events, cdb, current = [], None, None
     for line in open(log_path, errors="replace"):
         line = line.strip()
-        m = re.match(r"^\d+ CDB (.*)$", line)
+        m = re.match(r"^\d+ CDB (.*?)(?:\s+t=\S+)?$", line)
         if m:
             cdb = m.group(1).split()
             current = {"cdb": cdb}

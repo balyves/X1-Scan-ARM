@@ -561,3 +561,23 @@ own windows. User's decision: keep only the cold sequence of 2026-11-16
 (protocol.md §12, decisions.md). The exception for the seven holder code
 lines is now in CLAUDE.md rule 2 and the reviewer's instructions;
 test-session.md part G lists the next capture session.
+
+## 2026-11-18: guided capture session, timestamps in cap3.py
+
+`tools/capture/guided-session.sh` guides the capture session of
+test-session.md part G on the reference Mac (bash 3.2, nothing to
+install): one lldb run of FlexColor with `cap3.py` per capture, named,
+ended when FlexColor is quit; each step shown, timed in
+`essai-notes.txt`, with screenshots (whole screen and every FlexColor
+window); `--from N`
+to resume. It never talks to the X1. Tested here in its dry-run mode
+only (no FlexColor, no lldb): the 22 steps, resumes at steps 8, "08" and
+"010", invalid options, end of input. Not yet run with lldb on Mojave:
+`lldb --batch`, Ctrl-C (lldb in its own process group) and the window
+list for the screenshots are to be checked there.
+
+`cap3.py` now ends each CDB line with `  t=HH:MM:SS.mmm`.
+`cap3_to_fixture.py` keeps it as `time`, and accepts more than 9 999
+commands (a 5-digit counter, which the 4-digit pattern did not match);
+both decoders ignore it. Checked on a capture rewritten with timestamps
+and numbers past 9 999: same fixture and same decoder input as before.

@@ -23,6 +23,8 @@ Fields per exchange:
 - `response`: complete response (hex), when known
 - `response_head`: first 64 bytes of a longer response
 - `async`: issued asynchronously by FlexColor (image reads)
+- `time` (captures from 2026-11-18 on, when `cap3.py` prints it):
+  wall-clock time of the command, `HH:MM:SS.mmm`
 
 Uses:
 - **Simulator**: a virtual X1 answers each command with the recorded

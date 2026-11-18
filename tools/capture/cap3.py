@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # X1-Scan-ARM : capture lldb v3 (lecture seule). Commandes, reponses lues
 # au retour de l'execution, statut SCSI, et donnees image enregistrees.
-import lldb, os
+import lldb, os, datetime
 # Options, read from the environment of lldb (Python 2 syntax: Mojave's lldb):
 #   X1CAP_RAW      image data file (default ~/Desktop/x1-apercu.raw)
 #   X1CAP_SCAN_MB  after each SCAN (0x1B), write at most this many MiB of
@@ -83,7 +83,9 @@ def on_cdb(frame, bp_loc, d):
         S['after_scan'], S['scan_bytes'], S['scan_full'] = True, 0, False
     elif S['cdb'].startswith('db') or S['cdb'].startswith('cf 00 02'):
         S['after_scan'] = False
-    print('%04d CDB %s' % (S['k'], S['cdb']))
+    # Wall-clock time of the command, to the millisecond (durations; matches essai-notes.txt).
+    now = datetime.datetime.now().strftime('%H:%M:%S.%f')[:-3]
+    print('%04d CDB %s  t=%s' % (S['k'], S['cdb'], now))
     return False
 
 def on_sg(frame, bp_loc, d):

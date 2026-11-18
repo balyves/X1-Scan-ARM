@@ -16,7 +16,9 @@ import json
 import re
 import sys
 
-CDB = re.compile(r"^(\d{4}) CDB ((?:[0-9a-f]{2} ?)+)$")
+# "0001 CDB 12 00 00 00 60 00", optionally followed by "  t=HH:MM:SS.mmm" (cap3.py
+# since 2026-11-18); more than 4 digits after 9 999 commands.
+CDB = re.compile(r"^(\d{4,}) CDB ((?:[0-9a-f]{2} ?)+?)(?:\s+t=(\d\d:\d\d:\d\d\.\d{3}))?$")
 DIR = re.compile(r"^\s+(<-X1|->X1|--) (\d+) octets$")
 FIN = re.compile(r"^\s+FIN statut=0x([0-9a-f]{2}) recus=(\d+)$")
 SERIAL_TEXT = re.compile(r"FX1[0-9A-Za-z]{7}")
@@ -34,10 +36,16 @@ def parse(lines):
     for raw in lines:
         line = raw.rstrip("\n").rstrip()
         m = CDB.match(line)
+        if not m and re.match(r"^\d+ CDB ", line):
+            # cap3.py could not read the CDB ("CDB ?"), or a malformed time: its FIN and
+            # REP lines would go to the previous exchange.
+            raise SystemExit(f"unreadable CDB line: {line!r}")
         if m:
             current = {"seq": int(m.group(1)), "cdb": m.group(2).strip(), "direction": None,
                        "length": None, "data_out": None, "status": None, "transferred": None,
                        "response": None, "response_head": None, "async": False}
+            if m.group(3):
+                current["time"] = m.group(3)
             exchanges.append(current)
             continue
         if current is None:
@@ -109,7 +117,8 @@ def main():
             "direction: in = scanner to host, out = host to scanner",
             "image data (READ 0x28) is not included",
             "async = issued asynchronously by FlexColor (image reads); status not captured for these",
-        ] + ([f"completed_from: response longer than 64 bytes completed from that fixture "
+        ] + (["time: wall-clock time of the command (HH:MM:SS.mmm), from cap3.py"]
+             if any("time" in e for e in exchanges) else []) + ([f"completed_from: response longer than 64 bytes completed from that fixture "
               f"(identical first 64 bytes; complete responses read with tools/x1probe)"] if completed else []),
         "exchanges": exchanges,
     }
