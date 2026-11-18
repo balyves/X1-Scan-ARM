@@ -18,10 +18,24 @@
 		A1000000000000000000E001 /* Exceptions for "Fixtures" folder in "X1Scan" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				"holders/holder-code-lines.json",
+				"holders/holder-preview-1-6x6-6x45.json",
+				"holders/holder-preview-2-6x6x2.json",
+				"holders/holder-preview-3-24x36.json",
+				"holders/holder-preview-4-4x5.json",
+				"holders/holder-preview-5-24x36x6.json",
+				"holders/holder-preview-6-6x9.json",
+				"holders/holder-preview-7-24x36x4.json",
+				"holders/holder-preview-8-6x6-6x45-again.json",
 				"preview-sequence-warm-2.json",
+				"preview-sequence-warm-3.json",
+				"preview-sequence-warm-4.json",
+				"preview-sequence-warm-5.json",
 				README.md,
 				"scan-sequence-1000ppi.json",
+				"scan-sequence-2000ppi-twice.json",
 				"scan-sequence-3200ppi.json",
+				"scan-windows-2026-11-18.json",
 			);
 			target = A10000000000000000007001 /* X1Scan */;
 		};
