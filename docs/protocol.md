@@ -144,6 +144,18 @@ Offsets from the start of the 34-byte response.
   to 43 requested); the counter is never below the lines already delivered
   (4 to 22 ahead). The last value read is 808, before the last READ; 822
   lines are read in all (3 single lines, 40 × 20, 1 × 19). **[confirmed]**
+  In every capture (7 files, 9 image phases: previews and scans at 1 000,
+  2 000 and 3 200 ppi) the counter never goes back between
+  `1b 00 00 01 01 00` and the next `DB` (up to 2 062 at 3 200 ppi)
+  **[confirmed]**. Values read outside that phase **[confirmed]**: 0, 2,
+  then 11 at the two reads just before each preview's image SCAN (and at
+  the two reads of a scan's white and black references, after the 400-line
+  step at 2 000 ppi, before it at 1 000 and 3 200 ppi); 824, 583 or 1 066
+  at the start of a session; 824 right after a preview's `DB`. On the real
+  X1 (2026-11-18) the two reads of the scan's references gave 11, then 10
+  **[confirmed]**. What the counter means outside the image phase (for
+  instance the last lines of the previous run at the start of a session)
+  is a **[hypothesis]**.
   The scanner then holds a READ until its lines exist. **[hypothesis]**
   (The READs after SCAN are asynchronous in FlexColor; the capture has no
   timing for them.)

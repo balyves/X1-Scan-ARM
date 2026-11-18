@@ -78,6 +78,10 @@ public struct PreviewRunner: Sendable {
     public func run(progress: PreviewEventHandler? = nil) async throws(PreviewError) -> PreviewCapture {
         var capture = PreviewCapture()
         var scanSent = false
+        // Between the image SCAN (`1b 00 00 01 01 00`) and the next DB: the only
+        // phase where page 0x20's line counter must not go back. Elsewhere
+        // (white and black references of a scan, for one) it can (2026-11-18).
+        var inImage = false
         var lastLineCount: Int?
         // Page 0x20 reads before any window that requests a position show the
         // state left by earlier use (defaults after power-on, or the last
@@ -100,13 +104,18 @@ public struct PreviewRunner: Sendable {
                 progress?(.step(index: index, count: phases.count, phase: phases[min(index, phases.count - 1)]))
                 if step.kind == .scan {
                     scanSent = true  // set before sending: the scanner may have started
+                }
+                if step.command == X1Command.scan() {
+                    inImage = true
                     lastLineCount = nil  // page 0x20 counts the lines since this SCAN
+                } else if step.command == X1Command.stop() {
+                    inImage = false
                 }
                 let command = try substituted(step, lastPosition: lastPosition, progress: progress)
                 if case .positionWindow = step.kind { positionSent = Self.targetPosition(command) }
                 let result = try await transport.execute(command)
                 try verify(result, of: command)
-                try handle(result, of: step, scanSent: scanSent, positionRequested: positionRequested,
+                try handle(result, of: step, inImage: inImage, positionRequested: positionRequested,
                            positionSent: positionSent,
                            lastLineCount: &lastLineCount, capture: &capture, progress: progress)
                 if command.opcode == 0x5A, command.cdb[2] == ScanStatusPage.page,
@@ -192,7 +201,7 @@ public struct PreviewRunner: Sendable {
         command.opcode == 0x24 && command.dataOut.count >= 54 && command.dataOut[50..<54].contains { $0 != 0 }
     }
 
-    private func handle(_ result: SCSIResult, of step: PreviewStep, scanSent: Bool, positionRequested: Bool,
+    private func handle(_ result: SCSIResult, of step: PreviewStep, inImage: Bool, positionRequested: Bool,
                         positionSent: Int?, lastLineCount: inout Int?, capture: inout PreviewCapture,
                         progress: PreviewEventHandler?) throws {
         switch step.kind {
@@ -256,7 +265,10 @@ public struct PreviewRunner: Sendable {
                 throw PreviewAnomaly.positionOutOfTolerance(expected: expected, measured: status.measuredPosition,
                                                             tolerance: configuration.positionTolerance)
             }
-            if scanSent {
+            // The line counter is checked in the image phase only: it goes up
+            // there in every capture [confirmed]; elsewhere its meaning is a
+            // [hypothesis] and nothing we send depends on it.
+            if inImage {
                 if let previous = lastLineCount, status.linesAcquired < previous {
                     throw PreviewAnomaly.lineCounterWentBack(previous: previous, current: status.linesAcquired)
                 }

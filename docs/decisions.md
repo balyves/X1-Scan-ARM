@@ -470,7 +470,8 @@ sent by our code: only FlexColor's captured preview, byte for byte.
 - The runner is unchanged: same checks and stop rules as on the virtual X1
   (status, length, identity, 0xDF states, position within 100 of the
   capture, line counter; before SCAN nothing more, after SCAN only DB then
-  0xDF until `00 00`).
+  0xDF until `00 00`). Later changed: tolerance 256, line counter checked
+  in the image phase only (see below).
 
 ### Reading the lines after SCAN
 
@@ -650,7 +651,11 @@ explicitly. It is only for runs the user has approved (CLAUDE.md, rule 4).
   - an INQUIRY other than `Imacon` / `Flextight X1`;
   - a SCAN response other than `00 00`;
   - a measured position out of tolerance;
-  - a line counter going back after SCAN;
+  - a line counter going back in the image phase, between the image
+    SCAN (`1b 00 00 01 01 00`) and the next DB, in the preview and the
+    scan. Outside that phase it is not checked (user's decision,
+    2026-11-18: during a real scan's white and black references it went
+    from 11 to 10; nothing we send depends on it; protocol.md §5);
   - an unknown 0xDF state, or a timeout.
 - **Anomaly after SCAN (0x1B)**: send only `DB 00 00 00 00 00`, wait for
   0xDF to return `00 00`, and send nothing else. **Anomaly before SCAN**:

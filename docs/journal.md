@@ -455,3 +455,21 @@ another `08 00`: two in a row were never seen, and after SCAN that would
 delay the emergency `DB` by up to 120 s. Only 0xDF
 reads, same time limit; `08 80` (scan) and `08 04` stay refused. Our
 polling interval: 100 ms pause after each read, at most 120 s per wait.
+
+## 2026-11-18: first real scan, stopped at the references
+
+Cold preview complete (`08 00` accepted). The scan then went through
+calibration and the 400-line step: measured position 16 843, 192 above
+the captured 16 651, substituted within the tolerance. It stopped at
+step 458, during the white and black references (8 016-pixel reads):
+"line counter went back from 11 to 10". In the 2 000 ppi capture the
+counter read 11 (0x0b) at both reads of that phase; here 11, then 10
+**[confirmed]**.
+
+The runner checked the counter after any SCAN-type command, including
+the focus sweep `1b 00 08 06 01 00`. In all the captures the counter
+only goes up between the image SCAN `1b 00 00 01 01 00` and the next
+`DB` (9 image phases checked). User's decision: check it in that phase
+only, preview and scan; elsewhere, not at all (nothing we send depends
+on it). Its meaning outside the image phase is a **[hypothesis]**
+(`LineCounterTests`, protocol.md §5).
