@@ -8,10 +8,14 @@
 
 /* Begin PBXBuildFile section */
 		A1000000000000000000B001 /* X1ScanCore in Frameworks */ = {isa = PBXBuildFile; productRef = A1000000000000000000D001 /* X1ScanCore */; };
+		A1000000000000000000B002 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000F002 /* LICENSE */; };
+		A1000000000000000000B003 /* LICENSE-ICON in Resources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000F003 /* LICENSE-ICON */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		A1000000000000000000F001 /* X1 Scan.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "X1 Scan.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1000000000000000000F002 /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; name = LICENSE; path = ../LICENSE; sourceTree = SOURCE_ROOT; };
+		A1000000000000000000F003 /* LICENSE-ICON */ = {isa = PBXFileReference; lastKnownFileType = text; name = "LICENSE-ICON"; path = "../LICENSE-ICON"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -39,11 +43,22 @@
 			);
 			target = A10000000000000000007001 /* X1Scan */;
 		};
+		A1000000000000000000E002 /* Exceptions for "X1Scan" folder in "X1Scan" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"Icon/x1scan-logo-fond.svg",
+				"Icon/x1scan-logo-x1.svg",
+			);
+			target = A10000000000000000007001 /* X1Scan */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		A10000000000000000005001 /* X1Scan */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A1000000000000000000E002 /* Exceptions for "X1Scan" folder in "X1Scan" target */,
+			);
 			path = X1Scan;
 			sourceTree = "<group>";
 		};
@@ -75,6 +90,8 @@
 			children = (
 				A10000000000000000005001 /* X1Scan */,
 				A10000000000000000005002 /* Fixtures */,
+				A1000000000000000000F002 /* LICENSE */,
+				A1000000000000000000F003 /* LICENSE-ICON */,
 				A10000000000000000006002 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -157,6 +174,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A1000000000000000000B002 /* LICENSE in Resources */,
+				A1000000000000000000B003 /* LICENSE-ICON in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -217,6 +236,7 @@
 		A1000000000000000000C003 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = X1Scan/App/X1Scan.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
@@ -227,7 +247,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "X1 Scan";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.photography";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "MIT licence";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Code: MIT licence. Icon © 2026 BBH Solutions Visuelles Sàrl, not under the MIT licence (see the licences above).";
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -245,6 +265,7 @@
 		A1000000000000000000C004 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = X1Scan/App/X1Scan.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
@@ -255,7 +276,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "X1 Scan";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.photography";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "MIT licence";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Code: MIT licence. Icon © 2026 BBH Solutions Visuelles Sàrl, not under the MIT licence (see the licences above).";
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

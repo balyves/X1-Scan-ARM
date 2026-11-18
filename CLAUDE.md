@@ -29,8 +29,16 @@ Scope: **Flextight X1 only**. Other Flextight / Imacon models are out of scope.
    client or studio names, no IPTC credits from scan files, no capture logs or
    raw image files (one exception: the eight holder code lines of
    `tests/fixtures/holders/holder-code-lines.json`, docs/decisions.md, "Film
-   holders"). Check before every commit.
-3. **Licence**: the project is MIT. Do not copy code from GPL projects
+   holders"). One exception for names: the name of the icon's copyright
+   holder, **only** in `LICENSE`, `LICENSE-ICON`, the licence section of
+   `README.md`, the app's copyright line (Info.plist / About:
+   `project.pbxproj`, `InfoPlist.xcstrings`) and the icon files of
+   `app/X1Scan/Icon/`; everywhere else, write "the icon's copyright
+   holder" (docs/decisions.md, "Application icon"). Check before every
+   commit.
+3. **Licence**: the project is MIT, except the application icon
+   (`app/X1Scan/Icon/`, `LICENSE-ICON`; docs/decisions.md, "Application
+   icon"). Do not copy code from GPL projects
    (notably eigenshell/flextight-shenanigans). Their documentation can be
    read as a reference; the code must be our own.
 4. **Scanner safety**:
@@ -133,7 +141,9 @@ available; ask.
   `X1Image/HolderCode.swift`); `swift test` runs against
   the simulator, never against a real scanner.
 - `app/`: macOS application. `X1Scan.xcodeproj` and `X1Scan/` (AppKit
-  shell, SwiftUI settings panel and tool column, String Catalog), `X1ScanCore/` (models and view
+  shell, SwiftUI settings panel and tool column, String Catalog; `Icon/`:
+  the app icon, its two SVG layers and the Icon Composer document,
+  not under the MIT licence: `LICENSE-ICON`), `X1ScanCore/` (models and view
   models, plus the reusable views of the compact settings panel in `UI/`,
   `swift test`). The preview runs on the virtual X1; on the real X1,
   only FlexColor's captured preview (cold or warm, chosen by the first page

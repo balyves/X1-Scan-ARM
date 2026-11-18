@@ -15,8 +15,9 @@ import X1ScanCore
 ///                                (needs -X1ScanAutoPreview YES)
 ///   -X1ScanResizeProbe YES       resize the window, move the divider, hide and show the panel,
 ///                                print the sizes, put the window frame and panel layout back, quit
-/// The snapshot also writes each Settings pane and Scanner Information
-/// (`<path>-settings-<n>.png`, `<path>-info.png`), serial always masked.
+/// The snapshot also writes each Settings pane, Scanner Information and the
+/// About panel (`<path>-settings-<n>.png`, `<path>-info.png`,
+/// `<path>-floating-*.png`), serial always masked.
 /// These arguments change the saved panel layout like a user would.
 /// Never used against the real scanner: the preview only runs on the virtual X1.
 /// Write the PNGs outside the repository: they show the counters and the
@@ -124,6 +125,9 @@ enum DebugSnapshot {
                         .write(to: URL(filePath: path.replacingOccurrences(of: ".png", with: "-settings-\(index).png")))
                 }
             }
+            // The About panel, with both licences (written as -floating-panel).
+            (NSApp.delegate as? AppDelegate)?.showAbout(nil)
+            try? await Task.sleep(for: .milliseconds(500))
             // Other panels (colour panel excluded).
             for panel in NSApp.windows where panel is NSPanel && panel.isVisible && !(panel is NSColorPanel) {
                 guard let view = panel.contentView, let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds)

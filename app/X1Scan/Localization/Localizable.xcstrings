@@ -54,6 +54,42 @@
         }
       }
     },
+    "%@ is missing from the application.": {
+      "comment": "About panel: a licence file was not found; %@ is its name",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ manque dans l’application."
+          }
+        }
+      }
+    },
+    "Code licence (MIT)": {
+      "comment": "About panel: heading above the MIT licence text",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Licence du code (MIT)"
+          }
+        }
+      }
+    },
+    "Icon licence (not MIT)": {
+      "comment": "About panel: heading above the icon licence text",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Licence de l’icône (hors MIT)"
+          }
+        }
+      }
+    },
     "%lld pixels": {
       "extractionState": "manual",
       "localizations": {

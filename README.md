@@ -119,4 +119,6 @@ your own risk.
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE), except the application icon (`app/X1Scan/Icon/`):
+© 2026 BBH Solutions Visuelles Sàrl, **not** under the MIT licence; see
+[LICENSE-ICON](LICENSE-ICON).

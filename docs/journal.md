@@ -611,8 +611,9 @@ Findings (protocol.md §9 "Window rules", §12, §13), checked by
   six values. [hypothesis] as general rules.
 - The focus step and its correction behave as described before (base +
   10 000, then a multiple of 50 on both). Offset 62 of the focus window is
-  probably 32 bits (byte 64 set in three windows: up to 97 134) and depends on the frame by a rule not found: a
-  calculator cannot produce it yet.
+  probably 32 bits (byte 64 set in three windows: up to 97 134) and depends
+  on the frame by a rule not found: a calculator cannot produce it yet
+  (found later the same day: see the next entry).
 - The references come before the focus step when the optical resolution
   is 3 000 or more, after it otherwise (20 scans).
 - The first session of a FlexColor run starts with the ratio and optics
@@ -630,3 +631,29 @@ titles (50200407 and 50200410, where the sheet contradicts itself, keep
 the title with a `note`), and the 6×7 code line (essai-K, full CCD width)
 is the eighth code line kept in the repository (CLAUDE.md rule 2,
 decisions.md); `HolderCodeTests` decodes it as 14, 15.
+
+## 2026-11-18: offset 62 of the focus window; application icon
+
+Offset 62 of the 400-line window does not seem to come from the
+preview's content [hypothesis]: none of the measures tried on the
+flat-fielded preview inside each frame (mean, density, contrast,
+gradients, raw maximum) follows it (|r| ≤ 0.6 on the twelve 6×7 scans, seven distinct frames).
+It follows the frame's position along the drum: 15 500 + 28 800 × the
+middle of the frame's image lines in inches (offset 18 and offset 26
+without the priming lines, divided by ratio ÷ 10 000), within 21 on the
+20 scans of 2026-11-17 and -18 (four holders). [confirmed] on those
+values; that it is the drum position of the focus line, 28 800 per inch
+from 15 500 at line 0, is a [hypothesis], strongly supported. The exact
+rounding is not known (protocol.md §9). `ScanWindowRulesTests` checks it
+on the 15 scans of the afternoon.
+
+The application has an icon: a design of the icon's copyright holder
+(not under the MIT licence: `LICENSE-ICON`), split into
+two SVG layers and assembled as an Icon Composer document
+(`app/X1Scan/Icon/AppIcon.icon`); rendered with `ictool` in the light,
+dark and tinted appearances at 1024, 128, 32 and 16 px, and shown by the
+Finder. The fixtures the app does not read (holder previews and code
+lines, warm-3 to -5, two scans in a row, the window fixture) are no longer
+copied into the app bundle. The About panel shows both licences, copied
+into the app; the copyright line is in English and French. The CI pins
+Xcode 26.5 and checks the icon and the licences in the built app.

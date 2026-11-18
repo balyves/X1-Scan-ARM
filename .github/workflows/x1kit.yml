@@ -60,7 +60,26 @@ jobs:
         with:
           persist-credentials: false
 
-      # Xcode is not pinned: the image's default is used, and its version is logged here.
+      # Xcode pinned to 26.5 (the .icon app icon needs Xcode 26; the image keeps
+      # every 26.x minor release). Fails with the list if it is gone.
+      - name: Select Xcode 26.5
+        run: |
+          # Keep both "Select Xcode 26.5" steps the same.
+          xcode=""
+          for candidate in /Applications/Xcode_26.5.app /Applications/Xcode_26.5.0.app; do
+            if [ -d "$candidate" ]; then xcode=$candidate; break; fi
+          done
+          if [ -z "$xcode" ]; then
+            xcode=$(ls -d /Applications/Xcode_26.5*.app 2>/dev/null | grep -vi beta | sort | tail -n 1 || true)
+          fi
+          if [ -z "$xcode" ]; then
+            echo "Xcode 26.5 not found; installed:" >&2
+            ls -d /Applications/Xcode*.app >&2
+            exit 1
+          fi
+          echo "DEVELOPER_DIR=$xcode/Contents/Developer" >> "$GITHUB_ENV"
+          echo "Using $xcode"
+
       - name: Toolchain
         run: |
           sw_vers
@@ -81,6 +100,26 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
         with:
           persist-credentials: false
+
+      # Xcode pinned to 26.5 (the .icon app icon needs Xcode 26; the image keeps
+      # every 26.x minor release). Fails with the list if it is gone.
+      - name: Select Xcode 26.5
+        run: |
+          # Keep both "Select Xcode 26.5" steps the same.
+          xcode=""
+          for candidate in /Applications/Xcode_26.5.app /Applications/Xcode_26.5.0.app; do
+            if [ -d "$candidate" ]; then xcode=$candidate; break; fi
+          done
+          if [ -z "$xcode" ]; then
+            xcode=$(ls -d /Applications/Xcode_26.5*.app 2>/dev/null | grep -vi beta | sort | tail -n 1 || true)
+          fi
+          if [ -z "$xcode" ]; then
+            echo "Xcode 26.5 not found; installed:" >&2
+            ls -d /Applications/Xcode*.app >&2
+            exit 1
+          fi
+          echo "DEVELOPER_DIR=$xcode/Contents/Developer" >> "$GITHUB_ENV"
+          echo "Using $xcode"
 
       - name: Read-only guard
         # The app reaches the real X1 through IOKitTransport(policy: .readOnly),
@@ -108,4 +147,21 @@ jobs:
           for configuration in Debug Release; do
             xcodebuild -project X1Scan.xcodeproj -scheme X1Scan -configuration "$configuration" \
               -derivedDataPath "$RUNNER_TEMP/dd" CODE_SIGNING_ALLOWED=NO build
+            app="$RUNNER_TEMP/dd/Build/Products/$configuration/X1 Scan.app"
+            # The icon is compiled and the licences are copied (About).
+            /usr/libexec/PlistBuddy -c "Print CFBundleIconName" "$app/Contents/Info.plist"
+            test -f "$app/Contents/Resources/Assets.car"
+            test -f "$app/Contents/Resources/LICENSE"
+            test -f "$app/Contents/Resources/LICENSE-ICON"
+            # Only the fixtures the app reads are bundled.
+            for fixture in preview-sequence.json preview-sequence-cold.json \
+                           preview-calibration-profile.json scan-sequence-2000ppi.json; do
+              test -f "$app/Contents/Resources/$fixture"
+            done
+            for excluded in scan-windows-2026-11-18.json holder-code-lines.json holders/holder-code-lines.json; do
+              if [ -e "$app/Contents/Resources/$excluded" ]; then
+                echo "$excluded must not be in the app" >&2
+                exit 1
+              fi
+            done
           done

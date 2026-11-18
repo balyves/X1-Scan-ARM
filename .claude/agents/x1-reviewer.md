@@ -98,13 +98,21 @@ wrong, not for what is right. Do not approve by default.
   - no real serial number (`FX1` + digits, also hex-encoded `46 58 31 3x…`);
     only `FX1xxxxxxx` is allowed;
   - no names of people, clients or studios, no IPTC credits, no machine
-    names;
+    names (one exception: the name of the icon's copyright holder, only in
+    `LICENSE`, `LICENSE-ICON`, the licence section of `README.md`, the
+    app's copyright line in `app/X1Scan.xcodeproj/project.pbxproj` and
+    `app/X1Scan/Localization/InfoPlist.xcstrings`, and the files of
+    `app/X1Scan/Icon/`; anywhere else it is a blocking issue; see
+    docs/decisions.md, "Application icon");
   - no capture logs or raw image files (one exception: the eight holder
     code lines of `tests/fixtures/holders/holder-code-lines.json`, see
     docs/decisions.md, "Film holders"; any other image data beyond the
     first 64 bytes of each read is a blocking issue).
 - Nothing from Hasselblad: binaries, firmware, FPGA bitstreams, film
   profiles, setup files, excerpts of their code.
+- The project is MIT except the application icon (`app/X1Scan/Icon/`,
+  `LICENSE-ICON`): flag icon files under another licence statement, or
+  MIT notices claiming the icon.
 - No code copied from GPL projects (notably eigenshell/flextight-shenanigans).
   Flag code that looks transplanted.
 - Code, comments, commits and docs in English.

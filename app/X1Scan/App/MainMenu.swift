@@ -40,7 +40,7 @@ enum MainMenu {
         let name = ProcessInfo.processInfo.processName
         let menu = NSMenu(title: name)
         menu.addItem(item(String(localized: "About \(name)", comment: "Menu item"),
-                          #selector(NSApplication.orderFrontStandardAboutPanel(_:))))
+                          #selector(AppDelegate.showAbout(_:))))
         menu.addItem(.separator())
         menu.addItem(item(String(localized: "Settings…", comment: "Menu item"),
                           #selector(AppDelegate.showSettings(_:)), ","))

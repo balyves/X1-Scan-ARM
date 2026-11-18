@@ -259,7 +259,7 @@ little-endian fields:
 | 50 | 2 | 0, 25 000, 9 000, 8 971 | 0, 6 250 | Target position (see page 0x20); bytes 52-53 are always 0. |
 | 54 | 4 | 454 612 | 454 612 | Start position on the drum? |
 | 58 | 4 | 856 631 | 856 631 | End position on the drum? |
-| 62 | 4 | 15 500 | 15 500 | ? (LE32: above 65 535 in some 400-line windows, §9) |
+| 62 | 4 | 15 500 | 15 500 | Drum position of the focus line in the 400-line window? (§9; LE32: above 65 535 in some) |
 
 **Scan windows** (captures of 2026-11-17: one scan each at 1 000, 2 000 and
 3 200 ppi of a small frame; `tests/fixtures/scan-sequence-*.json`). Lists
@@ -287,7 +287,8 @@ of three values are in capture order: 2 000, 1 000 and 3 200 ppi.
   horizontal binning. **[hypothesis]**, consistent with the margins (§10).
 - Offset 50 in the 400-line window: the position just read on page 0x20
   (16 651, 8 081, 24 971). **[confirmed]** Offset 62 there: 26 560, 28 259,
-  27 156 (15 500 elsewhere); origin unknown.
+  27 156 (15 500 elsewhere): the drum position of the focus line, below
+  **[hypothesis]**.
 - Offsets 54 and 58: in the 400-line window 10 000 more than in the windows
   before it; in the image window (and the white and black reference window
   of the 2 000 ppi order) both change by the same multiple of 50, between
@@ -310,10 +311,25 @@ of three values are in capture order: 2 000, 1 000 and 3 200 ppi.
   the frame scanned twice on the morning of 2026-11-18, 30 146 to 97 134 in
   the afternoon scans (6×7 frames from 30 146, top, to 87 177, bottom;
   58 215 to 64 667 for the others; 24×36×4 97 134, 4×5 85 760, 24×36
-  32 734). **[confirmed]** No simple relation with the frame's position or
-  its raw preview brightness (the top and bottom frames got the lowest and
-  the highest 6×7 values). Computed by FlexColor from the frame, by a rule
-  not known. **[hypothesis]** A window calculator cannot produce it yet.
+  32 734). **[confirmed]** Mean level, density, contrast, gradients and raw
+  maximum of the flat-fielded preview over each frame give |r| ≤ 0.6 with
+  it on the twelve 6×7 scans of the afternoon (seven distinct frames; computed outside the
+  repository from the raw captures) **[confirmed]**: it does not seem to
+  come from the preview's content **[hypothesis]**.
+  It follows the position of the frame along the drum:
+  62 ≈ 15 500 + 28 800 × (offset 18 + (offset 26 − 2 × gap − 2) ÷ 2) ÷
+  (ratio ÷ 10 000), the middle of the frame's lines without the priming
+  lines (§10), in inches at the scan's line pitch, reproduces all 20
+  scans (2026-11-17 and -18, four holders, 600 to 3 200 ppi) within 21
+  **[confirmed]** for those values; `ScanWindowRulesTests` checks it on
+  the 15 scans of 2026-11-18. So offset 62
+  is the drum position of the line where the focus is measured (the
+  400-line step reads the middle of the frame, §12), 15 500 being line 0
+  of every other window, at 28 800 per inch. **[hypothesis]**, strongly
+  supported. The exact rounding is not known (computed − captured: −6 to +21, 17 of
+  the 20 positive, mean about +7: the constant or the rounding may differ
+  slightly): a
+  calculator can compute it to within about 0.02 mm, not byte for byte.
 
 **Window rules** (2026-11-18: 12 scans with the 6×7 holder in one
 FlexColor run, the same 1.0 × 1.0 cm frame at 600, 1 000, 1 500, 2 000,
@@ -322,7 +338,7 @@ frame; one 1 000 ppi scan each with the 24×36×4, 24×36 and 4×5 holders;
 `tests/fixtures/scan-windows-2026-11-18.json`). **[confirmed]** for those
 values; as rules for other frames and resolutions, **[hypothesis]**.
 `ScanWindowRulesTests` checks on the 15 scans: the image window's ratio,
-binning, width and lines, the 400-line window, the focus correction, the
+binning, width and lines, the 400-line window and its offset 62, the focus correction, the
 order of the references, the 6×7 model of 54 / 58 at the four optical
 resolutions of essai-I, and the constant frame position (spread only) of
 the 6×7 centred frames. The other statements below were checked by hand

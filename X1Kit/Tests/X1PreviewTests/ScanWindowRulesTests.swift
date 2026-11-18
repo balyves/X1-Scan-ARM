@@ -59,6 +59,7 @@ struct ScanWindowRulesTests {
         var target: Int { le(50, 2) }
         var o54: Int { le(54, 4) }
         var o58: Int { le(58, 4) }
+        var o62: Int { le(62, 4) }
     }
 
     private struct ScanCase {
@@ -143,6 +144,17 @@ struct ScanWindowRulesTests {
             #expect(c.focus.o54 == c.base.o54 + 10_000 && c.focus.o58 == c.base.o58 + 10_000, "\(label)")
             let correction = c.image.o54 - c.base.o54
             #expect(c.image.o58 - c.base.o58 == correction && correction % 50 == 0 && abs(correction) < 10_000, "\(label)")
+        }
+    }
+
+    /// Offset 62 of the 400-line window: the drum position of the middle of
+    /// the frame's image lines, 15 500 + 28 800 per inch (§9), within 25.
+    @Test func focusLinePosition() throws {
+        for c in try cases {
+            let gap = (20 + c.image.binning / 2) / c.image.binning
+            let middle = Double(c.image.line) + Double(c.image.lines - 2 * gap - 2) / 2
+            let expected = 15_500 + 28_800 * middle / (Double(c.image.ratio) / 10_000)
+            #expect(abs(Double(c.focus.o62) - expected) <= 25, "\(c.capture) session \(c.session): \(c.focus.o62)")
         }
     }
 

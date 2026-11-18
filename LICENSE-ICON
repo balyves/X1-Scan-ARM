@@ -1,0 +1,22 @@
+X1 Scan application icon
+
+Copyright (c) 2026 BBH Solutions Visuelles Sàrl. All rights reserved.
+
+The application icon of X1 Scan is NOT covered by the MIT License of this
+repository (LICENSE). This applies to the files of app/X1Scan/Icon/:
+
+- x1scan-logo-fond.svg (background layer)
+- x1scan-logo-x1.svg ("X1" layer)
+- AppIcon.icon (Icon Composer document built from these layers)
+
+and to every image rendered from them, including the icon compiled into
+the application.
+
+Permission is granted to use and redistribute these files and the icon
+compiled from them, without modification, only in builds of X1 Scan made
+from this repository, including forks that keep the name "X1 Scan".
+
+A derivative work distributed under another name must replace the icon.
+
+No other use is permitted without the written permission of
+BBH Solutions Visuelles Sàrl.

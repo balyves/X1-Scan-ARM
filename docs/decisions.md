@@ -918,3 +918,40 @@ page 0x20); kept for the reasoning.
   `tools/x1probe`; their first 64 bytes are identical (marked
   `completed_from`). They only feed the virtual X1 and the identity check.
 
+
+## Application icon (2026-11-18)
+
+User's decision: the app icon belongs to the icon's copyright holder
+(named in `LICENSE-ICON`) and is **not** under the MIT licence
+(`LICENSE-ICON`, `LICENSE`, README; CLAUDE.md rule 3).
+
+- **Name of the copyright holder** (user's decision, 2026-11-18): an
+  exception to "no client or studio names" (CLAUDE.md rule 2), only in
+  `LICENSE`, `LICENSE-ICON`, the licence section of `README.md`, the app's
+  copyright line (`INFOPLIST_KEY_NSHumanReadableCopyright` in
+  `project.pbxproj`, `InfoPlist.xcstrings`; About) and the files of
+  `app/X1Scan/Icon/`. Everywhere else: "the icon's copyright holder".
+- **Terms** (`LICENSE-ICON`): use and redistribution unmodified, only in
+  builds of X1 Scan made from this repository (forks included if they keep
+  the name X1 Scan); a derivative distributed under another name must
+  replace the icon; no other use without written permission.
+- The licences are copied into the app (`LICENSE`, `LICENSE-ICON`) and
+  shown in the About panel's credits, under "Icon licence (not MIT)" (first:
+  it is short) and "Code licence (MIT)".
+- The CI builds the app with Xcode 26.5, pinned (the `.icon` needs Xcode
+  26), and checks that the built app has the icon and both licences.
+
+Sources in
+`app/X1Scan/Icon/`: two SVG layers of 1024 × 1024 (background gradient
+#31435A → #0F161F, opaque; "X1" in white, outlined), split from the
+user's single Illustrator file, and `AppIcon.icon`, the Icon Composer
+document (Xcode 26 format): the gradient as the document's background
+fill, the "X1" layer alone in one group, Liquid Glass defaults, no shadow
+or highlight added by hand. The target uses it through
+`ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon`; the SVG layers are
+excluded from the target (only the `.icon` is compiled). The source
+layers in `app/X1Scan/Icon/` are the reference; `AppIcon.icon/Assets/`
+holds an identical copy of the "X1" layer and the `.icon`'s fill repeats
+the background colours: change both together. The About panel's
+copyright line (English and French, `InfoPlist.xcstrings`) names both
+licences.
