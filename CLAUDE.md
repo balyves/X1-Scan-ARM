@@ -27,7 +27,7 @@ Scope: **Flextight X1 only**. Other Flextight / Imacon models are out of scope.
    Describing behaviour observed in captures or static analysis is fine.
 2. **No personal data**: no scanner serial number (use `FX1xxxxxxx`), no
    client or studio names, no IPTC credits from scan files, no capture logs or
-   raw image files (one exception: the seven holder code lines of
+   raw image files (one exception: the eight holder code lines of
    `tests/fixtures/holders/holder-code-lines.json`, docs/decisions.md, "Film
    holders"). Check before every commit.
 3. **Licence**: the project is MIT. Do not copy code from GPL projects
@@ -112,8 +112,8 @@ available; ask.
 - `tools/capture/`: lldb capture script for FlexColor on Mojave, and its
   converter to fixtures.
 - `tests/fixtures/`: FlexColor captures (anonymised; of image data, only the first
-  64 bytes of each read, except the seven holder code lines of
-  `holders/holder-code-lines.json`, user's decision of 2026-11-18).
+  64 bytes of each read, except the eight holder code lines of
+  `holders/holder-code-lines.json`, user's decisions of 2026-11-18).
   `preview-sequence.json` (warm, after earlier previews) is replayed by the
   virtual X1; `preview-sequence-cold.json` (right after power-on, without
   its page 0x28 read) and `preview-sequence.json` are the two sequences
@@ -123,7 +123,9 @@ available; ask.
   the simulator in tests; `scan-sequence-2000ppi-twice.json` (two scans
   without a preview between them), `preview-sequence-warm-3` to `-5` and
   `holders/` (one preview per holder, and the holder code lines, §13)
-  document FlexColor; tests read `-warm-3` to `-5` and the code lines. See `tests/fixtures/README.md`.
+  document FlexColor; tests read `-warm-3` to `-5` and the code lines;
+  `scan-windows-2026-11-18.json` (windows and positions only, of the part G
+  captures) is read by `ScanWindowRulesTests` (§9, "Window rules"). See `tests/fixtures/README.md`.
 - `tools/decode/`: preview and scan decoders (Python, numpy, Pillow;
   `decode_scan.py --compare` also needs tifffile).
 - `X1Kit/`: Swift package (transport, protocol, preview sequence, image,

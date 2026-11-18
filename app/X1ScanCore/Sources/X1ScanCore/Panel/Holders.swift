@@ -25,9 +25,33 @@ public struct HolderAperture: Sendable, Hashable, Codable {
     }
 }
 
+/// An opening in inches, as Hasselblad's holder sheet writes it ("2¼",
+/// "0.94"): text, so that fractions are kept. Decimals use a dot.
+public struct HolderInches: Sendable, Hashable, Codable {
+    public var width: String
+    public var height: String
+
+    public init(width: String, height: String) {
+        self.width = width
+        self.height = height
+    }
+
+    public init(from decoder: any Decoder) throws {
+        var container = try decoder.unkeyedContainer()
+        width = try container.decode(String.self)
+        height = try container.decode(String.self)
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.unkeyedContainer()
+        try container.encode(width)
+        try container.encode(height)
+    }
+}
+
 /// A film holder: one of the defaults (Resources/holders.json) or one the
-/// user added. Saved, not sent to the scanner (nothing is known yet about how
-/// the X1 identifies a holder, see docs/protocol.md).
+/// user added. Saved, not sent to the scanner (the X1 reads a code on the
+/// holder, docs/protocol.md §13; the app does not use it yet).
 public struct Holder: Sendable, Hashable, Codable, Identifiable {
     public enum Series: String, Sendable, Hashable, Codable {
         /// Supplied for the X1 and X5.
@@ -45,12 +69,25 @@ public struct Holder: Sendable, Hashable, Codable, Identifiable {
     /// Format, e.g. `6×7`; for mounted slides, the slide size.
     public var format: String
     public var apertures: [HolderAperture]
+    /// The openings in inches as the holder sheet gives them (defaults only;
+    /// empty: computed from `apertures`).
+    public var aperturesInches: [HolderInches]
     public var frames: Int
     public var series: Series
     public var mountedSlides: Bool
+    /// Maker, e.g. `Hasselblad` (optional).
+    public var manufacturer: String?
+    /// Patent number printed on the holder, e.g. `US 6,081,352` (optional;
+    /// every Hasselblad holder has it).
+    public var patent: String?
+    /// Bright slots 7-15 of the holder code read by the X1 (X1Image.HolderCode),
+    /// when observed for this holder's format (optional).
+    public var code: [Int]?
 
     public init(id: String = UUID().uuidString, reference: String?, format: String, apertures: [HolderAperture],
-                frames: Int = 1, series: Series = .custom, mountedSlides: Bool = false) {
+                frames: Int = 1, series: Series = .custom, mountedSlides: Bool = false,
+                aperturesInches: [HolderInches] = [], manufacturer: String? = nil, patent: String? = nil,
+                code: [Int]? = nil) {
         self.id = id
         self.reference = reference
         self.format = format
@@ -58,10 +95,14 @@ public struct Holder: Sendable, Hashable, Codable, Identifiable {
         self.frames = max(frames, 1)
         self.series = series
         self.mountedSlides = mountedSlides
+        self.aperturesInches = aperturesInches
+        self.manufacturer = manufacturer
+        self.patent = patent
+        self.code = code
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, reference, format, apertures, frames, series, mountedSlides
+        case id, reference, format, apertures, aperturesInches, frames, series, mountedSlides, manufacturer, patent, code
     }
 
     public init(from decoder: any Decoder) throws {
@@ -73,9 +114,26 @@ public struct Holder: Sendable, Hashable, Codable, Identifiable {
         frames = max(try container.decodeIfPresent(Int.self, forKey: .frames) ?? 1, 1)
         series = try container.decodeIfPresent(Series.self, forKey: .series) ?? .custom
         mountedSlides = try container.decodeIfPresent(Bool.self, forKey: .mountedSlides) ?? false
+        aperturesInches = try container.decodeIfPresent([HolderInches].self, forKey: .aperturesInches) ?? []
+        manufacturer = try container.decodeIfPresent(String.self, forKey: .manufacturer)
+        patent = try container.decodeIfPresent(String.self, forKey: .patent)
+        code = try container.decodeIfPresent([Int].self, forKey: .code)
     }
 
     public var isCustom: Bool { series == .custom }
+
+    /// The openings in inches: the sheet's values when given (one per
+    /// opening), otherwise computed from the millimetres, 2 decimals at most.
+    public var inches: [HolderInches] {
+        if aperturesInches.count == apertures.count { return aperturesInches }
+        return apertures.map { HolderInches(width: Self.inches($0.width), height: Self.inches($0.height)) }
+    }
+
+    /// 57 → "2.24", 94 → "3.7" (dot decimal separator, like the data file).
+    public static func inches(_ millimetres: Double) -> String {
+        let value = (millimetres / 25.4 * 100).rounded() / 100
+        return value.formatted(.number.precision(.fractionLength(0...2)).grouping(.never).locale(Locale(identifier: "en_US_POSIX")))
+    }
 
     /// "4.5×6" → "4,5×6" where the locale's decimal separator is a comma: only
     /// a dot between two digits is replaced.
@@ -184,6 +242,7 @@ public final class HolderLibrary {
         custom[index].reference = Self.clean(reference)
         custom[index].format = Self.name(format)
         custom[index].apertures = aperture.map { [$0] } ?? []
+        custom[index].aperturesInches = [] // computed from the new millimetres
         custom[index].frames = max(frames, 1)
     }
 

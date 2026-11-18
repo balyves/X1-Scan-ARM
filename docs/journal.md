@@ -581,3 +581,52 @@ list for the screenshots are to be checked there.
 commands (a 5-digit counter, which the 4-digit pattern did not match);
 both decoders ignore it. Checked on a capture rewritten with timestamps
 and numbers past 9 999: same fixture and same decoder input as before.
+
+## 2026-11-18: guided session (part G): window rules, holder previews
+
+The guided script ran on the reference Mac for steps 1-22 (X1 on,
+FlexColor launched by the guide under lldb for each capture; X1 off and on
+for step 22), with no error or stop. Captures stay outside the repository;
+`tests/fixtures/scan-windows-2026-11-18.json` keeps their windows, page
+0x20 positions and motion/mode commands only. Deviations from the plan,
+from the windows and FlexColor's TIFFs: step 6 was scanned at 3 000 ppi
+(not 2 500); step 12 kept a 1.0 × 1.0 cm frame (not 3.0 × 1.0); step 17
+was first made with the 24×36×4 by mistake, then again (`--from 17`) with
+the 24×36.
+
+Findings (protocol.md §9 "Window rules", §12, §13), checked by
+`ScanWindowRulesTests` on the 15 scans:
+
+- Image window: ratio = resolution × holder factor × 50 000 / 3 (factor
+  1, 0.977, 1.0245, 0.8855 for the 6×7, 24×36×4, 24×36, 4×5); binning =
+  min(4, ⌊*M* ÷ resolution⌋), *M* per holder (3 200 for the 6×7, 6 300 and
+  2 040 for the 35 mm strips and the 4×5 are hypotheses; the scans only
+  bound them); width = TIFF width; lines = ⌊TIFF height × 5/3⌋ + 2 × gap +
+  2 with a gap of round(20 ÷ binning). [confirmed] on these scans.
+- 6×7: offset 14 and offset 18 put the same frame at the same place at
+  every resolution (CCD pixel 3 996 fixed on the film; offset 18 in lines
+  of ratio ÷ 10 000 per inch), matching where FlexColor drew the frame on
+  its preview. Offsets 54 / 58 before the focus step follow the optical
+  resolution (resolution × binning) by a thin-lens-like model, within 1 on
+  six values. [hypothesis] as general rules.
+- The focus step and its correction behave as described before (base +
+  10 000, then a multiple of 50 on both). Offset 62 of the focus window is
+  probably 32 bits (byte 64 set in three windows: up to 97 134) and depends on the frame by a rule not found: a
+  calculator cannot produce it yet.
+- The references come before the focus step when the optical resolution
+  is 3 000 or more, after it otherwise (20 scans).
+- The first session of a FlexColor run starts with the ratio and optics
+  of the holder used last (warm), other values after a cold-type start;
+  it also reads the holder code, at full CCD width: the earlier note that
+  the first preview has no code was wrong. New code: 6×7 = 14, 15. Each
+  holder's preview window is the same as in the morning.
+
+holders.json now gives the openings in inches as Hasselblad's holder sheet
+(v4, 2019; facts only, sheet not in the repository) writes them, the
+maker, the patent printed on Hasselblad holders (US 6,081,352) and the
+code read for the eight formats captured; Settings > Holders and the
+guide show mm and inches. User's decisions: the labels follow the sheet's
+titles (50200407 and 50200410, where the sheet contradicts itself, keep
+the title with a `note`), and the 6×7 code line (essai-K, full CCD width)
+is the eighth code line kept in the repository (CLAUDE.md rule 2,
+decisions.md); `HolderCodeTests` decodes it as 14, 15.

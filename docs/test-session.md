@@ -636,3 +636,12 @@ offsets 54 / 58 depend on the holder.
     FlexColor sends: ratio 16 000 000 and offsets 54 / 58 = 354 583 /
     576 354 (as on 2026-11-16), or 32 000 000 and 454 612 / 856 631 (as on
     2026-11-18, protocol.md §12).
+
+### G4. Result of 2026-11-18, 14:11-15:48
+
+Steps 1-22 done with the guided script, no error or stop. Step 1 was a
+cold-type preview. Step 6 was scanned at 3 000 ppi, step 12 kept a
+1.0 × 1.0 cm frame (so no wide frame was captured), step 17 was first
+made with the 24×36×4 by mistake and made again with the 24×36
+(`essai-J3-2`). Analysis: docs/protocol.md §9 ("Window rules"), §12, §13;
+`tests/fixtures/scan-windows-2026-11-18.json`.

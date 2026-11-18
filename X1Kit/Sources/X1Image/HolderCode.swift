@@ -3,7 +3,7 @@
 /// The code on a holder's leading edge, as one CCD line shows it
 /// (docs/protocol.md §13): bright bars of equal width at a regular pitch.
 /// Counting slots in pitches from the first bar, slots 0-3, 5, 6 and 16 are
-/// bright on every holder seen and slot 4 is dark [confirmed, seven
+/// bright on every holder seen and slot 4 is dark [confirmed, eight
 /// holders]; slots 7-15 carry the code. What the bits mean is a
 /// [hypothesis]: callers should only match a code against the codes of
 /// known holders, and treat an empty code (frame only, no code bar: never

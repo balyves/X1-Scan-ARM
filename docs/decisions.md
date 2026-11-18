@@ -530,12 +530,21 @@ sent by our code: only FlexColor's captured preview, byte for byte.
 
 Recorded on 2026-11-14.
 
-- **Holder code lines in the repository** (user's decision, 2026-11-18):
-  an exception to "no raw image files" (CLAUDE.md rule 2), limited to the
-  seven one-line reads that show a holder's code on its leading edge
-  (`tests/fixtures/holders/holder-code-lines.json`, raw pixels, no serial
-  number). No other image data; the calibration line of the first session
-  of that run, which shows no code, is not kept.
+- **Holder code lines in the repository** (user's decisions, 2026-11-18):
+  an exception to "no raw image files" (CLAUDE.md rule 2), limited to
+  **8 holder code lines**, one-line reads that show a holder's code on its
+  leading edge (`tests/fixtures/holders/holder-code-lines.json`, raw
+  pixels, no serial number): the seven of the morning capture, and the 6×7
+  line of the afternoon (`essai-K`, full CCD width), added by the user's
+  second decision of the same day. No other image data; the calibration
+  line of the first session of the morning run, which shows no code, is
+  not kept.
+- **Holder labels** (user's decision, 2026-11-18): `holders.json` uses the
+  titles of Hasselblad's holder sheet ("Flextight Holders", v4 2019; facts
+  only, the sheet is not in the repository), with openings in mm and in
+  inches as the sheet gives them, the patent printed on Hasselblad holders
+  and the code read. Where the sheet contradicts itself (50200407,
+  50200410), the title is kept and the other variant is in `note`.
 
 - The default list is a versioned data file,
   `app/X1ScanCore/Sources/X1ScanCore/Resources/holders.json`: reference,

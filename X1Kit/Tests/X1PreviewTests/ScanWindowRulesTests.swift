@@ -1,0 +1,179 @@
+// SPDX-License-Identifier: MIT
+import Foundation
+import Testing
+import X1TestSupport
+
+/// The rules behind FlexColor's scan windows (docs/protocol.md §9, "Window
+/// rules"), checked on the 15 scans of 2026-11-18
+/// (tests/fixtures/scan-windows-2026-11-18.json). Nothing here builds a
+/// window for the scanner: these rules are a [hypothesis] for a future
+/// window calculator, and this test shows that they reproduce every captured
+/// value.
+struct ScanWindowRulesTests {
+    private struct File: Decodable {
+        struct Capture: Decodable {
+            let capture: String
+            let sessions: [Session]
+        }
+        struct Session: Decodable {
+            let session: Int
+            let events: [Event]
+            let scan: Scan?
+        }
+        struct Scan: Decodable {
+            let ppi: Int
+            let tiff_width: Int
+            let tiff_height: Int
+        }
+        struct Event: Decodable {
+            let window: String?
+            let position: Int?
+            let cdb: String?
+        }
+        let captures: [Capture]
+    }
+
+    /// Per holder: drum factor × 10 000 (calibration ratio ÷ resolution) and
+    /// *M* (binning = min(4, *M* ÷ resolution)). *M* is a [hypothesis]: the
+    /// scans only bound it (§9); 6 300 for the 24×36 is not even observed at
+    /// a run start, any value of 4 000 or more gives the same binning here.
+    private static let holders: [String: (factor: Int, maximum: Int)] = [
+        "essai-I": (10_000, 3_200),   // 6×7
+        "essai-J3": (9_770, 6_300),   // 24×36×4
+        "essai-J3-2": (10_245, 6_300), // 24×36
+        "essai-J4": (8_855, 2_040),   // 4×5
+    ]
+
+    private struct Window {
+        let bytes: [UInt8]
+        init(_ hex: String) { bytes = hex.split(separator: " ").map { UInt8($0, radix: 16)! } }
+        func le(_ offset: Int, _ size: Int) -> Int {
+            (0..<size).reduce(0) { $0 | Int(bytes[offset + $1]) << (8 * $1) }
+        }
+        var ratio: Int { le(10, 4) }
+        var column: Int { le(14, 2) }
+        var line: Int { le(18, 2) }
+        var pixels: Int { le(22, 2) }
+        var lines: Int { le(26, 2) }
+        var binning: Int { Int(bytes[49]) }
+        var target: Int { le(50, 2) }
+        var o54: Int { le(54, 4) }
+        var o58: Int { le(58, 4) }
+    }
+
+    private struct ScanCase {
+        let capture: String
+        let session: Int
+        let scan: File.Scan
+        let image: Window
+        let focus: Window
+        let focusTarget: Int?
+        let base: Window
+        let referencesFirst: Bool
+    }
+
+    private static func loadCases() throws -> [ScanCase] {
+        let url = Fixtures.directory.appending(path: "scan-windows-2026-11-18.json")
+        let file = try JSONDecoder().decode(File.self, from: Data(contentsOf: url))
+        var result: [ScanCase] = []
+        for capture in file.captures {
+            for session in capture.sessions {
+                guard let scan = session.scan else { continue }
+                var windows: [(Window, Int?)] = []
+                var position: Int?
+                var image: Window?
+                var focusIndex: Int?
+                var referencesIndex: Int?
+                for event in session.events {
+                    if let p = event.position { position = p }
+                    if let hex = event.window {
+                        let window = Window(hex)
+                        if window.ratio == 21_674_665 { focusIndex = windows.count }
+                        windows.append((window, position))
+                    }
+                    if event.cdb == "1b 00 00 01 01 00" { image = windows.last?.0 }
+                    if event.cdb?.hasPrefix("f0 00 01 01 00 01") == true { referencesIndex = windows.count }
+                }
+                let label = "\(capture.capture) session \(session.session)"
+                let focus = try #require(focusIndex, "\(label): no 400-line window")
+                let references = try #require(referencesIndex, "\(label): no white and black references")
+                result.append(ScanCase(capture: capture.capture, session: session.session, scan: scan,
+                                       image: try #require(image, "\(label): no image window"),
+                                       focus: windows[focus].0, focusTarget: windows[focus].1,
+                                       base: windows[try #require(focus > 0 ? focus - 1 : nil)].0,
+                                       referencesFirst: references <= focus))
+            }
+        }
+        return result
+    }
+
+    private static let loaded = Result { try loadCases() }
+
+    private var cases: [ScanCase] { get throws { try Self.loaded.get() } }
+
+    @Test func fifteenScans() throws {
+        #expect(try cases.count == 15)
+        #expect(try cases.filter { $0.capture == "essai-I" }.count == 12)
+    }
+
+    /// Resolution, binning, width and lines of the image window.
+    @Test func imageWindow() throws {
+        for c in try cases {
+            let holder = Self.holders[c.capture]!
+            let binning = min(4, holder.maximum / c.scan.ppi)
+            let gap = (20 + binning / 2) / binning // 20, 10, 7, 5
+            let label = "\(c.capture) session \(c.session)"
+            #expect(c.image.ratio == c.scan.ppi * holder.factor * 5 / 3, "\(label)")
+            #expect(c.image.binning == binning, "\(label)")
+            #expect(c.image.pixels == c.scan.tiff_width, "\(label)")
+            #expect(c.image.lines == c.scan.tiff_height * 5 / 3 + 2 * gap + 2, "\(label)")
+            // White and black references before the 400-line step at an optical
+            // resolution of 3 000 and above, after it at 2 400 and below.
+            #expect(c.referencesFirst == (c.scan.ppi * binning >= 3_000), "\(label)")
+        }
+    }
+
+    /// The 400-line window and the focus correction of the image window.
+    @Test func focusWindow() throws {
+        for c in try cases {
+            let label = "\(c.capture) session \(c.session)"
+            #expect(c.focus.column == c.image.column && c.focus.pixels == c.image.pixels, "\(label)")
+            #expect(c.focus.line == 0 && c.focus.lines == 401 && c.focus.binning == c.image.binning, "\(label)")
+            #expect(c.focus.target == c.focusTarget, "\(label): the position read just before")
+            #expect(c.focus.o54 == c.base.o54 + 10_000 && c.focus.o58 == c.base.o58 + 10_000, "\(label)")
+            let correction = c.image.o54 - c.base.o54
+            #expect(c.image.o58 - c.base.o58 == correction && correction % 50 == 0 && abs(correction) < 10_000, "\(label)")
+        }
+    }
+
+    /// 6×7: offsets 54 and 58 before the focus step follow the optical
+    /// resolution O = resolution × binning (lens model fitted on six values
+    /// of O, §9; essai-I's scans have four of them: 2 000, 2 400, 3 000,
+    /// 3 200), within 1.
+    @Test func sixBySevenOptics() throws {
+        let sixBySeven = try cases.filter { $0.capture == "essai-I" }
+        #expect(Set(sixBySeven.map { $0.scan.ppi * $0.image.binning }) == [2_000, 2_400, 3_000, 3_200])
+        for c in sixBySeven {
+            let optical = Double(c.scan.ppi * c.image.binning)
+            let o58 = 1_136_908 - 896_886_417 / optical
+            let o54 = 1_094_694 - 896_148_801 / optical - 112.511 * optical
+            #expect(abs(Double(c.base.o58) - o58) <= 1, "session \(c.session)")
+            #expect(abs(Double(c.base.o54) - o54) <= 1, "session \(c.session)")
+        }
+    }
+
+    /// 6×7, the same centred frame at six resolutions (sessions 2-7): across
+    /// the CCD, the frame centre is at the same distance from CCD pixel 3 996
+    /// (in inches); along the drum, the frame starts at the same distance
+    /// (offset 18 ÷ lines per inch, ratio ÷ 10 000).
+    @Test func sixBySevenFramePosition() throws {
+        let centred = try cases.filter { $0.capture == "essai-I" && (2...7).contains($0.session) }
+        #expect(centred.count == 6)
+        let across = centred.map { c in
+            (Double(c.image.column) + Double(c.image.pixels) / 2 - 3_996 / Double(c.image.binning)) / Double(c.scan.ppi)
+        }
+        let along = centred.map { Double($0.image.line) / (Double($0.image.ratio) / 10_000) }
+        #expect(across.max()! - across.min()! < 0.003, "\(across)")
+        #expect(along.max()! - along.min()! < 0.002, "\(along)")
+    }
+}

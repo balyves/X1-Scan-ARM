@@ -171,6 +171,44 @@ struct HolderTests {
         #expect(onlySlides && withoutOpening.count == 2, "only mounted slides have no opening")
     }
 
+    /// Inches as the holder sheet gives them, one per opening; patent and
+    /// maker on every default; the codes read on 2026-11-18 (protocol.md §13).
+    @Test func inchesPatentAndCodes() {
+        let all = DefaultHolders.all
+        #expect(all.filter { !$0.apertures.isEmpty }.allSatisfy { $0.aperturesInches.count == $0.apertures.count })
+        #expect(all.first { $0.reference == "50200428" }?.inches == [HolderInches(width: "2¼", height: "2¼"),
+                                                                     HolderInches(width: "2¼", height: "1⅔")])
+        #expect(all.allSatisfy { $0.patent == "US 6,081,352" && $0.manufacturer == "Hasselblad" })
+        let codes = Dictionary(uniqueKeysWithValues: all.compactMap { h in h.code.map { (h.reference!, $0) } })
+        #expect(codes == ["50200401": [15], "50200402": [14], "50200428": [12, 14], "50200403": [14, 15],
+                          "50200404": [13], "50200405": [7, 15], "50200411": [7, 13, 14, 15], "50200416": [7, 12, 13]])
+        #expect(Set(codes.values).count == codes.count, "one code per format")
+    }
+
+    /// A custom holder: inches computed from the millimetres; maker, patent
+    /// and code stay nil when saved and read back.
+    @Test func customHolderInches() throws {
+        let holder = Holder(reference: nil, format: "Mine", apertures: [HolderAperture(width: 57, height: 94)])
+        #expect(holder.inches == [HolderInches(width: "2.24", height: "3.7")])
+        let decoded = try JSONDecoder().decode(Holder.self, from: JSONEncoder().encode(holder))
+        #expect(decoded == holder)
+        #expect(decoded.patent == nil && decoded.manufacturer == nil && decoded.code == nil)
+    }
+
+    /// Editing a custom holder's opening drops inches saved with it, so the
+    /// inches shown follow the new millimetres.
+    @Test func editingClearsSavedInches() throws {
+        let store = try #require(UserDefaults(suiteName: "HolderTests.inches.\(UUID().uuidString)"))
+        let saved = #"{"owned":["mine"],"custom":[{"id":"mine","format":"Mine","apertures":[[57,94]],"aperturesInches":[["9","9"]]}]}"#
+        store.set(Data(saved.utf8), forKey: "Holders")
+        let library = HolderLibrary(defaults: [], store: store)
+        #expect(library.holder(id: "mine")?.inches == [HolderInches(width: "9", height: "9")], "saved inches read back")
+        library.updateCustom("mine", reference: nil, format: "Mine", aperture: HolderAperture(width: 25.4, height: 50.8), frames: 1)
+        let edited = try #require(library.holder(id: "mine"))
+        #expect(edited.aperturesInches.isEmpty)
+        #expect(edited.inches == [HolderInches(width: "1", height: "2")])
+    }
+
     @Test func ownedCustomAndPersistence() {
         withTemporaryDefaults { store in
             let library = HolderLibrary(store: store)

@@ -270,6 +270,19 @@ ensure_essai_i() {  # steps 2-13: FlexColor must still run under lldb, else a ne
     screenshot "$CURRENT_STEP" apercu-reprise
 }
 
+holder_size() {  # holder_size STEP: reference and opening in mm and inches (holders.json)
+    case $1 in
+        1)  echo "réf. 50200403, ouverture 57 × 70 mm (2¼″ × 2,76″)" ;;
+        15) echo "réf. 50200428, ouvertures 57 × 57 / 57 × 42,5 mm (2¼″ × 2¼″ / 2¼″ × 1⅔″)" ;;
+        16) echo "réf. 50200404, deux vues de 57 × 57 mm (2¼″ × 2¼″)" ;;
+        17) echo "réf. 50200401, ouverture 24 × 35 mm (0,94″ × 1,38″)" ;;
+        18) echo "réf. 50200402, ouverture 94 × 119 mm (3,70″ × 4,69″)" ;;
+        19) echo "réf. 50200416, six vues, ouverture 24 × 226 mm (0,94″ × 8,9″)" ;;
+        20) echo "réf. 50200405, ouverture 57 × 90 mm (2¼″ × 3,54″)" ;;
+        21) echo "réf. 50200411, quatre vues, ouverture 24 × 149 mm (0,94″ × 5,87″)" ;;
+    esac
+}
+
 do_step() {  # do_step STEP: shows the step, waits, notes, screenshots
     local s=$1 res="" frame=""
     case $s in
@@ -277,6 +290,7 @@ do_step() {  # do_step STEP: shows the step, waits, notes, screenshots
             banner "Étape 1/22 : aperçu (porte-film 6×7, capture essai-I)"
             state "allumé" "fermé, puis lancé par le guide"
             say "Porte-film 6×7 avec le même film qu'avant : insérez-le."
+            say "  $(holder_size 1)"
             wait_enter "Entrée quand le porte-film 6×7 est en place."
             note "étape 1 : porte-film 6×7 en place"
             [ -z "$CAPTURE" ] || end_capture
@@ -321,20 +335,26 @@ do_step() {  # do_step STEP: shows the step, waits, notes, screenshots
         return
     fi
     if [ "$s" -ge 15 ] && [ "$s" -le 21 ]; then
-        local holder name scan=0
+        local holder size name scan=0
         case $s in
-            15) holder="6×6 / 6×4,5"; name=essai-J1 ;;
-            16) holder="6×6×2"; name=essai-J2 ;;
-            17) holder="24×36"; name=essai-J3; scan=1 ;;
-            18) holder="4×5"; name=essai-J4; scan=1 ;;
-            19) holder="24×36×6"; name=essai-J5 ;;
-            20) holder="6×9"; name=essai-J6 ;;
-            21) holder="24×36×4"; name=essai-J7 ;;
+            15) holder="6×6 / 6×4,5"; size="$(holder_size 15)"; name=essai-J1 ;;
+            16) holder="6×6×2"; size="$(holder_size 16)"; name=essai-J2 ;;
+            17) holder="24×36"; size="$(holder_size 17)"; name=essai-J3; scan=1 ;;
+            18) holder="4×5"; size="$(holder_size 18)"; name=essai-J4; scan=1 ;;
+            19) holder="24×36×6"; size="$(holder_size 19)"; name=essai-J5 ;;
+            20) holder="6×9"; size="$(holder_size 20)"; name=essai-J6 ;;
+            21) holder="24×36×4"; size="$(holder_size 21)"; name=essai-J7 ;;
         esac
         banner "Étape $s/22 : premier aperçu du porte-film $holder (capture $name)"
         [ -z "$CAPTURE" ] || end_capture
         state "allumé" "fermé, puis lancé par le guide"
-        say "Changez de porte-film : $holder. Notez la référence imprimée dessus."
+        say "Changez de porte-film : $holder."
+        say "  $size"
+        if [ "$s" = 17 ]; then
+            say "  Le 24×36 à UNE seule vue, étiqueté « 24x35 / 35x24 » (FlexColor affiche"
+            say "  « 24x36 / 36x24 ») : pas le 24×36×4 ni le 24×36×6 (bandes de vues)."
+        fi
+        say "Notez la référence imprimée dessus."
         wait_enter "Entrée quand le porte-film $holder est en place."
         note "étape $s : porte-film $holder en place"
         start_capture "$name"

@@ -4,7 +4,7 @@ Recorded from a real Flextight X1 driven by FlexColor 4.8.13 (Mac, Mojave),
 2026-11-12, with `tools/capture/cap3.py`. The scanner serial number is
 anonymised (`FX1xxxxxxx`). Of the image data, only the first 64 bytes of
 each read are kept (`response_head`): mostly dark margin pixels, a few
-pixels of the frame at most. One exception: the seven holder code lines of
+pixels of the frame at most. One exception: the eight holder code lines of
 `holders/holder-code-lines.json` (below; docs/decisions.md).
 
 ## preview-sequence.json
@@ -77,6 +77,17 @@ scans of the same frame without a preview between them (three sessions,
 2 629 exchanges; docs/protocol.md §12). Converted like the cold fixture.
 Not copied into the app.
 
+## scan-windows-2026-11-18.json
+
+Not a sequence of exchanges: from the ten FlexColor captures of
+2026-11-18 afternoon (docs/test-session.md, part G: `essai-I`, `essai-J1`
+to `-J7`, `essai-J3-2`, `essai-K`), per capture and session, in order, the
+SET WINDOW data (68 bytes, hex), the page 0x20 positions (bytes 27-28) and
+the E4, F0, 1B and DB commands. For scans, FlexColor's resolution, TIFF
+size and the frame asked; per capture, the holder FlexColor showed and the
+code slots read (docs/protocol.md §13). Read by `ScanWindowRulesTests`
+(protocol.md §9, "Window rules").
+
 ## preview-sequence-warm-3.json, -4, -5
 
 Three warm previews of 2026-11-18, FlexColor restarted before each (794,
@@ -96,9 +107,12 @@ format FlexColor showed. The file names and `seq` numbers keep the order of
 the run. Converted like the cold fixture (53 long responses completed).
 
 `holders/holder-code-lines.json`: the raw pixels of the first one-line
-read of sessions 2-8, which shows the holder code on the leading edge
-(docs/protocol.md §13). The user agreed on 2026-11-18 to keep these code
-lines, and no other image data (docs/decisions.md). Base64 of
+read of sessions 2-8 of the morning capture (`essai-H`, 2 004 pixels), and
+of the full-width code read of the 6×7 in the afternoon capture `essai-K`
+(8 016 pixels; `capture` and `session` identify each line), which show the
+holder code on the leading edge (docs/protocol.md §13). The user agreed on
+2026-11-18 to keep these eight code lines, and no other image data
+(docs/decisions.md). Base64 of
 little-endian UInt16 RGB, extracted from the raw data with the RAW offsets
 of the cap3.py log.
 

@@ -99,7 +99,7 @@ wrong, not for what is right. Do not approve by default.
     only `FX1xxxxxxx` is allowed;
   - no names of people, clients or studios, no IPTC credits, no machine
     names;
-  - no capture logs or raw image files (one exception: the seven holder
+  - no capture logs or raw image files (one exception: the eight holder
     code lines of `tests/fixtures/holders/holder-code-lines.json`, see
     docs/decisions.md, "Film holders"; any other image data beyond the
     first 64 bytes of each read is a blocking issue).

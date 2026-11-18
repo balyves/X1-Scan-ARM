@@ -260,13 +260,42 @@ enum Strings {
         return "\(holderName(holder)) (\(reference))"
     }
 
-    /// "57 × 70 mm", "57 × 57 / 57 × 42.5 mm", or "—".
+    /// "57 × 70 mm (2¼ × 2.76″)", "57 × 57 / 57 × 42.5 mm (2¼ × 2¼ / 2¼ × 1⅔″)",
+    /// or "—"; decimals in the locale's separator.
     static func holderApertures(_ holder: Holder) -> String {
         guard !holder.apertures.isEmpty else { return "—" }
         let sizes = holder.apertures.map {
             "\($0.width.formatted(.number.grouping(.never))) × \($0.height.formatted(.number.grouping(.never)))"
         }
-        return sizes.joined(separator: " / ") + " mm"
+        let inches = holder.inches.map { Holder.localizedDecimals("\($0.width) × \($0.height)") }
+        return sizes.joined(separator: " / ") + " mm (" + inches.joined(separator: " / ") + "″)"
+    }
+
+    /// VoiceOver: "57 × 70 millimetres, 2¼ × 2.76 inches" (the ″ symbol is not
+    /// read as inches).
+    static func holderAperturesAccessibility(_ holder: Holder) -> String {
+        guard !holder.apertures.isEmpty else { return holderApertures(holder) }
+        let millimetres = holder.apertures.map {
+            "\($0.width.formatted(.number.grouping(.never))) × \($0.height.formatted(.number.grouping(.never)))"
+        }.joined(separator: " / ")
+        let inches = holder.inches.map { Holder.localizedDecimals("\($0.width) × \($0.height)") }.joined(separator: " / ")
+        return holderSizeAccessibility(millimetres: millimetres, inches: inches)
+    }
+
+    /// The inch equivalent of an opening typed in millimetres: "2.24 × 2.76″".
+    static func holderInches(width: Double, height: Double) -> String {
+        Holder.localizedDecimals("\(Holder.inches(width)) × \(Holder.inches(height))″")
+    }
+
+    /// VoiceOver label of `holderInches`.
+    static func holderInchesAccessibility(width: Double, height: Double) -> String {
+        let inches = Holder.localizedDecimals("\(Holder.inches(width)) × \(Holder.inches(height))")
+        return String(localized: "\(inches) inches", comment: "VoiceOver: an opening in inches, e.g. “2.24 × 2.76 inches”")
+    }
+
+    private static func holderSizeAccessibility(millimetres: String, inches: String) -> String {
+        String(localized: "\(millimetres) millimetres, \(inches) inches",
+               comment: "VoiceOver: a holder opening, e.g. “57 × 70 millimetres, 2¼ × 2.76 inches”")
     }
 
     static func holderSeries(_ series: Holder.Series) -> String {

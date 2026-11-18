@@ -7,6 +7,7 @@ import X1TestSupport
 /// The holder code lines of 2026-11-18 (tests/fixtures/holders/holder-code-lines.json).
 struct HolderCodeTests {
     struct Line: Decodable {
+        let capture: String
         let session: Int
         let format_shown: String
         let pixels: Int
@@ -24,26 +25,30 @@ struct HolderCodeTests {
         return try JSONDecoder().decode(File.self, from: Data(contentsOf: url)).lines
     }
 
-    /// The codes read from the raw data (docs/protocol.md §13).
-    static let expected: [Int: Set<Int>] = [
-        2: [13], 3: [15], 4: [14], 5: [7, 12, 13], 6: [7, 15], 7: [7, 13, 14, 15], 8: [12, 14],
+    /// The codes read from the raw data (docs/protocol.md §13), by capture
+    /// and session.
+    static let expected: [String: Set<Int>] = [
+        "essai-H 2": [13], "essai-H 3": [15], "essai-H 4": [14], "essai-H 5": [7, 12, 13], "essai-H 6": [7, 15],
+        "essai-H 7": [7, 13, 14, 15], "essai-H 8": [12, 14],
+        "essai-K 1": [14, 15], // 6×7, full CCD width (8 016 pixels, binning 1)
     ]
 
     @Test func everyCodeLineDecodes() throws {
         let lines = try Self.lines()
-        #expect(lines.count == 7)
+        #expect(lines.count == 8)
         for line in lines {
-            let code = try #require(HolderCode.decode(rgb: line.rgb, pixels: line.pixels), "session \(line.session)")
-            #expect(code.slots == Self.expected[line.session], "session \(line.session), \(line.format_shown)")
+            let key = "\(line.capture) \(line.session)"
+            let code = try #require(HolderCode.decode(rgb: line.rgb, pixels: line.pixels), "\(key)")
+            #expect(code.slots == Self.expected[key], "\(key), \(line.format_shown)")
         }
-        #expect(Set(lines.compactMap { HolderCode.decode(rgb: $0.rgb, pixels: $0.pixels) }).count == 7,
-                "seven holders, seven codes")
+        #expect(Set(lines.compactMap { HolderCode.decode(rgb: $0.rgb, pixels: $0.pixels) }).count == 8,
+                "eight holders, eight codes")
     }
 
     // MARK: Changes to a real line (session 5: the smallest pitch, about 32 pixels)
 
     private static func line(_ session: Int) throws -> Line {
-        try #require(try lines().first { $0.session == session })
+        try #require(try lines().first { $0.capture == "essai-H" && $0.session == session })
     }
 
     /// Bright runs of the green channel (start, length), as the decoder sees them.
@@ -71,7 +76,7 @@ struct HolderCodeTests {
                 let edge = shift < 0 ? bar.start - 1 : bar.start
                 let bright = rgb[(bar.start + 1) * 3 + 1]
                 Self.set(&rgb, edge..<(edge + 1), to: shift < 0 ? bright : 0)
-                #expect(HolderCode.decode(rgb: rgb, pixels: line.pixels)?.slots == Self.expected[5],
+                #expect(HolderCode.decode(rgb: rgb, pixels: line.pixels)?.slots == Self.expected["essai-H 5"],
                         "bar at \(bar.start), shift \(shift)")
             }
         }
@@ -82,7 +87,7 @@ struct HolderCodeTests {
         let line = try Self.line(8)
         var rgb = line.rgb
         Self.set(&rgb, 1000..<1001, to: 65535)
-        #expect(HolderCode.decode(rgb: rgb, pixels: line.pixels)?.slots == Self.expected[8])
+        #expect(HolderCode.decode(rgb: rgb, pixels: line.pixels)?.slots == Self.expected["essai-H 8"])
     }
 
     /// The patterns that are not a holder code give nil.

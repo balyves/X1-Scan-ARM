@@ -18,6 +18,42 @@
         }
       }
     },
+    "%@ inches": {
+      "comment": "VoiceOver: an opening in inches, e.g. “2.24 × 2.76 inches”",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ pouces"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ inches"
+          }
+        }
+      }
+    },
+    "%@ millimetres, %@ inches": {
+      "comment": "VoiceOver: a holder opening, e.g. “57 × 70 millimetres, 2¼ × 2.76 inches”",
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ millimètres, %2$@ pouces"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ millimetres, %2$@ inches"
+          }
+        }
+      }
+    },
     "%lld pixels": {
       "extractionState": "manual",
       "localizations": {

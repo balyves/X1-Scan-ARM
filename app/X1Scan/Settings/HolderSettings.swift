@@ -66,7 +66,12 @@ struct HolderSettings: View {
             .accessibilityLabel(Strings.holderName(holder))
             Text(Strings.holderName(holder)).frame(minWidth: 120, alignment: .leading)
             Text(holder.reference ?? "—").monospacedDigit().foregroundStyle(.secondary).frame(width: 70, alignment: .leading)
-            Text(Strings.holderApertures(holder)).foregroundStyle(.secondary)
+            Text(Strings.holderApertures(holder))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .truncationMode(.middle)
+                .help(Strings.holderApertures(holder))
+                .accessibilityLabel(Strings.holderAperturesAccessibility(holder))
             if holder.frames > 1 {
                 // Only shown above 1 frame, so no singular form is needed.
                 Text("\(holder.frames) frames", comment: "Holder: number of frames, always 2 or more").foregroundStyle(.secondary)
@@ -138,6 +143,12 @@ private struct HolderEditor: View {
                     TextField(value: $draft.width, format: .number) { EmptyView() }.frame(width: 60)
                     Text(verbatim: "×")
                     TextField(value: $draft.height, format: .number) { EmptyView() }.frame(width: 60)
+                    if draft.width > 0 && draft.height > 0 {
+                        Text(verbatim: Strings.holderInches(width: draft.width, height: draft.height))
+                            .monospacedDigit()
+                            .foregroundStyle(.secondary)
+                            .accessibilityLabel(Strings.holderInchesAccessibility(width: draft.width, height: draft.height))
+                    }
                 }
             }
             Stepper(value: $draft.frames, in: 1...12) {
