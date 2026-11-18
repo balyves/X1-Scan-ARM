@@ -67,6 +67,31 @@ Converted like the cold fixture (14 long responses completed from
 copied into the app: the virtual X1 replays its scan session, and the real
 X1's scan guard is built from it; the other two are not copied.
 
+## scan-sequence-2000ppi-twice.json
+
+2026-11-18, X1 switched on just before: a cold preview, then two 2 000 ppi
+scans of the same frame without a preview between them (three sessions,
+2 629 exchanges; docs/protocol.md §12). Converted like the cold fixture.
+Not copied into the app.
+
+## preview-sequence-warm-3.json, -4, -5
+
+Three warm previews of 2026-11-18, FlexColor restarted before each (794,
+762 and 756 exchanges). Their commands outside polling are identical to
+`preview-sequence.json`; the position read before the window with target
+25 000 is 25 931, 25 995 and 25 931 (docs/protocol.md §11).
+
+## holders/
+
+One FlexColor run of 2026-11-18, X1 warm: eight previews, one per holder,
+FlexColor's Format menu never touched (docs/protocol.md §13). The capture
+(7 203 exchanges) is split per session, to stay under the 2 MiB limit of
+`tools/git-hooks/x1-check`: `holder-preview-1-6x6-6x45.json` (with
+FlexColor's initialisation), `-2-6x6x2`, `-3-24x36`, `-4-4x5`,
+`-5-24x36x6`, `-6-6x9`, `-7-24x36x4`, `-8-6x6-6x45-again`, named after the
+format FlexColor showed. The file names and `seq` numbers keep the order of
+the run. Converted like the cold fixture (53 long responses completed).
+
 ## preview-calibration-profile.json
 
 Per-column white and dark reference levels (2004 px × RGB, 16-bit) from the

@@ -90,6 +90,16 @@ note the reference written on the holder used, and look for it (decimal,
 hex or BCD) in the read-only responses (0xD3, page 0x27, 0xEE registers)
 and in the captures. **[hypothesis]**
 
+Since 2026-11-18 (§13): FlexColor reads a binary code on the holder's
+leading edge in one CCD line, different for each of the seven holders
+tried. **[confirmed]** Across those eight sessions every other non-image
+response is the same whatever the holder (INQUIRY, pages 0x21, 0x23,
+0x25, 0x26, 0x27, 0x29, log page 0x30, 0xEE registers 0x04-0x19; 0xE1
+always `04 c5 ff ff`; 0xD3 nothing tied to the holder); only page 0x20's
+position varies. **[confirmed]** So the X1 itself reports no holder and
+FlexColor decodes the code in software. **[hypothesis]**, strongly
+supported.
+
 ## 5. Vendor mode pages
 
 Standard MODE SENSE(10) header (8 bytes, no block descriptor), then page code
@@ -180,8 +190,9 @@ counter 3 is the **number of scans**. **[hypothesis]**
 | `08 40` | busy, other phase, often follows `08 01` |
 | `08 02`, `08 03`, `08 06`, `08 07` | busy. Right after power-on (2026-11-16): after the first `F0` FlexColor read `08 07`, `08 06`, `08 02`, `08 06`, `08 40`, then `00 00`; `08 03` after the first `F0 01 01 01 01`. In warm scan sessions (2026-11-17), `08 06` and `08 02` also follow the SCAN commands (§12). **[confirmed]** |
 | `08 80` | busy, seen in two captures of 2026-11-17, each time after `08 01` and polled many times in a row (69 and 96 reads), then `08 40`, `00 00` **[confirmed]**: after the first `f0 00 01 01 01 01` of the warm preview captured before the 2 000 ppi scan (seq 325), and after the `f0 00 01 01 01 01` of the 3 200 ppi scan session (seq 809, the step of seq 876 at 2 000 ppi). Accepted only in the warm preview's wait (`PreviewStep.alsoBusy`); not in the 2 000 ppi scan, whose capture does not show it at that step (there: `08 07`, `08 03`, `08 02`, `08 40`, `00 00`) |
-| `08 04` | busy, seen once **[confirmed]**: 1 000 ppi scan session, after its first `f0 00 01 01 01 01` (seq 803; `08 06`, `08 04`, `08 40`, `00 00`), a step the 2 000 ppi scan does not have. Not accepted anywhere: we run no 1 000 ppi scan |
-| `08 00` | seen twice on the real X1, 2026-11-18 **[confirmed]**. First in our cold preview: first state after the preview's final `DB`, where every FlexColor capture shows `08 01` then `00 00`. Our runner then stopped and sent its emergency `DB`; the X1 answered `08 01`, then `00 00`. That `08 00` ends by itself, without that second `DB`, is a **[hypothesis]**. Then in our second cold preview of the day, wait after its first `f0 00 01 01 01 01` (step 81): `08 07`, `08 03`, `08 01` ×6, then `08 00`. Never in FlexColor's captures. Accepted as busy after a final or emergency `DB`, and in every wait right after an accepted `08 xx` state (below) |
+| `08 04` | busy **[confirmed]**: 1 000 ppi scan session, after its first `f0 00 01 01 01 01` (seq 803; `08 06`, `08 04`, `08 40`, `00 00`), a step the 2 000 ppi scan does not have; and in the holder previews of 2026-11-18 (`tests/fixtures/holders/`, 4×5, 6×9 and 6×6 / 6×4.5 again), in the wait after `f0 00 01 01 01 01`, between `08 01` and `08 40`. Not accepted anywhere: we run neither |
+| `08 05` | busy **[confirmed]**: holder previews of 2026-11-18 (6×9, 24×36×4, 6×6 / 6×4.5 again), in the wait after `f0 00 01 01 01 01`, right after `08 07` and before `08 01`. Not accepted anywhere: we run none of those sequences |
+| `08 00` | seen three times on 2026-11-18 **[confirmed]**. Twice on the real X1 with our runner: first state after the cold preview's final `DB`, where every FlexColor capture shows `08 01` then `00 00` (the runner then stopped and sent its emergency `DB`; the X1 answered `08 01`, then `00 00`; that `08 00` ends by itself, without that second `DB`, is a **[hypothesis]**); and in the wait after the first `f0 00 01 01 01 01` of a cold preview (step 81): `08 07`, `08 03`, `08 01` ×6, `08 00`. Once in a FlexColor capture (`preview-sequence-warm-5.json`, seq 336, wait after the `f0 00 01 01 01 01` of seq 327): `08 01` ×8, `08 00`, `08 40`, `00 00`; FlexColor went on polling. Accepted as busy after a final or emergency `DB`, and in every wait right after an accepted `08 xx` state (below) |
 | `00 01` | seen once right after `1b 00 00 01 01 00`; FlexColor starts reading image lines on this value **[confirmed]** |
 | `00 06` | seen once right after `1b 00 08 06 01 00` (the 400-line step of a scan, §12), after `08 06` / `08 02` / `08 01`; FlexColor starts its one-line reads on this value. After that step's `DB`, a single `00 00`, then the next window. **[confirmed]** (three scans) |
 
@@ -209,7 +220,8 @@ is accepted as busy (user's decisions, 2026-11-18):
   scan) and `08 04` stay refused.
 
 **[hypothesis]**: the first byte `08` means busy and the second byte the
-activity in progress; `08 00` would be a short transition between two
+activity in progress (in the holder previews `08 04` and `08 05` also
+appear briefly between other busy states, §7 table); `08 00` would be a short transition between two
 activities, which FlexColor, polling more slowly, never caught. The
 meaning of the low byte is otherwise unknown.
 
@@ -280,6 +292,29 @@ of three values are in capture order: 2 000, 1 000 and 3 200 ppi.
   before it; in the image window, 850, 700 and 900 less than before the
   400-line step. **[confirmed]** Values computed by FlexColor from the frame
   and from measurements, not constants. **[hypothesis]**
+  Two scans of the same frame on 2026-11-18 (`scan-sequence-2000ppi-twice.json`)
+  give 750, then 450 less: the image window of the second scan has offsets
+  54 and 58 300 more than the first, everything else equal. Page 0x24,
+  read before each 400-line step, is identical in all the scans (5
+  scans, 2 days), so it is not the source. All five corrections are
+  multiples of 50 (450 to 900), offsets 54 and 58 change by the same amount,
+  and the 400-line window starts 10 000 above the base: consistent with a
+  focus value swept from base + 10 000 down in 400 steps of 50 (one per
+  line) and FlexColor keeping base + 10 000 − 50 × *i* for the line *i* it
+  finds sharpest, so *i* = 209 to 218 here. **[hypothesis]** With a simple
+  sharpness measure (mean squared difference between neighbouring pixels),
+  the sharpest line is within about 15 lines of that *i*, never exactly on
+  it: FlexColor's measure is not known.
+- The base values of offsets 54 and 58 are not constants either: 454 612
+  / 856 631 in most preview and calibration windows and in the 3 200 ppi
+  scan, 421 597 / 688 465 at 2 000 ppi, 458 444 / 837 946 at 1 000 ppi,
+  354 583 / 576 354 in the calibration windows of the cold capture of
+  2026-11-16 (ratio 16 000 000), and other pairs with other holders (§13).
+  **[confirmed]** They depend on the ratio and the holder, by a rule not
+  known: optical settings (focus or magnification). **[hypothesis]**
+- Offset 62 in the 400-line window: 26 877 in both scans of the same
+  frame on 2026-11-18. It depends on the frame, not on the run.
+  **[hypothesis]** (one frame scanned twice)
 
 ## 10. READ(10) and image data
 
@@ -371,7 +406,9 @@ restart). **[confirmed]**
 - One more read before the session start: MODE SENSE page 0x28 (30 bytes).
 - The first page 0x20 read gives 2 048 × 3 (bytes 19-24), position 8 203,
   0 lines.
-- Calibration: the first windows have ratio 62 500 instead of 125 000 and
+- Calibration: the first windows have ratio 16 000 000 instead of
+  32 000 000 (offset 10, LE32; first written here as 62 500 and 125 000,
+  read one byte off) and
   other bytes 54-61 (`17 69 05 00 62 cb 08 00`); a window with target
   10 000 and one with target 0 come first, then `F0 00 00 01 01` (with the
   busy states of §7), page 0x27, the full-CCD windows, `E4`, `F0 00 01 01
@@ -391,7 +428,7 @@ preview; logs outside the repository; "outside polling" means without
   identical up to and including the first page 0x20 read after
   `CF 00 01 80` (39 commands), apart from C's page 0x28 read; they diverge
   at the next command (warm: `F0 00 00 00 01 01`; cold: the window with
-  ratio 62 500). **[confirmed]**
+  ratio 16 000 000). **[confirmed]**
 - That page 0x20 read gives the power-on values (2 048 × 3, position
   8 203, 0 lines) before both cold sequences (C, A1), and values left by
   earlier use before the warm ones (W 1 936 / 1 846 / 1 891, B 1 921 /
@@ -416,15 +453,20 @@ preview; logs outside the repository; "outside polling" means without
   warm capture's sequence. In the preview of the 2 000 ppi run (2026-11-17)
   it did, up to the second page 0x20 read of the session (the first
   measurement after the target-0 windows): that read gave 24 523 where
-  every other warm session gave 25 739-25 867. FlexColor then read page
+  every other warm session gave 25 739-25 995 (25 931, 25 995, 25 931 and
+  25 931 in the four of 2026-11-18). FlexColor then read page
   0x20 again and did **not** send the window with target 25 000: it went
   on with the window with target 9 000. **[confirmed]** So the warm
   sequence also depends on that measurement. **[hypothesis]**: 24 523 is a
   state left by an earlier session. That preview was the first session of
   its FlexColor run; the run before it (B, a preview) ended about 15
   minutes earlier, and the first page 0x20 read of the session showed the
-  usual 6 155 / 824, so nothing confirms it yet. To check at the next
-  capture session. Our runner checks that read (tolerance 256) and stops before
+  usual 6 155 / 824, so nothing confirms it yet. Three more warm previews
+  on 2026-11-18 (FlexColor restarted before each,
+  `preview-sequence-warm-3.json` to `-5`) sent exactly the warm capture's
+  commands (206 outside polling) and read 25 931, 25 995 and 25 931 before
+  the window with target 25 000: the 24 523 case did not come back.
+  **[confirmed]** Our runner checks that read (tolerance 256) and stops before
   the window with target 25 000 (docs/decisions.md).
 - Page 0x28 is not part of the choice: A1 is identical to C without its
   page 0x28 read (207 commands outside polling). **[confirmed]** What makes
@@ -439,14 +481,20 @@ preview; logs outside the repository; "outside polling" means without
   not a subset of the warm one: 168 commands outside polling from the
   session start (183 in W and B), with fewer full-CCD calibration steps
   (6 `F0`, 7 windows, 3 `E4` instead of 9, 12 and 5). Against W: 13
-  commands (full-CCD windows with ratio 125 000, `E4`, `F0`, page 0x20,
-  two READs…) are replaced by a single window found in neither fixture
-  (ratio 31 250, 1 998 pixels); one READ is replaced by a one-line READ of
-  12 024 bytes, also in neither fixture (`28 00 01 00 01 01 00 2e f8 00`);
-  3 commands are left out (the full-CCD window with ratio 31 250, an `E4`,
-  `F0 00 01 01 01`). 183 − 13 + 1 − 3 = 168. It also measures a position
-  (6 059) that no fixture has. **[confirmed]** FlexColor keeps part of the
-  calibration of the first preview. **[hypothesis]**
+  commands (full-CCD windows with ratio 32 000 000, `E4`, `F0`, page
+  0x20, two READs…) are replaced by a single window (ratio 8 000 000,
+  1 998 pixels); one READ is replaced by a one-line READ of 12 024 bytes
+  (`28 00 01 00 01 01 00 2e f8 00`); 3 commands are left out (the
+  full-CCD window with ratio 8 000 000, an `E4`, `F0 00 01 01 01`).
+  183 − 13 + 1 − 3 = 168. It also measures a position (6 059).
+  **[confirmed]** (ratios first written here divided by 256, read one byte
+  off.) FlexColor keeps part of the calibration of the first preview.
+  **[hypothesis]** Since 2026-11-18 that window, that one-line read and
+  6 059 are in the fixtures: sessions 2 to 8 of `tests/fixtures/holders/`
+  start with the same structure (the window's ratio is inherited, §13), and
+the one-line read is the holder code (§13). A2
+  probably read the holder code. **[hypothesis]** (A2's commands not yet
+  compared one by one with those sessions)
 - Measured positions (page 0x20, bytes 27-28) differ between captures of
   the same sequence; the three differences observed are multiples of 64:
   64 (two warm captures of 2026-11-12), 128 (B against W, 25 739 / 25 867),
@@ -510,4 +558,122 @@ in general: the image window carries the frame (offsets 14, 18, 22, 26)
 and the resolution, and the 400-line window carries the position measured
 just before (offset 50) and values not explained yet (54, 58, 62).
 **[confirmed]** for offset 50; **[hypothesis]** for the others.
+
+**Two scans without a preview between them** (2026-11-18,
+`scan-sequence-2000ppi-twice.json`: X1 switched on just before, a cold
+preview, then two 2 000 ppi scans of the same frame, each in its own
+session). FlexColor does everything again for the second scan: session
+start, calibration at the scan resolution, 400-line step, white and black
+references, image (594 commands outside polling each time). The two scan
+sessions differ only in: the second has no `F0 00 00 00 01 01` after the
+first page 0x20 read, and reads page 0x20 once more after the first
+window; the target of the 400-line window (16 907, then 16 971: the
+position read just before); offsets 54 and 58 of the windows after that
+step (§9). **[confirmed]** Each scan here also has another frame than the
+capture of 2026-11-17 (offset 14 = 2 043, 560 pixels, offset 26 = 938,
+offset 18 = 870).
+
+The cold preview of that capture (first page 0x20 read with the power-on
+values) differs from `preview-sequence-cold.json` (without its page 0x28
+read) in two ways only **[confirmed]**:
+
+- the page 0x20 read after `F0 00 00 01 01 01` gave 25 675, and FlexColor
+  then sent the window with target 25 000, as in the warm sequence; the
+  cold capture of 2026-11-16 had read 14 219 there and gone on with the
+  window with target 9 000;
+- its calibration windows have ratio 32 000 000 and offsets 54 / 58 =
+  454 612 / 856 631 (seven: the six that the capture of 2026-11-16 sent
+  with 16 000 000 and 354 583 / 576 354, and the inserted window with
+  target 25 000).
+
+In all 11 sessions captured with that read, the window with target 25 000
+follows a position above 25 000 (25 675 to 25 995) and is missing after
+24 523 and 14 219. **[confirmed]** So FlexColor sends it only when the
+carriage is beyond 25 000; the cold/warm choice of the first page 0x20
+read does not decide it. **[hypothesis]**, strongly supported. Our cold
+sequence checks that read against 14 219 (tolerance 256): a run like this
+one would stop there, before anything else is sent. What sets the ratio
+of the calibration windows is unknown (an earlier holder or setting of
+FlexColor). **[hypothesis]**
+
+## 13. Holder detection (FlexColor 4.8.13)
+
+Capture of 2026-11-18 (`tests/fixtures/holders/`): X1 warm, eight
+previews in one FlexColor run, one per holder, FlexColor's Format menu
+never touched. FlexColor showed by itself, in order: 6×6 / 6×4.5, 6×6×2,
+24×36 / 36×24, 4×5, 24×36×6, 6×9, 24×36×4, 6×6 / 6×4.5 again.
+
+**The holder code.** From the second preview of the run on, each session
+starts with: a window whose target is the position just read (6 155,
+once 4 331), 5 lines, binning 4, ratio 5 100 000 to 15 750 000, `E4`,
+`F0 00 00 02 00 01`, 0xE1, page 0x20, then **one** calibration-type line
+read (`28 00 01 00 01 01 00 2e f8 00`, 2 004 pixels). That line shows
+bright bars of equal width at a regular pitch across the CCD
+(**[confirmed]**, decoded from the raw data): a code on the holder's
+leading edge. Counting positions in pitches from the first bar, slots 0-3,
+5, 6 and 16 are bright on every holder, and slots 7-15 carry the code:
+
+| Holder (as FlexColor named it) | Bright slots 7-15 |
+|---|---|
+| 24×36 / 36×24 | 15 |
+| 4×5 | 14 |
+| 6×6×2 | 13 |
+| 6×6 / 6×4.5 | 12, 14 |
+| 6×9 | 7, 15 |
+| 24×36×4 | 7, 13, 14, 15 |
+| 24×36×6 | 7, 12, 13 |
+
+**[confirmed]** for the seven holders read, decoded from the raw image
+data of the capture (outside the repository: the fixtures keep only the
+first 64 bytes of each read) (the pitch and bar width scale
+with the ratio of that window: about 50 / 26 pixels at 8 000 000). That
+window takes offsets 54 / 58 of the previous session's preview window, and
+its ratio is 3 times that preview's in sessions 2 to 5 and 7, not in 6
+and 8. **[confirmed]** Read as
+a binary number with slot 15 = 1, the first three give 1, 2 and 4, the
+last digits of the references of those formats in `holders.json`
+(50200401, 50200402, 50200404; the references of the holders used were
+not noted); the others do not follow that rule (6×6 / 6×4.5 gives 10, its
+reference is 50200428). Meaning of the bits: **[hypothesis]**; a lookup table of the
+observed codes is enough to recognise these seven holders. The first
+preview of the run is different: it starts like the warm capture, and its
+first one-line read (full CCD width, during the calibration) is bright
+across the whole CCD, with no code. **[confirmed]**
+
+**Low-resolution passes.** In the 6×6 / 6×4.5 (both times), 6×6×2 and
+24×36 previews, FlexColor then makes two passes before the preview:
+window (ratio 565 169 to 822 255, 34 to 49 ppi by the formula of §9; 77
+to 169 lines; offset 18 = 9 to 231), `F0 00 00 05 00 01`,
+`1b 00 01 01 01 00`, one-line reads, `DB`; twice. **[confirmed]** In the
+first session of the run (6×6 / 6×4.5) the passes are at full CCD width
+(7 992 pixels, binning 1, target 8 971, reads of 7 992 pixels); in the
+others at 1 998 pixels, binning 4, target 6 155. Not in
+the 4×5, 24×36×6, 6×9 and 24×36×4 previews, nor in any capture with the
+6×7 holder. These are the holders with two formats or two frames: the
+passes may find the film, the mask or the frames. **[hypothesis]**
+
+**Preview window per holder** (offset 10, by the formula of §9 the
+resolution, and offset 26):
+
+| Holder | Ratio | ppi | Lines |
+|---|---|---|---|
+| 6×7 (earlier captures) | 2 666 666 | 160 | 823 |
+| 6×6 / 6×4.5 | 2 666 666 | 160 | 1 201 |
+| 6×6×2 | 2 666 666 | 160 | 1 327 |
+| 6×9 | 2 666 666 | 160 | 1 033 |
+| 24×36 / 36×24 | 4 166 666 | 250 | 1 398 |
+| 4×5 | 1 700 000 | 102 | 847 |
+| 24×36×6 | 2 956 081 | 177.4 | 2 704 |
+| 24×36×4 | 4 422 297 | 265.3 | 2 702 |
+
+**[confirmed]** The two strips reach about 2 700 lines, and the other
+resolutions fall as the opening gets wider (opening width × ppi about 9 000
+to 9 600 in mm·ppi for 4×5, 6×n and 36×24): FlexColor seems to fit the
+opening in a fixed preview size. **[hypothesis]** The lines are roughly
+5/3 × ppi × opening length plus 50 to 110 lines for 6×7, 6×9, 4×5 and the
+two strips, not for 6×6 / 6×4.5 and 24×36. **[hypothesis]**
+
+**0xD3** during the run: mostly `00 0e` and `00 00`, with isolated other
+values (`00 04`, `00 8f`, `00 c6`, `00 71`, `00 da`, …) in every session,
+with no value tied to a holder. **[confirmed]**
 

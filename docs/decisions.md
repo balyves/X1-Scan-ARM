@@ -717,13 +717,20 @@ captures of 2026-11-17 (protocol.md §11). User's decisions.
   from the expected one (the captured one; in a scan, after the substituted
   window, the position sent), checked or not, is written to the run's log
   (expected, measured, difference) so that the tolerance can be revised
-  with later sessions.
+  with later sessions. FlexColor captures of 2026-11-18: before the window
+  with target 25 000, +64, +128, +64, +64 against the captured 25 867,
+  all on the same side, 128 below the limit at most; the cold preview of
+  that day read 25 675 where our cold sequence expects 14 219, and would
+  stop there (protocol.md §12): FlexColor then sent the window with
+  target 25 000 and calibration windows with ratio 32 000 000, where our
+  cold sequence has 16 000 000.
 - **Option A: the read before the window with target 25 000** (user's
   decision). In the warm sequence, the page 0x20 read right after the
   first calibration windows (target 0) is now always checked, with the
   same tolerance (256), although no window has requested a position yet.
   Reason: in the preview of the 2 000 ppi run it gave 24 523 (25 739-25 867
-  in the five other warm sessions) and FlexColor then did not send the
+  in the five other warm sessions of 2026-11-12/17; 25 931, 25 995, 25 931,
+  25 931 in four of 2026-11-18: +64 to +128, under the tolerance) and FlexColor then did not send the
   window with target 25 000 (protocol.md §11). Beyond the tolerance the
   preview stops there (`unexpectedCarriagePosition`) and nothing else is
   sent; the alert says: "Unexpected carriage position: preview stopped

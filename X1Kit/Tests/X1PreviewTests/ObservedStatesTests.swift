@@ -68,9 +68,15 @@ struct ObservedStatesTests {
                 #expect(wait.states.isEmpty, "\(name): FlexColor waited after seq \(wait.seq), the script does not (step \(index))")
                 continue
             }
-            for state in wait.states where state != target {
-                let accepted = state.isBusy || step.alsoBusy.contains(state)
+            // The runner's rule (PreviewRunner.waitForState), without the after-DB case.
+            // States read after the target in the same wait (FlexColor polled on)
+            // are checked too, the transition rule starting again.
+            var previous: ScannerState?
+            for state in wait.states {
+                if state == target { previous = nil; continue }
+                let accepted = state.isBusy || step.alsoBusy.contains(state) || state.isTransientAfter(previous)
                 #expect(accepted, "\(name): \(state) after seq \(wait.seq) (step \(index)) is refused")
+                previous = state
             }
         }
         #expect(matched > steps.count * 9 / 10, "\(name): the capture does not follow the script")
@@ -88,10 +94,23 @@ struct ObservedStatesTests {
     /// The warm previews captured, including those before the three scans.
     /// (name, first seq of the scan session, where the preview ends)
     @Test(arguments: [("preview-sequence", Int.max), ("preview-sequence-warm-2", Int.max),
+                      ("preview-sequence-warm-3", Int.max), ("preview-sequence-warm-4", Int.max),
+                      ("preview-sequence-warm-5", Int.max),
                       ("scan-sequence-1000ppi", 778), ("scan-sequence-2000ppi", 834),
                       ("scan-sequence-3200ppi", 767)])
     func warmPreviewStatesAreAccepted(_ name: String, end: Int) throws {
         Self.check(PreviewScript.plan.steps(for: .warm), against: try Self.load(name), from: 0, to: end, name)
+    }
+
+    /// The warm previews of 2026-11-18 (FlexColor restarted before each)
+    /// send exactly the warm capture's commands outside polling.
+    @Test(arguments: ["preview-sequence-warm-3", "preview-sequence-warm-4", "preview-sequence-warm-5"])
+    func laterWarmPreviewsSendTheSameCommands(_ name: String) throws {
+        func commands(_ fixture: CaptureFixture) -> [String] {
+            fixture.exchanges.filter { !Self.pollingOpcodes.contains($0.cdbBytes.first ?? 0) }
+                .map { "\($0.cdb)|\($0.dataOut ?? "")|\($0.length)" }
+        }
+        #expect(commands(try Self.load(name)) == commands(try Self.load("preview-sequence")))
     }
 
     @Test func coldPreviewStatesAreAccepted() throws {

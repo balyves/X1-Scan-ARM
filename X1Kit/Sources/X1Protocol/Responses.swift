@@ -179,8 +179,9 @@ public struct ScannerState: Sendable, Hashable, CustomStringConvertible {
     /// capture does not show it, and we run no 3 200 ppi scan.
     public static let busy0880 = ScannerState(rawValue: 0x0880)
 
-    /// `08 00` seen twice on the real X1 on 2026-11-18 [confirmed], never in
-    /// FlexColor's captures. First as the first 0xDF state after the final DB
+    /// `08 00` seen twice on the real X1 on 2026-11-18 [confirmed], and once
+    /// in a FlexColor capture of that day (`08 01` ×8, `08 00`, `08 40`, after
+    /// `f0 00 01 01 01 01`). On the real X1: first as the first 0xDF state after the final DB
     /// of a preview (the captures show `08 01` there, then `00 00`); the runner
     /// then stopped and sent its emergency DB, after which the X1 answered
     /// `08 01`, then `00 00`; that `08 00` ends by itself is a [hypothesis].

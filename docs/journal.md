@@ -213,7 +213,7 @@ after either stop.
 The user then captured FlexColor right after power-on (cold lamp, 6×7
 holder 50200403): 821 commands, all status 0x00. The sequence differs from
 the warm one: a page 0x28 read before the session start, other calibration
-windows (ratio 62 500), more `F0`, and the busy states `08 02`, `08 03`,
+windows (ratio 16 000 000; first noted as 62 500, read one byte off), more `F0`, and the busy states `08 02`, `08 03`,
 `08 06`, `08 07`. From the preview-width calibration on it is the same.
 The two sequences already differ before the first page 0x20 read, so the
 choice between them cannot be made there: the user chose to send only the
@@ -493,3 +493,44 @@ preview's pixel aspect ratio of 3. Scans are now shown with square
 pixels (`Viewport.setImage(width:height:pixelAspectRatio:)`). The hidden
 settings `EnableRealPreview` and `EnableRealScan` were turned off
 afterwards (test-session.md F4).
+
+## 2026-11-18: FlexColor captures: two scans in a row, warm previews, holders
+
+Captures on the Mojave Mac with FlexColor 4.8.13 (fixtures in
+`tests/fixtures/`, README there; details in protocol.md §11-§13):
+
+- **F**: X1 switched on just before, a cold preview, then two 2 000 ppi
+  scans of the same frame with no preview between them. FlexColor does
+  everything again for each scan **[confirmed]**; the second scan session
+  differs only by one `F0` less, one page 0x20 read more, the target
+  position of the 400-line window (16 907, then 16 971) and offsets 54 / 58 after the 400-line
+  step: 750, then 450 below the base, hence +300 in the image window.
+  Page 0x24 is identical in every scan; all corrections are multiples of
+  50, consistent with a focus sweep of 400 steps of 50 from base + 10 000
+  and FlexColor keeping the sharpest line **[hypothesis]**. The cold
+  preview read 25 675 after `F0 00 00 01 01 01` and sent the window with
+  target 25 000, which the cold capture of 2026-11-16 did not: in every
+  capture that window follows a position above 25 000 **[confirmed]**,
+  so FlexColor seems to send it only then **[hypothesis]**.
+- **G1-G3**: three warm previews, FlexColor restarted before each:
+  commands identical to the warm capture; 25 931, 25 995, 25 931 before
+  the window with target 25 000. The 24 523 case did not come back. G3
+  also shows 0xDF `08 00` for the first time in a FlexColor capture:
+  `08 01` ×8, `08 00`, `08 40`, `00 00` after the first
+  `f0 00 01 01 01 01`; FlexColor kept polling **[confirmed]**. Our runner
+  accepts that sequence (`08 00` right after an accepted `08 xx`).
+- **H**: eight previews, one per holder, Format menu never touched.
+  FlexColor reads one CCD line at the holder's leading edge: a code of
+  bright bars at a regular pitch, different for each of the seven
+  holders **[confirmed]**; every other non-image response is the same
+  whatever the holder, so FlexColor decodes the code itself
+  **[hypothesis]**, strongly supported. For holders with two formats or two
+  frames it adds two low-resolution passes (`1b 00 01 01 01 00`). The
+  preview resolution depends on the holder (102 to 265 ppi), apparently
+  to fit the opening in a fixed preview size **[hypothesis]**. In the
+  wait after `f0 00 01 01 01 01` some of these previews also show 0xDF
+  `08 04` and `08 05`, briefly, between other busy states **[confirmed]**;
+  our runner would refuse them, which is safe: on the real X1 we only
+  send the 6×7 sequences.
+
+Nothing was sent to the real X1.
