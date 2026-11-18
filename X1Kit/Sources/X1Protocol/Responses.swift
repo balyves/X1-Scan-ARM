@@ -156,8 +156,12 @@ public struct ScannerState: Sendable, Hashable, CustomStringConvertible {
 
     /// The `08 xx` states seen while FlexColor waited for `00 00` or `00 01`:
     /// 08 01 and 08 40 (2026-11-12), 08 02, 08 03, 08 06, 08 07 (right after
-    /// power-on, 2026-11-16). Busy [confirmed for these values only]; any
-    /// other state stops the preview.
+    /// power-on, 2026-11-16). Busy [confirmed]. The global list, accepted in
+    /// every wait. Busy is also [confirmed] for `08 80`, accepted only in one
+    /// wait of the warm preview (`PreviewStep.alsoBusy`), and for `08 04`,
+    /// accepted nowhere (1 000 ppi scan only). `08 00` is accepted only after
+    /// a final or emergency DB (user's decision; `busyAfterStop`). Any other
+    /// state stops the run.
     public static let observedBusyStates: Set<ScannerState> = [
         ScannerState(rawValue: 0x0801), ScannerState(rawValue: 0x0802), ScannerState(rawValue: 0x0803),
         ScannerState(rawValue: 0x0806), ScannerState(rawValue: 0x0807), ScannerState(rawValue: 0x0840),

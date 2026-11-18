@@ -6,8 +6,10 @@ import X1Protocol
 import X1TestSupport
 import X1Transport
 
-/// Every 0xDF state of the captures is accepted in the wait where it appears,
-/// and the states seen only in a scan capture (`08 80`) only there
+/// The warm previews, the cold preview and the 2 000 ppi scan session
+/// captured: every 0xDF state is accepted in the wait where it appears, and
+/// `08 80` only there. `08 04` (1 000 ppi scan) and the `08 80` of the
+/// 3 200 ppi scan session stay refused: those sessions are not walked
 /// (docs/protocol.md §7).
 struct ObservedStatesTests {
     private static let pollingOpcodes: Set<UInt8> = [0xDF, 0xEE, 0xD3]
@@ -56,8 +58,13 @@ struct ObservedStatesTests {
             let step = steps[index]
             guard let target = step.waitUntil else {
                 // Page 0x20 reads are matched by rank, which the extra read of
-                // the 2 000 ppi preview shifts: no check of a missing wait there.
-                guard wait.cdb != statusRead else { continue }
+                // the 2 000 ppi preview shifts: there, only the global list.
+                guard wait.cdb != statusRead else {
+                    for state in wait.states where state != .ready {
+                        #expect(state.isBusy, "\(name): \(state) after seq \(wait.seq)")
+                    }
+                    continue
+                }
                 #expect(wait.states.isEmpty, "\(name): FlexColor waited after seq \(wait.seq), the script does not (step \(index))")
                 continue
             }
@@ -101,6 +108,7 @@ struct ObservedStatesTests {
         let cold = PreviewScript.plan.steps(for: .cold)
         let warmIndex = warm.firstIndex { $0.command == mode1111 }
         #expect(warm.indices.filter { warm[$0].alsoBusy.contains(Self.state0880) } == [warmIndex].compactMap { $0 })
+        #expect(warmIndex.map { warm[$0].alsoBusy } == [Self.state0880], "08 80 and nothing else")
         #expect(warm.filter { !$0.alsoBusy.isEmpty }.count == 1)
         #expect(cold.allSatisfy { $0.alsoBusy.isEmpty }, "never seen in a cold preview")
         #expect(ScanScript.flexColor4813Scan2000ppi.allSatisfy { $0.alsoBusy.isEmpty })
@@ -123,6 +131,8 @@ struct ObservedStatesTests {
             #expect(error.stepIndex == mode1111)
             #expect(error.emergencyStop == nil, "before SCAN")
         }
+        #expect(await refused.commandsAfterFault == [X1Command.scannerState()],
+                "only the 0xDF read that returned 08 80; nothing after the refusal")
     }
 
     /// On the simulator: `08 80` in the warm preview's wait goes through; at

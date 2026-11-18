@@ -610,10 +610,10 @@ explicitly. It is only for runs the user has approved (CLAUDE.md, rule 4).
   and the runner is unchanged.
 - **Waits on 0xDF.** We poll 0xDF after exactly the commands where FlexColor
   polled it, until the state FlexColor last saw there: `00 00`, or `00 01`
-  after SCAN. Only the busy states observed in the captures are accepted
-  meanwhile: `08 01`, `08 40` (2026-11-12), `08 02`, `08 03`, `08 06`,
+  after SCAN. Only the global list of busy states is accepted in every
+  wait: `08 01`, `08 40` (2026-11-12), `08 02`, `08 03`, `08 06`,
   `08 07` (right after power-on, 2026-11-16). Any other state stops the
-  preview. The wait after an emergency stop (DB) uses the same set (plus `08 00`
+  run, except `08 80` in one wait and `08 00` after a DB (below). The wait after an emergency stop (DB) uses the same set (plus `08 00`
   since 2026-11-18, below), although
   both captures show only `08 01` there: this changes nothing that is sent
   (only 0xDF after DB, the guard allows nothing else), only how long the

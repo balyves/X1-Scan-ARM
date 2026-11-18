@@ -415,7 +415,10 @@ middle `DB`, it still stops the run (`ScannerState.isBusyAfterStop`,
 ## 2026-11-18: 0xDF states of the scan captures
 
 Before the first real scan, every 0xDF state of the three scan captures
-was checked against the wait where it appears (`ObservedStatesTests`).
+was listed with the wait where it appears. `ObservedStatesTests` walks the
+warm previews (five captures), the cold preview and the 2 000 ppi scan
+session against the scripts; the 1 000 and 3 200 ppi scan sessions, which
+have no script, were checked by hand, listing their states.
 The 2 000 ppi scan session itself shows only states already accepted.
 Two states are outside the global list, both **[confirmed]**:
 
