@@ -1765,50 +1765,6 @@
         }
       }
     },
-    "Rotate": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rotation"
-          }
-        }
-      }
-    },
-    "Add Frame": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ajouter un cadre"
-          }
-        }
-      }
-    },
-    "Auto Adjust": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Réglage auto"
-          }
-        }
-      }
-    },
-    "%@: not available yet": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ : pas encore disponible"
-          }
-        }
-      }
-    },
     "Source": {
       "extractionState": "manual",
       "localizations": {
@@ -1972,17 +1928,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tailles en pixels de l'aperçu ; en millimètres quand la résolution de l'aperçu sera confirmée. Résolution, échelle et cadrage s'appliquent au scan (étape suivante) : « Exporter l'aperçu » écrit l'aperçu entier."
-          }
-        }
-      }
-    },
-    "Not available yet": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pas encore disponible"
           }
         }
       }
@@ -3141,7 +3086,7 @@
       }
     },
     "menu.image": {
-      "comment": "Menu: orientation of the image",
+      "comment": "Menu: orientation of the image and grid",
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -3316,6 +3261,150 @@
           "stringUnit": {
             "state": "translated",
             "value": "Orientation"
+          }
+        }
+      }
+    },
+    "Grid": {
+      "comment": "Tool column button: grid over the image",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grid"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grille"
+          }
+        }
+      }
+    },
+    "Show Grid": {
+      "comment": "Menu item (Image menu)",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show Grid"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher la grille"
+          }
+        }
+      }
+    },
+    "Hide Grid": {
+      "comment": "Menu item (Image menu)",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hide Grid"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Masquer la grille"
+          }
+        }
+      }
+    },
+    "Fine Grid Squares": {
+      "comment": "Image menu > Grid: submenu, number of squares across the image",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fine Grid Squares"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Carrés de la grille fine"
+          }
+        }
+      }
+    },
+    "Thirds": {
+      "comment": "Grid kind",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thirds"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tiers"
+          }
+        }
+      }
+    },
+    "Fine Grid": {
+      "comment": "Grid kind",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fine Grid"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grille fine"
+          }
+        }
+      }
+    },
+    "Centre Cross": {
+      "comment": "Grid kind",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Centre Cross"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Croix centrale"
+          }
+        }
+      }
+    },
+    "grid.hidden": {
+      "comment": "VoiceOver value of the grid button (the grid, feminine in French)",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hidden"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Masquée"
           }
         }
       }

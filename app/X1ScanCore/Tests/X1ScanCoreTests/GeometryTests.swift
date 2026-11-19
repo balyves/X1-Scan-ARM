@@ -4,6 +4,7 @@ import Foundation
 import ImageIO
 import Testing
 import X1Image
+import X1Transport
 @testable import X1ScanCore
 
 /// All 8 orientations: 4 turns, mirrored or not.
@@ -171,5 +172,59 @@ struct RecipeExportTests {
         let master = URL(filePath: "/x/X1-07.tif")
         let taken: Set = ["X1-07_v1.tif", "X1-07_v2.tif"]
         #expect(ExportService.versionFileName(of: master) { taken.contains($0) } == "X1-07_v3.tif")
+    }
+}
+
+struct GridTests {
+    private let area = CGRect(x: 0, y: 0, width: 300, height: 120)
+
+    @Test func thirdsAndCentre() {
+        let thirds = GridSettings.lines(.thirds, in: area)
+        #expect(thirds.count == 4)
+        #expect(thirds.contains { $0.0 == CGPoint(x: 100, y: 0) && $0.1 == CGPoint(x: 100, y: 120) })
+        #expect(thirds.contains { $0.0 == CGPoint(x: 0, y: 80) && $0.1 == CGPoint(x: 300, y: 80) })
+        let centre = GridSettings.lines(.centre, in: area)
+        #expect(centre.count == 2 && centre[0].0.x == 150 && centre[1].0.y == 60)
+    }
+
+    @Test func fineGridHasSquareCellsFromTheCentre() {
+        // 10 squares across 300: spacing 30, lines at 150 ± 30k.
+        let lines = GridSettings.lines(.fine, in: area, fineDivisions: 10)
+        let xs = Set(lines.filter { $0.0.x == $0.1.x }.map(\.0.x))
+        let ys = Set(lines.filter { $0.0.y == $0.1.y }.map(\.0.y))
+        #expect(xs == [30, 60, 90, 120, 150, 180, 210, 240, 270])
+        #expect(ys == [30, 60, 90])
+        #expect(GridSettings.lines(.fine, in: .zero).isEmpty)
+    }
+
+    @Test func settingsDecodeSafely() throws {
+        var grid = GridSettings()
+        #expect(!grid.isVisible && grid.kind == .thirds)
+        grid.isVisible = true
+        grid.kind = .fine
+        grid.fineDivisions = 1_000
+        #expect(grid.fineDivisions == 64)
+        #expect(try JSONDecoder().decode(GridSettings.self, from: JSONEncoder().encode(grid)) == grid)
+        let future = #"{"isVisible":true,"kind":"golden","fineDivisions":"x"}"#
+        let decoded = try JSONDecoder().decode(GridSettings.self, from: Data(future.utf8))
+        #expect(decoded.isVisible && decoded.kind == .thirds && decoded.fineDivisions == GridSettings.defaultDivisions)
+        let huge = try JSONDecoder().decode(GridSettings.self, from: Data(#"{"fineDivisions":1000}"#.utf8))
+        #expect(huge.fineDivisions == 64, "bounded when read back too")
+    }
+}
+
+@MainActor
+struct GridModelTests {
+    @Test func gridIsSavedAndRestored() throws {
+        try withTemporaryDefaults { defaults in
+            let inspector = ScannerInspector { FakeConnection(responses: [:], openError: TransportError.deviceBusy) }
+            let model = AppModel(virtualScanner: { try TestFixtures.scanner() }, inspector: inspector, defaults: defaults)
+            model.showGrid(.centre)
+            model.toggleGrid()
+            #expect(!model.grid.isVisible && model.grid.kind == .centre)
+            model.toggleGrid()
+            let reloaded = AppModel(virtualScanner: { try TestFixtures.scanner() }, inspector: inspector, defaults: defaults)
+            #expect(reloaded.grid.isVisible && reloaded.grid.kind == .centre)
+        }
     }
 }

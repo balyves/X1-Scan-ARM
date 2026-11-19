@@ -130,6 +130,10 @@ public final class AppModel {
         didSet { if let data = try? JSONEncoder().encode(scanSettings) { defaults.set(data, forKey: Keys.scanSettings) } }
     }
     public var tools = ToolState()
+    /// The grid over the image (lot 1): display only, saved between launches.
+    public var grid: GridSettings {
+        didSet { if grid != oldValue, let data = try? JSONEncoder().encode(grid) { defaults.set(data, forKey: Keys.grid) } }
+    }
     public private(set) var viewport: Viewport
     /// Size of the visible image area, reported by the canvas.
     public var viewSize: CGSize { viewport.viewSize }
@@ -168,6 +172,7 @@ public final class AppModel {
         static let source = "ScannerSource"
         static let exportSettings = "ExportSettings"
         static let scanSettings = "ScanSettings"
+        static let grid = "GridSettings"
         /// Hidden setting, no interface: `defaults write org.x1scanarm.X1Scan EnableRealPreview -bool YES`.
         static let enableRealPreview = "EnableRealPreview"
         /// Set when a real preview starts, cleared when it completes: true
@@ -243,6 +248,8 @@ public final class AppModel {
         case .last: source = defaults.string(forKey: Keys.source).flatMap(ScannerSourceKind.init) ?? .virtual
         }
         viewport = Viewport(imageWidth: 0, imageHeight: 0, mode: settings.startupZoom == .fit ? .fit : .fixed)
+        grid = defaults.data(forKey: Keys.grid)
+            .flatMap { try? JSONDecoder().decode(GridSettings.self, from: $0) } ?? GridSettings()
         exportSettings = defaults.data(forKey: Keys.exportSettings)
             .flatMap { try? JSONDecoder().decode(ExportSettings.self, from: $0) } ?? ExportSettings()
         // Not saved here: "last chosen" is the last source chosen in the interface
@@ -563,6 +570,13 @@ public final class AppModel {
     public func rotateClockwise() { recipe.orientation.rotateClockwise() }
     public func rotateCounterclockwise() { recipe.orientation.rotateCounterclockwise() }
     public func mirrorHorizontally() { recipe.orientation.mirrorHorizontally() }
+    public func toggleGrid() { grid.isVisible.toggle() }
+
+    /// Choosing a kind of grid shows it.
+    public func showGrid(_ kind: GridKind) {
+        grid.kind = kind
+        grid.isVisible = true
+    }
 
     /// A preview runs or stops, or the real X1 is being read.
     public var isBusy: Bool { session.isBusy || realStatus == .reading }

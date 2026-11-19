@@ -328,6 +328,26 @@ enum Strings {
         String(localized: "Flip Horizontal", comment: "Menu item and tooltip: mirror the image left to right")
     }
 
+    // MARK: Grid (lot 1)
+
+    static var gridTool: String { String(localized: "Grid", comment: "Tool column button: grid over the image") }
+    static var gridHidden: String {
+        String(localized: "grid.hidden", defaultValue: "Hidden", comment: "VoiceOver value of the grid button (the grid, feminine in French)")
+    }
+    static var showGrid: String { String(localized: "Show Grid", comment: "Menu item (Image menu)") }
+    static var hideGrid: String { String(localized: "Hide Grid", comment: "Menu item (Image menu)") }
+    static var fineGridSpacing: String {
+        String(localized: "Fine Grid Squares", comment: "Image menu > Grid: submenu, number of squares across the image")
+    }
+
+    static func gridKind(_ kind: GridKind) -> String {
+        switch kind {
+        case .thirds: String(localized: "Thirds", comment: "Grid kind")
+        case .fine: String(localized: "Fine Grid", comment: "Grid kind")
+        case .centre: String(localized: "Centre Cross", comment: "Grid kind")
+        }
+    }
+
     /// A tooltip with its shortcut: "Rotate 90° Clockwise (⌘])".
     static func withShortcut(_ title: String, _ shortcut: String) -> String {
         String(localized: "\(title) (\(shortcut))", comment: "Tooltip: an action and its keyboard shortcut")

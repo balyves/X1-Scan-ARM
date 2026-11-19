@@ -60,6 +60,12 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         case #selector(zoomToFill(_:)): menuItem.state = model.viewport.mode == .fill ? .on : .off
         case #selector(zoomToStep(_:)):
             menuItem.state = (menuItem.representedObject as? Double) == model.viewport.currentStep ? .on : .off
+        case #selector(toggleGrid(_:)):
+            menuItem.title = model.grid.isVisible ? Strings.hideGrid : Strings.showGrid
+        case #selector(chooseGridKind(_:)):
+            menuItem.state = (menuItem.representedObject as? String) == model.grid.kind.rawValue ? .on : .off
+        case #selector(chooseGridDivisions(_:)):
+            menuItem.state = (menuItem.representedObject as? Int) == model.grid.fineDivisions ? .on : .off
         case #selector(toggleSettingsPanel(_:)):
             menuItem.title = model.panel.layout.isHidden
                 ? String(localized: "Show Settings Panel", comment: "Menu item")
@@ -149,6 +155,18 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     @objc func rotateCounterclockwise(_ sender: Any?) { model.rotateCounterclockwise() }
     @objc func rotateClockwise(_ sender: Any?) { model.rotateClockwise() }
     @objc func mirrorHorizontally(_ sender: Any?) { model.mirrorHorizontally() }
+    @objc func toggleGrid(_ sender: Any?) { model.toggleGrid() }
+    @objc func chooseGridKind(_ sender: Any?) {
+        if let name = (sender as? NSMenuItem)?.representedObject as? String, let kind = GridKind(rawValue: name) {
+            model.showGrid(kind)
+        }
+    }
+    @objc func chooseGridDivisions(_ sender: Any?) {
+        if let divisions = (sender as? NSMenuItem)?.representedObject as? Int {
+            model.grid.fineDivisions = divisions
+            model.showGrid(.fine)
+        }
+    }
 
     // MARK: Alerts
 

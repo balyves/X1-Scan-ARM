@@ -20,6 +20,10 @@ final class ImageCanvasView: NSView {
     private let pendingLayer = CALayer()
     private let imageLayer = CALayer()
     private let cropLayer = CAShapeLayer()
+    /// The grid (lot 1), in display coordinates; never part of an export.
+    /// A light line over a wider dark one, visible on light and dark images.
+    private let gridLayer = CAShapeLayer()
+    private let gridEdgeLayer = CAShapeLayer()
     private var observers: [Observing] = []
     private var trackingArea: NSTrackingArea?
     private var dragStart: (point: NSPoint, origin: NSPoint)?
@@ -39,12 +43,16 @@ final class ImageCanvasView: NSView {
         cropLayer.strokeColor = NSColor.controlAccentColor.cgColor
         cropLayer.lineWidth = 1.5
         cropLayer.lineDashPattern = [6, 4]
+        gridLayer.fillColor = nil
+        gridLayer.strokeColor = NSColor.white.withAlphaComponent(0.85).cgColor
+        gridEdgeLayer.fillColor = nil
+        gridEdgeLayer.strokeColor = NSColor.black.withAlphaComponent(0.55).cgColor
         sourceLayer.anchorPoint = .zero
         sourceLayer.addSublayer(pendingLayer)
         sourceLayer.addSublayer(imageLayer)
-        for sublayer in [sourceLayer, pendingLayer, imageLayer, cropLayer] {
+        for sublayer in [sourceLayer, pendingLayer, imageLayer, cropLayer, gridEdgeLayer, gridLayer] {
             sublayer.actions = ["contents": NSNull(), "bounds": NSNull(), "position": NSNull(), "path": NSNull(),
-                                "transform": NSNull()]
+                                "transform": NSNull(), "lineWidth": NSNull(), "hidden": NSNull()]
         }
         observers.append(Observing { [weak self] in self?.updateLayers() })
         observers.append(Observing { [weak self] in self?.updateCursor() })
@@ -60,6 +68,8 @@ final class ImageCanvasView: NSView {
     override func makeBackingLayer() -> CALayer {
         let layer = CALayer()
         layer.addSublayer(sourceLayer)
+        layer.addSublayer(gridEdgeLayer)
+        layer.addSublayer(gridLayer)
         layer.addSublayer(cropLayer)
         return layer
     }
@@ -90,6 +100,7 @@ final class ImageCanvasView: NSView {
             imageLayer.frame = CGRect(x: 0, y: 0, width: CGFloat(image.width),
                                       height: CGFloat(image.height) * pixelAspect)
         }
+        updateGrid(viewport)
         if let crop {
             cropLayer.path = CGPath(rect: viewport.documentRect(forPixelRect: crop), transform: nil)
             cropLayer.isHidden = false
@@ -97,6 +108,29 @@ final class ImageCanvasView: NSView {
             cropLayer.isHidden = true
         }
         CATransaction.commit()
+    }
+
+    /// The grid over the whole image shown, one screen point wide at any zoom.
+    private func updateGrid(_ viewport: Viewport) {
+        let grid = model.grid
+        let area = CGRect(origin: .zero, size: viewport.documentSize)
+        guard grid.isVisible, model.session.image != nil, area.width > 0 else {
+            gridLayer.isHidden = true
+            gridEdgeLayer.isHidden = true
+            return
+        }
+        let path = CGMutablePath()
+        for (start, end) in GridSettings.lines(grid.kind, in: area, fineDivisions: grid.fineDivisions) {
+            path.move(to: start)
+            path.addLine(to: end)
+        }
+        let point = 1 / max(viewport.magnification, 0.01)  // one screen point
+        gridLayer.path = path
+        gridLayer.lineWidth = point
+        gridLayer.isHidden = false
+        gridEdgeLayer.path = path
+        gridEdgeLayer.lineWidth = 3 * point
+        gridEdgeLayer.isHidden = false
     }
 
     // MARK: Cursor and tracking

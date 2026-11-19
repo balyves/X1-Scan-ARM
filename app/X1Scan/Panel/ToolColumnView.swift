@@ -2,8 +2,8 @@
 import SwiftUI
 import X1ScanCore
 
-/// The narrow tool bar between the image and the settings panel. Tools that
-/// do not work yet are disabled, with a tooltip.
+/// The narrow tool bar between the image and the settings panel: only tools
+/// that act on the preview (lot 1).
 struct ToolColumnView: View {
     @Bindable var model: AppModel
 
@@ -12,10 +12,7 @@ struct ToolColumnView: View {
             tool(.hand, "hand.raised")
             tool(.zoom, "plus.magnifyingglass")
             tool(.crop, "crop")
-            Divider().frame(width: 22)
-            unavailable("rotate.right", String(localized: "Rotate", comment: "Tool, not available yet"))
-            unavailable("plus.rectangle.on.rectangle", String(localized: "Add Frame", comment: "Tool, not available yet"))
-            unavailable("wand.and.stars", String(localized: "Auto Adjust", comment: "Tool, not available yet"))
+            gridButton
             Spacer()
         }
         .padding(.top, 10)
@@ -40,14 +37,34 @@ struct ToolColumnView: View {
         .accessibilityLabel(Strings.toolName(tool))
     }
 
-    private func unavailable(_ symbol: String, _ name: String) -> some View {
-        Image(systemName: symbol)
-            .font(.system(size: 14))
-            .frame(width: 28, height: 28)
-            .foregroundStyle(.tertiary)
-            .help(String(localized: "\(name): not available yet", comment: "Tooltip of a disabled tool"))
-            .accessibilityLabel(name)
-            .accessibilityAddTraits(.isButton)
-            .accessibilityValue(Text("Not available yet", comment: "Accessibility: disabled tool"))
+    /// Shows or hides the grid (⌘'); the kind is chosen in its menu (right click) or in Image > Grid.
+    private var gridButton: some View {
+        let shown = model.grid.isVisible
+        return Button {
+            model.toggleGrid()
+        } label: {
+            Image(systemName: "grid")
+                .font(.system(size: 14))
+                .frame(width: 28, height: 28)
+                .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(shown ? Color.accentColor : Color.primary)
+        .background { if shown { RoundedRectangle(cornerRadius: 6).fill(Color.accentColor.opacity(0.18)) } }
+        .help(Strings.withShortcut(Strings.gridTool, "⌘'"))
+        .accessibilityLabel(Strings.gridTool)
+        .accessibilityValue(shown ? Strings.gridKind(model.grid.kind) : Strings.gridHidden)
+        .accessibilityAddTraits(shown ? .isSelected : [])
+        .contextMenu {
+            ForEach(GridKind.allCases, id: \.self) { kind in
+                Toggle(Strings.gridKind(kind), isOn: Binding {
+                    model.grid.isVisible && model.grid.kind == kind
+                } set: { _ in
+                    model.showGrid(kind)
+                })
+            }
+            Divider()
+            Button(model.grid.isVisible ? Strings.hideGrid : Strings.showGrid) { model.toggleGrid() }
+        }
     }
 }

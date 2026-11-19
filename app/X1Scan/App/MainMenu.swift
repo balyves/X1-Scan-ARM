@@ -121,12 +121,30 @@ enum MainMenu {
         return menu
     }
 
-    /// Lot 1: orientation of the image (display and export, never the scan).
+    /// Lot 1: orientation of the image (display and export, never the scan) and the grid (display only).
     private static func imageMenu() -> NSMenu {
-        let menu = NSMenu(title: String(localized: "menu.image", defaultValue: "Image", comment: "Menu: orientation of the image"))
+        let menu = NSMenu(title: String(localized: "menu.image", defaultValue: "Image", comment: "Menu: orientation of the image and grid"))
         menu.addItem(item(Strings.rotateCounterclockwise, #selector(MainWindowController.rotateCounterclockwise(_:)), "["))
         menu.addItem(item(Strings.rotateClockwise, #selector(MainWindowController.rotateClockwise(_:)), "]"))
         menu.addItem(item(Strings.mirrorHorizontally, #selector(MainWindowController.mirrorHorizontally(_:))))
+        menu.addItem(.separator())
+        // Display only: the grid is never scanned nor exported.
+        menu.addItem(item(Strings.showGrid, #selector(MainWindowController.toggleGrid(_:)), "'"))
+        for kind in GridKind.allCases {
+            let kindItem = item(Strings.gridKind(kind), #selector(MainWindowController.chooseGridKind(_:)))
+            kindItem.representedObject = kind.rawValue
+            kindItem.indentationLevel = 1
+            menu.addItem(kindItem)
+        }
+        let spacing = NSMenu(title: Strings.fineGridSpacing)
+        for divisions in GridSettings.divisionChoices {
+            let spacingItem = item(divisions.formatted(), #selector(MainWindowController.chooseGridDivisions(_:)))
+            spacingItem.representedObject = divisions
+            spacing.addItem(spacingItem)
+        }
+        let spacingItem = submenu(spacing)
+        spacingItem.indentationLevel = 1
+        menu.addItem(spacingItem)
         return menu
     }
 
