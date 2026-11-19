@@ -83,6 +83,62 @@ private struct OriginalSection: View {
                 .accessibilityLabel(Text("Edit Holders", comment: "VoiceOver label of the … button next to the holder menu"))
             }
         }
+        OrientationRow(model: model)
+    }
+}
+
+/// Orientation (lot 1): quarter turns and mirror, for the display and the
+/// export; the letter F drawn as the image is turned shows the state at a glance.
+private struct OrientationRow: View {
+    @Bindable var model: AppModel
+
+    var body: some View {
+        let label = String(localized: "Orientation", comment: "Panel label: turns and mirror of the image")
+        let orientation = model.recipe.orientation
+        CompactControlRow(label) {
+            HStack(spacing: CompactPanelMetrics.columnSpacing) {
+                button("rotate.left", Strings.withShortcut(Strings.rotateCounterclockwise, "⌘[")) {
+                    model.rotateCounterclockwise()
+                }
+                button("rotate.right", Strings.withShortcut(Strings.rotateClockwise, "⌘]")) { model.rotateClockwise() }
+                button("arrow.left.and.right.righttriangle.left.righttriangle.right", Strings.mirrorHorizontally) {
+                    model.mirrorHorizontally()
+                }
+                Spacer(minLength: 0)
+                OrientationGlyph(orientation: orientation)
+                    .help(Strings.orientationDescription(orientation))
+                    .accessibilityElement()
+                    .accessibilityLabel(label)
+                    .accessibilityValue(Strings.orientationDescription(orientation))
+            }
+        }
+    }
+
+    private func button(_ symbol: String, _ help: String, action: @escaping () -> Void) -> some View {
+        Button {
+            action()
+            // VoiceOver hears the new state without going to the glyph.
+            AccessibilityNotification.Announcement(Strings.orientationDescription(model.recipe.orientation)).post()
+        } label: {
+            Image(systemName: symbol)
+        }
+        .help(help)
+        .accessibilityLabel(help)
+    }
+}
+
+/// The letter F turned and mirrored like the image: a state, not a control
+/// (secondary colour, no frame, no animation).
+private struct OrientationGlyph: View {
+    let orientation: Orientation
+
+    var body: some View {
+        Text(verbatim: "F")
+            .font(.callout.weight(.semibold))
+            .foregroundStyle(.secondary)
+            .scaleEffect(x: orientation.mirrored ? -1 : 1, y: 1)
+            .rotationEffect(.degrees(Double(orientation.quarterTurns) * 90))
+            .frame(width: CompactPanelMetrics.unitWidth)
     }
 }
 
@@ -114,8 +170,10 @@ private struct ScanSection: View {
                            value: pixels(model.inputPixelSize), help: Self.sizesNote)
             CompactInfoRow(String(localized: "Output", comment: "Panel label: output size"),
                            value: pixels(model.inputPixelSize.map {
+                               // The exported file is turned: its width and height follow the orientation.
+                               let size = model.recipe.orientation.orientedSize(width: $0.width, height: $0.height)
                                let scale = Double(model.scanSettings.scalePercent) / 100
-                               return (Int((Double($0.width) * scale).rounded()), Int((Double($0.height) * scale).rounded()))
+                               return (Int((Double(size.width) * scale).rounded()), Int((Double(size.height) * scale).rounded()))
                            }))
                 .help(Self.sizesNote)  // tooltip only: VoiceOver gets the hint once, on Input
         }

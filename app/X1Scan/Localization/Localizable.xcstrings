@@ -3139,6 +3139,186 @@
           }
         }
       }
+    },
+    "menu.image": {
+      "comment": "Menu: orientation of the image",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Image"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Image"
+          }
+        }
+      }
+    },
+    "Rotate 90° Counterclockwise": {
+      "comment": "Menu item and tooltip: orientation of the image",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rotate 90° Counterclockwise"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rotation 90° antihoraire"
+          }
+        }
+      }
+    },
+    "Rotate 90° Clockwise": {
+      "comment": "Menu item and tooltip: orientation of the image",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rotate 90° Clockwise"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rotation 90° horaire"
+          }
+        }
+      }
+    },
+    "Flip Horizontal": {
+      "comment": "Menu item and tooltip: mirror the image left to right",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Flip Horizontal"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Miroir horizontal"
+          }
+        }
+      }
+    },
+    "Turned 90° clockwise": {
+      "comment": "VoiceOver: orientation of the image",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turned 90° clockwise"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tournée de 90° en sens horaire"
+          }
+        }
+      }
+    },
+    "Turned 180°": {
+      "comment": "VoiceOver: orientation of the image",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turned 180°"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tournée de 180°"
+          }
+        }
+      }
+    },
+    "Turned 90° counterclockwise": {
+      "comment": "VoiceOver: orientation of the image",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turned 90° counterclockwise"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tournée de 90° en sens antihoraire"
+          }
+        }
+      }
+    },
+    "Not turned": {
+      "comment": "VoiceOver: orientation of the image",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not turned"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non tournée"
+          }
+        }
+      }
+    },
+    "%@, mirrored": {
+      "comment": "VoiceOver: orientation of the image; %@ is the turn",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, mirrored"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, en miroir"
+          }
+        }
+      }
+    },
+    "Orientation": {
+      "comment": "Panel label: turns and mirror of the image",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Orientation"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Orientation"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

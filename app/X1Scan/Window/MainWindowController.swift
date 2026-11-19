@@ -146,6 +146,9 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     @objc func selectZoomTool(_ sender: Any?) { model.tools.selected = .zoom }
     @objc func selectCropTool(_ sender: Any?) { model.tools.selected = .crop }
     @objc func toggleSettingsPanel(_ sender: Any?) { model.panel.toggleHidden() }
+    @objc func rotateCounterclockwise(_ sender: Any?) { model.rotateCounterclockwise() }
+    @objc func rotateClockwise(_ sender: Any?) { model.rotateClockwise() }
+    @objc func mirrorHorizontally(_ sender: Any?) { model.mirrorHorizontally() }
 
     // MARK: Alerts
 

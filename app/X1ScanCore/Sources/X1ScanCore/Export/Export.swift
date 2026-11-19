@@ -273,12 +273,17 @@ public enum ExportService {
     /// sRGB curve and an sRGB profile (grey: the grey profile with the sRGB
     /// curve). Provisional until the IT8 input profile (docs/decisions.md).
     public static func tiffData(for image: PreviewImage, settings: ExportSettings, resolution: Int = 72) -> Data {
+        tiffData(for: image.exportImage, settings: settings, resolution: resolution)
+    }
+
+    /// The TIFF bytes for any RGB image (the preview or scan with its recipe applied).
+    public static func tiffData(for image: RGB16Image, settings: ExportSettings, resolution: Int = 72) -> Data {
         let profile: Data? = switch settings.format {
         case .rgb8: ExportService.srgbProfile
         case .gray8: ICCProfiles.graySRGB
         case .rgb16, .gray16: nil
         }
-        return TIFFWriter.data(for: image.exportImage, format: settings.format, compression: settings.compression,
+        return TIFFWriter.data(for: image, format: settings.format, compression: settings.compression,
                                iccProfile: profile, resolution: resolution)
     }
 
@@ -304,34 +309,68 @@ public enum ExportService {
     }
 
     /// The name the next export would get, for the settings panel.
-    public static func nextFileName(settings: ExportSettings, date: Date = Date(),
-                                    fileManager: FileManager = .default) -> String {
-        fileName(settings: settings, date: date) { name in
-            settings.folder.map { fileManager.fileExists(atPath: $0.appending(path: name).path) } ?? false
+    /// Same rules as `export`: a version of `master` if given, and a name
+    /// counts as taken when the image or (`withRecipe`) its recipe exists.
+    public static func nextFileName(settings: ExportSettings, date: Date = Date(), versionOf master: URL? = nil,
+                                    withRecipe: Bool = false, fileManager: FileManager = .default) -> String {
+        let folder = master?.deletingLastPathComponent() ?? settings.folder
+        let taken = isTaken(in: folder, withRecipe: withRecipe, fileManager: fileManager)
+        return master.map { versionFileName(of: $0, exists: taken) } ?? fileName(settings: settings, date: date, exists: taken)
+    }
+
+    /// A file name is taken in `folder` when the image exists, or its recipe (`withRecipe`).
+    static func isTaken(in folder: URL?, withRecipe: Bool, fileManager: FileManager) -> (String) -> Bool {
+        { name in
+            guard let folder else { return false }
+            let url = folder.appending(path: name)
+            return fileManager.fileExists(atPath: url.path)
+                || (withRecipe && fileManager.fileExists(atPath: Recipe.fileURL(forImage: url).path))
         }
     }
 
     /// Writes `image` into the settings' folder and returns the file's URL.
     /// `resolution`: pixels per inch written in the file (72 for a preview,
-    /// the scan's resolution for a scan).
+    /// the scan's resolution for a scan). With a `recipe`, its JSON file is
+    /// written next to the image (`<name>.x1recipe.json`); `applyRecipe`
+    /// renders the recipe into the pixels (Export), otherwise the pixels are
+    /// the scanner's (the scan's master). `versionOf`: the master this export
+    /// is made from; the file is then `<master>_v1.tif`, `_v2`… and never
+    /// replaces the master or another version.
     public static func export(_ image: PreviewImage?, settings: ExportSettings, date: Date = Date(),
-                              resolution: Int = 72, fileManager: FileManager = .default) throws(ExportError) -> URL {
-        guard let folder = settings.folder else { throw .noFolder }
+                              resolution: Int = 72, recipe: Recipe? = nil, applyRecipe: Bool = false,
+                              pixelAspectRatio: Double = 1, versionOf master: URL? = nil,
+                              fileManager: FileManager = .default) throws(ExportError) -> URL {
+        guard let folder = master?.deletingLastPathComponent() ?? settings.folder else { throw .noFolder }
         guard let image, image.height > 0 else { throw .noImage }
         var isDirectory: ObjCBool = false
         guard fileManager.fileExists(atPath: folder.path, isDirectory: &isDirectory), isDirectory.boolValue else {
             throw .folderMissing(folder.path)
         }
-        let name = fileName(settings: settings, date: date) {
-            fileManager.fileExists(atPath: folder.appending(path: $0).path)
-        }
+        let taken = isTaken(in: folder, withRecipe: recipe != nil, fileManager: fileManager)
+        let name = master.map { versionFileName(of: $0, exists: taken) } ?? fileName(settings: settings, date: date, exists: taken)
         let url = folder.appending(path: name)
+        let pixels = if let recipe, applyRecipe {
+            RecipeRenderer.render(image.exportImage, pixelAspectRatio: pixelAspectRatio, recipe: recipe)
+        } else {
+            image.exportImage
+        }
         do {
             // If a file appeared in between, fail rather than replace it (cannot be combined with .atomic).
-            try tiffData(for: image, settings: settings, resolution: resolution).write(to: url, options: .withoutOverwriting)
+            try tiffData(for: pixels, settings: settings, resolution: resolution).write(to: url, options: .withoutOverwriting)
+            if let recipe {
+                try recipe.jsonData().write(to: Recipe.fileURL(forImage: url), options: .withoutOverwriting)
+            }
         } catch {
             throw .write(error.localizedDescription)
         }
         return url
+    }
+
+    /// `<master>_v1.tif`, `_v2`…: the first version whose name is free.
+    public static func versionFileName(of master: URL, exists: (String) -> Bool) -> String {
+        let stem = master.deletingPathExtension().lastPathComponent
+        var number = 1
+        while exists("\(stem)_v\(number).tif") { number += 1 }
+        return "\(stem)_v\(number).tif"
     }
 }

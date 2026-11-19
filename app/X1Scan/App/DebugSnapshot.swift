@@ -11,6 +11,8 @@ import X1ScanCore
 ///   -X1ScanHidePanel YES         hide the settings panel
 ///   -X1ScanZoomFill YES          Fill Window instead of the startup zoom
 ///   -X1ScanOpenHistogram YES     unfold the histogram in the panel
+///   -X1ScanQuarterTurns <n>      turn the image n quarters clockwise (lot 1)
+///   -X1ScanMirror YES            mirror the image (lot 1)
 ///   -X1ScanCropDemo YES          draw a centred crop on the preview before the snapshot
 ///                                (needs -X1ScanAutoPreview YES)
 ///   -X1ScanResizeProbe YES       resize the window, move the divider, hide and show the panel,
@@ -31,6 +33,8 @@ enum DebugSnapshot {
         if arguments.bool(forKey: "X1ScanOpenHistogram"), model.panel.layout.isFolded(.histogram) {
             model.panel.toggleFolded(.histogram)
         }
+        for _ in 0..<max(arguments.integer(forKey: "X1ScanQuarterTurns"), 0) { model.rotateClockwise() }
+        if arguments.bool(forKey: "X1ScanMirror") { model.mirrorHorizontally() }
         if arguments.bool(forKey: "X1ScanAutoPreview") { model.startPreview() }
         if arguments.bool(forKey: "X1ScanResizeProbe"), let window {
             Task { @MainActor in

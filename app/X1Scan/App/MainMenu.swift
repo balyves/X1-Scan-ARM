@@ -13,6 +13,7 @@ enum MainMenu {
         menu.addItem(submenu(fileMenu()))
         menu.addItem(submenu(editMenu()))
         menu.addItem(submenu(viewMenu()))
+        menu.addItem(submenu(imageMenu()))
         menu.addItem(submenu(scannerMenu()))
         let window = windowMenu()
         menu.addItem(submenu(window))
@@ -117,6 +118,15 @@ enum MainMenu {
                           #selector(MainWindowController.toggleSettingsPanel(_:)), "p", [.command, .option]))
         menu.addItem(.separator())
         // AppKit adds "Enter Full Screen" (⌃⌘F) to the View menu by itself.
+        return menu
+    }
+
+    /// Lot 1: orientation of the image (display and export, never the scan).
+    private static func imageMenu() -> NSMenu {
+        let menu = NSMenu(title: String(localized: "menu.image", defaultValue: "Image", comment: "Menu: orientation of the image"))
+        menu.addItem(item(Strings.rotateCounterclockwise, #selector(MainWindowController.rotateCounterclockwise(_:)), "["))
+        menu.addItem(item(Strings.rotateClockwise, #selector(MainWindowController.rotateClockwise(_:)), "]"))
+        menu.addItem(item(Strings.mirrorHorizontally, #selector(MainWindowController.mirrorHorizontally(_:))))
         return menu
     }
 

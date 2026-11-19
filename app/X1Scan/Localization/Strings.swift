@@ -316,6 +316,35 @@ enum Strings {
         }
     }
 
+    // MARK: Orientation (lot 1)
+
+    static var rotateCounterclockwise: String {
+        String(localized: "Rotate 90° Counterclockwise", comment: "Menu item and tooltip: orientation of the image")
+    }
+    static var rotateClockwise: String {
+        String(localized: "Rotate 90° Clockwise", comment: "Menu item and tooltip: orientation of the image")
+    }
+    static var mirrorHorizontally: String {
+        String(localized: "Flip Horizontal", comment: "Menu item and tooltip: mirror the image left to right")
+    }
+
+    /// A tooltip with its shortcut: "Rotate 90° Clockwise (⌘])".
+    static func withShortcut(_ title: String, _ shortcut: String) -> String {
+        String(localized: "\(title) (\(shortcut))", comment: "Tooltip: an action and its keyboard shortcut")
+    }
+
+    /// VoiceOver description of the orientation, e.g. "Turned 90° clockwise, mirrored".
+    static func orientationDescription(_ orientation: Orientation) -> String {
+        let turn = switch orientation.quarterTurns {
+        case 1: String(localized: "Turned 90° clockwise", comment: "VoiceOver: orientation of the image")
+        case 2: String(localized: "Turned 180°", comment: "VoiceOver: orientation of the image")
+        case 3: String(localized: "Turned 90° counterclockwise", comment: "VoiceOver: orientation of the image")
+        default: String(localized: "Not turned", comment: "VoiceOver: orientation of the image")
+        }
+        guard orientation.mirrored else { return turn }
+        return String(localized: "\(turn), mirrored", comment: "VoiceOver: orientation of the image; %@ is the turn")
+    }
+
     /// The values a folded section shows next to its title; empty: none.
     @MainActor
     static func panelSummary(_ section: PanelSection, model: AppModel) -> String {

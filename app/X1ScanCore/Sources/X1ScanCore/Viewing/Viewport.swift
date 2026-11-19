@@ -19,6 +19,11 @@ public enum ZoomMode: String, Sendable, Hashable, Codable {
 /// height multiplied by `pixelAspectRatio`: preview pixels are taller than
 /// wide (3), scan pixels square (1). Magnification 1 shows one image pixel across one point
 /// ("actual size"). The aspect correction is display only.
+///
+/// Two document spaces (lot 1): the *source* document (the scanner's pixels,
+/// stretched by the aspect ratio) and the *display* document, the source
+/// turned and mirrored by `orientation`. The view shows the display document;
+/// pixels and the crop stay in source coordinates.
 public struct Viewport: Sendable, Hashable {
     /// Zoom steps for Zoom In / Zoom Out: 6.25 % to 1600 %.
     public static let steps: [Double] = [1.0 / 16, 1.0 / 12, 1.0 / 8, 1.0 / 6, 1.0 / 4, 1.0 / 3, 1.0 / 2, 2.0 / 3,
@@ -32,6 +37,10 @@ public struct Viewport: Sendable, Hashable {
     /// Final height of the image (rows still arriving included).
     public var imageHeight: Int
     public var pixelAspectRatio: Double
+    /// Quarter turns and mirror of the display (lot 1).
+    public var orientation: Orientation = .identity {
+        didSet { if orientation.swapsAxes != oldValue.swapsAxes { recompute() } }
+    }
     public private(set) var magnification: Double = 1
     public private(set) var mode: ZoomMode = .fit
     /// Last view size seen, used to recompute Fit and Fill.
@@ -46,9 +55,22 @@ public struct Viewport: Sendable, Hashable {
         self.mode = mode
     }
 
-    /// Size of the document at magnification 1, in points.
-    public var documentSize: CGSize {
+    /// Size of the source document at magnification 1, in points.
+    public var sourceDocumentSize: CGSize {
         CGSize(width: Double(imageWidth), height: Double(imageHeight) * pixelAspectRatio)
+    }
+
+    /// Size of the displayed (oriented) document at magnification 1, in points.
+    public var documentSize: CGSize { orientation.orientedSize(sourceDocumentSize) }
+
+    /// Source document → display document.
+    public var displayTransform: CGAffineTransform {
+        orientation.orientedTransform(sourceSize: sourceDocumentSize)
+    }
+
+    /// The source document point shown at a display document point.
+    public func sourceDocumentPoint(atDisplayPoint point: CGPoint) -> CGPoint {
+        point.applying(displayTransform.inverted())
     }
 
     /// Magnification that shows the whole image in `viewSize`, with `margin` points around it.
@@ -136,19 +158,26 @@ public struct Viewport: Sendable, Hashable {
         return clamp(percent / 100)
     }
 
-    /// The image pixel under a point of the document (magnification 1
-    /// coordinates, origin top left), or nil outside the image.
-    public func pixel(atDocumentPoint point: CGPoint) -> PixelCoordinate? {
+    /// The image pixel under a point of the displayed document (magnification
+    /// 1 coordinates, origin top left), or nil outside the image.
+    public func pixel(atDocumentPoint displayPoint: CGPoint) -> PixelCoordinate? {
+        let point = sourceDocumentPoint(atDisplayPoint: displayPoint)
         let x = Int((point.x).rounded(.down))
         let y = Int((point.y / pixelAspectRatio).rounded(.down))
         guard point.x >= 0, point.y >= 0, x < imageWidth, y < imageHeight else { return nil }
         return PixelCoordinate(x: x, y: y)
     }
 
-    /// Document rectangle covered by an image rectangle (pixels).
-    public func documentRect(forPixelRect rect: PixelRect) -> CGRect {
+    /// Source document rectangle covered by an image rectangle (pixels).
+    public func sourceDocumentRect(forPixelRect rect: PixelRect) -> CGRect {
         CGRect(x: Double(rect.x), y: Double(rect.y) * pixelAspectRatio,
                width: Double(rect.width), height: Double(rect.height) * pixelAspectRatio)
+    }
+
+    /// Displayed document rectangle covered by an image rectangle (pixels);
+    /// quarter turns keep rectangles upright.
+    public func documentRect(forPixelRect rect: PixelRect) -> CGRect {
+        sourceDocumentRect(forPixelRect: rect).applying(displayTransform).standardized
     }
 
     /// Smallest image area Fit and Fill are computed for. Below that the size

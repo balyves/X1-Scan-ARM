@@ -8,9 +8,15 @@ import X1ScanCore
 ///
 /// The image is the contents of a layer. Core Animation colour-matches it
 /// from its colour space (linear sRGB, provisional) to the display's profile.
+///
+/// Lot 1: the frame is the *displayed* document (turned and mirrored). The
+/// image layers sit in a source layer whose transform turns them; the
+/// overlays (crop) are drawn in display coordinates.
 @MainActor
 final class ImageCanvasView: NSView {
     private let model: AppModel
+    /// Holds the image in source document coordinates; turned by its transform.
+    private let sourceLayer = CALayer()
     private let pendingLayer = CALayer()
     private let imageLayer = CALayer()
     private let cropLayer = CAShapeLayer()
@@ -33,8 +39,12 @@ final class ImageCanvasView: NSView {
         cropLayer.strokeColor = NSColor.controlAccentColor.cgColor
         cropLayer.lineWidth = 1.5
         cropLayer.lineDashPattern = [6, 4]
-        for sublayer in [pendingLayer, imageLayer, cropLayer] {
-            sublayer.actions = ["contents": NSNull(), "bounds": NSNull(), "position": NSNull(), "path": NSNull()]
+        sourceLayer.anchorPoint = .zero
+        sourceLayer.addSublayer(pendingLayer)
+        sourceLayer.addSublayer(imageLayer)
+        for sublayer in [sourceLayer, pendingLayer, imageLayer, cropLayer] {
+            sublayer.actions = ["contents": NSNull(), "bounds": NSNull(), "position": NSNull(), "path": NSNull(),
+                                "transform": NSNull()]
         }
         observers.append(Observing { [weak self] in self?.updateLayers() })
         observers.append(Observing { [weak self] in self?.updateCursor() })
@@ -49,8 +59,7 @@ final class ImageCanvasView: NSView {
 
     override func makeBackingLayer() -> CALayer {
         let layer = CALayer()
-        layer.addSublayer(pendingLayer)
-        layer.addSublayer(imageLayer)
+        layer.addSublayer(sourceLayer)
         layer.addSublayer(cropLayer)
         return layer
     }
@@ -69,7 +78,11 @@ final class ImageCanvasView: NSView {
         let pixelAspect = viewport.pixelAspectRatio
         CATransaction.begin()
         CATransaction.setDisableActions(true)
-        pendingLayer.frame = bounds
+        let sourceSize = viewport.sourceDocumentSize
+        sourceLayer.bounds = CGRect(origin: .zero, size: sourceSize)
+        sourceLayer.position = .zero
+        sourceLayer.setAffineTransform(viewport.displayTransform)
+        pendingLayer.frame = CGRect(origin: .zero, size: sourceSize)
         pendingLayer.isHidden = image == nil && model.session.image == nil
         imageLayer.contents = image
         if let image {
@@ -178,6 +191,7 @@ final class ImageCanvasView: NSView {
 
     private func clampedPixel(at point: NSPoint) -> PixelCoordinate {
         let viewport = model.viewport
+        let point = viewport.sourceDocumentPoint(atDisplayPoint: point)
         let x = min(max(Int(point.x.rounded(.down)), 0), max(viewport.imageWidth - 1, 0))
         let y = min(max(Int((point.y / viewport.pixelAspectRatio).rounded(.down)), 0), max(viewport.imageHeight - 1, 0))
         return PixelCoordinate(x: x, y: y)

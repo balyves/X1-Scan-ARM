@@ -133,6 +133,11 @@ public final class AppModel {
     public private(set) var viewport: Viewport
     /// Size of the visible image area, reported by the canvas.
     public var viewSize: CGSize { viewport.viewSize }
+    /// The recipe of the image shown (lot 1): orientation for now. Kept from
+    /// one image to the next (a preview, then the scan of the same frame).
+    public private(set) var recipe = Recipe() {
+        didSet { viewport.orientation = recipe.orientation }
+    }
     /// Framing rectangle drawn with the crop tool. Not exported at this stage;
     /// the histogram counts its pixels only.
     public var cropRect: PixelRect? {
@@ -154,6 +159,9 @@ public final class AppModel {
         didSet { saveExportSettings() }
     }
     public private(set) var lastExport: Result<URL, ExportError>?
+    /// The scan shown was saved as this master (raw TIFF and its recipe):
+    /// Export then writes `<master>_v1.tif`, `_v2`… next to it.
+    public private(set) var scanMaster: URL?
 
     private let defaults: UserDefaults
     private enum Keys {
@@ -460,15 +468,20 @@ public final class AppModel {
         if exportSettings.needsRollValidation { exportSettings.validateRoll() }
         var settings = exportSettings
         settings.format = .rgb16
+        // The master: the scanner's pixels, never turned or cropped, and the recipe beside them.
+        let recipe = recipe
         let result = Result { () throws(ExportError) -> URL in
-            try ExportService.export(session.image, settings: settings, date: date, resolution: ScanScript.resolution)
+            try ExportService.export(session.image, settings: settings, date: date, resolution: ScanScript.resolution,
+                                     recipe: recipe)
         }
         lastScanSave = result
+        if case .success(let url) = result { scanMaster = url }
         if case .success = result, exportSettings.incrementsFrame { exportSettings.frame += 1 }
     }
 
     private func prepareNewPreview() {
         lastExport = nil
+        scanMaster = nil
         // Every new preview gets the zoom of Settings > Display when its first
         // rows arrive (refreshImage). The crop rectangle is kept if the size is the same.
         startupZoomPending = true
@@ -529,13 +542,27 @@ public final class AppModel {
     public func export(date: Date = Date()) -> Result<URL, ExportError> {
         // Exporting right after typing a new roll name counts as validating it.
         if exportSettings.needsRollValidation { exportSettings.validateRoll() }
+        // The recipe applied to the image shown, written as a new file with its recipe:
+        // a version of the scan's master, or a preview named by the template.
+        let master = session.kind == .scan ? scanMaster : nil
+        let isScan = session.kind == .scan
         let result = Result { () throws(ExportError) -> URL in
-            try ExportService.export(session.image, settings: exportSettings, date: date)
+            try ExportService.export(session.image, settings: exportSettings, date: date,
+                                     resolution: isScan ? ScanScript.resolution : 72,
+                                     recipe: recipe, applyRecipe: true,
+                                     pixelAspectRatio: viewport.pixelAspectRatio, versionOf: master)
         }
         lastExport = result
-        if case .success = result, exportSettings.incrementsFrame { exportSettings.frame += 1 }
+        // A version of a master is the same frame: the frame number does not move.
+        if case .success = result, master == nil, exportSettings.incrementsFrame { exportSettings.frame += 1 }
         return result
     }
+
+    // MARK: Orientation (lot 1)
+
+    public func rotateClockwise() { recipe.orientation.rotateClockwise() }
+    public func rotateCounterclockwise() { recipe.orientation.rotateCounterclockwise() }
+    public func mirrorHorizontally() { recipe.orientation.mirrorHorizontally() }
 
     /// A preview runs or stops, or the real X1 is being read.
     public var isBusy: Bool { session.isBusy || realStatus == .reading }
@@ -570,8 +597,10 @@ public final class AppModel {
 
     /// The name the next export would get.
     public func nextExportFileName(date: Date = Date()) -> String {
-        // As the export will write it: with the roll name validated.
-        ExportService.nextFileName(settings: exportSettings.validated, date: date)
+        // As the export will write it: with the roll name validated, a version of the
+        // scan's master when a saved scan is shown, a recipe beside it.
+        ExportService.nextFileName(settings: exportSettings.validated, date: date,
+                                   versionOf: session.kind == .scan ? scanMaster : nil, withRecipe: true)
     }
 
     // MARK: Viewport
