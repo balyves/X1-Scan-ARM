@@ -23,8 +23,9 @@ final class ImageCanvasView: NSView {
     private let zonesLayer = CALayer()
     private let cropLayer = CAShapeLayer()
     /// The grid (lot 1), in display coordinates; never part of an export.
-    /// One line of one screen point, in green: apart from the crop frame, the
-    /// rule (yellow) and the exposure zones (red and blue).
+    /// One line of one screen point; green by default (apart from the crop
+    /// frame, the rule in yellow and the exposure zones in red and blue),
+    /// colour and opacity chosen by the user.
     private let gridLayer = CAShapeLayer()
     /// Crop mode (lot 1): the image outside the frame darkened, the frame's handles.
     private let shadeLayer = CAShapeLayer()
@@ -264,8 +265,14 @@ final class ImageCanvasView: NSView {
         gridLayer.path = path
         // One screen point at any zoom: thin, and never lost between two device pixels.
         gridLayer.lineWidth = screenPoint(viewport)
-        // Set here so that it follows the appearance (light or dark).
-        gridLayer.strokeColor = NSColor.systemGreen.withAlphaComponent(0.9).cgColor
+        // Set here so that it follows the appearance (light or dark) and the settings.
+        let color: NSColor = switch grid.color {
+        case .green: .systemGreen
+        case .pink: .systemPink
+        case .white: .white
+        case .black: .black
+        }
+        gridLayer.strokeColor = color.withAlphaComponent(grid.opacity).cgColor
         gridLayer.isHidden = false
     }
 

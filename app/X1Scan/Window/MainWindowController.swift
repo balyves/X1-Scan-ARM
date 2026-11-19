@@ -65,6 +65,10 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
             menuItem.title = model.grid.isVisible ? Strings.hideGrid : Strings.showGrid
         case #selector(chooseGridKind(_:)):
             menuItem.state = (menuItem.representedObject as? String) == model.grid.kind.rawValue ? .on : .off
+        case #selector(chooseGridColor(_:)):
+            menuItem.state = (menuItem.representedObject as? String) == model.grid.color.rawValue ? .on : .off
+        case #selector(chooseGridOpacity(_:)):
+            menuItem.state = (menuItem.representedObject as? Double).map { abs($0 - model.grid.opacity) < 1e-9 } == true ? .on : .off
         case #selector(chooseGridDivisions(_:)):
             menuItem.state = (menuItem.representedObject as? Int) == model.grid.fineDivisions ? .on : .off
         case #selector(toggleSettingsPanel(_:)):
@@ -164,6 +168,15 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         if let name = (sender as? NSMenuItem)?.representedObject as? String, let kind = GridKind(rawValue: name) {
             model.showGrid(kind)
         }
+    }
+    /// Colour and opacity change the line, shown or not.
+    @objc func chooseGridColor(_ sender: Any?) {
+        if let name = (sender as? NSMenuItem)?.representedObject as? String, let color = GridColor(rawValue: name) {
+            model.grid.color = color
+        }
+    }
+    @objc func chooseGridOpacity(_ sender: Any?) {
+        if let opacity = (sender as? NSMenuItem)?.representedObject as? Double { model.grid.opacity = opacity }
     }
     @objc func chooseGridDivisions(_ sender: Any?) {
         if let divisions = (sender as? NSMenuItem)?.representedObject as? Int {

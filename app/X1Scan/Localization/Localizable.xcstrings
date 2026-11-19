@@ -4072,6 +4072,114 @@
           }
         }
       }
+    },
+    "Grid Colour": {
+      "comment": "Image menu and grid button's context menu: submenu of line colours",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grid Colour"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couleur de la grille"
+          }
+        }
+      }
+    },
+    "Grid Opacity": {
+      "comment": "Image menu and grid button's context menu: submenu of line opacities",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grid Opacity"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opacité de la grille"
+          }
+        }
+      }
+    },
+    "grid.color.green": {
+      "comment": "Grid line colour (Image menu and grid button's context menu)",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Green"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vert"
+          }
+        }
+      }
+    },
+    "grid.color.pink": {
+      "comment": "Grid line colour (Image menu and grid button's context menu)",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pink"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rose"
+          }
+        }
+      }
+    },
+    "grid.color.white": {
+      "comment": "Grid line colour (Image menu and grid button's context menu)",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "White"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blanc"
+          }
+        }
+      }
+    },
+    "grid.color.black": {
+      "comment": "Grid line colour (Image menu and grid button's context menu)",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Black"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noir"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

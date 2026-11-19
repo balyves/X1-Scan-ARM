@@ -65,6 +65,21 @@ struct ToolColumnView: View {
                 })
             }
             Divider()
+            Menu(Strings.gridColorMenu) {
+                ForEach(GridColor.allCases, id: \.self) { color in
+                    Toggle(Strings.gridColor(color), isOn: Binding { model.grid.color == color } set: { _ in
+                        model.grid.color = color
+                    })
+                }
+            }
+            Menu(Strings.gridOpacityMenu) {
+                ForEach(GridSettings.opacityChoices, id: \.self) { opacity in
+                    Toggle(Strings.gridOpacity(opacity), isOn: Binding { abs(model.grid.opacity - opacity) < 1e-9 } set: { _ in
+                        model.grid.opacity = opacity
+                    })
+                }
+            }
+            Divider()
             Button(model.grid.isVisible ? Strings.hideGrid : Strings.showGrid) { model.toggleGrid() }
         }
     }

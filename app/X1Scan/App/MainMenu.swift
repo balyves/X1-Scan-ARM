@@ -146,6 +146,24 @@ enum MainMenu {
         let spacingItem = submenu(spacing)
         spacingItem.indentationLevel = 1
         menu.addItem(spacingItem)
+        let colors = NSMenu(title: Strings.gridColorMenu)
+        for color in GridColor.allCases {
+            let colorItem = item(Strings.gridColor(color), #selector(MainWindowController.chooseGridColor(_:)))
+            colorItem.representedObject = color.rawValue
+            colors.addItem(colorItem)
+        }
+        let colorsItem = submenu(colors)
+        colorsItem.indentationLevel = 1
+        menu.addItem(colorsItem)
+        let opacities = NSMenu(title: Strings.gridOpacityMenu)
+        for opacity in GridSettings.opacityChoices {
+            let opacityItem = item(Strings.gridOpacity(opacity), #selector(MainWindowController.chooseGridOpacity(_:)))
+            opacityItem.representedObject = opacity
+            opacities.addItem(opacityItem)
+        }
+        let opacitiesItem = submenu(opacities)
+        opacitiesItem.indentationLevel = 1
+        menu.addItem(opacitiesItem)
         return menu
     }
 

@@ -13,10 +13,20 @@ public enum GridKind: String, Sendable, Hashable, CaseIterable, Codable {
     case centre
 }
 
-/// Grid shown or not, its kind and the fine grid's spacing; saved between launches.
+/// Colour of the grid's line (the line is always one screen point).
+public enum GridColor: String, Sendable, Hashable, CaseIterable, Codable {
+    case green, pink, white, black
+}
+
+/// Grid shown or not, its kind, the fine grid's spacing, its colour and
+/// opacity; saved between launches.
 public struct GridSettings: Sendable, Hashable, Codable {
     public static let divisionChoices = [4, 6, 8, 10, 12, 16, 20, 24]
     public static let defaultDivisions = 12
+    /// Opacities offered, 30 to 100 %.
+    public static let opacityChoices: [Double] = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+    public static let opacityRange = 0.3...1.0
+    public static let defaultOpacity = 0.7
 
     public var isVisible = false
     public var kind: GridKind = .thirds
@@ -25,6 +35,16 @@ public struct GridSettings: Sendable, Hashable, Codable {
         didSet { fineDivisions = Self.clampedDivisions(fineDivisions) }
     }
     public static let divisionRange = 2...64
+    public var color: GridColor = .green
+    /// Opacity of the line, 0.3...1.
+    public var opacity: Double = GridSettings.defaultOpacity {
+        didSet { opacity = Self.clampedOpacity(opacity) }
+    }
+
+    static func clampedOpacity(_ value: Double) -> Double {
+        guard value.isFinite else { return defaultOpacity }
+        return min(max(value, opacityRange.lowerBound), opacityRange.upperBound)
+    }
 
     static func clampedDivisions(_ value: Int) -> Int {
         min(max(value, divisionRange.lowerBound), divisionRange.upperBound)
@@ -32,7 +52,7 @@ public struct GridSettings: Sendable, Hashable, Codable {
 
     public init() {}
 
-    private enum CodingKeys: String, CodingKey { case isVisible, kind, fineDivisions }
+    private enum CodingKeys: String, CodingKey { case isVisible, kind, fineDivisions, color, opacity }
 
     /// Unknown values (another version) fall back to the defaults.
     public init(from decoder: any Decoder) throws {
@@ -42,6 +62,8 @@ public struct GridSettings: Sendable, Hashable, Codable {
         // didSet does not run in an initialiser: bounded here.
         fineDivisions = Self.clampedDivisions((try? container.decodeIfPresent(Int.self, forKey: .fineDivisions))
                                               ?? Self.defaultDivisions)
+        color = (try? container.decodeIfPresent(String.self, forKey: .color)).flatMap(GridColor.init(rawValue:)) ?? .green
+        opacity = Self.clampedOpacity((try? container.decodeIfPresent(Double.self, forKey: .opacity)) ?? Self.defaultOpacity)
     }
 
     /// The lines of `kind` over `rect` (display coordinates), as segments.

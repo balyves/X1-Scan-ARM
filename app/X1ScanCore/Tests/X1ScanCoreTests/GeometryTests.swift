@@ -210,6 +210,20 @@ struct GridTests {
         #expect(decoded.isVisible && decoded.kind == .thirds && decoded.fineDivisions == GridSettings.defaultDivisions)
         let huge = try JSONDecoder().decode(GridSettings.self, from: Data(#"{"fineDivisions":1000}"#.utf8))
         #expect(huge.fineDivisions == 64, "bounded when read back too")
+        // Colour and opacity: green and 70 % by default, bounded, unknown values fall back.
+        #expect(GridSettings().color == .green && GridSettings().opacity == 0.7)
+        var styled = GridSettings()
+        styled.color = .pink
+        styled.opacity = 0.05
+        #expect(styled.opacity == 0.3)
+        #expect(try JSONDecoder().decode(GridSettings.self, from: JSONEncoder().encode(styled)) == styled)
+        let odd = try JSONDecoder().decode(GridSettings.self, from: Data(#"{"color":"purple","opacity":7}"#.utf8))
+        #expect(odd.color == .green && odd.opacity == 1)
+        let faint = try JSONDecoder().decode(GridSettings.self, from: Data(#"{"opacity":0.1}"#.utf8))
+        #expect(faint.opacity == 0.3, "too low when read back: bounded too")
+        // The menu always has a checked opacity: the default is one of the choices, all within the range.
+        #expect(GridSettings.opacityChoices.contains(GridSettings.defaultOpacity))
+        #expect(GridSettings.opacityChoices.allSatisfy(GridSettings.opacityRange.contains))
     }
 }
 

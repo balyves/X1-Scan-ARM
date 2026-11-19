@@ -467,6 +467,23 @@ enum Strings {
         String(localized: "Fine Grid Squares", comment: "Image menu > Grid: submenu, number of squares across the image")
     }
 
+    static var gridColorMenu: String { String(localized: "Grid Colour", comment: "Image menu and grid button's context menu: submenu of line colours") }
+    static var gridOpacityMenu: String { String(localized: "Grid Opacity", comment: "Image menu and grid button's context menu: submenu of line opacities") }
+
+    static func gridColor(_ color: GridColor) -> String {
+        switch color {
+        case .green: String(localized: "grid.color.green", defaultValue: "Green", comment: "Grid line colour (Image menu and grid button's context menu)")
+        case .pink: String(localized: "grid.color.pink", defaultValue: "Pink", comment: "Grid line colour (Image menu and grid button's context menu)")
+        case .white: String(localized: "grid.color.white", defaultValue: "White", comment: "Grid line colour (Image menu and grid button's context menu)")
+        case .black: String(localized: "grid.color.black", defaultValue: "Black", comment: "Grid line colour (Image menu and grid button's context menu)")
+        }
+    }
+
+    /// "70 %", in the locale's style.
+    static func gridOpacity(_ value: Double) -> String {
+        value.formatted(.percent.precision(.fractionLength(0)).grouping(.never))
+    }
+
     static func gridKind(_ kind: GridKind) -> String {
         switch kind {
         case .thirds: String(localized: "Thirds", comment: "Grid kind")
