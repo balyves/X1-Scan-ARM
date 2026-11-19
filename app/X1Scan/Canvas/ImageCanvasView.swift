@@ -23,9 +23,9 @@ final class ImageCanvasView: NSView {
     private let zonesLayer = CALayer()
     private let cropLayer = CAShapeLayer()
     /// The grid (lot 1), in display coordinates; never part of an export.
-    /// A light line over a wider dark one, visible on light and dark images.
+    /// One line of one screen point, in green: apart from the crop frame, the
+    /// rule (yellow) and the exposure zones (red and blue).
     private let gridLayer = CAShapeLayer()
-    private let gridEdgeLayer = CAShapeLayer()
     /// Crop mode (lot 1): the image outside the frame darkened, the frame's handles.
     private let shadeLayer = CAShapeLayer()
     private let handlesLayer = CAShapeLayer()
@@ -65,9 +65,6 @@ final class ImageCanvasView: NSView {
         cropLayer.lineWidth = 1.5
         cropLayer.lineDashPattern = [6, 4]
         gridLayer.fillColor = nil
-        gridLayer.strokeColor = NSColor.white.withAlphaComponent(0.85).cgColor
-        gridEdgeLayer.fillColor = nil
-        gridEdgeLayer.strokeColor = NSColor.black.withAlphaComponent(0.55).cgColor
         shadeLayer.fillColor = NSColor.black.withAlphaComponent(0.5).cgColor
         shadeLayer.fillRule = .evenOdd
         handlesLayer.fillColor = NSColor.white.cgColor
@@ -88,7 +85,7 @@ final class ImageCanvasView: NSView {
         zonesLayer.magnificationFilter = .nearest
         zonesLayer.opacity = 0.75
         sourceLayer.addSublayer(zonesLayer)
-        for sublayer in [sourceLayer, pendingLayer, imageLayer, zonesLayer, cropLayer, gridEdgeLayer, gridLayer,
+        for sublayer in [sourceLayer, pendingLayer, imageLayer, zonesLayer, cropLayer, gridLayer,
                          shadeLayer, handlesLayer, rulerEdgeLayer, rulerLayer, rulerLabel] {
             sublayer.actions = ["contents": NSNull(), "bounds": NSNull(), "position": NSNull(), "path": NSNull(),
                                 "transform": NSNull(), "lineWidth": NSNull(), "hidden": NSNull(),
@@ -109,7 +106,6 @@ final class ImageCanvasView: NSView {
         let layer = CALayer()
         layer.addSublayer(sourceLayer)
         layer.addSublayer(shadeLayer)
-        layer.addSublayer(gridEdgeLayer)
         layer.addSublayer(gridLayer)
         layer.addSublayer(cropLayer)
         layer.addSublayer(handlesLayer)
@@ -258,7 +254,6 @@ final class ImageCanvasView: NSView {
         }
         guard let kind, model.session.image != nil, area.width > 0 else {
             gridLayer.isHidden = true
-            gridEdgeLayer.isHidden = true
             return
         }
         let path = CGMutablePath()
@@ -266,13 +261,12 @@ final class ImageCanvasView: NSView {
             path.move(to: start)
             path.addLine(to: end)
         }
-        let point = 1 / max(viewport.magnification, 0.01)  // one screen point
         gridLayer.path = path
-        gridLayer.lineWidth = point
+        // One screen point at any zoom: thin, and never lost between two device pixels.
+        gridLayer.lineWidth = screenPoint(viewport)
+        // Set here so that it follows the appearance (light or dark).
+        gridLayer.strokeColor = NSColor.systemGreen.withAlphaComponent(0.9).cgColor
         gridLayer.isHidden = false
-        gridEdgeLayer.path = path
-        gridEdgeLayer.lineWidth = 3 * point
-        gridEdgeLayer.isHidden = false
     }
 
     // MARK: Cursor and tracking
