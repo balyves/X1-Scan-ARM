@@ -9,8 +9,8 @@ import X1Transport
 struct InspectorLayoutTests {
     @Test func defaultsAndLimits() {
         var layout = InspectorLayout()
-        #expect(layout.width == InspectorLayout.defaultWidth && !layout.isHidden && layout.tab == .main)
-        #expect(layout.folded.isEmpty, "all sections open at first launch")
+        #expect(layout.width == InspectorLayout.defaultWidth && !layout.isHidden)
+        #expect(layout.folded == [.histogram], "all sections open at first launch, except the histogram (lot 1)")
         layout.setWidth(10)
         #expect(layout.width == InspectorLayout.minimumWidth)
         layout.setWidth(.infinity)
@@ -22,18 +22,26 @@ struct InspectorLayoutTests {
                 && InspectorLayout.defaultWidth == 300)
         layout.toggleFolded(.histogram)
         layout.toggleFolded(.output)
-        #expect(layout.isFolded(.histogram) && layout.isFolded(.output))
+        #expect(!layout.isFolded(.histogram) && layout.isFolded(.output))
     }
 
     @Test func decodesUnknownValuesSafely() throws {
         let json = #"{"width":9999,"isHidden":true,"folded":["output","scanner","future"],"tab":"future"}"#
         let layout = try JSONDecoder().decode(InspectorLayout.self, from: Data(json.utf8))
         #expect(layout.width == InspectorLayout.maximumWidth && layout.isHidden)
-        #expect(layout.folded == [.output] && layout.tab == .main)
+        #expect(layout.folded == [.output])
         var changed = InspectorLayout()
-        changed.tab = .advanced
         changed.toggleFolded(.original)
         #expect(try JSONDecoder().decode(InspectorLayout.self, from: JSONEncoder().encode(changed)) == changed)
+    }
+
+    @Test func migratesTheSettingsSectionOfStep3() throws {
+        // Step 3 saved the Main / Advanced section as "settings", with a tab: now the Scan section.
+        let json = #"{"width":300,"isHidden":false,"folded":["settings"],"tab":"advanced"}"#
+        let layout = try JSONDecoder().decode(InspectorLayout.self, from: Data(json.utf8))
+        #expect(layout.folded == [.scan], "histogram open: it was open in the saved layout")
+        let saved = String(decoding: try JSONEncoder().encode(layout), as: UTF8.self)
+        #expect(!saved.contains("tab") && !saved.contains("settings"))
     }
 
     @MainActor

@@ -1611,17 +1611,6 @@
         }
       }
     },
-    "Settings": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Réglages"
-          }
-        }
-      }
-    },
     "Output": {
       "extractionState": "manual",
       "localizations": {
@@ -1872,39 +1861,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Enregistré ; appliqué au scanner avec les vrais scans (étape suivante)."
-          }
-        }
-      }
-    },
-    "Advanced settings come with real scans; only settings that work are shown here.": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les réglages avancés viendront avec les vrais scans ; seuls les réglages qui fonctionnent apparaissent ici."
-          }
-        }
-      }
-    },
-    "Main": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Principal"
-          }
-        }
-      }
-    },
-    "Advanced": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Avancé"
           }
         }
       }
@@ -3162,6 +3118,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "La numérisation capturée de FlexColor (2 000 ppi) sera envoyée au scanner commande par commande. Une seule valeur change : la position du chariot du pas de 400 lignes, lue sur le scanner juste avant (à %lld près de la capture). Toute autre différence l'arrête ; Arrêter (⌘. ou Échap) reste disponible. Chaque commande est journalisée.\n\nLe cadre et la résolution sont ceux de la capture, pas ceux du panneau : 609 × 614 pixels à 2 000 ppi (7,7 × 7,8 mm), à l'emplacement capturé. Le recadrage et la résolution du panneau sont ignorés.\n\nPorte-film de la capture : 6×7, référence 50200403. Ne le déplacez pas après l'aperçu."
+          }
+        }
+      }
+    },
+    "panel.section.scan": {
+      "comment": "Panel section: resolution, scale, sizes",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scan"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scan"
           }
         }
       }

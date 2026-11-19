@@ -77,16 +77,20 @@ public struct CompactDisclosureStyle: DisclosureGroupStyle {
 }
 
 /// A foldable section: short title, thin separator below, folded state kept
-/// by the caller (the panel layout, saved between launches).
+/// by the caller (the panel layout, saved between launches). When folded,
+/// `summary` (already translated, may be empty) shows the section's main
+/// values on the right of the title, in the secondary colour.
 public struct CompactSection<Content: View>: View {
     let title: String
+    let summary: String
     let foldTexts: CompactFoldTexts
     @Binding var isExpanded: Bool
     @ViewBuilder var content: () -> Content
 
-    public init(_ title: String, foldTexts: CompactFoldTexts, isExpanded: Binding<Bool>,
+    public init(_ title: String, summary: String = "", foldTexts: CompactFoldTexts, isExpanded: Binding<Bool>,
                 @ViewBuilder content: @escaping () -> Content) {
         self.title = title
+        self.summary = summary
         self.foldTexts = foldTexts
         _isExpanded = isExpanded
         self.content = content
@@ -101,7 +105,20 @@ public struct CompactSection<Content: View>: View {
                 // Sub-groups inside the section: the same style, without the header trait.
                 .disclosureGroupStyle(CompactDisclosureStyle(texts: foldTexts))
             } label: {
-                Text(title).font(.callout.weight(.semibold))
+                HStack(alignment: .firstTextBaseline, spacing: CompactPanelMetrics.columnSpacing) {
+                    Text(title).font(.callout.weight(.semibold))
+                        .layoutPriority(1)
+                    if !isExpanded && !summary.isEmpty {
+                        Spacer(minLength: 0)
+                        Text(summary)
+                            .font(.caption)
+                            .monospacedDigit()
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                    }
+                }
+                .accessibilityElement(children: .combine)
             }
             .disclosureGroupStyle(CompactDisclosureStyle(texts: foldTexts, isHeader: true))
             .padding(CompactPanelMetrics.sectionInsets)

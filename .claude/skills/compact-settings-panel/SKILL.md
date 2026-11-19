@@ -8,13 +8,15 @@ description: Interface conventions for the settings panel on the right of the X1
 The panel on the right of the main window holds the scan and export
 settings. It is a working tool used for hours: dense, quiet and aligned, with
 every number readable and editable in one place. These rules apply to every
-section of the panel (today Original, Settings, Output).
+section of the panel (today Original, Scan, Histogram, Output).
 
 ## Components (X1ScanCore, `Sources/X1ScanCore/UI/CompactPanel.swift`)
 
-- `CompactSection(title, foldTexts:, isExpanded:) { … }`: a foldable
-  section. `foldTexts` is `Strings.foldTexts` (VoiceOver "expanded" /
-  "collapsed"); `isExpanded` is `model.panel.expansion(of: section)`.
+- `CompactSection(title, summary:, foldTexts:, isExpanded:) { … }`: a
+  foldable section. `foldTexts` is `Strings.foldTexts` (VoiceOver "expanded" /
+  "collapsed"); `isExpanded` is `model.panel.expansion(of: section)`;
+  `summary` (from `Strings.panelSummary`) is shown next to the title while
+  the section is folded.
 - `CompactDisclosureStyle(texts:isHeader:)`: the disclosure style of the
   panel (one button for chevron and title, content not indented).
   `CompactSection` uses it with the header trait, and gives its content the
@@ -72,8 +74,13 @@ passes every string, already translated (see Text and languages).
   words) that fits on one line in both languages.
 - Folded state is remembered between launches: bind `isExpanded` to the
   panel layout (`model.panel.expansion(of: section)`); add a `PanelSection`
-  case for a new section. All sections are open at first launch.
-- A sub-group inside a section (for example a histogram) is a
+  case for a new section. All sections are open at first launch, except
+  those in `InspectorLayout.defaultFolded` (the histogram).
+- A folded section shows a short summary of its main values on the right of
+  its title (`.caption`, secondary colour, one line, numbers without
+  grouping): "2000 ppi · 100 %". A section with nothing to summarise
+  passes an empty summary.
+- A sub-group inside a section (for example a group of rarely used options) is a
   `DisclosureGroup` bound with `model.panel.expansion(of:)`, without its own
   separator. Inside a `CompactSection` it gets `CompactDisclosureStyle`
   without the header trait; outside one, apply

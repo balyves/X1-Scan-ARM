@@ -4,10 +4,11 @@ import SwiftUI
 import X1Image
 import X1ScanCore
 
-/// The settings panel on the right (step 3): Original, Main / Advanced tabs,
+/// The settings panel on the right (lot 1): Original, Scan, Histogram,
 /// Output, and the Preview and Scan buttons. Small controls everywhere. All
 /// sections follow the compact panel conventions
-/// (.claude/skills/compact-settings-panel/SKILL.md).
+/// (.claude/skills/compact-settings-panel/SKILL.md); a folded section shows
+/// a summary of its values next to its title.
 struct SettingsPanelView: View {
     @Bindable var model: AppModel
 
@@ -15,16 +16,10 @@ struct SettingsPanelView: View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    CompactSection(Strings.panelSection(.original), foldTexts: Strings.foldTexts,
-                                   isExpanded: model.panel.expansion(of: .original)) {
-                        OriginalSection(model: model)
-                    }
-                    CompactSection(Strings.panelSection(.settings), foldTexts: Strings.foldTexts,
-                                   isExpanded: model.panel.expansion(of: .settings)) {
-                        TabsSection(model: model)
-                    }
-                    CompactSection(Strings.panelSection(.output), foldTexts: Strings.foldTexts,
-                                   isExpanded: model.panel.expansion(of: .output)) {
+                    section(.original) { OriginalSection(model: model) }
+                    section(.scan) { ScanSection(model: model) }
+                    section(.histogram) { HistogramView(model: model) }
+                    section(.output) {
                         OutputSection(model: model)
                     }
                 }
@@ -45,6 +40,12 @@ struct SettingsPanelView: View {
         }
         .controlSize(.small)
         .font(.callout)
+    }
+
+    private func section(_ section: PanelSection, @ViewBuilder content: @escaping () -> some View) -> some View {
+        CompactSection(Strings.panelSection(section), summary: Strings.panelSummary(section, model: model),
+                       foldTexts: Strings.foldTexts, isExpanded: model.panel.expansion(of: section),
+                       content: content)
     }
 }
 
@@ -85,32 +86,9 @@ private struct OriginalSection: View {
     }
 }
 
-private struct TabsSection: View {
-    @Bindable var model: AppModel
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: CompactPanelMetrics.groupSpacing) {
-            Picker(String(localized: "Settings", comment: "Panel section: Main / Advanced"),
-                   selection: Binding { model.panel.layout.tab } set: { model.panel.layout.tab = $0 }) {
-                Text("Main", comment: "Panel tab").tag(PanelTab.main)
-                Text("Advanced", comment: "Panel tab").tag(PanelTab.advanced)
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            switch model.panel.layout.tab {
-            case .main: MainTab(model: model)
-            case .advanced:
-                Text("Advanced settings come with real scans; only settings that work are shown here.",
-                     comment: "Panel: empty Advanced tab")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-    }
-}
-
-private struct MainTab: View {
+/// Scan section (lot 1): resolution, scale, input, output. The Main /
+/// Advanced tabs of step 3 are gone; they will come back with corrections.
+private struct ScanSection: View {
     @Bindable var model: AppModel
 
     private static let resolutionFormat = CompactValueFormat(
@@ -127,20 +105,19 @@ private struct MainTab: View {
                 texts: Strings.sliderRow(label: String(localized: "Resolution", comment: "Panel label"),
                                          unit: String(localized: "ppi", comment: "Unit: pixels per inch"),
                                          format: Self.resolutionFormat))
-            CompactInfoRow(String(localized: "Input", comment: "Panel label: input size"),
-                           value: pixels(model.inputPixelSize), help: Self.sizesNote)
             CompactSliderRow(
                 value: Binding(rounding: $model.scanSettings.scalePercent),
                 format: Self.scaleFormat,
                 texts: Strings.sliderRow(label: String(localized: "Scale", comment: "Panel label"),
                                          unit: "%", format: Self.scaleFormat))
+            CompactInfoRow(String(localized: "Input", comment: "Panel label: input size"),
+                           value: pixels(model.inputPixelSize), help: Self.sizesNote)
             CompactInfoRow(String(localized: "Output", comment: "Panel label: output size"),
                            value: pixels(model.inputPixelSize.map {
                                let scale = Double(model.scanSettings.scalePercent) / 100
                                return (Int((Double($0.width) * scale).rounded()), Int((Double($0.height) * scale).rounded()))
                            }))
                 .help(Self.sizesNote)  // tooltip only: VoiceOver gets the hint once, on Input
-            HistogramDisclosure(model: model)
         }
     }
 
@@ -153,21 +130,6 @@ private struct MainTab: View {
     private func pixels(_ size: (width: Int, height: Int)?) -> String {
         guard let size else { return "—" }
         return String(localized: "\(size.width) × \(size.height) px", comment: "Image size in pixels")
-    }
-}
-
-/// Inside the Settings section: a sub-group without its own separator.
-private struct HistogramDisclosure: View {
-    @Bindable var model: AppModel
-
-    var body: some View {
-        DisclosureGroup(isExpanded: model.panel.expansion(of: .histogram)) {
-            HistogramView(model: model)
-        } label: {
-            Text("Histogram", comment: "Palette title")
-        }
-        .disclosureGroupStyle(CompactDisclosureStyle(texts: Strings.foldTexts))
-        .padding(.top, CompactPanelMetrics.groupSpacing - CompactPanelMetrics.rowSpacing)
     }
 }
 

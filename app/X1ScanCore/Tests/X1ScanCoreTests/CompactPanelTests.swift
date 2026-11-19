@@ -84,12 +84,12 @@ struct CompactPanelBindingTests {
 
     @Test func sectionFoldingIsSetExplicitly() {
         var layout = InspectorLayout()
-        layout.setFolded(.settings, true)
-        #expect(layout.isFolded(.settings))
-        layout.setFolded(.settings, true)
-        #expect(layout.isFolded(.settings), "idempotent")
-        layout.setFolded(.settings, false)
-        #expect(!layout.isFolded(.settings))
+        layout.setFolded(.scan, true)
+        #expect(layout.isFolded(.scan))
+        layout.setFolded(.scan, true)
+        #expect(layout.isFolded(.scan), "idempotent")
+        layout.setFolded(.scan, false)
+        #expect(!layout.isFolded(.scan))
     }
 }
 
@@ -137,14 +137,14 @@ struct CompactPanelExpansionTests {
         let defaults = try #require(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
         let panel = PanelController(defaults: defaults)
-        let expansion = panel.expansion(of: .settings)
+        let expansion = panel.expansion(of: .scan)
         #expect(expansion.wrappedValue, "open at first launch")
         expansion.wrappedValue = false
-        #expect(panel.layout.isFolded(.settings))
+        #expect(panel.layout.isFolded(.scan))
         let saved = try #require(defaults.data(forKey: "InspectorLayout"))
-        #expect(try JSONDecoder().decode(InspectorLayout.self, from: saved).isFolded(.settings))
+        #expect(try JSONDecoder().decode(InspectorLayout.self, from: saved).isFolded(.scan))
         expansion.wrappedValue = true
-        #expect(!panel.layout.isFolded(.settings))
+        #expect(!panel.layout.isFolded(.scan))
     }
 
     @Test func roundingBindingWritesOnlyChanges() {

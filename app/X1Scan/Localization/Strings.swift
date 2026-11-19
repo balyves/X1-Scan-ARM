@@ -309,9 +309,30 @@ enum Strings {
     static func panelSection(_ section: PanelSection) -> String {
         switch section {
         case .original: String(localized: "Original", comment: "Panel section: the film")
-        case .settings: String(localized: "Settings", comment: "Panel section: Main / Advanced")
+        case .scan: String(localized: "panel.section.scan", defaultValue: "Scan",
+                           comment: "Panel section: resolution, scale, sizes")
         case .histogram: String(localized: "Histogram", comment: "Palette title")
         case .output: String(localized: "Output", comment: "Panel section: export")
+        }
+    }
+
+    /// The values a folded section shows next to its title; empty: none.
+    @MainActor
+    static func panelSummary(_ section: PanelSection, model: AppModel) -> String {
+        let settings = model.scanSettings
+        switch section {
+        case .original:
+            let film = filmType(settings.filmType)
+            guard let holder = model.selectedHolder else { return film }
+            return "\(film) · \(holderName(holder))"
+        case .scan:
+            let ppi = String(localized: "ppi", comment: "Unit: pixels per inch")
+            let scale = (Double(settings.scalePercent) / 100).formatted(.percent.grouping(.never))
+            return "\(settings.resolution.formatted(.number.grouping(.never))) \(ppi) · \(scale)"
+        case .histogram:
+            return ""
+        case .output:
+            return exportFormat(model.exportSettings.format)
         }
     }
 
