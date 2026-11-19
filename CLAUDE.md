@@ -177,7 +177,10 @@ available; ask.
 - `X1Kit/`: Swift package (transport, protocol, preview sequence, image,
   scan decoding in `X1Image/ScanDecoding.swift`, holder code in
   `X1Image/HolderCode.swift`); `swift test` runs against
-  the simulator, never against a real scanner.
+  the simulator, never against a real scanner. `X1Geometry`: the window
+  calculator and its guard, simulator only, rule 4 unchanged (no
+  dependency, not in the X1Kit product: nothing in the app or the
+  transport can reach it; docs/decisions.md, "Window calculator").
 - `app/`: macOS application. `X1Scan.xcodeproj` and `X1Scan/` (AppKit
   shell, SwiftUI settings panel and tool column, String Catalog; `Icon/`:
   the app icon, its two SVG layers and the Icon Composer document,
