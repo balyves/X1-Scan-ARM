@@ -324,7 +324,7 @@ holder_size() {  # holder_size STEP: reference and opening in mm and inches (hol
         1)  echo "réf. 50200403, ouverture 57 × 70 mm (2¼″ × 2,76″)" ;;
         15) echo "réf. 50200428, ouvertures 57 × 57 / 57 × 42,5 mm (2¼″ × 2¼″ / 2¼″ × 1⅔″)" ;;
         16) echo "réf. 50200404, deux vues de 57 × 57 mm (2¼″ × 2¼″)" ;;
-        17) echo "réf. 50200401, ouverture 24 × 35 mm (0,94″ × 1,38″)" ;;
+        17) echo "réf. 50200401, deux ouvertures de 24 × 35 mm, une horizontale et une verticale (0,94″ × 1,38″)" ;;
         18) echo "réf. 50200402, ouverture 94 × 119 mm (3,70″ × 4,69″)" ;;
         19) echo "réf. 50200416, six vues, ouverture 24 × 226 mm (0,94″ × 8,9″)" ;;
         20) echo "réf. 50200405, ouverture 57 × 90 mm (2¼″ × 3,54″)" ;;
@@ -402,8 +402,9 @@ do_step() {  # do_step STEP: shows the step, waits, notes, screenshots
         say "Changez de porte-film : $holder."
         say "  $size"
         if [ "$s" = 17 ]; then
-            say "  Le 24×36 à UNE seule vue, étiqueté « 24x35 / 35x24 » (FlexColor affiche"
-            say "  « 24x36 / 36x24 ») : pas le 24×36×4 ni le 24×36×6 (bandes de vues)."
+            say "  Le 24×36 / 36×24 à deux ouvertures (une horizontale, une verticale),"
+            say "  étiqueté « 24x35 / 35x24 » (FlexColor affiche « 24x36 / 36x24 ») :"
+            say "  pas le 24×36×4 ni le 24×36×6 (bandes de vues)."
         fi
         say "Notez la référence imprimée dessus."
         wait_enter "Entrée quand le porte-film $holder est en place."
@@ -498,6 +499,9 @@ do_part_h() {  # do_part_h STEP
     state "allumé" "ouvert sous lldb (capture en cours)"
     say "Cadre : $frame."
     say "Résolution : $res ppi. Pas de nouvel aperçu."
+    if [ "$s" = 24 ]; then
+        say "Vérifiez que le Zoom de FlexColor est à 100 % (sinon il scanne à PPP × zoom)."
+    fi
     if [ "$s" -ge 25 ] && [ "$s" -le 26 ]; then
         say "Ne touchez pas au cadre : seule la résolution change (champ PPP de FlexColor)."
     fi
@@ -538,8 +542,9 @@ do_part_i() {  # do_part_i STEP
     say "Porte-film : $holder."
     say "  $(holder_size "$key")"
     if [ "$s" = 41 ]; then
-        say "  Le 24×36 à UNE seule vue, étiqueté « 24x35 / 35x24 » (FlexColor affiche"
-        say "  « 24x36 / 36x24 ») : pas le 24×36×4 ni le 24×36×6 (bandes de vues)."
+        say "  Le 24×36 / 36×24 à deux ouvertures (une horizontale, une verticale),"
+        say "  étiqueté « 24x35 / 35x24 » (FlexColor affiche « 24x36 / 36x24 ») :"
+        say "  pas le 24×36×4 ni le 24×36×6 (bandes de vues)."
     fi
     if [ "$s" = 38 ] || [ "$s" = 40 ]; then
         say "  (Ce passage par le 6×7 remet à zéro le réglage que FlexColor garde du"
@@ -551,7 +556,7 @@ do_part_i() {  # do_part_i STEP
     fi
     wait_enter "Entrée quand le porte-film $holder est en place."
     note "étape $s : porte-film $holder en place"
-    typed_note "$s" "Référence imprimée sur le porte-film (Entrée si absente ou illisible) :" "référence du porte-film"
+    typed_note "$s" "Tapez le numéro de référence imprimé sur le porte-film (ex. 50200403 ; Entrée s'il n'y en a pas) :" "référence du porte-film"
     start_capture "$name"
     say "Dans FlexColor : cliquez sur Aperçu. Ne touchez pas au menu Format."
     wait_enter "Entrée quand l'aperçu est fini."

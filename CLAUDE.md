@@ -137,8 +137,9 @@ available; ask.
   without a preview between them), `preview-sequence-warm-3` to `-5` and
   `holders/` (one preview per holder, and the holder code lines, §13)
   document FlexColor; tests read `-warm-3` to `-5` and the code lines;
-  `scan-windows-2026-11-18.json` (windows and positions only, of the part G
-  captures) is read by `ScanWindowRulesTests` (§9, "Window rules"). See `tests/fixtures/README.md`.
+  `scan-windows-2026-11-18.json` and `-19.json` (windows and positions only,
+  of the part G, H and I captures) are read by `ScanWindowRulesTests` (§9,
+  "Window rules"). See `tests/fixtures/README.md`.
 - `tools/decode/`: preview and scan decoders (Python, numpy, Pillow;
   `decode_scan.py --compare` also needs tifffile).
 - `X1Kit/`: Swift package (transport, protocol, preview sequence, image,

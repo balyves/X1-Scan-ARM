@@ -712,3 +712,33 @@ implemented yet).
 
 `InfoPlist.xcstrings`: the bundle names Xcode extracted (CFBundleName,
 CFBundleDisplayName) are kept, with the French value "X1 Scan".
+
+## 2026-11-19: parts H and I captured (original calibration)
+
+Both done with the guide, 08:21-09:12, the last captures with the X1's
+original calibration (protocol.md §9, §12, §13; `scan-windows-2026-11-19.json`):
+
+- Part H: FlexColor's zoom was at 160 %, so it scanned at PPP × 1.6
+  (3 200 and 960 ppi). The untouched frame gave 59 542 at 3 200 ppi (twice)
+  and 59 515 at 960 ppi: offset 62 follows the window at each resolution,
+  but no formula of the window's values alone is exact (best within about
+  ±10 units, 0.01 mm). FlexColor probably uses its own frame coordinates
+  [hypothesis]. The lens model of offsets 54 / 58 matched a seventh,
+  unfitted value (O = 2 880) within 1. Four of the eight scans skipped the
+  calibration and references (rule unknown). A scan cancelled during the
+  400-line step shows how FlexColor stops there: no more reads, 0xDF
+  polled until `00 00`, then `DB` and `CF 00 02 80`. The heights typed at
+  steps 30 and 31 were not taken; the step of that field is not known.
+- Part I: the nine codes match the table; for the 6×7, 6×9, 6×6 / 6×4.5,
+  6×6×2, 4×5, 24×36×6 and 24×36 runs, the commands up to the code read
+  are those of our warm sequence; the 6×7 run is `preview-sequence.json`
+  itself, and the 6×6 / 6×4.5 and 6×6×2 runs repeat 2026-11-18 to the end,
+  low-resolution passes included, with another original. Every holder read
+  now has a warm first preview starting like ours. The references typed
+  were not the numbers: the guide's question is clearer now.
+
+The guide now says that the 24×36 / 36×24 holder (50200401) has two
+openings, one horizontal and one vertical (holders.json still lists one
+24 × 35 mm opening: to be corrected after the user's answer), and asks to check FlexColor's
+zoom at 100 % in part H. README roadmap: moving the crop frame with the
+keyboard (arrows one step, Shift + arrows ten), with VoiceOver.

@@ -92,6 +92,15 @@ size and the frame asked; per capture, the holder FlexColor showed and the
 code slots read (docs/protocol.md §13). Read by `ScanWindowRulesTests`
 (protocol.md §9, "Window rules").
 
+## scan-windows-2026-11-19.json
+
+Same format as `scan-windows-2026-11-18.json`, from the FlexColor
+captures of 2026-11-19 (docs/test-session.md parts H and I: `essai-L`,
+`essai-M1` to `-M9`). For the scans of `essai-L`, the scan resolution
+(FlexColor's PPP × its zoom, 160 % that day), the PPP and zoom shown, the
+TIFF size and the frame; session 5 is a scan cancelled during the
+400-line step. Read by `ScanWindowRulesTests`.
+
 ## preview-sequence-warm-3.json, -4, -5
 
 Three warm previews of 2026-11-18, FlexColor restarted before each (794,

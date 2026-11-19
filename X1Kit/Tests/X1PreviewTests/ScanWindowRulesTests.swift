@@ -4,8 +4,8 @@ import Testing
 import X1TestSupport
 
 /// The rules behind FlexColor's scan windows (docs/protocol.md §9, "Window
-/// rules"), checked on the 15 scans of 2026-11-18
-/// (tests/fixtures/scan-windows-2026-11-18.json). Nothing here builds a
+/// rules"), checked on the 15 scans of 2026-11-18 and the 8 of 2026-11-19
+/// (tests/fixtures/scan-windows-2026-11-18.json, -19.json). Nothing here builds a
 /// window for the scanner: these rules are a [hypothesis] for a future
 /// window calculator, and this test shows that they reproduce every captured
 /// value.
@@ -39,6 +39,7 @@ struct ScanWindowRulesTests {
     /// a run start, any value of 4 000 or more gives the same binning here.
     private static let holders: [String: (factor: Int, maximum: Int)] = [
         "essai-I": (10_000, 3_200),   // 6×7
+        "essai-L": (10_000, 3_200),   // 6×7 (part H)
         "essai-J3": (9_770, 6_300),   // 24×36×4
         "essai-J3-2": (10_245, 6_300), // 24×36
         "essai-J4": (8_855, 2_040),   // 4×5
@@ -70,14 +71,18 @@ struct ScanWindowRulesTests {
         let focus: Window
         let focusTarget: Int?
         let base: Window
-        let referencesFirst: Bool
+        /// Nil when FlexColor skipped the calibration and references (some scans of part H).
+        let referencesFirst: Bool?
     }
 
     private static func loadCases() throws -> [ScanCase] {
-        let url = Fixtures.directory.appending(path: "scan-windows-2026-11-18.json")
-        let file = try JSONDecoder().decode(File.self, from: Data(contentsOf: url))
+        var captures: [File.Capture] = []
+        for name in ["scan-windows-2026-11-18.json", "scan-windows-2026-11-19.json"] {
+            let url = Fixtures.directory.appending(path: name)
+            captures += try JSONDecoder().decode(File.self, from: Data(contentsOf: url)).captures
+        }
         var result: [ScanCase] = []
-        for capture in file.captures {
+        for capture in captures {
             for session in capture.sessions {
                 guard let scan = session.scan else { continue }
                 var windows: [(Window, Int?)] = []
@@ -97,12 +102,11 @@ struct ScanWindowRulesTests {
                 }
                 let label = "\(capture.capture) session \(session.session)"
                 let focus = try #require(focusIndex, "\(label): no 400-line window")
-                let references = try #require(referencesIndex, "\(label): no white and black references")
                 result.append(ScanCase(capture: capture.capture, session: session.session, scan: scan,
                                        image: try #require(image, "\(label): no image window"),
                                        focus: windows[focus].0, focusTarget: windows[focus].1,
                                        base: windows[try #require(focus > 0 ? focus - 1 : nil)].0,
-                                       referencesFirst: references <= focus))
+                                       referencesFirst: referencesIndex.map { $0 <= focus }))
             }
         }
         return result
@@ -112,9 +116,13 @@ struct ScanWindowRulesTests {
 
     private var cases: [ScanCase] { get throws { try Self.loaded.get() } }
 
-    @Test func fifteenScans() throws {
-        #expect(try cases.count == 15)
+    @Test func twentyThreeScans() throws {
+        #expect(try cases.count == 23)
         #expect(try cases.filter { $0.capture == "essai-I" }.count == 12)
+        #expect(try cases.filter { $0.capture == "essai-L" }.count == 8)
+        // Part H: FlexColor skipped the calibration and references in four scans.
+        #expect(try cases.filter { $0.referencesFirst == nil }.map(\.session) == [6, 8, 9, 10])
+        #expect(try cases.filter { $0.capture != "essai-L" }.allSatisfy { $0.referencesFirst != nil })
     }
 
     /// Resolution, binning, width and lines of the image window.
@@ -130,7 +138,9 @@ struct ScanWindowRulesTests {
             #expect(c.image.lines == c.scan.tiff_height * 5 / 3 + 2 * gap + 2, "\(label)")
             // White and black references before the 400-line step at an optical
             // resolution of 3 000 and above, after it at 2 400 and below.
-            #expect(c.referencesFirst == (c.scan.ppi * binning >= 3_000), "\(label)")
+            if let first = c.referencesFirst {
+                #expect(first == (c.scan.ppi * binning >= 3_000), "\(label)")
+            }
         }
     }
 
@@ -163,14 +173,15 @@ struct ScanWindowRulesTests {
     /// of O, §9; essai-I's scans have four of them: 2 000, 2 400, 3 000,
     /// 3 200), within 1.
     @Test func sixBySevenOptics() throws {
-        let sixBySeven = try cases.filter { $0.capture == "essai-I" }
-        #expect(Set(sixBySeven.map { $0.scan.ppi * $0.image.binning }) == [2_000, 2_400, 3_000, 3_200])
+        let sixBySeven = try cases.filter { $0.capture == "essai-I" || $0.capture == "essai-L" }
+        // essai-L adds O = 2 880 (960 ppi at binning 3), a value not used to fit the model.
+        #expect(Set(sixBySeven.map { $0.scan.ppi * $0.image.binning }) == [2_000, 2_400, 2_880, 3_000, 3_200])
         for c in sixBySeven {
             let optical = Double(c.scan.ppi * c.image.binning)
             let o58 = 1_136_908 - 896_886_417 / optical
             let o54 = 1_094_694 - 896_148_801 / optical - 112.511 * optical
-            #expect(abs(Double(c.base.o58) - o58) <= 1, "session \(c.session)")
-            #expect(abs(Double(c.base.o54) - o54) <= 1, "session \(c.session)")
+            #expect(abs(Double(c.base.o58) - o58) <= 1, "\(c.capture) session \(c.session)")
+            #expect(abs(Double(c.base.o54) - o54) <= 1, "\(c.capture) session \(c.session)")
         }
     }
 

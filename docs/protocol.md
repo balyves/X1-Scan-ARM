@@ -323,19 +323,37 @@ of three values are in capture order: 2 000, 1 000 and 3 200 ppi.
   It follows the position of the frame along the drum:
   62 ≈ 15 500 + 28 800 × (offset 18 + (offset 26 − 2 × gap − 2) ÷ 2) ÷
   (ratio ÷ 10 000), the middle of the frame's lines without the priming
-  lines (§10), in inches at the scan's line pitch, reproduces all 20
-  scans (2026-11-17 and -18, four holders, 600 to 3 200 ppi) within 21
-  **[confirmed]** for those values; `ScanWindowRulesTests` checks it on
-  the 15 scans of 2026-11-18. So offset 62
+  lines (§10), in inches at the scan's line pitch, reproduces all 25
+  windows (24 distinct scans of 2026-11-17 to -19 and the one cancelled;
+  four holders, 600 to 3 200 ppi)
+  within −6 to +21 **[confirmed]** for those values; `ScanWindowRulesTests`
+  checks it on the 23 scans of 2026-11-18 and -19. So offset 62
   is the drum position of the line where the focus is measured (the
   400-line step reads the middle of the frame, §12), 15 500 being line 0
   of every other window, at 28 800 per inch (one unit = 1/28 800 in ≈
   0.88 µm; 15 500 ≈ 13.67 mm from position 0 of offset 62). **[hypothesis]**, strongly
-  supported. docs/test-session.md part H lists the scans that would show
-  the rounding. The exact rounding is not known (computed − captured: −6 to +21, 17 of
-  the 20 positive, mean about +7: the constant or the rounding may differ
-  slightly): a
-  calculator can compute it to within about 0.02 mm, not byte for byte.
+  supported.
+
+  **Part H (2026-11-19, essai-L)**. FlexColor's zoom was at 160 %: it
+  scanned at PPP × 1.6 (3 200 ppi for "2 000", 960 for "600";
+  `ScanWindowRulesTests`), so the frame left untouched was read twice at
+  3 200 ppi and once at 960 ppi, with 59 542, 59 542 and 59 515.
+  **[confirmed]** Offset 62 depends on the resolution, so it is not one
+  fixed position of the frame. **[confirmed]** Whether it follows the
+  window or FlexColor's own rounded coordinates is not known: from the
+  windows the two values should differ by 14.4, they differ by 27.
+  **[hypothesis]** No formula of the window's values
+  alone gives it exactly: of the forms tried (the middle at offset 18 +
+  offset 26 ÷ 2 − gap − 1, − 1.5 or − 2 lines, with truncation, rounding or
+  none), the best matches 4 of the 25 windows, and the others stay within
+  about ±10 (−9 to +12 with − 1.5). A free fit gives 15 500 (±1), 1.000 ×
+  offset 18, 0.500 × offset 26, −1.03 to −1.04 × gap and −1.9 lines
+  (residuals within 8). **[confirmed]** That the form is right and the
+  remainder is rounding: **[hypothesis]**.
+  FlexColor probably computes it from its own frame coordinates, which it
+  also rounds to the window's lines (at 960 ppi it may also have moved the
+  frame to its output pixel grid). **[hypothesis]** A calculator can give
+  it within about ±12 units (0.01 mm), not byte for byte.
 
 **Window rules** (2026-11-18: 12 scans with the 6×7 holder in one
 FlexColor run, the same 1.0 × 1.0 cm frame at 600, 1 000, 1 500, 2 000,
@@ -387,7 +405,9 @@ on the captures.
   − 112.511 × *O* reproduce, within 1, the six values of *O* seen with
   that holder or at the start of a session (1 600, 2 000, 2 400, 2 656,
   3 000, 3 200); at 3 541 (start of the cold session of essai-K, §12) both
-  are 1 000 below. 58 linear in 1 / *O* and 54 in
+  are 1 000 below. A seventh value, not used for the fit, also matches
+  within 1: *O* = 2 880 (960 ppi at binning 3, part H: 459 499 / 825 489).
+  **[confirmed]** 58 linear in 1 / *O* and 54 in
   *O* and 1 / *O* is what a lens to film distance and a total track give
   for a thin lens at magnification ∝ *O*: offsets 54 and 58 move the CCD
   and the lens (zoom and focus). **[hypothesis]**, strongly supported. With
@@ -728,6 +748,26 @@ cold capture of 2026-11-16 (16 000 000) and that of the morning of
 FlexColor keeps between runs, not the X1. Our cold sequence always sends
 the windows of 2026-11-16, whatever FlexColor would have chosen.
 
+**Scans without calibration** (part H, 2026-11-19, essai-L). Of the eight
+scans of one FlexColor run, four (sessions 6, 8, 9, 10) have no
+calibration at the scan resolution and no white and black references:
+only the image window, the 400-line step and the image. **[confirmed]**
+They came 1.7 to 6.3 minutes after the last calibrated scan of the same
+resolution and holder (sessions 6, 8, 9, 10: 2.6, 1.7, 5.0, 6.3 min);
+session 7 calibrated again 4.1 minutes after session 4, in the same range.
+**[confirmed]** So time alone does not decide it; what does is unknown.
+**[hypothesis]**
+
+**A scan cancelled during the 400-line step** (essai-L session 5). After
+`1b 00 08 06 01 00` and one line read, FlexColor read no more lines; it
+kept polling 0xDF, which stayed `00 06` for about 10 s, then `00 00`; then
+it sent `DB` and `CF 00 02 80`, and nothing else outside the 0xDF / 0xD3
+polling. **[confirmed]** (one case) This is how FlexColor stops in that
+step; whether it is the same in other steps is unknown. FlexColor waits
+for `00 00` **before** `DB`; our emergency stop sends `DB` first, then
+waits (docs/decisions.md). **[confirmed]** A fact to keep in mind; the
+rule is not changed.
+
 ## 13. Holder detection (FlexColor 4.8.13)
 
 Capture of 2026-11-18 (`tests/fixtures/holders/`): X1 warm, eight
@@ -796,7 +836,7 @@ for that holder, whatever holder came before. **[confirmed]** (eight
 holders, the 24×36×4 twice). The low-resolution passes occur for the
 same holders (6×6 / 6×4.5, 6×6×2, 24×36), at full CCD width since each is
 the first session of its run. At step 17 the 24×36×4 was first put in by
-mistake (the single-frame 24×36 is labelled "24x35 / 35x24", FlexColor
+mistake (the 24×36 / 36×24, with two openings, is labelled "24x35 / 35x24", FlexColor
 shows "24x36 / 36x24"): FlexColor read 7, 13, 14, 15 and made the 24×36×4
 preview; the step was made again with the 24×36 (code 15). The X1 and
 FlexColor did not report any holder as unknown, Hasselblad's or not.
@@ -838,3 +878,26 @@ two strips, not for 6×6 / 6×4.5 and 24×36. **[hypothesis]**
 values (`00 04`, `00 8f`, `00 c6`, `00 71`, `00 da`, …) in every session,
 with no value tied to a holder. **[confirmed]**
 
+**Part I (2026-11-19, essai-M1 to M9): one first preview per holder, each
+run after one with a 6×7-type holder.** Every holder's code matches the
+table above, the two 6×7 runs that followed a 4×5 and a 24×36×6 included
+(read at another pitch). **[confirmed]** (nine captures) From
+`CF 00 01 80` on, outside 0xDF / 0xD3 / 0xEE polling (the reads before it
+come in another order), the commands and data sent up to the code read
+are identical to `preview-sequence.json` for the 6×7, 6×9, 6×6 / 6×4.5,
+6×6×2, 4×5, 24×36×6 and 24×36 runs (different, as expected, for the two
+reset runs). **[confirmed]** In the same sense, the 6×7
+run is identical to `preview-sequence.json` to the end; the 6×6 / 6×4.5
+and 6×6×2 runs, with another original than on 2026-11-18 (as asked by
+the guide; not checked on the images), are identical to the captures of
+2026-11-18 to the end, low-resolution passes included. **[confirmed]** So
+those passes did not depend on the original here. **[hypothesis]** (two
+holders, two originals each) The 24×36 passes differ slightly from those
+of 2026-11-18 (ratios 558 445 / 563 603 against 558 443 / 563 653, same
+offsets 18 and lines); the run of 2026-11-18 (essai-J3-2) had a cold-type
+start (table of §12).
+**[confirmed]** The preview windows (ratio, lines, 54 / 58) are the same
+as on 2026-11-18 for every holder. **[confirmed]** With the 24×36×4 runs
+of 2026-11-18, there is now, for each of the eight holders read, a warm
+first preview whose commands up to the code read are those of our warm
+sequence. **[confirmed]**

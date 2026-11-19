@@ -665,7 +665,8 @@ Format menu not touched. `tools/capture/guided-session.sh --part H` (or
 part H.
 
 23. Launch FlexColor (essai-L), make a preview.
-24. Frame 0.50 × 0.50 cm at the centre of the opening (frame P0): scan at
+24. Check that FlexColor's Zoom is 100 % (it scans at PPP × zoom). Frame
+    0.50 × 0.50 cm at the centre of the opening (frame P0): scan at
     2 000 ppi.
 25. The same frame, **untouched**: 600 ppi.
 26. The same frame, **untouched**: 3 200 ppi.
@@ -688,6 +689,27 @@ and the screenshots outside the repository. At 600 ppi the frame is about
 200 lines, fewer than the 400 of the focus step: a possible limit case
 (part G's 1.0 cm frame at 600 ppi, about 400 lines, followed the rule).
 About 15 minutes.
+
+### H1. Result of 2026-11-19, 08:21-08:44
+
+Done with the guide, still with the original calibration. FlexColor's
+zoom was at 160 %: the scans were made at 3 200 ppi ("2 000") and 960
+ppi ("600"), and FlexColor offered no more than 2 000 ppi at step 26. At
+step 27 a scan was started by mistake and cancelled during the 400-line
+step (essai-L session 5). At steps 30 and 31, the heights typed (0.53,
+0.52) were not taken: FlexColor showed 0.50 again and the windows did not
+change. Analysis: docs/protocol.md §9 (offset 62), §12;
+`tests/fixtures/scan-windows-2026-11-19.json`. The steps of 27-29 moved
+the frame by 17, then 33 and 33 lines (offset 18: 7 828, 7 845, 7 878,
+7 911): about 1/160 in, one pixel of the 160 ppi preview (33.3 lines at
+5 333 lines per inch), the step FlexColor's keyboard or mouse gave.
+
+What the heights show: a change of up to 0.03 cm of output height (0.19
+mm on the film at that zoom, about two preview lines) left the frame
+exactly as it was. Either FlexColor's step for that field is coarser, or
+the value was not taken (validation, linked width and height, or the
+zoom). These captures cannot tell which. To find out: zoom 100 %, type
+0.60 then Tab, and note what FlexColor shows.
 
 ## Part I: first preview of the holders still missing (captures "essai-M1" to "M9")
 
@@ -714,12 +736,19 @@ previous 6×7 step.
 38. 6×7 (reset) → essai-M6.
 39. 24×36×6 → essai-M7.
 40. 6×7 (reset) → essai-M8.
-41. 24×36 (single frame, labelled "24x35 / 35x24") → essai-M9.
+41. 24×36 / 36×24 (two openings, one horizontal and one vertical;
+    labelled "24x35 / 35x24") → essai-M9.
 
 At each step the guide asks for the reference printed on the holder and
 the format FlexColor shows, and notes both. Starting at step 33, it also
 asks which holder the previous FlexColor run had and notes it. About 25
 minutes.
+
+### I1. Result of 2026-11-19, 08:45-09:12
+
+Done with the guide. The references typed were not the numbers (the
+question was unclear; the guide now asks for the number). Codes,
+sequences and preview windows: docs/protocol.md §13.
 
 ## Part J: check after the X1 is recalibrated (no real preview or scan by X1 Scan before J3's verdict; J1 reads only)
 

@@ -85,6 +85,9 @@ scanning) depend on sequences captured from FlexColor:
   DNG/TIFF; settings that need a Hasselblad film profile are reported, not
   emulated (see `docs/decisions.md`).
 - Thumbnails and batch scanning of all frames of a strip.
+- Move the crop frame with the keyboard: arrow keys move it by one step
+  (one preview pixel), Shift + arrow keys by ten, with VoiceOver announcing
+  the new position and size.
 - Metadata palette (IPTC/XMP via ImageIO): credit, copyright, title,
   keywords; reusable templates applied at export; batch editing of
   already-scanned files, with a preview before writing.
