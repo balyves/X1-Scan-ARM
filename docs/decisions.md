@@ -785,17 +785,25 @@ User's decisions; nothing has been sent to the real X1.
 - **The one substitution.** The window right before `1b 00 08 06 01 00`
   (the 400-line step, protocol.md §12) carries at offset 50 the position
   just read on page 0x20, as FlexColor did (16 651 in the capture). The
-  runner sends it only if it is within the position tolerance (256) of the
-  captured 16 651; otherwise it stops before that window. At 2 000 ppi only
-  16 651 was observed there (8 081 and 24 971 come from the other two
-  scans, other resolutions and frames): the range 16 395-16 907 is the
-  user's choice, not values FlexColor was seen sending. The
+  runner sends it only if it is within the allowed range; otherwise it
+  stops before that window. Until 2026-11-19 the range was the captured
+  16 651 ± 256 (16 395-16 907), from that one capture. **Since 2026-11-19
+  (user's decision)**: 16 651, 16 907 and 16 971 ± 256, the positions
+  FlexColor measured there in the 2 000 ppi scans of
+  `scan-sequence-2000ppi.json` (2026-11-17) and
+  `scan-sequence-2000ppi-twice.json` (essai-F, 2026-11-18, another frame):
+  16 395 to 17 227 (`ScanScript.focusPositionRange`). essai-I's 16 331 (a
+  1.0 × 3.0 cm frame, 2026-11-18) is outside, by the user's choice. Reason: a real scan stopped on
+  2026-11-19 at 16 971, a position FlexColor itself had measured. The value
+  substituted is bounded the same way (it is the position read); the check
+  after the window is unchanged (± 256 around the position sent). The
   guard (`CapturedSequenceGuard.scan`) accepts that window with another
   value in the same range only, at that place only, every other byte being
   the captured one; anything else is refused. Rule 4 of CLAUDE.md says so.
 - **Two position checks around that window** (user's decision):
-  1. *Before it*: the position read just before must be within 256 of the
-     captured 16 651, or nothing more is sent (the window is not sent).
+  1. *Before it*: the position read just before must be within the allowed
+     range (16 395 to 17 227 since 2026-11-19), or nothing more is sent (the
+     window is not sent; anomaly `positionOutOfRange`).
   2. *After it*: every later page 0x20 read of the session is compared with
      the position **sent** in that window, not with 16 651: the carriage
      must have reached the target it was given, within 256. Otherwise the

@@ -759,3 +759,26 @@ at 3 200 ppi and read again at 600 ppi. Part H could not tell whether
 offset 62 follows FlexColor's own frame coordinates or the window's
 lines (zoom 160 %, two resolutions). To be captured before the
 recalibration of 2026-11-20 if possible.
+
+## 2026-11-19: real scan stopped at 16 971; focus position range widened
+
+A real scan (X1 Scan, 2 000 ppi, log x1scan-scan-121232, outside the
+repository) stopped before the window of the 400-line step: position read
+16 971, the rule then accepted 16 651 ± 256. FlexColor itself had measured
+16 907 and 16 971 there (essai-F, 2026-11-18), and our real scans 16 843
+and 16 779 (2026-11-18). The rule came from the capture of 2026-11-17
+alone. User's decision: accept 16 651, 16 907 and 16 971
+(`scan-sequence-2000ppi*.json`) ± 256: 16 395 to 17 227
+(`ScanScript.focusPositionRange`); the value sent is that position,
+so it is bounded the same way; the check after the window is unchanged
+(± 256 around the position sent). The guard accepts the same range.
+Tested on the simulator with 16 971 (and 16 395, 17 227; 16 394 and
+17 228 refused). CLAUDE.md rule 4 and decisions.md updated. Not tried on
+the real X1 yet.
+
+Positions read before that window in the captures, for reference: at
+2 000 ppi, 16 651 (2026-11-17), 16 907 and 16 971 (essai-F); in part G
+(essai-I, other frames) 16 843 five times, 16 907, and 16 331 for the
+1.0 × 3.0 cm frame; other resolutions and holders: 4 907, 6 155 (twice),
+7 691, 7 831, 8 081 (twice), 12 145, 24 203, 24 971 (in three captures:
+the 3 200 ppi scan of 2026-11-17, essai-I, essai-L).

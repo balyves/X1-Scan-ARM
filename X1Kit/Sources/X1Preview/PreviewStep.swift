@@ -30,9 +30,10 @@ public struct PreviewStep: Sendable {
         /// SET WINDOW whose target position (offset 50, LE16) is replaced by the
         /// position of the last page 0x20 read, as FlexColor did (the window of
         /// a scan's 400-line step, docs/protocol.md §9). The only substitution
-        /// allowed: the position must be within the tolerance of the captured
-        /// one, or the run stops before sending the window (docs/decisions.md).
-        case positionWindow(capturedPosition: Int)
+        /// allowed: the position must be within `allowed` (positions FlexColor
+        /// measured there ± the tolerance), or the run stops before sending the
+        /// window (docs/decisions.md).
+        case positionWindow(capturedPosition: Int, allowed: ClosedRange<Int>)
         /// READ: data kept for decoding.
         case read(ReadPurpose)
         /// 0x1B SCAN: must return `00 00`. From here on, an anomaly triggers the stop sequence.

@@ -8,8 +8,8 @@ import X1Transport
 ///
 /// Every value is the captured one, except one: the target position of the
 /// window of the 400-line step (offset 50), which FlexColor set to the
-/// position read just before, and which the runner sets the same way, within
-/// the tolerance of the captured 16 651 (`.positionWindow`; docs/decisions.md,
+/// position read just before, and which the runner sets the same way, only
+/// within `focusPositionRange` (`.positionWindow`; docs/decisions.md,
 /// "Real X1: scan"). The frame (offsets 14, 22, 26 of the image window) and
 /// the resolution are those of the capture: 609 × 614 pixels at 2 000 ppi.
 ///
@@ -24,6 +24,17 @@ public enum ScanScript {
     public static let resolution = 2000
     /// Position captured just before the 400-line window, and its target there.
     public static let capturedFocusPosition = 16651
+    /// The positions `focusPositionRange` is built from: those FlexColor measured just
+    /// before the 400-line window in the 2 000 ppi scans of `scan-sequence-2000ppi.json`
+    /// (16 651, the scan replayed) and `scan-sequence-2000ppi-twice.json` (16 907 and
+    /// 16 971, essai-F, another frame). Not every 2 000 ppi capture: essai-I's 16 331
+    /// (a 1.0 × 3.0 cm frame) is left out, by the user's choice.
+    public static let observedFocusPositions = [16651, 16907, 16971]
+    /// The positions accepted before the 400-line window, and so the targets that
+    /// may be sent: 16 651 − 256 to 16 971 + 256 (user's decision of 2026-11-19,
+    /// docs/decisions.md, "Real X1: scan"; `ScanRunTests` checks it against
+    /// `observedFocusPositions`).
+    public static let focusPositionRange = 16_395...17_227
 
     public static let flexColor4813Scan2000ppi: [PreviewStep] = {
         var builder = ScanBuilder()
@@ -126,7 +137,8 @@ struct ScanBuilder {
         status(ScanScript.capturedFocusPosition); thenWait()
         page(0x24, 32)
         status(ScanScript.capturedFocusPosition); thenWait()
-        add(X1Command.setWindow(ScanWindow.focus), .positionWindow(capturedPosition: ScanScript.capturedFocusPosition))
+        add(X1Command.setWindow(ScanWindow.focus), .positionWindow(capturedPosition: ScanScript.capturedFocusPosition,
+                                                                   allowed: ScanScript.focusPositionRange))
         thenWait()
         add(X1Command.focusSweep(), .scan); thenWait(.afterFocusSweep)
         for _ in 0..<400 { read(lines: 1, calibration: false, pixels: ScanScript.pixelsPerLine, .focusLine) }

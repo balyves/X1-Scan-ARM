@@ -81,8 +81,11 @@ Scope: **Flextight X1 only**. Other Flextight / Imacon models are out of scope.
      decision of 2026-11-17, docs/decisions.md, "Real X1: scan"): the
      target position (bytes 50-51) of the window right before `1b 00 08 06
      01 00` carries the position read on page 0x20 just before, as FlexColor
-     does, only if it is within the position tolerance (256) of the captured
-     one; otherwise the scan stops before that window. Later page 0x20
+     does, only if it is within 16 395 to 17 227: 16 651, 16 907 and 16 971
+     (FlexColor's 2 000 ppi scans of `scan-sequence-2000ppi*.json`) ± 256;
+     essai-I's 16 331 (a 1.0 × 3.0 cm frame) is outside, by the user's choice
+     (decision of 2026-11-19, `ScanScript.focusPositionRange`); otherwise the
+     scan stops before that window. Later page 0x20
      reads are compared with the position sent (tolerance 256). Every other byte of
      every command stays the captured one, and the guard
      (`CapturedSequenceGuard.scan`) accepts no other difference. The 0xDF

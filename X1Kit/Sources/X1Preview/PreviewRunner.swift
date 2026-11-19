@@ -160,17 +160,16 @@ public struct PreviewRunner: Sendable {
 
     /// The command to send for `step`: the captured one, or for
     /// `.positionWindow` the captured window with the last measured position
-    /// at offset 50, if it is within the tolerance of the captured position.
+    /// at offset 50, if it is within the allowed range.
     private func substituted(_ step: PreviewStep, lastPosition: Int?,
                              progress: PreviewEventHandler?) throws -> SCSICommand {
-        guard case .positionWindow(let captured) = step.kind else { return step.command }
+        guard case .positionWindow(let captured, let allowed) = step.kind else { return step.command }
         guard let measured = lastPosition else { throw PreviewAnomaly.malformedResponse("no position read before the window") }
         if measured != captured {
             progress?(.positionDifference(expected: captured, measured: measured, checked: true))
         }
-        guard abs(measured - captured) <= configuration.positionTolerance, (0...0xFFFF).contains(measured) else {
-            throw PreviewAnomaly.positionOutOfTolerance(expected: captured, measured: measured,
-                                                        tolerance: configuration.positionTolerance)
+        guard allowed.contains(measured), (0...0xFFFF).contains(measured) else {
+            throw PreviewAnomaly.positionOutOfRange(measured: measured, allowed: allowed)
         }
         var data = step.command.dataOut
         guard data.count >= 54, Int(data[50]) | Int(data[51]) << 8 == captured, data[52] == 0, data[53] == 0 else {
@@ -351,6 +350,8 @@ public enum PreviewAnomaly: Error, Hashable, CustomStringConvertible {
     case unexpectedIdentity(vendor: String, product: String)
     case unexpectedScanResponse([UInt8])
     case positionOutOfTolerance(expected: Int, measured: Int, tolerance: Int)
+    /// Before the window of a scan's 400-line step: outside the positions accepted there.
+    case positionOutOfRange(measured: Int, allowed: ClosedRange<Int>)
     /// The read before the warm sequence's window with target 25 000 is too far
     /// from the capture: stopped before that window.
     case unexpectedCarriagePosition(captured: Int, measured: Int, tolerance: Int)
@@ -396,6 +397,9 @@ public enum PreviewAnomaly: Error, Hashable, CustomStringConvertible {
                 + "(tolerance \(tolerance)); stopped before the window with target 25 000"
         case .positionOutOfTolerance(let expected, let measured, let tolerance):
             "measured position \(measured), expected \(expected) (tolerance \(tolerance))"
+        case .positionOutOfRange(let measured, let allowed):
+            "measured position \(measured) before the focus step, accepted \(allowed.lowerBound) to \(allowed.upperBound) "
+                + "(positions FlexColor measured there ± tolerance); stopped before that window"
         case .lineCounterWentBack(let previous, let current):
             "line counter went back from \(previous) to \(current)"
         case .unexpectedState(let state, let target):

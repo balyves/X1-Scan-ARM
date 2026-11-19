@@ -20,10 +20,10 @@ import Synchronization
 ///   `DB 00 00 00 00 00` (stop) is accepted out of order; after that stop
 ///   only 0xDF is allowed;
 /// - after the last captured command, only polls;
-/// - one substitution, for a scan only (`scan(fixture:positionTolerance:)`):
+/// - one substitution, for a scan only (`scan(fixture:allowedPositions:)`):
 ///   the target position (bytes 50-51) of the window right before
 ///   `1b 00 08 06 01 00` may differ from the captured one, within the
-///   tolerance; every other byte of that window must be the captured one
+///   allowed positions; every other byte of that window must be the captured one
 ///   (docs/decisions.md, "Real X1: scan").
 /// Anything else is refused before it reaches the scanner.
 public final class CapturedSequenceGuard: Sendable {
@@ -80,21 +80,22 @@ public final class CapturedSequenceGuard: Sendable {
     /// Several captured sequences; `excluding` lists commands (CDB and
     /// length) to leave out of every capture.
     public convenience init(alternatives fixtures: [CaptureFixture], excluding: [SCSICommand] = []) throws(SetupError) {
-        try self.init(alternatives: fixtures.map(\.exchanges), excluding: excluding, positionTolerance: nil)
+        try self.init(alternatives: fixtures.map(\.exchanges), excluding: excluding, allowedPositions: nil)
     }
 
     /// The scan session of a scan capture (from its last `CF 00 01 80`), with
     /// the one substitution allowed: the target position of the window right
-    /// before `1b 00 08 06 01 00`, within `positionTolerance` of the captured one.
-    public static func scan(fixture: CaptureFixture, positionTolerance: Int) throws(SetupError) -> CapturedSequenceGuard {
-        guard positionTolerance >= 0 else { throw .noSequence }
+    /// before `1b 00 08 06 01 00`, within `allowedPositions`, which must contain
+    /// the captured one.
+    public static func scan(fixture: CaptureFixture, allowedPositions: ClosedRange<Int>) throws(SetupError) -> CapturedSequenceGuard {
+        guard allowedPositions.lowerBound >= 0, allowedPositions.upperBound <= 0xFFFF else { throw .noSequence }
         guard let start = fixture.exchanges.lastIndex(where: { $0.cdb == "cf 00 01 80 00 00" }) else { throw .noSequence }
         return try CapturedSequenceGuard(alternatives: [Array(fixture.exchanges[start...])], excluding: [],
-                                         positionTolerance: positionTolerance)
+                                         allowedPositions: allowedPositions)
     }
 
     private init(alternatives exchangeLists: [[CaptureExchange]], excluding: [SCSICommand],
-                 positionTolerance: Int?) throws(SetupError) {
+                 allowedPositions: ClosedRange<Int>?) throws(SetupError) {
         guard !exchangeLists.isEmpty else { throw .noSequence }
         var sequences: [[SCSICommand]] = []
         var scans: [Int] = []
@@ -108,12 +109,13 @@ public final class CapturedSequenceGuard: Sendable {
             }
             guard let scan = commands.firstIndex(where: { $0.opcode == 0x1B }) else { throw .noScan }
             var substitution: [Int: ClosedRange<Int>] = [:]
-            if let tolerance = positionTolerance {
+            if let allowed = allowedPositions {
                 guard let sweep = commands.firstIndex(where: { $0.cdb == Self.focusSweep }), sweep > 0,
                       commands[sweep - 1].opcode == 0x24, commands[sweep - 1].dataOut.count >= 54 else { throw .noScan }
                 let data = commands[sweep - 1].dataOut
                 let captured = Int(data[50]) | Int(data[51]) << 8
-                substitution[sweep - 1] = max(captured - tolerance, 0)...min(captured + tolerance, 0xFFFF)
+                guard allowed.contains(captured) else { throw .noScan }
+                substitution[sweep - 1] = allowed
             }
             sequences.append(commands)
             scans.append(scan)

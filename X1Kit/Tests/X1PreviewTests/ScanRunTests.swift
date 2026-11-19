@@ -13,7 +13,11 @@ struct ScanRunTests {
     static let fixtureURL = Fixtures.directory.appending(path: "scan-sequence-2000ppi.json")
     /// First exchange of the scan session in the capture.
     static let sessionSeq = 834
-    static let windowIndex = script.firstIndex { $0.kind == .positionWindow(capturedPosition: 16651) }!
+    static let windowIndex = script.firstIndex {
+        if case .positionWindow = $0.kind { return true } else { return false }
+    }!
+    /// Positions accepted before the 400-line window: 16 651, 16 907, 16 971 ± 256.
+    static let allowed = 16395...17227
     static let tolerance = PreviewConfiguration.defaultPositionTolerance
 
     static func fixture() throws -> CaptureFixture { try CaptureFixture.load(from: fixtureURL) }
@@ -23,7 +27,7 @@ struct ScanRunTests {
     }
 
     static func scanGuard() throws -> CapturedSequenceGuard {
-        try CapturedSequenceGuard.scan(fixture: fixture(), positionTolerance: tolerance)
+        try CapturedSequenceGuard.scan(fixture: fixture(), allowedPositions: allowed)
     }
 
     static func runner(_ transport: any SCSITransport) -> PreviewRunner {
@@ -70,12 +74,17 @@ struct ScanRunTests {
         #expect(capture.image.reduce(0) { $0 + $1.count } == 1023 * ScanScript.pixelsPerLine * 6)
     }
 
-    /// Within the tolerance, the window of the 400-line step carries the
-    /// position read just before; the guard lets that window through.
-    @Test(arguments: [64, -192, 256])
+    /// Within the range, the window of the 400-line step carries the
+    /// position read just before; the guard lets that window through. 320:
+    /// 16 971, the position of the real scan stopped on 2026-11-19.
+    @Test(arguments: [64, -192, -256, 256, 320, 576])
     func theMeasuredPositionIsSubstituted(shift: Int) async throws {
         let sequence = try Self.scanGuard()
-        let faulty = FaultInjectingTransport(inner: CapturedFocusWindow(inner: try Self.simulator()),
+        // The carriage then stays at the position sent: every later read is shifted the same way
+        // (the check after the window, ± 256 around the position sent, is unchanged).
+        let later = Dictionary(uniqueKeysWithValues: ((Self.statusReadsBeforeWindow + 1)...Self.statusReads).map { ($0, shift) })
+        let carriage = StatusShifting(inner: CapturedFocusWindow(inner: try Self.simulator()), shifts: later)
+        let faulty = FaultInjectingTransport(inner: carriage,
                                              faultAtNonPollingCommand: Self.windowIndex - 1,
                                              fault: .shiftMeasuredPosition(by: shift))
         let capture = try await Self.runner(GuardedTransport(inner: faulty, sequence: sequence)).run()
@@ -108,13 +117,16 @@ struct ScanRunTests {
         #expect(capture.image.count == 52)
     }
 
+    /// Number of page 0x20 reads in the scan script.
+    static let statusReads = script.filter { $0.command.opcode == 0x5A && $0.command.cdb[2] == 0x20 }.count
+
     /// Number (1-based) of the page 0x20 read right before the substituted window.
     static let statusReadsBeforeWindow = script[..<windowIndex].filter {
         $0.command.opcode == 0x5A && $0.command.cdb[2] == 0x20
     }.count
 
     /// Beyond it, the run stops before that window: nothing more is sent.
-    @Test(arguments: [257, -300, 8000])
+    @Test(arguments: [-257, 577, 8000])
     func beyondTheToleranceNothingMoreIsSent(shift: Int) async throws {
         let faulty = FaultInjectingTransport(inner: try Self.simulator(), faultAtNonPollingCommand: Self.windowIndex - 1,
                                              fault: .shiftMeasuredPosition(by: shift))
@@ -123,7 +135,7 @@ struct ScanRunTests {
             _ = try await runner.run()
             Issue.record("the scan should have stopped")
         } catch {
-            #expect(error.anomaly == .positionOutOfTolerance(expected: 16651, measured: 16651 + shift, tolerance: 256))
+            #expect(error.anomaly == .positionOutOfRange(measured: 16651 + shift, allowed: Self.allowed))
             #expect(error.stepIndex == Self.windowIndex)
             #expect(error.emergencyStop == nil)
             #expect(await faulty.commandsAfterFault.allSatisfy { $0.opcode == 0xDF }, "only the wait after that read")
@@ -161,10 +173,22 @@ struct ScanRunTests {
         }
     }
 
-    /// A negative tolerance cannot build a guard.
-    @Test func negativeToleranceIsRefused() throws {
+    /// The range is the one decided (2026-11-19): 16 395 to 17 227.
+    @Test func theRangeIsTheDecidedOne() {
+        #expect(ScanScript.focusPositionRange == Self.allowed)
+        // The literal is the observed positions ± the tolerance.
+        let tolerance = PreviewConfiguration.defaultPositionTolerance
+        #expect(ScanScript.observedFocusPositions.min()! - tolerance == Self.allowed.lowerBound)
+        #expect(ScanScript.observedFocusPositions.max()! + tolerance == Self.allowed.upperBound)
+        #expect(ScanScript.observedFocusPositions.allSatisfy { Self.allowed.contains($0) })
+        #expect(Self.script[Self.windowIndex].kind == .positionWindow(capturedPosition: 16651, allowed: Self.allowed))
+    }
+
+    /// A range without the captured position, or beyond 16 bits, cannot build a guard.
+    @Test(arguments: [16652...17227, 0...0x10000])
+    func anInvalidRangeIsRefused(range: ClosedRange<Int>) throws {
         #expect(throws: CapturedSequenceGuard.SetupError.self) {
-            try CapturedSequenceGuard.scan(fixture: Self.fixture(), positionTolerance: -1)
+            try CapturedSequenceGuard.scan(fixture: Self.fixture(), allowedPositions: range)
         }
     }
 
@@ -213,9 +237,7 @@ struct ScanRunTests {
 /// The scan guard's single substitution.
 struct ScanGuardTests {
     private static let commands = ScanScript.flexColor4813Scan2000ppi.map(\.command)
-    private static let window = ScanScript.flexColor4813Scan2000ppi.firstIndex {
-        $0.kind == .positionWindow(capturedPosition: 16651)
-    }!
+    private static let window = ScanRunTests.windowIndex
 
     private static func withPosition(_ command: SCSICommand, _ position: Int) -> SCSICommand {
         var data = command.dataOut
@@ -230,12 +252,12 @@ struct ScanGuardTests {
         return sequence
     }
 
-    @Test(arguments: [16651 - 256, 16651, 16651 + 256])
-    func thePositionWithinTheToleranceIsAccepted(position: Int) throws {
+    @Test(arguments: [16395, 16651, 16907, 16971, 17227])
+    func thePositionWithinTheRangeIsAccepted(position: Int) throws {
         try guardAtTheWindow().check(Self.withPosition(Self.commands[Self.window], position))
     }
 
-    @Test(arguments: [16651 - 257, 16651 + 257, 0])
+    @Test(arguments: [16394, 17228, 0])
     func aPositionBeyondIsRefused(position: Int) throws {
         let sequence = try guardAtTheWindow()
         #expect(throws: TransportError.self) { try sequence.check(Self.withPosition(Self.commands[Self.window], position)) }

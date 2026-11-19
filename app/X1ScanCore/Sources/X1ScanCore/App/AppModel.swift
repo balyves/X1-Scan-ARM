@@ -405,8 +405,7 @@ public final class AppModel {
         }
         let sequence: CapturedSequenceGuard
         do {
-            sequence = try CapturedSequenceGuard.scan(fixture: fixture,
-                                                      positionTolerance: PreviewConfiguration.defaultPositionTolerance)
+            sequence = try CapturedSequenceGuard.scan(fixture: fixture, allowedPositions: ScanScript.focusPositionRange)
         } catch {
             return .failure(.noCapturedSequence(error.description))
         }
@@ -418,8 +417,9 @@ public final class AppModel {
                 "X1 Scan: FlexColor 4.8.13's captured 2 000 ppi scan replayed on the real X1, \(date.ISO8601Format())",
                 "Sequence: scan session of scan-sequence-2000ppi.json (frame 609 x 614 px at 2 000 ppi).",
                 "One substitution: the target position of the 400-line step's window is the position read",
-                "just before, within \(tolerance) of the captured 16 651; later positions are compared with",
-                "the target sent. Every position that differs is noted below.",
+                "just before, accepted from \(ScanScript.focusPositionRange.lowerBound) to "
+                    + "\(ScanScript.focusPositionRange.upperBound) (captured 16 651); later positions are compared with",
+                "the target sent (within \(tolerance)). Every position that differs is noted below.",
             ])
         } catch {
             return .failure(.log(String(describing: error)))
