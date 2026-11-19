@@ -749,3 +749,13 @@ User's decision: `holders.json` gives the 24×36 / 36×24 holder (50200401)
 its two openings, one vertical (24 × 35 mm, 0.94″ × 1.38″) and one
 horizontal (35 × 24 mm, 1.38″ × 0.94″), as the holder sheet; Settings >
 Holders shows both.
+
+## 2026-11-19: part K planned (offset 62, zoom 100 %)
+
+docs/test-session.md part K and the guide (`--part K`, steps 42-50,
+essai-N): FlexColor's zoom at 100 %, one 0.50 × 0.50 cm frame untouched
+at 3 200, 2 000, 1 000 and 600 ppi, then moved twice by one preview pixel
+at 3 200 ppi and read again at 600 ppi. Part H could not tell whether
+offset 62 follows FlexColor's own frame coordinates or the window's
+lines (zoom 160 %, two resolutions). To be captured before the
+recalibration of 2026-11-20 if possible.

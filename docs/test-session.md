@@ -547,7 +547,8 @@ launch, kept outside the repository (they hold the serial number). Purpose: the 
 
 **Guided**: `tools/capture/guided-session.sh` (copy the `tools/capture/`
 folder to the reference Mac) walks through steps 1-22 (part H: steps
-23-32, `--part H`; part I: steps 33-41, `--part I`). It starts each
+23-32, `--part H`; part I: steps 33-41, `--part I`; part K: steps 42-50,
+`--part K`). It starts each
 FlexColor run under lldb with `cap3.py` and a new name (`essai-I`,
 `essai-J1`…, `-2` added if the name exists), waits for FlexColor to be
 quit, shows each step in French with the state of the X1 and FlexColor,
@@ -802,3 +803,49 @@ the holder codes. Result:
   the `x1scan-*` logs and pass them on; do not retry with other settings.
 - Turn `EnableRealPreview` and `EnableRealScan` off again afterwards.
   **X1: off** at the end.
+
+## Part K: offset 62 again, zoom 100 % (one capture, "essai-N")
+
+Purpose: part H was made with FlexColor's zoom at 160 % (docs/protocol.md
+§9): its untouched frame was read at 3 200 and 960 ppi only, and FlexColor
+may have moved the frame to its output pixel grid at each resolution.
+Here, zoom 100 %: one frame at four resolutions, untouched, to tell
+whether offset 62 follows FlexColor's own frame coordinates (then the
+four values are equal) or the window's rounded lines (then they follow
+the window); then two moves of one preview pixel (about 1/160 in) and the
+last position again at 600 ppi. Same set-up as part H (reference Mac,
+cap3.py, the guide), **X1: on**, FlexColor launched by the guide, 6×7
+holder with the IT8 target, the Format menu not touched.
+`tools/capture/guided-session.sh --part K` (or `--from 42`).
+
+42. Launch FlexColor (essai-N), set the Zoom to **100 %**, make a preview
+    (the guide notes the zoom shown).
+43. Frame 0.50 × 0.50 cm at the centre (frame P0): scan at 3 200 ppi.
+44. The same frame, **untouched**: 2 000 ppi.
+45. The same frame, **untouched**: 1 000 ppi.
+46. The same frame, **untouched**: 600 ppi.
+47. Down by one preview pixel (one press of the down arrow): 3 200 ppi.
+48. Down by one more preview pixel: 3 200 ppi.
+49. That frame, **untouched**: 600 ppi.
+50. Quit FlexColor.
+
+Before each scan the guide asks for the zoom FlexColor shows and does
+not go on until it is 100 (FlexColor might change it when a size is
+typed). If FlexColor stops in the middle, the guide starts a new run with
+a preview and a new frame P0, and has step 43 made again first. The guide
+notes the size typed at each scan. **Keep FlexColor's TIFFs**, outside the
+repository: their sizes show FlexColor's output pixel grid at each
+resolution. FlexColor shows no frame position (only width, height, zoom,
+size and PPP): the screenshots are the only record of where the frame is.
+About 15 minutes.
+
+What will be conclusive: four values equal (±1) at steps 43-46 mean that
+FlexColor computes offset 62 from its own frame coordinates. Different
+values do not by themselves mean that it follows the window's lines: a
+frame moved to the output pixel grid at each resolution also changes it.
+To tell those apart, per resolution: offset 18 and the lines of the
+window, the TIFF size, and the size shown. Expected size of the effect:
+at 600 ppi a window line is 28.8 units (1 000 lines per inch), so if
+offset 62 follows the window it may differ from the 3 200 ppi value by up
+to about 14 units. To be made before the X1 is recalibrated (2026-11-20), like
+parts H and I.
