@@ -817,3 +817,14 @@ repository, kept for docs/test-session.md part J): with FlexColor at
 2 000 ppi (neutral settings twice, default settings once, FlexColor's
 default frame), and with X1 Scan (twice a preview then the replayed scan
 of the capture of 2026-11-17; one preview TIFF and two scan TIFFs kept).
+
+## 2026-11-19: working rules
+
+User's rules, now in CLAUDE.md: reports in a fixed form (decisions
+waiting first, then the state, then a short detail; no wide tables);
+documentation, journal and fixtures are pushed after one x1-reviewer pass
+with no blocking item, while code that talks to the scanner still needs
+the user's approval before push; one review pass for documentation, at
+most two for that code; `docs/hypotheses.md` lists the open hypotheses
+(first version); x1-reviewer plays devil's advocate on every new
+[confirmed] conclusion.

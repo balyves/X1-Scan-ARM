@@ -90,7 +90,13 @@ wrong, not for what is right. Do not approve by default.
   hypothesis must not be stated as fact, and nothing may be marked
   `[confirmed]` without a capture or a test on a real X1 behind it.
 - New findings are recorded in `docs/protocol.md` and in a dated entry of
-  `docs/journal.md`.
+  `docs/journal.md`. A new [hypothesis] has its line in `docs/hypotheses.md`;
+  one confirmed or refuted has its line removed.
+- **Devil's advocate on every new `[confirmed]` conclusion** (user's rule of
+  2026-11-19): give another explanation that would fit the same data, and
+  the capture that would refute the conclusion. If no other explanation
+  holds, say why; if one does, the conclusion is "À corriger" (mark it
+  [hypothesis] or narrow it to what was observed).
 
 ### 3. CLAUDE.md rules
 

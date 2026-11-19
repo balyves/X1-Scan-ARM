@@ -95,16 +95,44 @@ Scope: **Flextight X1 only**. Other Flextight / Imacon models are out of scope.
 5. **Instructions involving the scanner**: at every step, state explicitly
    the required state of the **X1 (on / off)** and of **FlexColor
    (open / closed)**. Only one program can open the scanner at a time.
-6. **Git**: show `git status` and a summary of the diff, and wait for the
-   user's approval before `git push`. Never force-push.
+6. **Git**: never force-push. Show `git status` and a summary of the diff
+   with every push. Who decides the push (user's decision of 2026-11-19):
+   - documentation (`docs/`, `README.md`), the journal and fixtures
+     (`tests/fixtures/`): push without waiting, once an `x1-reviewer` pass
+     has no "Bloquant" item; except the fixtures the app replays on the
+     real X1 or builds its guards from (`preview-sequence.json`,
+     `preview-sequence-cold.json`, `scan-sequence-2000ppi.json`) and the
+     sections of `docs/decisions.md` that set scanner safety (read-only
+     guard, "Real X1: …", tolerances, position ranges): those follow the
+     next point;
+   - code that talks to the scanner (the runner, the guards, the sequences
+     and scripts, the window calculator, the transport) and the files
+     above: the user's approval before every push;
+   - anything else, and any change to these rules (`CLAUDE.md`, the
+     subagents' instructions in `.claude/agents/`): the user's approval
+     before push.
 7. **Review before every commit**: run the `x1-reviewer` subagent
    (`.claude/agents/x1-reviewer.md`) on the changes, and show the user its
    full report together with `git status` and the diff summary. Fix or
-   discuss every "Bloquant" item before committing. For interface changes,
+   discuss every "Bloquant" item before committing. Number of passes: one
+   for documentation (if it has a "Bloquant" item: fix it and run one more
+   pass, or give it to the user); at most two for code that talks to the
+   scanner (points still open after the second pass go to the user, and
+   nothing is pushed until the user decides). For interface changes,
    run the `x1-ui` subagent as well and show its opinion. The pre-commit hook
    (`tools/git-hooks`, install with `git config core.hooksPath
    tools/git-hooks`) and the X1Kit CI workflow are additional checks, not a
    substitute.
+
+## Reports to the user
+
+Every report has a fixed form:
+
+1. **Décisions qui vous attendent**: numbered, first (or "aucune").
+2. **État**: commit (hash) or not, pushed or not, X1 touched or not.
+3. **Détail**: short.
+
+No wide tables (they are cut in the terminal): lists instead.
 
 ## Machines
 
@@ -123,7 +151,8 @@ available; ask.
 
 ## Repository layout
 
-- `docs/`: protocol, hardware chain, FlexColor internals, 3F format, journal.
+- `docs/`: protocol, hardware chain, FlexColor internals, 3F format, journal,
+  open hypotheses (`hypotheses.md`).
 - `tools/x1probe/`: read-only probe (C, IOKit SCSITaskUserClient).
 - `tools/capture/`: lldb capture script for FlexColor on Mojave, and its
   converter to fixtures.
@@ -176,4 +205,6 @@ Captures and raw files stay outside the repository (see `.gitignore`).
 ## When something new is learned
 
 Update `docs/protocol.md` (with [confirmed] / [hypothesis]) and add a dated
-entry to `docs/journal.md`.
+entry to `docs/journal.md`. Keep `docs/hypotheses.md` up to date: one line
+per open [hypothesis] (statement, missing evidence, capture that would
+settle it); remove the line when it is confirmed or refuted.
