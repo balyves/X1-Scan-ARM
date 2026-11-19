@@ -921,3 +921,12 @@ The crop frame now follows the image: exact quarter turns of the frame
 (named ratio exchanged) and mirror (fine angle negated), tested for the
 four turns, the mirror and back; a ratio chosen keeps the frame's
 direction. CLAUDE.md gains a line on `X1ScanCore/Geometry`.
+
+## 2026-11-19: lot 1 finished, waiting for the user's tests
+
+Lot 1 is done: steps A to F, then the grid (one thin line, with a choice
+of colour and opacity), the rule in the crop frame's colour and the noise
+zones in violet, and a test of a custom ratio turning with the frame.
+11 commits, not pushed, wait for the user's tests of the application (on
+the virtual X1, then the real one). The order of the panel's sections is
+not changed until the new organisation of the panel is approved.
