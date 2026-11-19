@@ -742,3 +742,10 @@ openings, one horizontal and one vertical (holders.json still lists one
 24 × 35 mm opening: to be corrected after the user's answer), and asks to check FlexColor's
 zoom at 100 % in part H. README roadmap: moving the crop frame with the
 keyboard (arrows one step, Shift + arrows ten), with VoiceOver.
+
+## 2026-11-19: two openings for the 24×36 / 36×24 holder
+
+User's decision: `holders.json` gives the 24×36 / 36×24 holder (50200401)
+its two openings, one vertical (24 × 35 mm, 0.94″ × 1.38″) and one
+horizontal (35 × 24 mm, 1.38″ × 0.94″), as the holder sheet; Settings >
+Holders shows both.

@@ -162,6 +162,9 @@ struct HolderTests {
         let sixBySeven = all.first { $0.reference == "50200403" }
         #expect(sixBySeven?.format == "6×7" && sixBySeven?.apertures == [HolderAperture(width: 57, height: 70)])
         #expect(all.first { $0.reference == "50200428" }?.apertures.count == 2)
+        #expect(all.first { $0.reference == "50200401" }?.apertures == [HolderAperture(width: 24, height: 35),
+                                                                       HolderAperture(width: 35, height: 24)],
+                "24×36 / 36×24: one vertical (24 × 35) and one horizontal (35 × 24) opening")
         #expect(all.first { $0.reference == "50200416" }?.frames == 6)
         #expect(all.filter(\.mountedSlides).map(\.reference) == ["50200100", "1005377"])
         #expect(all.first { $0.reference == "50200417" }?.apertures == [HolderAperture(width: 24, height: 65)])
