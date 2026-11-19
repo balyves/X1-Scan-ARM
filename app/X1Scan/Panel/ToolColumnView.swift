@@ -12,6 +12,7 @@ struct ToolColumnView: View {
             tool(.hand, "hand.raised")
             tool(.zoom, "plus.magnifyingglass")
             tool(.crop, "crop")
+            tool(.straighten, "ruler")
             gridButton
             Spacer()
         }

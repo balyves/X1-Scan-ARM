@@ -461,12 +461,12 @@ final class AppModelTests {
             return String(format: "%04d-%02d-%02d_%02d-%02d-%02d_%@.tif", parts.year!, parts.month!, parts.day!,
                           parts.hour!, parts.minute!, parts.second!, number)
         }
-        let first = try model.export(date: exportedAt).get()
+        let first = try await model.export(date: exportedAt).get()
         #expect(first.lastPathComponent == expected(exportedAt, "001"))
         #expect(first.lastPathComponent != shown)
         // A file that appears after the name was shown moves {n} on at export time.
         try Data().write(to: folder.appending(path: expected(exportedAt.addingTimeInterval(60), "001")))
-        let second = try model.export(date: exportedAt.addingTimeInterval(60)).get()
+        let second = try await model.export(date: exportedAt.addingTimeInterval(60)).get()
         #expect(second.lastPathComponent == expected(exportedAt.addingTimeInterval(60), "002"))
         #expect(model.nextExportFileName(date: exportedAt.addingTimeInterval(60))
             == expected(exportedAt.addingTimeInterval(60), "003"))
@@ -480,14 +480,14 @@ final class AppModelTests {
         await model.session.waitUntilIdle()
         model.exportSettings = ExportSettings(folder: folder, nameTemplate: "{roll}_{frame}")
         model.exportSettings.roll = "R1"
-        #expect(try model.export().get().lastPathComponent == "R1_01.tif")
-        #expect(try model.export().get().lastPathComponent == "R1_02.tif")
+        #expect(try await model.export().get().lastPathComponent == "R1_01.tif")
+        #expect(try await model.export().get().lastPathComponent == "R1_02.tif")
         #expect(model.exportSettings.frame == 3)
         model.exportSettings.incrementsFrame = false
-        #expect(try model.export().get().lastPathComponent == "R1_03.tif")
+        #expect(try await model.export().get().lastPathComponent == "R1_03.tif")
         #expect(model.exportSettings.frame == 3, "not incremented")
         model.exportSettings.folder = folder.appending(path: "missing")
-        _ = model.export()
+        _ = await model.export()
         #expect(model.exportSettings.frame == 3, "a failed export does not move the frame on")
     }
 
@@ -622,13 +622,13 @@ struct RollValidationTests {
         model.exportSettings.frame = 5
         model.exportSettings.roll = "B"   // typed, then Export clicked at once
         #expect(model.nextExportFileName() == "B_01.tif", "the preview shows what the export will write")
-        #expect(try model.export().get().lastPathComponent == "B_01.tif")
+        #expect(try await model.export().get().lastPathComponent == "B_01.tif")
         #expect(model.exportSettings.frame == 2)
 
         // A roll already started: name typed, frame set by hand without leaving the roll field.
         model.exportSettings.roll = "C"
         model.exportSettings.setFrame(5)
         #expect(model.nextExportFileName() == "C_05.tif")
-        #expect(try model.export().get().lastPathComponent == "C_05.tif", "the frame chosen is kept")
+        #expect(try await model.export().get().lastPathComponent == "C_05.tif", "the frame chosen is kept")
     }
 }

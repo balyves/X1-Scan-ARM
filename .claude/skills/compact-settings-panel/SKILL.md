@@ -8,7 +8,8 @@ description: Interface conventions for the settings panel on the right of the X1
 The panel on the right of the main window holds the scan and export
 settings. It is a working tool used for hours: dense, quiet and aligned, with
 every number readable and editable in one place. These rules apply to every
-section of the panel (today Original, Scan, Histogram, Output).
+section of the panel (today Original, Scan, Exposure, Histogram, Output;
+the crop options at the top while the crop tool is selected).
 
 ## Components (X1ScanCore, `Sources/X1ScanCore/UI/CompactPanel.swift`)
 

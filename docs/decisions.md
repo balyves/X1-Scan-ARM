@@ -1237,3 +1237,52 @@ nothing is sent to the scanner and nothing in the image changes.
 - **Advice**: planned (it will point to quality modes: several passes,
   HDR), hidden in lot 1 (`ExposureSection.showsAdvice`), because those
   modes do not exist yet.
+
+## Lot 1: layout and geometry (2026-11-19)
+
+User's brief of 2026-11-19 and decisions on the plan. No colour processing,
+and no command sent to the scanner: everything here acts on pixels already
+received, on the display or on exported files.
+
+- **Panel**: sections Original (film, holder, orientation), Scan
+  (resolution, scale, input, output), Exposure, Histogram (folded at first
+  launch), Output; a folded section shows a summary of its values. The
+  Main / Advanced tabs are gone; they come back with corrections.
+- **Recipe** (`Recipe`, JSON `"version": 1`, `<name>.x1recipe.json` next
+  to the image): orientation (quarter turns clockwise after an optional
+  horizontal mirror), fine angle (degrees, −45 to 45, steps of 0.1,
+  positive clockwise on screen), crop frame normalised in the image after
+  the quarter turns and before the fine angle (physical units: a preview
+  pixel counts 3 in height), proportions, portrait, lock, constraint. The
+  pixels are never turned in place: the frame and the angle can later be
+  written as an instruction for a raw developer (pixels not turned) in the
+  DNG of a later lot.
+- **Files** (user's decision): the scan's automatic save writes the
+  decoded scan as a TIFF, not turned or cropped (the master until the DNG;
+  "raw" in the user's words, not the raw CCD samples before the flat
+  field), with its recipe. Export (⇧⌘E) renders the recipe into the image
+  shown and writes a new file with its recipe: for a saved scan,
+  `<master>_v1.tif`, `_v2`…, the first name whose image and recipe are
+  both free, never replacing the master; for a preview, the name template
+  as before.
+- **Rendering** (`RecipeRenderer`): quarter turns and mirror are exact
+  permutations. Without a fine angle the crop takes whole pixels (no
+  resampling; a preview keeps its 1 × 3 pixels). With an angle: Lanczos-3,
+  in floating point, onto square pixels the size of the source pixel's
+  shorter side (user's decision: a preview gets 3 times more rows), then
+  the crop. With the constraint on, the frame is kept inside the turned
+  image, also when a recipe is read from a file.
+- **The scanned area is not changed.** The X1 still scans FlexColor's
+  captured window; the turned frame must fit in the area scanned. Enlarging
+  the scan window to cover a turned frame waits for the window calculator
+  to be validated by captures (TODO in `AppModel.refreshImage`).
+- **Display**: the image layers turn with the recipe (layer transforms,
+  never resampled pixels); the grid (thirds, fine, centre cross) and the
+  crop frame are overlays, never scanned or exported. The frame drawn on a
+  preview is dropped when another image (the scan) or a quarter turn
+  comes; the turns and the angle are kept.
+- **Straightening rule**: the line's direction folded into (−90°, 90°];
+  within 45° of horizontal it is made horizontal, otherwise vertical; the
+  angle is added to the current one.
+- **Not in this lot**: Auto (edges) is shown disabled; corrections, film
+  types, presets, DNG, ICC profiles, quality modes are left out.

@@ -6,8 +6,11 @@ public enum Tool: String, Sendable, Hashable, CaseIterable, Codable {
     case hand
     /// Click to zoom in, Option-click to zoom out.
     case zoom
-    /// Draw a framing rectangle. No effect on the scan at this stage.
+    /// Draw, move and resize the crop frame (lot 1). Never sent to the scanner:
+    /// applied to the exported file.
     case crop
+    /// The straightening rule (lot 1): a line along what should be horizontal or vertical.
+    case straighten
 
     /// Single-key shortcut, as in image editors.
     public var key: Character {
@@ -15,6 +18,7 @@ public enum Tool: String, Sendable, Hashable, CaseIterable, Codable {
         case .hand: "h"
         case .zoom: "z"
         case .crop: "c"
+        case .straighten: "r"
         }
     }
 
@@ -35,4 +39,7 @@ public struct ToolState: Sendable, Hashable {
 
     /// The tool that handles the mouse right now.
     public var effective: Tool { spaceHeld ? .hand : selected }
+
+    /// The crop options are shown at the top of the panel.
+    public var showsCropOptions: Bool { selected == .crop || selected == .straighten }
 }

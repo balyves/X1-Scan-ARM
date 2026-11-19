@@ -96,3 +96,11 @@ older ones in `docs/protocol.md` §1-§11 are still to be added.
   contents) may change after the recalibration of 2026-11-20 (every
   capture up to 2026-11-19 was made with the original one: the user's
   statement). Settle: docs/test-session.md part J.
+
+## Application (lot 1)
+
+- The exposure indicator's thresholds, clipping at 64 000 and noise floor
+  at 1 024 on the 16-bit raw samples (decisions.md, "Lot 1: exposure
+  indicator"), are round guesses. Missing: measured levels. Settle: dark
+  frames (lamp off or an opaque holder) for the noise floor, an
+  over-exposed frame (empty holder, about 58 000) for the clipping level.

@@ -354,13 +354,18 @@ public enum ExportService {
         } else {
             image.exportImage
         }
+        // The recipe first: an image is never left on disk without its recipe.
+        // If a file appeared in between, fail rather than replace it (cannot be combined with .atomic).
+        let recipeURL = recipe.map { _ in Recipe.fileURL(forImage: url) }
         do {
-            // If a file appeared in between, fail rather than replace it (cannot be combined with .atomic).
-            try tiffData(for: pixels, settings: settings, resolution: resolution).write(to: url, options: .withoutOverwriting)
-            if let recipe {
-                try recipe.jsonData().write(to: Recipe.fileURL(forImage: url), options: .withoutOverwriting)
-            }
+            if let recipe, let recipeURL { try recipe.jsonData().write(to: recipeURL, options: .withoutOverwriting) }
         } catch {
+            throw .write(error.localizedDescription)
+        }
+        do {
+            try tiffData(for: pixels, settings: settings, resolution: resolution).write(to: url, options: .withoutOverwriting)
+        } catch {
+            if let recipeURL { try? fileManager.removeItem(at: recipeURL) }
             throw .write(error.localizedDescription)
         }
         return url

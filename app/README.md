@@ -46,12 +46,17 @@ real scanner.
 |---|---|
 | ⌘R | Preview |
 | ⌘. or Esc | Stop |
-| ⇧⌘E | Export the preview |
+| ⇧⌘E | Export the image shown with its recipe (turned, straightened, cropped) |
 | ⌘0 / ⌥⌘0 / ⌘1 | Zoom to fit / fill window / actual size |
 | ⌘+ / ⌘− | Zoom in / out (next step) |
 | ⌘I | Scanner Information |
 | ⌘, | Settings |
-| H, Z, C | Hand, zoom, crop tools |
+| H, Z, C, R | Hand, zoom, crop, straightening rule tools |
+| ⌘[ / ⌘] | Rotate 90° counterclockwise / clockwise |
+| ⌘' | Show / hide the grid |
+| X (crop) | Swap width and height of the proportions |
+| ← / → (crop) | Angle −/+ 0.1° (⇧: 1°) |
+| Return (crop) | Done |
 | Space (held) | Hand, temporarily |
 | Option-click (zoom tool) | Zoom out |
 | ⌥⌘P | Hide / show the settings panel |

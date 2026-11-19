@@ -34,6 +34,8 @@ enum Strings {
         case .hand: String(localized: "tool.hand", defaultValue: "Hand", comment: "Tool: move the image")
         case .zoom: String(localized: "tool.zoom", defaultValue: "Zoom", comment: "Tool: magnifier (not the window zoom)")
         case .crop: String(localized: "tool.crop", defaultValue: "Crop", comment: "Tool: framing rectangle")
+        case .straighten: String(localized: "tool.straighten", defaultValue: "Straightening Rule",
+                                 comment: "Tool: draw a line along what should be horizontal or vertical")
         }
     }
 
@@ -381,6 +383,77 @@ enum Strings {
 
     /// Advice under the gauge; hidden in lot 1 (it will point to quality modes).
     static func exposureAdvice(_ reading: ExposureReading) -> String? { nil }
+
+    // MARK: Crop and straighten (lot 1)
+
+    /// An angle in degrees with one decimal and a true minus sign: "−1.3°".
+    static func angle(_ degrees: Double) -> String {
+        let text = abs(degrees).formatted(.number.precision(.fractionLength(1)).grouping(.never))
+        return (degrees < -0.05 ? "\u{2212}" : "") + text + "°"
+    }
+
+    static var cropTitle: String { String(localized: "Crop and Straighten", comment: "Title of the crop options at the top of the panel") }
+    static var cropDone: String { String(localized: "Done", comment: "Button: leave the crop tool") }
+    static var cropProportions: String { String(localized: "Proportions", comment: "Crop options label: aspect ratio") }
+    static var cropProportionsHelp: String {
+        String(localized: "Proportions of the frame, width × height as named: 6×7 is 6 wide and 7 high; X exchanges them.",
+               comment: "Tooltip of the crop proportions menu")
+    }
+    static var cropFree: String { String(localized: "Free", comment: "Crop proportions: any") }
+    static var cropOriginal: String { String(localized: "crop.original", defaultValue: "Original", comment: "Crop proportions: those of the image") }
+    static var cropCustom: String { String(localized: "Custom…", comment: "Crop proportions: type a ratio") }
+    static var cropCustomTitle: String { String(localized: "Custom Proportions", comment: "Title of the custom ratio popover") }
+    static var cropCustomWidth: String { String(localized: "Width", comment: "Custom ratio field") }
+    static var cropCustomHeight: String { String(localized: "Height", comment: "Custom ratio field") }
+    static var cropSwap: String { String(localized: "Swap Width and Height", comment: "Crop options button (key X)") }
+    static var cropSwapped: String { String(localized: "Exchanged", comment: "VoiceOver value of the swap button: width and height exchanged") }
+    static var cropAsNamed: String { String(localized: "As named", comment: "VoiceOver value of the swap button: width × height as named") }
+    static var cropLock: String { String(localized: "Lock Proportions", comment: "Crop options toggle") }
+    static var cropLockHelp: String {
+        String(localized: "Lock the proportions: the frame keeps its shape while it is resized.", comment: "Tooltip of the crop lock")
+    }
+    static var cropAngle: String { String(localized: "Angle", comment: "Crop options label: fine rotation") }
+    static var cropStraighten: String { String(localized: "Straighten", comment: "Crop options label") }
+    static var cropRuleHelp: String {
+        String(localized: "Draw a line along what should be horizontal or vertical", comment: "Tooltip of the Straightening Rule button")
+    }
+    static var cropRule: String { String(localized: "crop.rule", defaultValue: "Rule", comment: "Crop options button: the straightening rule (short)") }
+    static var cropAutoEdges: String { String(localized: "Auto (Edges)", comment: "Crop options button, not available yet") }
+    static var cropAutoEdgesHelp: String {
+        String(localized: "Straighten from the frame's edges on the film: in a later version.", comment: "Tooltip of the disabled Auto (Edges) button")
+    }
+    static var cropGridNone: String { String(localized: "crop.grid.none", defaultValue: "None", comment: "Crop grid menu: no grid") }
+    static var cropGridHelp: String {
+        String(localized: "Grid shown inside the frame while cropping; display only.", comment: "Tooltip of the crop grid menu")
+    }
+    static var cropConstrain: String {
+        String(localized: "Constrain to image", comment: "Crop options checkbox")
+    }
+    static var cropConstrainHelp: String {
+        String(localized: "No empty corners: the frame stays inside the turned image, within the area scanned.", comment: "Tooltip of the constrain checkbox")
+    }
+    static var exportHelp: String {
+        String(localized: "Export the image shown, turned, straightened and cropped, with its recipe (⇧⌘E). A saved scan is never replaced: its versions are named _v1, _v2…",
+               comment: "Tooltip of the panel's Export button")
+    }
+    static var ok: String { String(localized: "OK", comment: "Button") }
+    static var cancel: String { String(localized: "Cancel", comment: "Button") }
+
+    /// A film format or ratio as named: "6×4.5".
+    static func ratio(_ width: Double, _ height: Double) -> String {
+        let format = FloatingPointFormatStyle<Double>.number.precision(.fractionLength(0...2)).grouping(.never)
+        return "\(width.formatted(format))×\(height.formatted(format))"
+    }
+
+    /// Next to the rule: "−1.3° · horizontal".
+    static func straightenLabel(angle degrees: Double, axis: Straighten.Axis) -> String {
+        switch axis {
+        case .horizontal:
+            String(localized: "\(angle(degrees)) · horizontal", comment: "Label next to the straightening rule: angle applied")
+        case .vertical:
+            String(localized: "\(angle(degrees)) · vertical", comment: "Label next to the straightening rule: angle applied")
+        }
+    }
 
     // MARK: Grid (lot 1)
 

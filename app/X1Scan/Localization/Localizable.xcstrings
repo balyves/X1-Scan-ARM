@@ -1502,8 +1502,15 @@
       }
     },
     "Custom…": {
+      "comment": "Crop proportions: type a ratio",
       "extractionState": "manual",
       "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Custom…"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1887,28 +1894,6 @@
         }
       }
     },
-    "Export Preview": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Exporter l'aperçu"
-          }
-        }
-      }
-    },
-    "Export the preview with these settings (⇧⌘E)": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Exporter l'aperçu avec ces réglages (⇧⌘E)"
-          }
-        }
-      }
-    },
     "Edit…": {
       "extractionState": "manual",
       "localizations": {
@@ -1916,18 +1901,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Modifier…"
-          }
-        }
-      }
-    },
-    "Sizes in preview pixels; millimetres once the preview resolution is confirmed. Resolution, scale and crop apply to the scan (a later step): Export Preview writes the whole preview.": {
-      "comment": "Tooltip and VoiceOver hint of the Input and Output size rows of the settings panel",
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tailles en pixels de l'aperçu ; en millimètres quand la résolution de l'aperçu sera confirmée. Résolution, échelle et cadrage s'appliquent au scan (étape suivante) : « Exporter l'aperçu » écrit l'aperçu entier."
           }
         }
       }
@@ -2073,7 +2046,8 @@
             "value": "Annuler"
           }
         }
-      }
+      },
+      "comment": "Button"
     },
     "Save": {
       "extractionState": "manual",
@@ -2469,18 +2443,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "8 bits : courbe et profil sRVB (provisoires) ; moins de niveaux que le 16 bits linéaire."
-          }
-        }
-      }
-    },
-    "Exports the whole preview, without the crop.": {
-      "comment": "Panel note under Export Preview, shown only while a crop is drawn",
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Exporte l'aperçu entier, sans le recadrage."
           }
         }
       }
@@ -3549,6 +3511,564 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sur l'aperçu : pixels écrêtés en rouge, pixels proches du plancher de bruit en bleu. Affichage seulement."
+          }
+        }
+      }
+    },
+    "Sizes in pixels; millimetres once the preview resolution is confirmed. Input: the scanner's pixels under the frame. Output: the file Export writes, turned, straightened and cropped. Resolution and scale apply to the scan in a later step.": {
+      "comment": "Tooltip and VoiceOver hint of the Input and Output size rows of the settings panel",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sizes in pixels; millimetres once the preview resolution is confirmed. Input: the scanner's pixels under the frame. Output: the file Export writes, turned, straightened and cropped. Resolution and scale apply to the scan in a later step."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tailles en pixels ; en millimètres quand la résolution de l'aperçu sera confirmée. Entrée : les pixels du scanner sous le cadre. Sortie : le fichier qu'écrit Exporter, tourné, redressé et recadré. Résolution et échelle s'appliqueront au scan dans une étape ultérieure."
+          }
+        }
+      }
+    },
+    "Export the image shown, turned, straightened and cropped, with its recipe (⇧⌘E). A saved scan is never replaced: its versions are named _v1, _v2…": {
+      "comment": "Tooltip of the panel's Export button",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export the image shown, turned, straightened and cropped, with its recipe (⇧⌘E). A saved scan is never replaced: its versions are named _v1, _v2…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exporte l'image affichée, tournée, redressée et recadrée, avec sa recette (⇧⌘E). Un scan enregistré n'est jamais remplacé : ses versions sont nommées _v1, _v2…"
+          }
+        }
+      }
+    },
+    "tool.straighten": {
+      "comment": "Tool: draw a line along what should be horizontal or vertical",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Straightening Rule"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Règle de redressement"
+          }
+        }
+      }
+    },
+    "%@ · horizontal": {
+      "comment": "Label next to the straightening rule: angle applied",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · horizontal"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · horizontale"
+          }
+        }
+      }
+    },
+    "%@ · vertical": {
+      "comment": "Label next to the straightening rule: angle applied",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · vertical"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · verticale"
+          }
+        }
+      }
+    },
+    "Crop and Straighten": {
+      "comment": "Title of the crop options at the top of the panel",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crop and Straighten"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recadrage et redressement"
+          }
+        }
+      }
+    },
+    "Done": {
+      "comment": "Button: leave the crop tool",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terminé"
+          }
+        }
+      }
+    },
+    "Proportions": {
+      "comment": "Crop options label: aspect ratio",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proportions"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proportions"
+          }
+        }
+      }
+    },
+    "Free": {
+      "comment": "Crop proportions: any",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Free"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Libre"
+          }
+        }
+      }
+    },
+    "crop.original": {
+      "comment": "Crop proportions: those of the image",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Original"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Original"
+          }
+        }
+      }
+    },
+    "Custom Proportions": {
+      "comment": "Title of the custom ratio popover",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Custom Proportions"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proportions personnalisées"
+          }
+        }
+      }
+    },
+    "Width": {
+      "comment": "Custom ratio field",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Width"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Largeur"
+          }
+        }
+      }
+    },
+    "Height": {
+      "comment": "Custom ratio field",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Height"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hauteur"
+          }
+        }
+      }
+    },
+    "Swap Width and Height": {
+      "comment": "Crop options button (key X)",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Swap Width and Height"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inverser largeur et hauteur"
+          }
+        }
+      }
+    },
+    "Lock Proportions": {
+      "comment": "Crop options toggle",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lock Proportions"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verrouiller les proportions"
+          }
+        }
+      }
+    },
+    "Lock the proportions: the frame keeps its shape while it is resized.": {
+      "comment": "Tooltip of the crop lock",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lock the proportions: the frame keeps its shape while it is resized."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verrouiller les proportions : le cadre garde sa forme quand on le redimensionne."
+          }
+        }
+      }
+    },
+    "Angle": {
+      "comment": "Crop options label: fine rotation",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Angle"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Angle"
+          }
+        }
+      }
+    },
+    "Straighten": {
+      "comment": "Crop options label",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Straighten"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Redresser"
+          }
+        }
+      }
+    },
+    "Draw a line along what should be horizontal or vertical": {
+      "comment": "Tooltip of the Straightening Rule button",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Draw a line along what should be horizontal or vertical"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tirer un trait le long de ce qui devrait être horizontal ou vertical"
+          }
+        }
+      }
+    },
+    "Auto (Edges)": {
+      "comment": "Crop options button, not available yet",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auto (Edges)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auto (bords)"
+          }
+        }
+      }
+    },
+    "Straighten from the frame's edges on the film: in a later version.": {
+      "comment": "Tooltip of the disabled Auto (Edges) button",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Straighten from the frame's edges on the film: in a later version."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Redresser d'après les bords de la vue sur le film : dans une version ultérieure."
+          }
+        }
+      }
+    },
+    "crop.grid.none": {
+      "comment": "Crop grid menu: no grid",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "None"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune"
+          }
+        }
+      }
+    },
+    "Grid shown inside the frame while cropping; display only.": {
+      "comment": "Tooltip of the crop grid menu",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grid shown inside the frame while cropping; display only."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grille affichée dans le cadre pendant le recadrage ; affichage seulement."
+          }
+        }
+      }
+    },
+    "OK": {
+      "comment": "Button",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        }
+      }
+    },
+    "Constrain to image": {
+      "comment": "Crop options checkbox",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Constrain to image"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contraindre à l'image"
+          }
+        }
+      }
+    },
+    "No empty corners: the frame stays inside the turned image, within the area scanned.": {
+      "comment": "Tooltip of the constrain checkbox",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No empty corners: the frame stays inside the turned image, within the area scanned."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas de coins vides : le cadre reste dans l'image tournée, à l'intérieur de la zone scannée."
+          }
+        }
+      }
+    },
+    "crop.rule": {
+      "comment": "Crop options button: the straightening rule (short)",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rule"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Règle"
+          }
+        }
+      }
+    },
+    "Proportions of the frame, width × height as named: 6×7 is 6 wide and 7 high; X exchanges them.": {
+      "comment": "Tooltip of the crop proportions menu",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proportions of the frame, width × height as named: 6×7 is 6 wide and 7 high; X exchanges them."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proportions du cadre, largeur × hauteur telles qu'on les nomme : 6×7 fait 6 de large et 7 de haut ; X les inverse."
+          }
+        }
+      }
+    },
+    "Exchanged": {
+      "comment": "VoiceOver value of the swap button: width and height exchanged",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exchanged"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inversées"
+          }
+        }
+      }
+    },
+    "As named": {
+      "comment": "VoiceOver value of the swap button: width × height as named",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "As named"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Telles que nommées"
+          }
+        }
+      }
+    },
+    "panel.export": {
+      "comment": "Panel button: export the image shown",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exporter"
           }
         }
       }

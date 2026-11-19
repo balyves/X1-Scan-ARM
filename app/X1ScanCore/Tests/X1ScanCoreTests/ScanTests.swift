@@ -63,6 +63,39 @@ final class ScanTests {
         #expect(data.range(of: Data("FX1".utf8)) == nil, "no serial number in the file")
     }
 
+    /// Lot 1: the scan is saved as a master (pixels as decoded, with its
+    /// recipe); Export writes versions next to it, never replacing it, and the
+    /// frame number does not move; the preview's exposure stays shown.
+    @Test func scanMasterThenVersions() async throws {
+        let model = try model()
+        model.startPreview()
+        await model.session.waitUntilIdle()
+        model.refreshImage()
+        await model.waitForRendering()
+        let exposure = try #require(model.exposure)
+        model.rotateClockwise()
+        model.startScan()
+        await model.session.waitUntilIdle()
+        model.refreshImage()
+        await model.waitForRendering()
+        #expect(model.exposure == exposure, "the preview's measure is kept during and after the scan")
+        let master = try #require(try? model.lastScanSave?.get())
+        #expect(model.scanMaster == master)
+        let recipeURL = Recipe.fileURL(forImage: master)
+        #expect(try Recipe.decode(from: Data(contentsOf: recipeURL)).orientation == Orientation(quarterTurns: 1))
+        let frame = model.exportSettings.frame
+        model.setCropAngle(1.5)
+        #expect(model.nextExportFileName() == master.deletingPathExtension().lastPathComponent + "_v1.tif")
+        let v1 = try await model.export().get()
+        let v2 = try await model.export().get()
+        #expect(v1.lastPathComponent == master.deletingPathExtension().lastPathComponent + "_v1.tif")
+        #expect(v2.lastPathComponent == master.deletingPathExtension().lastPathComponent + "_v2.tif")
+        #expect(v1.deletingLastPathComponent() == master.deletingLastPathComponent())
+        #expect(model.exportSettings.frame == frame, "a version is the same frame")
+        #expect(try Recipe.decode(from: Data(contentsOf: Recipe.fileURL(forImage: v1))).crop.angle == 1.5)
+        #expect(FileManager.default.fileExists(atPath: master.path), "the master is still there")
+    }
+
     /// A scan is shown with square pixels (609 × 614 points at 100 %), a
     /// preview with pixels 3 times taller than wide; a preview after a scan
     /// goes back to 3.

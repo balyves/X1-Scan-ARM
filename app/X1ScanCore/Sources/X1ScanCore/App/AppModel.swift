@@ -137,15 +137,145 @@ public final class AppModel {
     public private(set) var viewport: Viewport
     /// Size of the visible image area, reported by the canvas.
     public var viewSize: CGSize { viewport.viewSize }
-    /// The recipe of the image shown (lot 1): orientation for now. Kept from
-    /// one image to the next (a preview, then the scan of the same frame).
+    /// The recipe of the image shown (lot 1): orientation, fine angle, crop.
+    /// The turns and the angle are kept from one image to the next (a
+    /// preview, then the scan of the same frame); the crop frame is not (the
+    /// scan covers another area).
     public private(set) var recipe = Recipe() {
-        didSet { viewport.orientation = recipe.orientation }
+        didSet {
+            viewport.orientation = recipe.orientation
+            viewport.angle = recipe.crop.angle
+            if recipe.crop != oldValue.crop || recipe.orientation != oldValue.orientation {
+                let region = histogramRegion
+                if region != lastHistogramRegion { refreshHistogram() }
+            }
+        }
     }
-    /// Framing rectangle drawn with the crop tool. Not exported at this stage;
-    /// the histogram counts its pixels only.
+    private var lastHistogramRegion: PixelRect?
+    /// The grid drawn inside the crop frame while cropping (thirds by default); nil: none. Saved.
+    public var cropGridKind: GridKind? {
+        didSet { defaults.set(cropGridKind?.rawValue ?? "none", forKey: Keys.cropGrid) }
+    }
+
+    /// The source pixels under the crop frame (their bounding box when the
+    /// image is turned by a fine angle); nil without a frame. The histogram
+    /// counts these pixels only. Setting it draws an upright frame over them.
     public var cropRect: PixelRect? {
-        didSet { if Self.histogramRegion(of: cropRect) != Self.histogramRegion(of: oldValue) { refreshHistogram() } }
+        get {
+            guard let frame = cropFrameInDocument, viewport.imageWidth > 0, viewport.imageHeight > 0 else { return nil }
+            let inverse = viewport.displayTransform.inverted()
+            let source = frame.applying(inverse).standardized
+            let aspect = viewport.pixelAspectRatio
+            let x0 = max(Int(source.minX.rounded(.down)), 0)
+            let y0 = max(Int((source.minY / aspect).rounded(.down)), 0)
+            let x1 = min(Int(source.maxX.rounded(.up)), viewport.imageWidth)
+            let y1 = min(Int((source.maxY / aspect).rounded(.up)), viewport.imageHeight)
+            guard x1 > x0, y1 > y0 else { return nil }
+            return PixelRect(x: x0, y: y0, width: x1 - x0, height: y1 - y0)
+        }
+        set {
+            setCropFrame(documentRect: newValue.map { viewport.documentRect(forPixelRect: $0) }, constrain: false)
+        }
+    }
+
+    // MARK: Crop and straighten (lot 1)
+
+    /// The displayed document's size (after the quarter turns), the space of the crop frame.
+    private var cropSpace: CGSize { viewport.documentSize }
+
+    /// The frame used for the image, in displayed document coordinates
+    /// (upright; the image turns under it by the fine angle); nil: the whole image.
+    public var cropFrameInDocument: CGRect? {
+        let size = cropSpace
+        guard let frame = recipe.crop.effectiveFrame(imageSize: size), size.width > 0, size.height > 0 else { return nil }
+        return CGRect(x: frame.minX * size.width, y: frame.minY * size.height,
+                      width: frame.width * size.width, height: frame.height * size.height)
+    }
+
+    /// Width over height the frame must keep while it is drawn or resized:
+    /// the proportions chosen, or with the lock, the frame's own; nil: free.
+    public var cropRatio: Double? {
+        if let ratio = recipe.crop.ratio(imageSize: cropSpace) { return ratio }
+        guard recipe.crop.locked, let frame = cropFrameInDocument, frame.height > 0 else { return nil }
+        return frame.width / frame.height
+    }
+
+    /// A frame drawn, moved or resized (displayed document coordinates);
+    /// nil removes it. With the constraint on it is kept inside the turned image.
+    public func setCropFrame(documentRect: CGRect?, constrain: Bool = true) {
+        let size = cropSpace
+        guard var rect = documentRect?.standardized, size.width > 0, size.height > 0, rect.width > 0, rect.height > 0 else {
+            recipe.crop.frame = nil
+            return
+        }
+        if constrain && recipe.crop.constrained {
+            rect = CropGeometry.constrained(rect, imageSize: size, angle: recipe.crop.angle)
+        } else {
+            rect = rect.intersection(CGRect(origin: .zero, size: size))
+            guard !rect.isNull, rect.width > 0, rect.height > 0 else { return }
+        }
+        recipe.crop.frame = CGRect(x: rect.minX / size.width, y: rect.minY / size.height,
+                                   width: rect.width / size.width, height: rect.height / size.height)
+    }
+
+    /// The fine angle (degrees, clockwise; ±45°, steps of 0.1°).
+    public func setCropAngle(_ angle: Double) {
+        recipe.crop.angle = angle
+        reconstrainCrop()
+    }
+
+    /// Proportions chosen: the frame takes them (same centre and area), or
+    /// without a frame, the largest frame of these proportions appears.
+    public func setCropAspect(_ aspect: CropAspect) {
+        recipe.crop.aspect = aspect
+        applyCropRatio()
+    }
+
+    /// Exchanges width and height of the proportions (key X).
+    public func toggleCropPortrait() {
+        recipe.crop.portrait.toggle()
+        if recipe.crop.aspect == .free, let frame = cropFrameInDocument {
+            // Free proportions: the frame itself is turned upright or flat.
+            let swapped = CGRect(x: frame.midX - frame.height / 2, y: frame.midY - frame.width / 2,
+                                 width: frame.height, height: frame.width)
+            setCropFrame(documentRect: swapped)
+        } else {
+            applyCropRatio()
+        }
+    }
+
+    public func setCropLocked(_ locked: Bool) { recipe.crop.locked = locked }
+
+    public func setCropConstrained(_ constrained: Bool) {
+        recipe.crop.constrained = constrained
+        reconstrainCrop()
+    }
+
+    /// The straightening rule (display coordinates): turns the image so that
+    /// the line becomes horizontal or vertical. Returns what was applied.
+    @discardableResult
+    public func straighten(from a: CGPoint, to b: CGPoint) -> (angle: Double, axis: Straighten.Axis)? {
+        guard let correction = Straighten.correction(from: a, to: b) else { return nil }
+        // The line is measured on the image as shown, already turned by the current angle.
+        setCropAngle(recipe.crop.angle + correction.angle)
+        return (recipe.crop.angle, correction.axis)
+    }
+
+    private func applyCropRatio() {
+        let size = cropSpace
+        guard let ratio = recipe.crop.ratio(imageSize: size), size.width > 0 else { return }
+        if let frame = cropFrameInDocument, recipe.crop.frame != nil {
+            setCropFrame(documentRect: CropGeometry.reshaped(frame, ratio: ratio))
+        } else {
+            setCropFrame(documentRect: CropGeometry.largestFrame(ratio: ratio, imageSize: size, angle: recipe.crop.angle))
+        }
+    }
+
+    private func reconstrainCrop() {
+        guard recipe.crop.constrained, let frame = recipe.crop.frame else { return }
+        let size = cropSpace
+        setCropFrame(documentRect: CGRect(x: frame.minX * size.width, y: frame.minY * size.height,
+                                          width: frame.width * size.width, height: frame.height * size.height))
     }
     /// Pixel under the pointer, reported by the canvas.
     public var pointer: PixelCoordinate?
@@ -187,6 +317,7 @@ public final class AppModel {
         static let scanSettings = "ScanSettings"
         static let grid = "GridSettings"
         static let showsExposureZones = "ShowExposureZones"
+        static let cropGrid = "CropGrid"
         /// Hidden setting, no interface: `defaults write org.x1scanarm.X1Scan EnableRealPreview -bool YES`.
         static let enableRealPreview = "EnableRealPreview"
         /// Set when a real preview starts, cleared when it completes: true
@@ -263,6 +394,8 @@ public final class AppModel {
         }
         viewport = Viewport(imageWidth: 0, imageHeight: 0, mode: settings.startupZoom == .fit ? .fit : .fixed)
         showsExposureZones = defaults.bool(forKey: Keys.showsExposureZones)
+        let cropGrid = defaults.string(forKey: Keys.cropGrid)
+        cropGridKind = cropGrid == "none" ? nil : cropGrid.flatMap(GridKind.init(rawValue:)) ?? .thirds
         grid = defaults.data(forKey: Keys.grid)
             .flatMap { try? JSONDecoder().decode(GridSettings.self, from: $0) } ?? GridSettings()
         exportSettings = defaults.data(forKey: Keys.exportSettings)
@@ -278,12 +411,14 @@ public final class AppModel {
     // MARK: Derived state
 
     public var toolbar: ToolbarState {
-        ToolbarState(source: source, session: session.state, virtualAvailable: virtualScanner != nil,
+        var state = ToolbarState(source: source, session: session.state, virtualAvailable: virtualScanner != nil,
                      hasImage: (session.image?.height ?? 0) > 0, hasExportFolder: exportSettings.folder != nil,
                      realPreviewEnabled: realPreviewEnabled, scanAvailable: virtualScanner?.scanFixture != nil,
                      scanHasExportFolder: exportSettings.folder != nil,
                      realScanEnabled: realScanEnabled,
                      realScanReady: realPreviewCompletedThisLaunch && !realPreviewNeedsPowerCycle)
+        if isExporting { state.canExport = false }  // one export at a time
+        return state
     }
 
     /// The hidden setting (off by default): scan on the real X1 allowed, with a confirmation.
@@ -490,7 +625,7 @@ public final class AppModel {
         if exportSettings.needsRollValidation { exportSettings.validateRoll() }
         var settings = exportSettings
         settings.format = .rgb16
-        // The master: the scanner's pixels, never turned or cropped, and the recipe beside them.
+        // The master: the decoded scan, never turned or cropped, and the recipe beside it.
         let recipe = recipe
         let result = Result { () throws(ExportError) -> URL in
             try ExportService.export(session.image, settings: settings, date: date, resolution: ScanScript.resolution,
@@ -569,20 +704,29 @@ public final class AppModel {
         }
     }
 
+    /// An export is being rendered and written (Export is disabled meanwhile).
+    public private(set) var isExporting = false
+
+    /// Renders the recipe into the image shown and writes it, off the main
+    /// actor (a scan with a fine angle takes a while to resample).
     @discardableResult
-    public func export(date: Date = Date()) -> Result<URL, ExportError> {
+    public func export(date: Date = Date()) async -> Result<URL, ExportError> {
         // Exporting right after typing a new roll name counts as validating it.
         if exportSettings.needsRollValidation { exportSettings.validateRoll() }
         // The recipe applied to the image shown, written as a new file with its recipe:
         // a version of the scan's master, or a preview named by the template.
         let master = session.kind == .scan ? scanMaster : nil
-        let isScan = session.kind == .scan
-        let result = Result { () throws(ExportError) -> URL in
-            try ExportService.export(session.image, settings: exportSettings, date: date,
-                                     resolution: isScan ? ScanScript.resolution : 72,
-                                     recipe: recipe, applyRecipe: true,
-                                     pixelAspectRatio: viewport.pixelAspectRatio, versionOf: master)
-        }
+        let resolution = session.kind == .scan ? ScanScript.resolution : 72
+        let image = session.image, settings = exportSettings, recipe = recipe
+        let aspect = viewport.pixelAspectRatio
+        isExporting = true
+        let result = await Task.detached(priority: .userInitiated) {
+            Result { () throws(ExportError) -> URL in
+                try ExportService.export(image, settings: settings, date: date, resolution: resolution,
+                                         recipe: recipe, applyRecipe: true, pixelAspectRatio: aspect, versionOf: master)
+            }
+        }.value
+        isExporting = false
         lastExport = result
         // A version of a master is the same frame: the frame number does not move.
         if case .success = result, master == nil, exportSettings.incrementsFrame { exportSettings.frame += 1 }
@@ -591,9 +735,22 @@ public final class AppModel {
 
     // MARK: Orientation (lot 1)
 
-    public func rotateClockwise() { recipe.orientation.rotateClockwise() }
-    public func rotateCounterclockwise() { recipe.orientation.rotateCounterclockwise() }
-    public func mirrorHorizontally() { recipe.orientation.mirrorHorizontally() }
+    public func rotateClockwise() {
+        recipe.orientation.rotateClockwise()
+        orientationChanged()
+    }
+    public func rotateCounterclockwise() {
+        recipe.orientation.rotateCounterclockwise()
+        orientationChanged()
+    }
+    public func mirrorHorizontally() {
+        recipe.orientation.mirrorHorizontally()
+        orientationChanged()
+    }
+
+    /// After a turn the frame (normalised in the turned image) no longer
+    /// covers the same pixels: it is removed.
+    private func orientationChanged() { recipe.crop.frame = nil }
     public func toggleGrid() { grid.isVisible.toggle() }
 
     /// Choosing a kind of grid shows it.
@@ -626,11 +783,18 @@ public final class AppModel {
         ExportService.estimatedBytes(for: session.image, settings: exportSettings)
     }
 
-    /// Input size of the panel: the crop rectangle, or the whole preview, in pixels.
+    /// Input size of the panel: the source pixels under the crop frame, or the whole image.
     public var inputPixelSize: (width: Int, height: Int)? {
         if let cropRect { return (cropRect.width, cropRect.height) }
         guard let image = session.image else { return nil }
         return (image.width, image.expectedHeight)
+    }
+
+    /// Size of the file Export writes: turned, straightened, cropped (before the scale).
+    public var exportPixelSize: (width: Int, height: Int)? {
+        guard let image = session.image else { return nil }
+        return RecipeRenderer.outputSize(width: image.width, height: image.expectedHeight,
+                                         pixelAspectRatio: viewport.pixelAspectRatio, recipe: recipe)
     }
 
     /// The name the next export would get.
@@ -683,7 +847,11 @@ public final class AppModel {
         if viewport.imageWidth != image.width || viewport.imageHeight != image.expectedHeight
             || viewport.pixelAspectRatio != aspect {
             viewport.setImage(width: image.width, height: image.expectedHeight, pixelAspectRatio: aspect)
-            cropRect = nil
+            // Another area: the frame drawn on the previous image does not apply.
+            // TODO(window calculator): once validated by captures, the scan window could be
+            // enlarged to cover the turned frame drawn on the preview; today the X1 always
+            // scans FlexColor's captured window, and the frame must fit inside the area scanned.
+            recipe.crop.frame = nil
         }
         if startupZoomPending {
             // A new preview: the zoom of Settings > Display, Fit by default.
@@ -694,6 +862,7 @@ public final class AppModel {
         renderTask?.cancel()
         histogramTask?.cancel()
         let region = histogramRegion
+        lastHistogramRegion = region
         renderTask = Task {
             let rendered = await Task.detached(priority: .userInitiated) {
                 (DisplayImage.make(from: image).map(SendableImage.init),
@@ -747,6 +916,7 @@ public final class AppModel {
     /// crop changed; the display image does not change.
     private func refreshHistogram() {
         histogramTask?.cancel()
+        lastHistogramRegion = histogramRegion
         guard let image = session.image else {
             histogram = .empty
             return

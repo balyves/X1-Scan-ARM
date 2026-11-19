@@ -41,6 +41,10 @@ public struct Viewport: Sendable, Hashable {
     public var orientation: Orientation = .identity {
         didSet { if orientation.swapsAxes != oldValue.swapsAxes { recompute() } }
     }
+    /// Fine angle of the display in degrees, clockwise, about the centre of
+    /// the displayed document (lot 1). The document keeps its size: the
+    /// turned image's corners may pass its edges.
+    public var angle: Double = 0
     public private(set) var magnification: Double = 1
     public private(set) var mode: ZoomMode = .fit
     /// Last view size seen, used to recompute Fit and Fill.
@@ -63,9 +67,16 @@ public struct Viewport: Sendable, Hashable {
     /// Size of the displayed (oriented) document at magnification 1, in points.
     public var documentSize: CGSize { orientation.orientedSize(sourceDocumentSize) }
 
-    /// Source document → display document.
+    /// Source document → display document: the quarter turns and mirror,
+    /// then the fine angle about the centre.
     public var displayTransform: CGAffineTransform {
-        orientation.orientedTransform(sourceSize: sourceDocumentSize)
+        let turned = orientation.orientedTransform(sourceSize: sourceDocumentSize)
+        guard angle != 0 else { return turned }
+        let size = documentSize
+        let rotation = CGAffineTransform(translationX: -size.width / 2, y: -size.height / 2)
+            .concatenating(CGAffineTransform(rotationAngle: angle * .pi / 180))
+            .concatenating(CGAffineTransform(translationX: size.width / 2, y: size.height / 2))
+        return turned.concatenating(rotation)
     }
 
     /// The source document point shown at a display document point.
@@ -174,8 +185,8 @@ public struct Viewport: Sendable, Hashable {
                width: Double(rect.width), height: Double(rect.height) * pixelAspectRatio)
     }
 
-    /// Displayed document rectangle covered by an image rectangle (pixels);
-    /// quarter turns keep rectangles upright.
+    /// Displayed document rectangle covered by an image rectangle (pixels):
+    /// its bounding box when the display has a fine angle.
     public func documentRect(forPixelRect rect: PixelRect) -> CGRect {
         sourceDocumentRect(forPixelRect: rect).applying(displayTransform).standardized
     }

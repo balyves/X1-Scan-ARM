@@ -107,11 +107,12 @@ enum MainMenu {
         menu.addItem(submenu(steps))
         menu.addItem(.separator())
         let tools = NSMenu(title: String(localized: "Tools", comment: "Menu"))
-        // The single-key shortcuts (H, Z, C, Space) are handled by the canvas, not
+        // The single-key shortcuts (H, Z, C, R, Space) are handled by the canvas, not
         // here: a menu key equivalent without modifier would steal typing from text fields.
         tools.addItem(item(Strings.toolName(.hand), #selector(MainWindowController.selectHandTool(_:))))
         tools.addItem(item(Strings.toolName(.zoom), #selector(MainWindowController.selectZoomTool(_:))))
         tools.addItem(item(Strings.toolName(.crop), #selector(MainWindowController.selectCropTool(_:))))
+        tools.addItem(item(Strings.toolName(.straighten), #selector(MainWindowController.selectStraightenTool(_:))))
         menu.addItem(submenu(tools))
         menu.addItem(.separator())
         menu.addItem(item(String(localized: "Hide Settings Panel", comment: "Menu item"),

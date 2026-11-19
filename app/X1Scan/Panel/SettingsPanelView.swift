@@ -16,6 +16,10 @@ struct SettingsPanelView: View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
+                    if model.tools.showsCropOptions {
+                        CropOptionsSection(model: model)
+                        Divider()
+                    }
                     section(.original) { OriginalSection(model: model) }
                     section(.scan) { ScanSection(model: model) }
                     section(.exposure) { ExposureSection(model: model) }
@@ -170,9 +174,8 @@ private struct ScanSection: View {
             CompactInfoRow(String(localized: "Input", comment: "Panel label: input size"),
                            value: pixels(model.inputPixelSize), help: Self.sizesNote)
             CompactInfoRow(String(localized: "Output", comment: "Panel label: output size"),
-                           value: pixels(model.inputPixelSize.map {
-                               // The exported file is turned: its width and height follow the orientation.
-                               let size = model.recipe.orientation.orientedSize(width: $0.width, height: $0.height)
+                           value: pixels(model.exportPixelSize.map { size in
+                               // The exported file: turned, straightened and cropped.
                                let scale = Double(model.scanSettings.scalePercent) / 100
                                return (Int((Double(size.width) * scale).rounded()), Int((Double(size.height) * scale).rounded()))
                            }))
@@ -182,7 +185,7 @@ private struct ScanSection: View {
 
     /// Tooltip of the size rows.
     private static var sizesNote: String {
-        String(localized: "Sizes in preview pixels; millimetres once the preview resolution is confirmed. Resolution, scale and crop apply to the scan (a later step): Export Preview writes the whole preview.",
+        String(localized: "Sizes in pixels; millimetres once the preview resolution is confirmed. Input: the scanner's pixels under the frame. Output: the file Export writes, turned, straightened and cropped. Resolution and scale apply to the scan in a later step.",
                comment: "Tooltip and VoiceOver hint of the Input and Output size rows of the settings panel")
     }
 
@@ -261,24 +264,12 @@ private struct OutputSection: View {
                 }
             }
         }
-        let wholePreviewNote = String(localized: "Exports the whole preview, without the crop.",
-                                      comment: "Panel note under Export Preview, shown only while a crop is drawn")
         CompactDetailRow {
-            Button(String(localized: "Export Preview", comment: "Panel button")) { model.export() }
-                .disabled(!model.toolbar.canExport)
-                .help(Text("Export the preview with these settings (⇧⌘E)", comment: "Tooltip"))
-                // VoiceOver hears the note with the button, before using it.
-                .accessibilityHint(model.cropRect != nil ? wholePreviewNote : "")
-        }
-        if model.cropRect != nil {
-            // Visible without hovering: with a crop drawn, one could expect a cropped file.
-            CompactDetailRow {
-                Text(wholePreviewNote)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .accessibilityHidden(true)  // already the button's hint
+            Button(String(localized: "panel.export", defaultValue: "Export", comment: "Panel button: export the image shown")) {
+                Task { await model.export() }
             }
+                .disabled(!model.toolbar.canExport)
+                .help(Strings.exportHelp)
         }
         switch model.lastExport {
         case .success(let url):

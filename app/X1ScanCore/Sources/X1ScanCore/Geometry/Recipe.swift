@@ -14,9 +14,21 @@ public struct Recipe: Sendable, Hashable, Codable {
     public private(set) var version: Int = Recipe.currentVersion
     /// Quarter turns and mirror.
     public var orientation: Orientation = .identity
+    /// Fine angle and crop frame, after the turns.
+    public var crop = CropSettings()
 
-    public init(orientation: Orientation = .identity) {
+    public init(orientation: Orientation = .identity, crop: CropSettings = CropSettings()) {
         self.orientation = orientation
+        self.crop = crop
+    }
+
+    private enum CodingKeys: String, CodingKey { case version, orientation, crop }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        version = try container.decode(Int.self, forKey: .version)
+        orientation = try container.decodeIfPresent(Orientation.self, forKey: .orientation) ?? .identity
+        crop = try container.decodeIfPresent(CropSettings.self, forKey: .crop) ?? CropSettings()
     }
 
     /// The recipe as written to disk: pretty, keys sorted, stable.

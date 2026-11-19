@@ -17,6 +17,8 @@ import X1ScanCore
 ///   -X1ScanGrid <kind>           show the grid: thirds, fine or centre (lot 1)
 ///   -X1ScanCropDemo YES          draw a centred crop on the preview before the snapshot
 ///                                (needs -X1ScanAutoPreview YES)
+///   -X1ScanTool <tool>           select a tool: hand, zoom, crop, straighten (lot 1)
+///   -X1ScanAngle <degrees>       fine angle, after the crop demo (lot 1)
 ///   -X1ScanResizeProbe YES       resize the window, move the divider, hide and show the panel,
 ///                                print the sizes, put the window frame and panel layout back, quit
 /// The snapshot also writes each Settings pane, Scanner Information and the
@@ -96,6 +98,8 @@ enum DebugSnapshot {
                     FileHandle.standardError.write(Data("X1ScanCropDemo: no preview image, no crop drawn\n".utf8))
                 }
             }
+            if arguments.object(forKey: "X1ScanAngle") != nil { model.setCropAngle(arguments.double(forKey: "X1ScanAngle")) }
+            if let tool = arguments.string(forKey: "X1ScanTool").flatMap(Tool.init(rawValue:)) { model.tools.selected = tool }
             model.pointer = PixelCoordinate(x: 1000, y: 400)
             try? await Task.sleep(for: .milliseconds(300))
             FileHandle.standardError.write(Data("""

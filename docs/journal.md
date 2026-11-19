@@ -901,3 +901,16 @@ calculator" and "Window calculator v1"):
   from offset 18 added to docs/hypotheses.md.
 - The four open review suggestions are left for step 2.
 
+
+## 2026-11-19: lot 1, layout and geometry (application, virtual X1)
+
+Lot 1 of the application, from the user's brief (docs/decisions.md, "Lot 1:
+layout and geometry" and "Lot 1: exposure indicator"). Five commits, A to E:
+panel sections with summaries; orientation (exact turns and mirror) and the
+recipe, with the raw scan kept as master and versions `_v1`, `_v2`… on
+Export; the grid and a tool column with active tools only; the exposure
+indicator on the preview's raw samples (provisional thresholds); crop
+frame, proportions, fine angle, straightening rule, Lanczos-3 rendering.
+Nothing sent to the scanner changed: the scan sequences, guards and
+transport are untouched. Tried on the virtual X1 only; the user tests the
+application next, then on the real X1.

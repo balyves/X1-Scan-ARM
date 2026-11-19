@@ -56,6 +56,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         case #selector(selectHandTool(_:)): menuItem.state = model.tools.selected == .hand ? .on : .off
         case #selector(selectZoomTool(_:)): menuItem.state = model.tools.selected == .zoom ? .on : .off
         case #selector(selectCropTool(_:)): menuItem.state = model.tools.selected == .crop ? .on : .off
+        case #selector(selectStraightenTool(_:)): menuItem.state = model.tools.selected == .straighten ? .on : .off
         case #selector(zoomToFit(_:)): menuItem.state = model.viewport.mode == .fit ? .on : .off
         case #selector(zoomToFill(_:)): menuItem.state = model.viewport.mode == .fill ? .on : .off
         case #selector(zoomToStep(_:)):
@@ -130,8 +131,10 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     override func cancelOperation(_ sender: Any?) { model.stop() }
 
     @objc func exportImage(_ sender: Any?) {
-        if case .failure(let error) = model.export() {
-            showAlert(String(localized: "Export failed", comment: "Alert title"), Strings.exportError(error))
+        Task {
+            if case .failure(let error) = await model.export() {
+                showAlert(String(localized: "Export failed", comment: "Alert title"), Strings.exportError(error))
+            }
         }
     }
 
@@ -151,6 +154,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     @objc func selectHandTool(_ sender: Any?) { model.tools.selected = .hand }
     @objc func selectZoomTool(_ sender: Any?) { model.tools.selected = .zoom }
     @objc func selectCropTool(_ sender: Any?) { model.tools.selected = .crop }
+    @objc func selectStraightenTool(_ sender: Any?) { model.tools.selected = .straighten }
     @objc func toggleSettingsPanel(_ sender: Any?) { model.panel.toggleHidden() }
     @objc func rotateCounterclockwise(_ sender: Any?) { model.rotateCounterclockwise() }
     @objc func rotateClockwise(_ sender: Any?) { model.rotateClockwise() }
