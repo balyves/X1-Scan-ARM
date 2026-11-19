@@ -782,3 +782,17 @@ Positions read before that window in the captures, for reference: at
 1.0 × 3.0 cm frame; other resolutions and holders: 4 907, 6 155 (twice),
 7 691, 7 831, 8 081 (twice), 12 145, 24 203, 24 971 (in three captures:
 the 3 200 ppi scan of 2026-11-17, essai-I, essai-L).
+
+## 2026-11-19: part K captured (offset 62, zoom 100 %)
+
+Done with the guide, 11:04-11:29, the last capture with the original
+calibration. One frame left untouched gives offset 62 = 59 713 at 3 200,
+2 000 and 1 000 ppi [confirmed], where the windows would have made them
+differ by about 4: not the window's lines [confirmed], FlexColor's own
+frame coordinates [hypothesis, strongly supported]. At 600 ppi it is 48
+less (one 600 ppi output pixel; an output grid [hypothesis]), and the
+moved frame 63 less, which that does not explain. From the window's values
+alone the formula stays within −6 to +24 on all 37 focus windows: no
+byte-for-byte formula. A tolerance limited to that field is proposed for
+the user's decision (decisions.md). `ScanWindowRulesTests` now covers 31
+scans; the lens model of offsets 54 / 58 holds for part K too.

@@ -4,7 +4,7 @@ import Testing
 import X1TestSupport
 
 /// The rules behind FlexColor's scan windows (docs/protocol.md §9, "Window
-/// rules"), checked on the 15 scans of 2026-11-18 and the 8 of 2026-11-19
+/// rules"), checked on the 15 scans of 2026-11-18 and the 16 of 2026-11-19
 /// (tests/fixtures/scan-windows-2026-11-18.json, -19.json). Nothing here builds a
 /// window for the scanner: these rules are a [hypothesis] for a future
 /// window calculator, and this test shows that they reproduce every captured
@@ -40,6 +40,7 @@ struct ScanWindowRulesTests {
     private static let holders: [String: (factor: Int, maximum: Int)] = [
         "essai-I": (10_000, 3_200),   // 6×7
         "essai-L": (10_000, 3_200),   // 6×7 (part H)
+        "essai-N": (10_000, 3_200),   // 6×7 (part K)
         "essai-J3": (9_770, 6_300),   // 24×36×4
         "essai-J3-2": (10_245, 6_300), // 24×36
         "essai-J4": (8_855, 2_040),   // 4×5
@@ -116,13 +117,14 @@ struct ScanWindowRulesTests {
 
     private var cases: [ScanCase] { get throws { try Self.loaded.get() } }
 
-    @Test func twentyThreeScans() throws {
-        #expect(try cases.count == 23)
+    @Test func thirtyOneScans() throws {
+        #expect(try cases.count == 31)
         #expect(try cases.filter { $0.capture == "essai-I" }.count == 12)
         #expect(try cases.filter { $0.capture == "essai-L" }.count == 8)
-        // Part H: FlexColor skipped the calibration and references in four scans.
-        #expect(try cases.filter { $0.referencesFirst == nil }.map(\.session) == [6, 8, 9, 10])
-        #expect(try cases.filter { $0.capture != "essai-L" }.allSatisfy { $0.referencesFirst != nil })
+        #expect(try cases.filter { $0.capture == "essai-N" }.count == 8)
+        // FlexColor skipped the calibration and references in four scans of part H, one of part K.
+        let skipped = try cases.filter { $0.referencesFirst == nil }.map { "\($0.capture) \($0.session)" }
+        #expect(skipped == ["essai-L 6", "essai-L 8", "essai-L 9", "essai-L 10", "essai-N 8"])
     }
 
     /// Resolution, binning, width and lines of the image window.
@@ -168,12 +170,21 @@ struct ScanWindowRulesTests {
         }
     }
 
+    /// Part K (zoom 100 %): one frame left untouched gives the same offset 62
+    /// at 3 200, 2 000 (twice) and 1 000 ppi, and one 600 ppi output pixel
+    /// (28 800 ÷ 600 = 48) less at 600 ppi (docs/protocol.md §9).
+    @Test func partKUntouchedFrame() throws {
+        let frame = try cases.filter { $0.capture == "essai-N" && (2...6).contains($0.session) }
+        #expect(frame.map(\.scan.ppi) == [3_200, 2_000, 2_000, 1_000, 600])
+        #expect(frame.map(\.focus.o62) == [59_713, 59_713, 59_713, 59_713, 59_713 - 48])
+    }
+
     /// 6×7: offsets 54 and 58 before the focus step follow the optical
     /// resolution O = resolution × binning (lens model fitted on six values
     /// of O, §9; essai-I's scans have four of them: 2 000, 2 400, 3 000,
     /// 3 200), within 1.
     @Test func sixBySevenOptics() throws {
-        let sixBySeven = try cases.filter { $0.capture == "essai-I" || $0.capture == "essai-L" }
+        let sixBySeven = try cases.filter { ["essai-I", "essai-L", "essai-N"].contains($0.capture) }
         // essai-L adds O = 2 880 (960 ppi at binning 3), a value not used to fit the model.
         #expect(Set(sixBySeven.map { $0.scan.ppi * $0.image.binning }) == [2_000, 2_400, 2_880, 3_000, 3_200])
         for c in sixBySeven {

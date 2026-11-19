@@ -1000,3 +1000,55 @@ licences.
   the second pass depends on the original. Cold start: 6×7 only.
 - Simulator: the other holders' code lines are generated in the tests from
   their bar pattern; no other raw code line enters the repository.
+
+## Offset 62 of the 400-line window (2026-11-19): proposal, not decided
+
+Parts H and K (protocol.md §9) show that FlexColor computes offset 62
+from its own frame coordinates [hypothesis, strongly supported], which
+are not in the window: no formula of the window's values gives
+FlexColor's value byte for byte. For a future window calculator (frames
+that FlexColor never scanned), for the user's decision:
+
+- **Where the value comes from: two options.**
+  - A. From the calculator's window: 15 500 + 28 800 × (offset 18 +
+    (offset 26 − 2 × gap − 2) ÷ 2) ÷ (ratio ÷ 10 000), rounded (the rounding
+    to be fixed with the implementation, the same in the calculator and the
+    guard). A guard can
+    recompute it from the window alone. On the 37 focus windows captured,
+    it is within −6 to +24 of FlexColor's value (mostly above).
+  - B. From the calculator's own frame (its exact middle along the drum,
+    15 500 + 28 800 per inch), as FlexColor seems to do. Closer to
+    FlexColor's method, but a guard cannot recompute it from the window
+    alone; it would check it against the window's image lines (below).
+- **32 units: a validation criterion, not a check made during a scan.**
+  The difference with what FlexColor would send for the same frame cannot
+  be known for a frame FlexColor never scanned. So 32 applies when the
+  calculator is given the frames of the captured scans: its offset 62 must
+  then be within 32 of FlexColor's value (simulator test, every captured
+  scan). 32 units = 1/900 in = 0.028 mm along the drum (one unit ≈
+  0.88 µm, [hypothesis]); largest difference observed 24 (0.021 mm),
+  margin 8 (7 µm), that margin resting on two 600 ppi windows only. Along
+  the drum the line pitch is ratio ÷ 10 000: 0.028 mm is about 1.8 lines
+  at 1 000 ppi and 5.9 lines at 3 200 ppi. The 400-line step reads the film
+  at that position while the focus is swept: such a shift within a frame
+  of a millimetre or more should not change the focus found. **[hypothesis]**
+- **Resolutions.** Part K suggests an output-pixel effect of about
+  28 800 ÷ resolution units (48 at 600 ppi, 96 at 300). So the 32 units are
+  proposed for 600 ppi and above only (the resolutions captured); below
+  that, either no calculator, or a tolerance of max(32, 28 800 ÷
+  resolution) **[hypothesis]**, to be checked by a capture first.
+- **Guards during a scan.**
+  1. Only offset 62 (4 bytes, LE) of the 400-line window (ratio
+     21 674 665, the window right before `1b 00 08 06 01 00`); every other
+     byte follows the confirmed rules or the capture.
+  2. Option A: the value sent is exactly the formula of the session's
+     image window. Options A and B: it lies between the drum positions of
+     the first and the last image line of that window (offset 18 and
+     offset 18 + offset 26, converted at 28 800 per inch from 15 500),
+     within a few units.
+  3. Before any free frame: the validation above, on every captured scan.
+  4. Simulator only until the user approves; then the first real runs
+     with frames identical to captured ones (the whole windows compared),
+     a confirmation before each run, every command logged.
+  5. Any other field the calculator computes (offsets 14, 18, 22, 26,
+     54 / 58 and the rest) needs its own decision.

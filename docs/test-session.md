@@ -849,3 +849,13 @@ at 600 ppi a window line is 28.8 units (1 000 lines per inch), so if
 offset 62 follows the window it may differ from the 3 200 ppi value by up
 to about 14 units. To be made before the X1 is recalibrated (2026-11-20), like
 parts H and I.
+
+### K1. Result of 2026-11-19, 11:04-11:29
+
+Done with the guide, zoom 100 %, TIFFs kept; still the original
+calibration. Step 44 (2 000 ppi) was scanned twice (sessions 3 and 4,
+identical windows apart from the focus correction). Offset 62: the same
+value at 3 200, 2 000 and 1 000 ppi, 48 less at 600 ppi (docs/protocol.md
+§9). The two presses of the down arrow moved the window by 22 and then 16
+lines at 5 333 lines per inch (offset 62 +126, then +81), less than one
+preview pixel (1/160 in, 180 units): the gesture, not the shift obtained. Windows in `tests/fixtures/scan-windows-2026-11-19.json`.

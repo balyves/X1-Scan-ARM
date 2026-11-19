@@ -355,6 +355,30 @@ of three values are in capture order: 2 000, 1 000 and 3 200 ppi.
   frame to its output pixel grid). **[hypothesis]** A calculator can give
   it within about ±12 units (0.01 mm), not byte for byte.
 
+  **Part K (2026-11-19, essai-N, zoom 100 %)**. One 0.50 × 0.50 cm frame
+  left untouched gives 59 713 at 3 200, 2 000 (twice) and 1 000 ppi, and
+  59 665 at 600 ppi; moved twice by one press of the down arrow (22 and 16 lines, less than
+  one preview pixel; test-session K1), 59 839 and 59 920 at
+  3 200 ppi, and that last frame 59 857 at 600 ppi. **[confirmed]** So
+  offset 62 is the same at 3 200, 2 000 and 1 000 ppi **[confirmed]** and
+  different at 600 ppi. It does not follow the window's lines: from the
+  windows, 3 200 and 2 000 / 1 000 ppi should differ by about 4 units, and
+  they are equal **[confirmed]** (a difference of 4 units: consistent, not
+  large). That FlexColor computes it from its own frame coordinates:
+  **[hypothesis]**, strongly supported. At 600 ppi the untouched frame is
+  48 lower, one 600 ppi output pixel (28 800 ÷ 600): FlexColor may move the
+  frame to its output pixel grid at coarse resolutions **[hypothesis]**;
+  part H fits it (27 between 3 200 and 960 ppi with the zoom at 160 %, under
+  one output pixel, 30 units on the film). But the moved frame is 63 lower
+  at 600 ppi (59 920 → 59 857), more than one output pixel, which a simple
+  move to that grid does not explain **[confirmed]**; the cause is not
+  known. Those coordinates are not in the window: from the window's values alone, the formula above
+  stays within −6 to +24 of FlexColor's value on all 37 focus windows
+  captured (2026-11-17 to -19), the largest at 600 ppi. **[confirmed]** A
+  window calculator, which has its own frame, gets offset 62 from it; it
+  cannot reproduce FlexColor's value for the same frame byte for byte
+  (docs/decisions.md, proposal of 2026-11-19).
+
 **Window rules** (2026-11-18: 12 scans with the 6×7 holder in one
 FlexColor run, the same 1.0 × 1.0 cm frame at 600, 1 000, 1 500, 2 000,
 3 000 and 3 200 ppi, the same size near each edge, and a 1.0 × 3.0 cm
