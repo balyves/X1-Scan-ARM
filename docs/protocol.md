@@ -8,6 +8,10 @@ Mac on macOS 10.14 Mojave) or reproduced with our own tools;
 Multi-byte values: CDB fields are big-endian (SCSI convention). Data
 **inside vendor pages and parameter blocks is little-endian**, unless noted.
 
+Every capture described here was made up to 2026-11-19, with the X1's
+original calibration (a recalibration was planned for 2026-11-20;
+docs/journal.md). Values that come from the calibration may differ after it.
+
 ## 1. Transport
 
 - FireWire 400 device (S400, even on a FireWire 800 bus). **[confirmed]**

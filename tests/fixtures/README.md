@@ -7,6 +7,10 @@ each read are kept (`response_head`): mostly dark margin pixels, a few
 pixels of the frame at most. One exception: the eight holder code lines of
 `holders/holder-code-lines.json` (below; docs/decisions.md).
 
+Calibration: every fixture here was captured up to 2026-11-19, with the
+X1's original calibration (a recalibration by another program, written
+into the scanner, is planned for 2026-11-20; docs/journal.md).
+
 ## preview-sequence.json
 
 Every SCSI exchange of one preview, in order (766 exchanges): initialisation,

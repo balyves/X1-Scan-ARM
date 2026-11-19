@@ -547,7 +547,7 @@ launch, kept outside the repository (they hold the serial number). Purpose: the 
 
 **Guided**: `tools/capture/guided-session.sh` (copy the `tools/capture/`
 folder to the reference Mac) walks through steps 1-22 (part H: steps
-23-32, `--part H`). It starts each
+23-32, `--part H`; part I: steps 33-41, `--part I`). It starts each
 FlexColor run under lldb with `cap3.py` and a new name (`essai-I`,
 `essai-J1`…, `-2` added if the name exists), waits for FlexColor to be
 quit, shows each step in French with the state of the X1 and FlexColor,
@@ -688,3 +688,88 @@ and the screenshots outside the repository. At 600 ppi the frame is about
 200 lines, fewer than the 400 of the focus step: a possible limit case
 (part G's 1.0 cm frame at 600 ppi, about 400 lines, followed the rule).
 About 15 minutes.
+
+## Part I: first preview of the holders still missing (captures "essai-M1" to "M9")
+
+Purpose: a first preview of each holder whose run starts exactly like our
+warm sequence (`preview-sequence.json`) up to the holder code read, so
+that X1 Scan can later go on with that holder's captured preview
+(docs/decisions.md, "Holder detection"). FlexColor starts a run with the
+settings of the holder of the previous run: a run follows one with a 6×7,
+6×6 / 6×4.5, 6×6×2 or 6×9 holder, and the 6×7 runs of steps 38 and 40 only
+reset that. The 6×6 and 6×6×2 come again with another original, to see
+whether the second low-resolution pass depends on it (protocol.md §13).
+Same set-up as part G, **X1: on** throughout, FlexColor **closed** before
+each step and launched by the guide; one preview per run, then quit; the
+Format menu not touched. `tools/capture/guided-session.sh --part I` (or
+`--from 33`); resuming at 34-37, 39 or 41 asks whether the previous
+FlexColor run had a 6×7-type holder, and otherwise sends back to the
+previous 6×7 step.
+
+33. 6×7 → essai-M1.
+34. 6×9 → essai-M2.
+35. 6×6 / 6×4.5, another film (or the same placed differently) → essai-M3.
+36. 6×6×2, another film → essai-M4.
+37. 4×5 → essai-M5.
+38. 6×7 (reset) → essai-M6.
+39. 24×36×6 → essai-M7.
+40. 6×7 (reset) → essai-M8.
+41. 24×36 (single frame, labelled "24x35 / 35x24") → essai-M9.
+
+At each step the guide asks for the reference printed on the holder and
+the format FlexColor shows, and notes both. Starting at step 33, it also
+asks which holder the previous FlexColor run had and notes it. About 25
+minutes.
+
+## Part J: check after the X1 is recalibrated (no real preview or scan by X1 Scan before J3's verdict; J1 reads only)
+
+Context: on 2026-11-20 another program recalibrates the X1 and writes the
+new calibration into the scanner. Every capture and real run up to
+2026-11-19 was made with the original calibration. X1 Scan replays
+FlexColor's sequences byte for byte and checks positions read on page
+0x20 (tolerance 256): if the recalibration changed what the X1 answers,
+a real run would stop at the first unexpected response (the intended
+safe behaviour). This part checks first, with reads and FlexColor only.
+
+### J1. Reads only, development Mac
+
+- **X1: off**, FlexColor closed on the other Mac, cable on the
+  development Mac (B1), then **X1: on**, idle. X1 Scan: Source Real X1.
+- Scanner > Scanner Information… (⌘I), Read Identity. Keep a screenshot
+  (serial masked by the app) in `~/X1-captures/<date>/`.
+- Optionally `tools/x1probe` (B3), output saved in the same folder.
+- `EnableRealPreview` and `EnableRealScan` stay **off**.
+- **X1: off** before moving the cable.
+
+### J2. FlexColor captures, reference Mac
+
+- **X1: off**, cable on the reference Mac (C1), **FlexColor: closed**.
+- Cold preview: `guided-session.sh --from 22` (X1 off then on, 6×7, essai-K).
+- Warm previews: `guided-session.sh --part I` (all holders) or at least
+  its step 33 (6×7), then part H if there is time.
+- **FlexColor: closed**, **X1: off** at the end (C4). Pass on the folder
+  for analysis.
+
+### J3. Comparison (analysis, nothing sent)
+
+The new captures are compared with `preview-sequence-cold.json`,
+`preview-sequence.json` and the part G and I captures of 2026-11-18/19:
+commands and data sent, the first page 0x20 read (2 048 × 3 cold), the
+positions read before each window (cold: 14 219 ± 256 after
+`F0 00 00 01 01 01`), pages 0x21-0x29, the windows' offsets 54 / 58 and
+the holder codes. Result:
+
+- the same within the tolerances: J4 may be run;
+- different: no real run of X1 Scan; new fixtures and the user's decision
+  first.
+
+### J4. Only after J3 says so: X1 Scan on the real X1
+
+- **X1: on**, cable on the development Mac (B1; X1 off while moving it),
+  **FlexColor: closed** (on the reference Mac).
+- As parts E (cold preview) and F (preview then scan), with the hidden
+  settings turned on for the run only and a confirmation before each run.
+- A stop on an unexpected response is the expected safe behaviour: keep
+  the `x1scan-*` logs and pass them on; do not retry with other settings.
+- Turn `EnableRealPreview` and `EnableRealScan` off again afterwards.
+  **X1: off** at the end.

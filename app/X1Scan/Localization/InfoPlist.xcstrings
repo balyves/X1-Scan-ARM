@@ -1,6 +1,42 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "CFBundleDisplayName" : {
+      "comment" : "Bundle display name: the app name shown in Finder and the Dock",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "X1 Scan"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "X1 Scan"
+          }
+        }
+      }
+    },
+    "CFBundleName" : {
+      "comment" : "Bundle name: the app name in the menu bar",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "X1 Scan"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "X1 Scan"
+          }
+        }
+      }
+    },
     "NSHumanReadableCopyright" : {
       "comment" : "About panel: copyright line. The code is MIT; the icon is not.",
       "extractionState" : "manual",

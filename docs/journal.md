@@ -690,3 +690,25 @@ window lines?), then moved by FlexColor's smallest steps and given two
 other heights, to find the rounding behind the −6 to +21 residuals of
 offset 62. Its unit is probably 1/28 800 inch (about 0.88 µm) [hypothesis]. Not
 run yet.
+
+## 2026-11-19: original calibration; parts I and J; holder decision
+
+Tomorrow (2026-11-20) another program recalibrates the X1 and writes the
+new calibration into the scanner. **Every capture and real run up to
+2026-11-19 inclusive was made with the X1's original calibration.** Parts
+H and I are to be captured today, still with it.
+
+docs/test-session.md part I and the guide (`--part I`, steps 33-41): the
+first preview of each holder whose run starts like our warm sequence (a
+run after a 6×7-type holder), the 6×6 and 6×6×2 again with another
+original. Part J: the check after the recalibration (reads only, then
+FlexColor captures, then a comparison, and only then X1 Scan on the real
+X1).
+
+User's decision for the real X1: a holder other than the 6×7, detected
+from the code line our sequences already read, stops the run right after
+that read with a clear message (decisions.md, "Holder detection"; not
+implemented yet).
+
+`InfoPlist.xcstrings`: the bundle names Xcode extracted (CFBundleName,
+CFBundleDisplayName) are kept, with the French value "X1 Scan".

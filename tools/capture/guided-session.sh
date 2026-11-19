@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 #
 # Guided FlexColor capture sessions (docs/test-session.md, part G, steps 1-22;
-# part H, steps 23-32)
+# part H, steps 23-32; part I, steps 33-41)
 # for the reference Mac (Mojave): bash 3.2 and what macOS ships (lldb from the
 # Command Line Tools, screencapture, /usr/bin/python with PyObjC). Nothing to
 # install.
@@ -14,6 +14,7 @@
 # Usage:
 #   tools/capture/guided-session.sh                 part G, from step 1
 #   tools/capture/guided-session.sh --part H        part H (steps 23-32)
+#   tools/capture/guided-session.sh --part I        part I (steps 33-41)
 #   tools/capture/guided-session.sh --from 8        resume at step 8 (to the
 #                                                   end of that step's part)
 #   tools/capture/guided-session.sh --list          list the steps
@@ -27,7 +28,7 @@
 #   X1GUIDE_DIR         output folder (default: ~/Desktop/captures-YYYY-MM-DD)
 #   X1CAP_SCAN_MB       image data kept after each SCAN, in MiB (default: 64, as
 #                       in docs/test-session.md C2; expected to hold every scan of
-#                       parts G and H whole: check "RAW skipped" in the logs)
+#                       parts G to I whole: check "RAW skipped" in the logs)
 #   X1GUIDE_DRY_RUN=1   try the script without FlexColor nor lldb: a placeholder
 #                       process stands for FlexColor, Entrée "quits" it, the
 #                       screenshots are empty files, and the default folder is
@@ -46,8 +47,9 @@ else
 fi
 SCAN_MB=${X1CAP_SCAN_MB:-64}
 NOTES="$DIR/essai-notes.txt"
-PART_G_LAST=22  # part G: steps 1-22; part H: steps 23-LAST_STEP
-LAST_STEP=32
+PART_G_LAST=22  # part G: steps 1-22
+PART_H_LAST=32  # part H: steps 23-32; part I: steps 33-LAST_STEP
+LAST_STEP=41
 CURRENT_STEP=1
 
 CAPTURE=""      # name of the capture running (essai-I, essai-J1...), "" if none
@@ -332,6 +334,7 @@ holder_size() {  # holder_size STEP: reference and opening in mm and inches (hol
 
 do_step() {  # do_step STEP: shows the step, waits, notes, screenshots
     local s=$1 res="" frame=""
+    if [ "$s" -gt "$PART_H_LAST" ]; then do_part_i "$s"; return; fi
     if [ "$s" -gt "$PART_G_LAST" ]; then do_part_h "$s"; return; fi
     case $s in
         1)
@@ -510,6 +513,69 @@ do_part_h() {  # do_part_h STEP
     screenshot "$s" "scan-${res}ppi"
 }
 
+# Part I (docs/test-session.md): the first preview of each holder that has
+# no capture starting like our warm sequence. FlexColor starts a run with the
+# settings of the holder used in the previous run: each holder below follows
+# a run with a 6×7, 6×6, 6×6×2 or 6×9 (the 6×7 runs at 38 and 40 only reset
+# that), so that its run starts like preview-sequence.json.
+do_part_i() {  # do_part_i STEP
+    local s=$1 holder key note_film="" name
+    name="essai-M$((s - PART_H_LAST))"
+    case $s in
+        33) holder="6×7"; key=1 ;;
+        34) holder="6×9"; key=20 ;;
+        35) holder="6×6 / 6×4,5"; key=15; note_film=1 ;;
+        36) holder="6×6×2"; key=16; note_film=1 ;;
+        37) holder="4×5"; key=18 ;;
+        38) holder="6×7"; key=1 ;;
+        39) holder="24×36×6"; key=19 ;;
+        40) holder="6×7"; key=1 ;;
+        41) holder="24×36"; key=17 ;;
+    esac
+    banner "Étape $s/41 : premier aperçu du porte-film $holder (capture $name)"
+    [ -z "$CAPTURE" ] || end_capture
+    state "allumé" "fermé, puis lancé par le guide"
+    say "Porte-film : $holder."
+    say "  $(holder_size "$key")"
+    if [ "$s" = 41 ]; then
+        say "  Le 24×36 à UNE seule vue, étiqueté « 24x35 / 35x24 » (FlexColor affiche"
+        say "  « 24x36 / 36x24 ») : pas le 24×36×4 ni le 24×36×6 (bandes de vues)."
+    fi
+    if [ "$s" = 38 ] || [ "$s" = 40 ]; then
+        say "  (Ce passage par le 6×7 remet à zéro le réglage que FlexColor garde du"
+        say "  porte-film précédent ; l'aperçu lui-même sert peu.)"
+    fi
+    if [ -n "$note_film" ]; then
+        say "  Avec un AUTRE film que le 18/11, ou le même placé autrement :"
+        say "  on cherche si les passes rapides de FlexColor changent avec l'original."
+    fi
+    wait_enter "Entrée quand le porte-film $holder est en place."
+    note "étape $s : porte-film $holder en place"
+    typed_note "$s" "Référence imprimée sur le porte-film (Entrée si absente ou illisible) :" "référence du porte-film"
+    start_capture "$name"
+    say "Dans FlexColor : cliquez sur Aperçu. Ne touchez pas au menu Format."
+    wait_enter "Entrée quand l'aperçu est fini."
+    note "étape $s : aperçu fait"
+    typed_note "$s" "Format affiché par FlexColor (Entrée si illisible) :" "format affiché"
+    screenshot "$s" apercu
+    state "allumé" "à quitter"
+    end_capture
+}
+
+typed_note() {  # typed_note STEP PROMPT LABEL: notes what the user types ("non noté" if nothing)
+    local text
+    if [ -t 0 ]; then
+        while read -r -t 1 _; do :; done
+    fi
+    printf '%s ' "$2"
+    if ! read -r text; then
+        say ""
+        say "Entrée standard fermée : arrêt du guide."
+        stop_guide 1
+    fi
+    note "étape $1 : $3 : ${text:-(rien)}"
+}
+
 list_steps() {
     say "Étapes (docs/test-session.md, partie G) :"
     say "  1      essai-I : lancer FlexColor, aperçu (6×7)"
@@ -526,6 +592,18 @@ list_steps() {
     say "  27-29  essai-L : le même, descendu de 1, 2, 3 petits pas, 2 000 ppi"
     say "  30-31  essai-L : sans le déplacer, hauteur 0,51 puis 0,52 cm, 2 000 ppi"
     say "  32     essai-L : quitter FlexColor"
+    say ""
+    say "Partie I (aperçus des porte-film manquants ; --part I ou --from 33) :"
+    say "  33     essai-M1 : 6×7"
+    say "  34     essai-M2 : 6×9"
+    say "  35     essai-M3 : 6×6 / 6×4,5 (autre film)"
+    say "  36     essai-M4 : 6×6×2 (autre film)"
+    say "  37     essai-M5 : 4×5"
+    say "  38     essai-M6 : 6×7 (remise à zéro)"
+    say "  39     essai-M7 : 24×36×6"
+    say "  40     essai-M8 : 6×7 (remise à zéro)"
+    say "  41     essai-M9 : 24×36"
+    say "  (FlexColor relancé à chaque étape ; un aperçu, puis quitter)"
 }
 
 # ---------------------------------------------------------------------------
@@ -539,11 +617,16 @@ while [ $# -gt 0 ]; do
             [ $# -ge 2 ] || { say "--from attend un numéro d'étape (1 à $LAST_STEP)"; exit 2; }
             FROM=$2; FROM_GIVEN=1; shift 2 ;;
         --part)
-            [ $# -ge 2 ] || { say "--part attend G ou H"; exit 2; }
-            case $2 in G|g) FROM=1 ;; H|h) FROM=$((PART_G_LAST + 1)) ;; *) say "--part attend G ou H"; exit 2 ;; esac
+            [ $# -ge 2 ] || { say "--part attend G, H ou I"; exit 2; }
+            case $2 in
+                G|g) FROM=1 ;;
+                H|h) FROM=$((PART_G_LAST + 1)) ;;
+                I|i) FROM=$((PART_H_LAST + 1)) ;;
+                *) say "--part attend G, H ou I"; exit 2 ;;
+            esac
             PART_GIVEN=1; shift 2 ;;
         --list) list_steps; exit 0 ;;
-        -h|--help) sed -n '3,34p' "$0"; exit 0 ;;
+        -h|--help) sed -n '3,35p' "$0"; exit 0 ;;
         *) say "Option inconnue : $1 (voir --help)"; exit 2 ;;
     esac
 done
@@ -572,7 +655,7 @@ fi
 mkdir -p "$DIR" || exit 1
 
 banner "Session de captures guidée — dossier : $DIR"
-if [ "$FROM" -le "$PART_G_LAST" ]; then PART=G; else PART=H; fi
+if [ "$FROM" -le "$PART_G_LAST" ]; then PART=G; elif [ "$FROM" -le "$PART_H_LAST" ]; then PART=H; else PART=I; fi
 # The first preview of this run: a resume preview in the middle of a capture
 # (essai-I: 2-13, essai-L: 24-31), the next step after a step that only quits.
 case $FROM in
@@ -596,7 +679,27 @@ note "guide démarré à l'étape $FROM (dossier $DIR)"
 wait_enter "Entrée pour commencer à l'étape $FROM."
 
 # A run stays within the part of its first step.
-if [ "$FROM" -le "$PART_G_LAST" ]; then END_STEP=$PART_G_LAST; else END_STEP=$LAST_STEP; fi
+case $PART in G) END_STEP=$PART_G_LAST ;; H) END_STEP=$PART_H_LAST ;; *) END_STEP=$LAST_STEP ;; esac
+# Part I from step 33: noted only (essai-M1 starts like our warm sequence
+# only after a 6×7-type run; the steps after it follow a 6×7 run anyway).
+if [ "$PART" = I ] && [ "$FROM" = 33 ]; then
+    if ask_yes "La dernière session FlexColor (avant celle-ci) avait-elle un 6×7, 6×6, 6×6×2 ou 6×9 ?"; then
+        note "étape 33 : session précédente avec un porte-film de type 6×7 (réponse de l'utilisateur)"
+    else
+        say "Noté : essai-M1 ne commencera pas comme la séquence chaude ; la suite n'en dépend pas."
+        note "étape 33 : session précédente avec un autre porte-film ou inconnue (réponse de l'utilisateur)"
+    fi
+fi
+# Part I resumed: the step's run must follow a run with a 6×7-type holder.
+if [ "$PART" = I ] && [ "$FROM" -gt 33 ] && [ "$FROM" != 38 ] && [ "$FROM" != 40 ]; then
+    if ! ask_yes "La dernière session FlexColor (avant celle-ci) avait-elle un 6×7, 6×6, 6×6×2 ou 6×9 ?"; then
+        case $FROM in 3[4-7]) back=33 ;; 39) back=38 ;; *) back=40 ;; esac
+        say "Reprenez à l'étape $back (6×7) : --from $back."
+        note "reprise à l'étape $FROM refusée : porte-film précédent inconnu ou autre ; reprendre à $back"
+        exit 2
+    fi
+    note "reprise à l'étape $FROM : session précédente avec un porte-film de type 6×7 (réponse de l'utilisateur)"
+fi
 step=$FROM
 while [ "$step" -le "$END_STEP" ]; do
     CURRENT_STEP=$step

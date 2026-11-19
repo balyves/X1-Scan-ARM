@@ -967,3 +967,28 @@ licences.
   Composer's neutral dark), and the "X1" outline has a 14-unit white
   stroke (round joins) in the source layer and in the `.icon`, for the 16
   and 32 px sizes. The four renders stay outside the repository.
+
+## Holder detection (2026-11-19, plan; not implemented yet)
+
+- The cold and warm sequences X1 Scan replays already read the holder
+  code line at full CCD width (`28 00 01 00 01 01 00 bb e0 00`, seq 355 of
+  `preview-sequence-cold.json`, seq 299 of `preview-sequence.json`). Detecting the holder
+  needs no new command: X1 Scan decodes that line (`X1Image.HolderCode`)
+  and looks the code up in `holders.json` (`code`).
+- **Real X1, holder other than the 6×7** (user's decision, 2026-11-19):
+  the run stops right after that read, with the message "Holder <format>
+  detected; only the 6×7 is supported for now". Nothing else is sent. A
+  line that cannot be decoded, or a code not in `holders.json`, stops the
+  run the same way, with its own message (holder not recognised). What
+  FlexColor itself sends after that read to end cleanly has never been
+  captured: the X1 is left as it is after that read. **[hypothesis]**
+  that this is harmless, to be watched on the first such stop.
+- Later, other holders: after the code read, go on with that holder's
+  captured preview, only from a capture whose commands up to the code read
+  are identical to our sequence (the captures of 2026-11-18 of the 6×6 /
+  6×4.5, the 6×6×2 and twice the 24×36×4 are; docs/test-
+  session.md part I adds the others). Holders with the two low-resolution
+  passes (6×6 / 6×4.5, 6×6×2, 24×36) may not be replayable byte for byte if
+  the second pass depends on the original. Cold start: 6×7 only.
+- Simulator: the other holders' code lines are generated in the tests from
+  their bar pattern; no other raw code line enters the repository.
