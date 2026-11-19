@@ -828,3 +828,11 @@ the user's approval before push; one review pass for documentation, at
 most two for that code; `docs/hypotheses.md` lists the open hypotheses
 (first version); x1-reviewer plays devil's advocate on every new
 [confirmed] conclusion.
+
+## 2026-11-19: part K added to the post-recalibration check
+
+docs/test-session.md J2 now runs part K again after the previews
+(essai-N2, zoom 100 %), and J3 compares its windows with essai-N of
+`scan-windows-2026-11-19.json`: offsets 54 / 58 and the focus positions
+decide J4; offset 62 is noted only. The guide still writes `essai-N`
+(its name is fixed in `guided-session.sh`); essai-N2 is the analysis name.

@@ -776,7 +776,18 @@ safe behaviour). This part checks first, with reads and FlexColor only.
 - **X1: off**, cable on the reference Mac (C1), **FlexColor: closed**.
 - Cold preview: `guided-session.sh --from 22` (X1 off then on, 6×7, essai-K).
 - Warm previews: `guided-session.sh --part I` (all holders) or at least
-  its step 33 (6×7), then part H if there is time.
+  its step 33 (6×7).
+- Then part K again: `guided-session.sh --part K` (steps 42-50; **X1:
+  on**, **FlexColor: closed**, launched by the guide; 6×7 holder with the
+  IT8 target, zoom **100 %**; about 15 minutes). The guide names the run
+  `essai-N` in that day's folder (`essai-N-2`, `-3`… after a restart in
+  the middle, or if the folder already has an essai-N); all of them
+  together are called **essai-N2** in the analysis, to keep them apart
+  from essai-N of 2026-11-19 (K1). Purpose: to
+  check again, after the recalibration, offset 62 of the 400-line window
+  and offsets 54 / 58 before the 400-line step, at 3 200, 2 000, 1 000
+  and 600 ppi (J3).
+- Then part H if there is time.
 - **FlexColor: closed**, **X1: off** at the end (C4). Pass on the folder
   for analysis.
 
@@ -787,7 +798,32 @@ The new captures are compared with `preview-sequence-cold.json`,
 commands and data sent, the first page 0x20 read (2 048 × 3 cold), the
 positions read before each window (cold: 14 219 ± 256 after
 `F0 00 00 01 01 01`), pages 0x21-0x29, the windows' offsets 54 / 58 and
-the holder codes. Result:
+the holder codes. The windows of essai-N2 are compared with those of
+essai-N in `tests/fixtures/scan-windows-2026-11-19.json`, resolution by
+resolution (3 200, 2 000, 1 000, 600 ppi; the frame is placed by hand, so
+its position may differ from essai-N's). What decides J4:
+
+- offsets 54 / 58 before the 400-line step: the same values at the same
+  optical resolution (the 6×7 model of docs/protocol.md §9, "Window
+  rules", within 1), and the same +10 000 in the 400-line window;
+- the page 0x20 position read just before each 400-line window, and its
+  offset 50: the same as essai-N at each resolution (24 971 at 3 200 ppi,
+  16 843 at 2 000, 8 081 at 1 000, 4 907 at 600; they do not depend on
+  the frame), within 256, and at 2 000 ppi within 16 395-17 227
+  (`ScanScript.focusPositionRange`);
+- the rest of the image and 400-line windows (ratio, binning, width,
+  lines, the 400-line window's constants) by the rules of §9.
+
+Noted only, for §9 and the offset 62 decision (they do not decide J4,
+which replays offset 62 byte for byte from the capture):
+
+- offset 62: the same value (±1) at 3 200, 2 000 and 1 000 ppi for the
+  untouched frame; the difference at 600 ppi (−48 in K1, −63 for the
+  moved frame; its cause is a [hypothesis], §9);
+- option A of docs/decisions.md ("Offset 62") against FlexColor's value
+  (the 32 units are the future calculator's validation criterion).
+
+Result:
 
 - the same within the tolerances: J4 may be run;
 - different: no real run of X1 Scan; new fixtures and the user's decision
@@ -804,7 +840,7 @@ the holder codes. Result:
 - Turn `EnableRealPreview` and `EnableRealScan` off again afterwards.
   **X1: off** at the end.
 
-## Part K: offset 62 again, zoom 100 % (one capture, "essai-N")
+## Part K: offset 62 again, zoom 100 % (one capture, "essai-N"; run again in J2)
 
 Purpose: part H was made with FlexColor's zoom at 160 % (docs/protocol.md
 §9): its untouched frame was read at 3 200 and 960 ppi only, and FlexColor
@@ -848,7 +884,7 @@ window, the TIFF size, and the size shown. Expected size of the effect:
 at 600 ppi a window line is 28.8 units (1 000 lines per inch), so if
 offset 62 follows the window it may differ from the 3 200 ppi value by up
 to about 14 units. To be made before the X1 is recalibrated (2026-11-20), like
-parts H and I.
+parts H and I, and once more after it (J2, essai-N2).
 
 ### K1. Result of 2026-11-19, 11:04-11:29
 
