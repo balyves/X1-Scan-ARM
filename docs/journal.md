@@ -914,3 +914,10 @@ frame, proportions, fine angle, straightening rule, Lanczos-3 rendering.
 Nothing sent to the scanner changed: the scan sequences, guards and
 transport are untouched. Tried on the virtual X1 only; the user tests the
 application next, then on the real X1.
+
+## 2026-11-19: lot 1, step F (user's decisions after the first report)
+
+The crop frame now follows the image: exact quarter turns of the frame
+(named ratio exchanged) and mirror (fine angle negated), tested for the
+four turns, the mirror and back; a ratio chosen keeps the frame's
+direction. CLAUDE.md gains a line on `X1ScanCore/Geometry`.

@@ -98,6 +98,43 @@ public struct CropSettings: Sendable, Hashable, Codable {
         constrained = try container.decodeIfPresent(Bool.self, forKey: .constrained) ?? true
     }
 
+    // MARK: Following the image's turns (lot 1, step F)
+
+    /// The image is turned a quarter (clockwise or not): the frame turns with
+    /// it, exactly (normalised coordinates), and the proportions are
+    /// exchanged (6×7 becomes 7×6). The fine angle is unchanged: a quarter
+    /// turn and a fine rotation about the same centre commute.
+    public mutating func turnQuarter(clockwise: Bool) {
+        if let frame {
+            // Unit square, y down. Clockwise: (u, v) → (1 − v, u); counterclockwise: (u, v) → (v, 1 − u).
+            self.frame = clockwise
+                ? CGRect(x: 1 - frame.maxY, y: frame.minX, width: frame.height, height: frame.width)
+                : CGRect(x: frame.minY, y: 1 - frame.maxX, width: frame.height, height: frame.width)
+        }
+        // The image's own proportions turn with the image; a named ratio is exchanged.
+        if case .ratio = aspect { portrait.toggle() }
+    }
+
+    /// The image is mirrored left to right: the frame is mirrored and the
+    /// fine angle changes sign.
+    public mutating func mirrorHorizontally() {
+        if let frame { self.frame = CGRect(x: 1 - frame.maxX, y: frame.minY, width: frame.width, height: frame.height) }
+        angle = -angle
+    }
+
+    /// Proportions chosen: their direction follows the frame's (or without a
+    /// frame, the image's): a frame higher than wide stays so. A square
+    /// ratio has no direction.
+    public mutating func choose(_ aspect: CropAspect, imageSize: CGSize, currentFrame: CGRect?) {
+        self.aspect = aspect
+        portrait = false
+        let reference = currentFrame ?? CGRect(origin: .zero, size: imageSize)
+        guard reference.width > 0, reference.height > 0, imageSize.width > 0, imageSize.height > 0,
+              let named = aspect.namedRatio(imageRatio: imageSize.width / imageSize.height),
+              abs(named - 1) > 1e-9, abs(reference.width / reference.height - 1) > 1e-9 else { return }
+        portrait = (named > 1) != (reference.width > reference.height)
+    }
+
     /// Width over height of the frame the proportions ask for; nil: free.
     /// `imageSize`: the oriented image, physical units.
     public func ratio(imageSize: CGSize) -> Double? {

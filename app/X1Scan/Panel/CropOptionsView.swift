@@ -81,7 +81,9 @@ struct CropOptionsSection: View {
                                         presets, [.init(Strings.cropCustom, .custom)]])
                     .popover(isPresented: $customShown, arrowEdge: .bottom) { customRatio }
                 Button { model.toggleCropPortrait() } label: {
-                    Image(systemName: model.recipe.crop.portrait ? "rectangle.portrait" : "rectangle")
+                    // The frame's real direction (portrait means "exchanged", not "upright").
+                    Image(systemName: (model.cropRatio ?? model.cropFrameInDocument.map { $0.width / $0.height } ?? 1) < 1
+                          ? "rectangle.portrait" : "rectangle")
                 }
                 .buttonStyle(.borderless)
                 .help(Strings.withShortcut(Strings.cropSwap, "X"))
@@ -126,7 +128,7 @@ struct CropOptionsSection: View {
                     .keyboardShortcut(.cancelAction)
                 Button(Strings.ok) {
                     if let aspect = CropAspect.custom(Self.number(customWidth) ?? 0, Self.number(customHeight) ?? 0) {
-                        model.setCropAspect(aspect)
+                        model.setCropAspect(aspect, asTyped: true)
                         customShown = false
                     }
                 }

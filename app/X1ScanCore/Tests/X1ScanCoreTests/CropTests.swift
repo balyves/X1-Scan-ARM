@@ -234,9 +234,140 @@ struct CropModelTests {
             await model.waitForRendering()
             let region = try #require(model.cropRect)
             #expect(model.histogram.pixelCount == region.width * region.height)
-            // A quarter turn removes the frame (it no longer covers the same pixels); the angle stays.
+            // A quarter turn turns the frame with the image (step F); the angle stays.
             model.rotateClockwise()
-            #expect(model.recipe.crop.frame == nil && model.recipe.crop.angle == -2)
+            #expect(model.recipe.crop.frame != nil && model.recipe.crop.angle == -2)
         }
+    }
+}
+
+/// Step F: the frame and the angle follow the image's turns and mirror.
+struct CropFollowsOrientationTests {
+    private func near(_ a: CGRect?, _ b: CGRect?) -> Bool {
+        guard let a, let b else { return a == nil && b == nil }
+        return abs(a.minX - b.minX) < 1e-12 && abs(a.minY - b.minY) < 1e-12
+            && abs(a.width - b.width) < 1e-12 && abs(a.height - b.height) < 1e-12
+    }
+
+    private var sample: CropSettings {
+        var crop = CropSettings()
+        crop.frame = CGRect(x: 0.1, y: 0.2, width: 0.3, height: 0.4)
+        crop.aspect = .ratio(width: 6, height: 7)
+        crop.angle = 1.5
+        return crop
+    }
+
+    @Test func quarterTurnsAreExact() {
+        var crop = sample
+        crop.turnQuarter(clockwise: true)
+        // Clockwise, unit square: (u, v) → (1 − v, u).
+        #expect(near(crop.frame, CGRect(x: 0.4, y: 0.1, width: 0.4, height: 0.3)))
+        #expect(crop.portrait, "6×7 becomes 7×6")
+        #expect(crop.angle == 1.5, "a quarter turn keeps the fine angle")
+        crop.turnQuarter(clockwise: false)
+        #expect(near(crop.frame, sample.frame) && !crop.portrait && crop.angle == sample.angle, "there and back")
+        var around = sample
+        for _ in 0..<4 { around.turnQuarter(clockwise: true) }
+        #expect(near(around.frame, sample.frame) && around.portrait == sample.portrait, "four quarters: back home")
+        for _ in 0..<4 { around.turnQuarter(clockwise: false) }
+        #expect(near(around.frame, sample.frame))
+        // The image's own proportions are not exchanged: they turn with the image.
+        var original = sample
+        original.aspect = .original
+        original.turnQuarter(clockwise: true)
+        #expect(!original.portrait)
+    }
+
+    @Test func mirrorIsExact() {
+        var crop = sample
+        crop.mirrorHorizontally()
+        #expect(near(crop.frame, CGRect(x: 0.6, y: 0.2, width: 0.3, height: 0.4)))
+        #expect(crop.angle == -1.5 && !crop.portrait)
+        crop.mirrorHorizontally()
+        #expect(near(crop.frame, sample.frame) && crop.angle == 1.5, "there and back")
+    }
+
+    @Test func proportionsFollowTheFrameDirection() {
+        let image = CGSize(width: 300, height: 200)
+        var crop = CropSettings()
+        // An upright frame and 6×9 (upright as named): stays upright.
+        crop.choose(.ratio(width: 6, height: 9), imageSize: image, currentFrame: CGRect(x: 0, y: 0, width: 50, height: 90))
+        #expect(!crop.portrait && crop.ratio(imageSize: image) == 6.0 / 9)
+        // A flat frame and 6×9: turned flat, 9×6.
+        crop.choose(.ratio(width: 6, height: 9), imageSize: image, currentFrame: CGRect(x: 0, y: 0, width: 90, height: 50))
+        #expect(crop.portrait && crop.ratio(imageSize: image) == 9.0 / 6)
+        // No frame: the image's direction (here flat).
+        crop.choose(.ratio(width: 4, height: 5), imageSize: image, currentFrame: nil)
+        #expect(crop.ratio(imageSize: image) == 5.0 / 4)
+        // Original follows the frame's direction too: an upright frame on a flat image gets 200:300.
+        crop.choose(.original, imageSize: image, currentFrame: CGRect(x: 0, y: 0, width: 50, height: 90))
+        #expect(crop.portrait && abs((crop.ratio(imageSize: image) ?? 0) - 2.0 / 3) < 1e-12)
+        // A square ratio has no direction.
+        crop.choose(.ratio(width: 6, height: 6), imageSize: image, currentFrame: CGRect(x: 0, y: 0, width: 90, height: 50))
+        #expect(!crop.portrait)
+    }
+}
+
+/// Step F, on a preview: after turns and mirrors the frame covers the same source pixels.
+@MainActor
+struct CropFollowsOrientationModelTests {
+    @Test func frameCoversTheSamePixels() async throws {
+        let suite = "X1ScanCoreTests-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let inspector = ScannerInspector { FakeConnection(responses: [:], openError: TransportError.deviceBusy) }
+        let model = AppModel(virtualScanner: { try TestFixtures.scanner() }, inspector: inspector, defaults: defaults)
+        model.startPreview()
+        await model.session.waitUntilIdle()
+        model.refreshImage()
+        await model.waitForRendering()
+        model.cropRect = PixelRect(x: 300, y: 100, width: 500, height: 200)
+        let pixels = try #require(model.cropRect)
+        for step in 0..<4 {
+            model.rotateClockwise()
+            #expect(model.cropRect == pixels, "after \(step + 1) quarter turn(s): \(String(describing: model.cropRect))")
+        }
+        model.mirrorHorizontally()
+        #expect(model.cropRect == pixels, "mirrored")
+        model.rotateCounterclockwise()
+        model.mirrorHorizontally()
+        model.rotateClockwise()
+        #expect(model.cropRect == pixels, "turned and mirrored, there and back")
+        // With a fine angle: the frame still covers the same pixels (to the pixel, rounding).
+        model.setCropAngle(1.5)
+        let turned = try #require(model.cropRect)
+        model.rotateClockwise()
+        model.mirrorHorizontally()
+        let after = try #require(model.cropRect)
+        #expect(abs(after.x - turned.x) <= 1 && abs(after.y - turned.y) <= 1
+                && abs(after.width - turned.width) <= 2 && abs(after.height - turned.height) <= 2)
+        #expect(model.recipe.crop.angle == -1.5)
+    }
+
+    /// Through the model, on a preview (pixels 3 times taller than wide): a
+    /// ratio keeps the frame's direction; a custom ratio is kept as typed.
+    @Test func ratioKeepsTheFrameDirectionOnAPreview() async throws {
+        let suite = "X1ScanCoreTests-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let inspector = ScannerInspector { FakeConnection(responses: [:], openError: TransportError.deviceBusy) }
+        let model = AppModel(virtualScanner: { try TestFixtures.scanner() }, inspector: inspector, defaults: defaults)
+        model.startPreview()
+        await model.session.waitUntilIdle()
+        model.refreshImage()
+        // Upright frame (display points): 6×9 stays upright.
+        model.setCropFrame(documentRect: CGRect(x: 100, y: 100, width: 400, height: 900))
+        model.setCropAspect(.ratio(width: 6, height: 9))
+        let upright = try #require(model.cropFrameInDocument)
+        #expect(upright.height > upright.width && abs(upright.width / upright.height - 6.0 / 9) < 1e-6)
+        // Flat frame: 6×9 turned flat.
+        model.setCropFrame(documentRect: CGRect(x: 100, y: 100, width: 900, height: 400))
+        model.setCropAspect(.ratio(width: 6, height: 9))
+        let flat = try #require(model.cropFrameInDocument)
+        #expect(flat.width > flat.height && abs(flat.width / flat.height - 9.0 / 6) < 1e-6)
+        // Custom, typed 13 wide and 18 high: kept so, even on a flat frame.
+        model.setCropAspect(.ratio(width: 13, height: 18), asTyped: true)
+        let typed = try #require(model.cropFrameInDocument)
+        #expect(abs(typed.width / typed.height - 13.0 / 18) < 1e-6)
     }
 }

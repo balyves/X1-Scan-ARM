@@ -186,7 +186,9 @@ available; ask.
   the app icon, its two SVG layers and the Icon Composer document,
   not under the MIT licence: `LICENSE-ICON`), `X1ScanCore/` (models and view
   models, plus the reusable views of the compact settings panel in `UI/`,
-  `swift test`). The preview runs on the virtual X1; on the real X1,
+  `swift test`; `Geometry/`: the recipe, orientation, crop, straightening
+  and Lanczos rendering of exported files, on pixels already received,
+  never sent to the scanner). The preview runs on the virtual X1; on the real X1,
   only FlexColor's captured preview (cold or warm, chosen by the first page
   0x20 read), behind the hidden setting `EnableRealPreview`, a confirmation
   before every run and `CapturedSequenceGuard` built from both captures

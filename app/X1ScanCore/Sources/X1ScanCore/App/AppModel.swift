@@ -166,10 +166,13 @@ public final class AppModel {
             let inverse = viewport.displayTransform.inverted()
             let source = frame.applying(inverse).standardized
             let aspect = viewport.pixelAspectRatio
-            let x0 = max(Int(source.minX.rounded(.down)), 0)
-            let y0 = max(Int((source.minY / aspect).rounded(.down)), 0)
-            let x1 = min(Int(source.maxX.rounded(.up)), viewport.imageWidth)
-            let y1 = min(Int((source.maxY / aspect).rounded(.up)), viewport.imageHeight)
+            // A pixel edge within a millionth counts as that edge: turns and back
+            // leave 99.9999999 where 100 was.
+            let tolerance = 1e-6
+            let x0 = max(Int((source.minX + tolerance).rounded(.down)), 0)
+            let y0 = max(Int((source.minY / aspect + tolerance).rounded(.down)), 0)
+            let x1 = min(Int((source.maxX - tolerance).rounded(.up)), viewport.imageWidth)
+            let y1 = min(Int((source.maxY / aspect - tolerance).rounded(.up)), viewport.imageHeight)
             guard x1 > x0, y1 > y0 else { return nil }
             return PixelRect(x: x0, y: y0, width: x1 - x0, height: y1 - y0)
         }
@@ -224,10 +227,19 @@ public final class AppModel {
         reconstrainCrop()
     }
 
-    /// Proportions chosen: the frame takes them (same centre and area), or
-    /// without a frame, the largest frame of these proportions appears.
-    public func setCropAspect(_ aspect: CropAspect) {
-        recipe.crop.aspect = aspect
+    /// Proportions chosen: the frame takes them (same centre and area, same
+    /// direction), or without a frame, the largest frame of these
+    /// proportions appears, in the image's direction.
+    /// `asTyped`: a width and a height typed by the user (Custom…), kept in
+    /// that direction; otherwise the direction follows the frame's (an
+    /// upright frame stays upright).
+    public func setCropAspect(_ aspect: CropAspect, asTyped: Bool = false) {
+        if asTyped {
+            recipe.crop.aspect = aspect
+            recipe.crop.portrait = false
+        } else {
+            recipe.crop.choose(aspect, imageSize: cropSpace, currentFrame: recipe.crop.frame == nil ? nil : cropFrameInDocument)
+        }
         applyCropRatio()
     }
 
@@ -735,22 +747,25 @@ public final class AppModel {
 
     // MARK: Orientation (lot 1)
 
+    // The frame and the angle follow the image (user's decision, lot 1 step F).
     public func rotateClockwise() {
-        recipe.orientation.rotateClockwise()
-        orientationChanged()
+        var updated = recipe
+        updated.orientation.rotateClockwise()
+        updated.crop.turnQuarter(clockwise: true)
+        recipe = updated
     }
     public func rotateCounterclockwise() {
-        recipe.orientation.rotateCounterclockwise()
-        orientationChanged()
+        var updated = recipe
+        updated.orientation.rotateCounterclockwise()
+        updated.crop.turnQuarter(clockwise: false)
+        recipe = updated
     }
     public func mirrorHorizontally() {
-        recipe.orientation.mirrorHorizontally()
-        orientationChanged()
+        var updated = recipe
+        updated.orientation.mirrorHorizontally()
+        updated.crop.mirrorHorizontally()
+        recipe = updated
     }
-
-    /// After a turn the frame (normalised in the turned image) no longer
-    /// covers the same pixels: it is removed.
-    private func orientationChanged() { recipe.crop.frame = nil }
     public func toggleGrid() { grid.isVisible.toggle() }
 
     /// Choosing a kind of grid shows it.
