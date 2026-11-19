@@ -803,3 +803,17 @@ User's decision (decisions.md, "Offset 62 of the 400-line window"): a
 future window calculator takes offset 62 from its own window (option A,
 recomputable by the guard); 32 units are the validation criterion on
 captured frames, at 600 ppi and above; no free frame below 600 ppi.
+
+## 2026-11-19: InfoPlist.xcstrings, Xcode's form
+
+Contrary to the entry above (the bundle names kept with
+`extractionState: extracted_with_value` so that Xcode would leave the
+file alone), Xcode removed that field from both names and the final
+newline; values and translations are unchanged. The file is committed in
+that form.
+
+Reference scans made before the recalibration (IT8 target, outside the
+repository, kept for docs/test-session.md part J): with FlexColor at
+2 000 ppi (neutral settings twice, default settings once, FlexColor's
+default frame), and with X1 Scan (twice a preview then the replayed scan
+of the capture of 2026-11-17; one preview TIFF and two scan TIFFs kept).
