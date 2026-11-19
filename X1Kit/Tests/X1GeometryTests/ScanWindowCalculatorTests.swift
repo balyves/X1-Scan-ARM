@@ -253,13 +253,30 @@ struct ScanWindowCalculatorTests {
             for c in scans.dropFirst() {
                 let computed = try ScanWindowCalculator.windowsWithoutMenu(frame: frame, resolution: c.scan.ppi,
                                                                            calibration: Self.calibration)
-                found += Self.differences("\(capture) \(scans[0].session)→\(c.session)", computed: computed,
+                let label = "\(capture) \(scans[0].session)→\(c.session)"
+                found += Self.differences(label, computed: computed,
                                           image: Self.fields(c.image), base: Self.fields(c.base),
                                           focus: Self.fields(c.focus), only: fields)
+                // Offset 14: the provisional tolerance, with the frame in the CCD.
+                let tolerance = Self.columnPredictionTolerance
+                for (window, captured) in [(computed.image, Self.fields(c.image)),
+                                           (computed.focus, Self.fields(c.focus))] {
+                    #expect(abs(window.column - captured.column) <= tolerance, "\(label)")
+                    #expect(window.column - tolerance >= 0
+                                && window.column + window.pixels + tolerance <= ScanWindowCalculator.ccdPixels / window.binning,
+                            "\(label)")
+                }
             }
         }
         #expect(found == Self.familyTwoDifferences, "\(found)")
     }
+
+    /// Offset 14 predicted across resolutions: within ±5 pixels of
+    /// FlexColor's, provided the window moved by 5 pixels either way stays
+    /// in the CCD. User's decision of 2026-11-19, simulator only;
+    /// provisional, to be reviewed after part J (docs/decisions.md, "Window
+    /// calculator", field decisions).
+    static let columnPredictionTolerance = 5
 
     /// Offset 14 up to 5 pixels (binning 1, 3 200 → 2 000 ppi), 18 and 22
     /// by 1; offset 62 beyond 32 units at 600 ppi (43 to 53: FlexColor's

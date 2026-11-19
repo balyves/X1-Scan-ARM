@@ -1086,8 +1086,14 @@ direction only, after CLAUDE.md rule 4 is changed.
   1.6427 to 1.6442 in, protocol.md §9; centred by eye, a convention), the lens model of 54 / 58, +10 000,
   ratio 21 674 665, 15 500 and 28 800 per inch. A new set is added after
   a recalibration (docs/test-session.md J3); sets are not edited.
-- **Rules** (protocol.md §9; [confirmed] on the captured scans, as rules
-  for other frames [hypothesis]): offset 10 = ⌊resolution × *f* × 50 000 /
+- **Rules** (protocol.md §9). [confirmed] on the captured scans, exact:
+  offsets 10, 26 (against the TIFF height), bytes 48, 49, and offsets 50 =
+  0 and 62 = 15 500 of the image window. Offsets 54 / 58: within 1 (54 one
+  too high at *O* = 2 000, 2 880, 3 000; family 1). Offsets 14, 18, 22:
+  reproduced by construction in the round trip (family 1 takes the frame
+  from them), [hypothesis] as rules; in prediction of the same frame at
+  other resolutions they differ (14 by up to 5 pixels, 18 and 22 by 1:
+  family 2). All the rules are [hypothesis] for other frames. Offset 10 = ⌊resolution × *f* × 50 000 /
   3⌋; byte 48 = 1; byte 49 = min(4, ⌊*M* ÷ resolution⌋); offset 14 =
   3 996 ÷ binning + (*x* + left) × resolution, offset 22 = width ×
   resolution, offset 18 = (1.644 + top) × ratio ÷ 10 000, TIFF height =
@@ -1104,13 +1110,20 @@ direction only, after CLAUDE.md rule 4 is changed.
   sent after the 400-line step, the binned start window, the reference
   windows and their order.
 - **Field decisions (guard 5), for the simulator**: the exact fields (10,
-  48, 49, 50, 62 of the image window, 26) and the fields within 1 (18,
-  22, base 54 / 58) are accepted, and the 400-line window's constants,
-  being the same in all 31 captured scans (`focusWindowConstants`).
-  Offset 14 was proposed within 1, but it is within 1 only in the round
-  trip; predicted across resolutions it differs by up
-  to 5 pixels (family 2). **Open, for the user**: offset 14 (600 ppi:
-  decided, "Window calculator v1" below). For
+  48, 49, 50, 62 of the image window, 26) are accepted, and the 400-line
+  window's constants, being the same in all 31 captured scans
+  (`focusWindowConstants`). The fields within 1 (18, 22, base 54 / 58):
+  **proposed**, the user decides after part J (user's decision of
+  2026-11-19). Offset 14 is within 1 only in the round trip; predicted
+  across resolutions it differs by up to 5 pixels (family 2). **User's
+  decision (2026-11-19): a tolerance of ±5 pixels in prediction,
+  simulator only, provided the frame stays in the CCD; provisional, to be
+  reviewed after part J.** As implemented: family 2 checks every offset 14
+  difference against ±5 (`columnPredictionTolerance`) and that each
+  predicted window, moved by 5 pixels either way, stays within the CCD
+  (offset 14 ≥ 0 and offset 14 + offset 22 ≤ 7 992 ÷ binning); the
+  calculator itself still refuses only a window outside the CCD. 600 ppi:
+  decided, "Window calculator v1" below. For
   the real X1, no decision yet: before rule 4 is changed, a table of each
   field (rule, unit, largest difference observed, in mm, proposal) goes
   to the user.
@@ -1167,8 +1180,11 @@ to be decided after part J.
   FlexColor's *i* on the 36 captured scans with 400 lines
   (`FocusSweepReportTests`, data exported by `tools/decode/
   export_focus.py`, outside the repository): see the journal of
-  2026-11-19. **No acceptance criterion and no measure chosen yet: the
-  user decides from that report.**
+  2026-11-19. For each scan the report also gives each measure's score at
+  FlexColor's line, in % of the highest score of our curve. **User's
+  decision (2026-11-19): gradient energy is the provisional measure
+  (`FocusSweep.provisionalMeasure`); no acceptance criterion yet, it will
+  be set after the recalibration.**
 - **Offset 50** of the 400-line window: the position read on page 0x20
   just before, as today (not computed).
 - **Guard** (`X1Geometry.ComputedWindowGuard`, simulator only; not an
@@ -1182,4 +1198,9 @@ to be decided after part J.
   the 400 positions swept, the same line for both.
 - **Not done in this step** (the user's choice, 2026-11-19): the start,
   calibration and reference windows and their order are not computed yet;
-  step 2 (the app, simulator only) after the user's approval.
+  step 2 (the app, simulator only) after the user's approval. The four
+  suggestions still open from the review are left for step 2 (user's
+  decision of 2026-11-19): a single entry point for the guard; distinct
+  `FocusSweep` errors for the two widths; the sharpness report setting
+  aside a badly exported folder instead of stopping; `FocusSweep` in
+  CLAUDE.md.

@@ -23,6 +23,11 @@ public enum FocusSweep {
         case normalizedGradientEnergy
     }
 
+    /// The measure used until a criterion is set: gradient energy. User's
+    /// decision of 2026-11-19, provisional; the criterion is set after the
+    /// recalibration (docs/decisions.md, "Window calculator v1").
+    public static let provisionalMeasure = Measure.gradientEnergy
+
     /// Errors of `sharpestLine`.
     public enum FocusError: Error, Equatable, Sendable {
         /// Not exactly `lineCount` lines, or lines of different lengths.

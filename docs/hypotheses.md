@@ -49,6 +49,16 @@ older ones in `docs/protocol.md` §1-§11 are still to be added.
   menu). Likely the same cause as the 600 ppi move to the output pixel
   grid above. Settle: the same frame at 600 and 300 ppi at several
   sub-pixel positions (zoom 100 %).
+- Option A (offset 62, decisions.md "Offset 62 of the 400-line window")
+  counts the middle of the frame from offset 18: offset 18 + (offset 26 −
+  2 × gap − 2) ÷ 2 lines: offset 18 is taken as the first image line (the
+  2 × gap + 2 extra lines of offset 26 do not move it) and the image as
+  offset 26 without those extra lines. Missing:
+  the drum position of the image lines (option A is within −6 to +24 units
+  of FlexColor's value, which does not separate this from other
+  conventions). Settle: a target with a mark at a known position along the
+  drum, scanned with frames typed so that their middle is on the mark;
+  the mark must appear in the 400 lines of the focus step.
 - Calibration and references are skipped for some scans by a rule not
   known. Settle: the same scan repeated at timed intervals.
 - 32 units of offset 62 (0.028 mm) do not change the focus found.

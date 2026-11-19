@@ -880,3 +880,24 @@ correction in lines, the result always one of the 400 lines swept.
   calibration read use the last earlier one of the capture with the same
   width (essai-D 2, essai-I 2-4, the other holders).
 
+User's decisions on that report (2026-11-19, decisions.md, "Window
+calculator" and "Window calculator v1"):
+
+- Sharpness: gradient energy is the provisional measure; no criterion,
+  set after the recalibration. The report now gives, for each scan, each
+  measure's score at FlexColor's line in % of the highest score of our
+  curve. 29 6×7 scans at the menu's resolutions: lowest 60.0 / 59.4 /
+  59.9 % (essai-I 4, 1 500 ppi), mean 95.1 / 93.8 / 95.1 %. Of the 36
+  scans: 100 % on the four where the three measures agree with FlexColor
+  (three of them in the 29); below 90 % with gradient energy:
+  essai-I 2 (600 ppi, 69.0 %), essai-I 4 (60.0 %), essai-N 4 (88.1 %),
+  N 5 (88.5 %), N 8 (85.9 %).
+- Offset 14 in prediction: ±5 pixels, simulator only, provided the frame
+  stays in the CCD; provisional, to be reviewed after part J (checked in
+  family 2).
+- Offsets 18, 22 and base 54 / 58 within 1: proposed, decided after part J.
+- The "[confirmed]" of the calculator's rules is limited to the round
+  trip for offsets 14, 18 and 22; option A's middle of the frame counted
+  from offset 18 added to docs/hypotheses.md.
+- The four open review suggestions are left for step 2.
+

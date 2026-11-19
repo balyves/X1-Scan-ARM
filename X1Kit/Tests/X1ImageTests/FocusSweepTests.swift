@@ -59,6 +59,8 @@ struct FocusSweepReportTests {
         let holder: String
         let flexColor: Int
         let ours: [FocusSweep.Measure: Int]
+        /// Score at FlexColor's line, in % of the highest score of our curve.
+        let percent: [FocusSweep.Measure: Double]
     }
 
     /// Captures of other holders (ScanWindowFixtures.holders); every other
@@ -102,21 +104,30 @@ struct FocusSweepReportTests {
                 littleEndianBlocks: [Array(try Data(contentsOf: directory.appending(path: "focus.bin")))],
                 width: geometry.pixelsPerLine)
             let lines = try FocusSweep.greenLines(focus: focus, geometry: geometry, reference: reference)
+            let flexColor = delta / 50
+            try #require((0..<FocusSweep.lineCount).contains(flexColor), "\(name)")
             var ours: [FocusSweep.Measure: Int] = [:]
+            var percent: [FocusSweep.Measure: Double] = [:]
             for measure in FocusSweep.Measure.allCases {
-                ours[measure] = try FocusSweep.sharpestLine(lines, measure: measure)
+                let best = try FocusSweep.sharpestLine(lines, measure: measure)
+                ours[measure] = best
+                let top = FocusSweep.score(lines[best], measure: measure)
+                percent[measure] = top > 0 ? 100 * FocusSweep.score(lines[flexColor], measure: measure) / top : 0
             }
             let capture = Self.split(name).0
             rows.append(Row(label: name, ppi: f["ppi"] ?? 0, binning: binning,
-                            holder: Self.otherHolders[capture] ?? "6×7", flexColor: delta / 50, ours: ours))
+                            holder: Self.otherHolders[capture] ?? "6×7", flexColor: flexColor, ours: ours,
+                            percent: percent))
         }
         let measures = FocusSweep.Measure.allCases
         var report = skipped.isEmpty ? "" : "skipped (no image window or no calibration): \(skipped)\n"
         report += "scan holder ppi binning flexcolor_i, then ours − flexcolor: "
-            + measures.map(\.rawValue).joined(separator: " ") + "\n"
+            + measures.map(\.rawValue).joined(separator: " ")
+            + ", then the score at flexcolor_i in % of our maximum, same order\n"
         for row in rows {
             report += "\(row.label) \(row.holder) \(row.ppi) \(row.binning) \(row.flexColor) "
-                + measures.map { "\(row.ours[$0]! - row.flexColor)" }.joined(separator: " ") + "\n"
+                + measures.map { "\(row.ours[$0]! - row.flexColor)" }.joined(separator: " ") + " "
+                + measures.map { String(format: "%.1f%%", row.percent[$0]!) }.joined(separator: " ") + "\n"
         }
         let groups: [(String, [Row])] = [
             ("all scans", rows),
@@ -132,7 +143,10 @@ struct FocusSweepReportTests {
                     + String(format: "%.1f", absolute.reduce(0, +) / n)
                     + ", mean diff " + String(format: "%+.1f", signed.reduce(0, +) / n)
                     + ", within 5 lines \(absolute.filter { $0 <= 5 }.count)"
-                    + ", within 10 \(absolute.filter { $0 <= 10 }.count)\n"
+                    + ", within 10 \(absolute.filter { $0 <= 10 }.count)"
+                let percents = group.map { $0.percent[measure]! }
+                report += ", at flexcolor_i: lowest " + String(format: "%.1f", percents.min() ?? 0)
+                    + " %, mean " + String(format: "%.1f", percents.reduce(0, +) / n) + " % of our maximum\n"
             }
         }
         print(report)
