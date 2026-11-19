@@ -26,6 +26,29 @@ older ones in `docs/protocol.md` §1-§11 are still to be added.
 - The 400-line step sweeps the focus and FlexColor keeps the sharpest
   line. Missing: FlexColor's sharpness measure. Settle: frames on targets
   of known focus behaviour.
+- Our sharpness measures (gradient energy, Laplacian variance,
+  normalised gradient energy; `X1Image.FocusSweep`) pick a line close
+  enough to FlexColor's *i* for the image (today 0 to 31 lines apart on
+  the 29 6×7 scans at 1 000-3 200 ppi, mean 6.6 to 7.1). Missing: what a
+  difference of n lines does to the sharpness of the image. Settle: one
+  frame of a fine target scanned with FlexColor, then the same 400 lines
+  read by our measure, and scans at *i* and *i* ± 5, 10, 20, 30 lines
+  (computed windows: only after CLAUDE.md rule 4 is changed).
+- The manual focus correction (in lines of the sweep, 50 units each)
+  moves the plane of best focus in proportion, the same way at every
+  resolution. Missing: any scan with a correction. Settle: the same scan
+  with corrections −10, 0, +10 on a fine target (same condition).
+- One line of the sweep is 50 units of 54 / 58 and line 0 is base +
+  10 000 (protocol.md §9). The 31 scans only show multiples of 50 from
+  base + 10 000: they do not tell a sweep of 50 per line from FlexColor
+  rounding a continuous focus value to 50, or another start. Settle: a
+  target with a known depth step (or tilted) read by the 400-line step,
+  where the sharpest line must move by a predictable amount.
+- At 600 ppi offset 62 predicted by option A is 43 to 53 units above
+  FlexColor's (family 2, three predictions; 600 ppi left out of the
+  menu). Likely the same cause as the 600 ppi move to the output pixel
+  grid above. Settle: the same frame at 600 and 300 ppi at several
+  sub-pixel positions (zoom 100 %).
 - Calibration and references are skipped for some scans by a rule not
   known. Settle: the same scan repeated at timed intervals.
 - 32 units of offset 62 (0.028 mm) do not change the focus found.

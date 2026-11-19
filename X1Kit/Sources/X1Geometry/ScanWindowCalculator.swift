@@ -19,10 +19,13 @@ public struct WindowCalibration: Sendable, Equatable {
     public let holder: String
     /// Holder factor *f* × 10 000 (calibration ratio ÷ resolution).
     public let holderFactor: Int
-    /// *M*: binning = min(4, ⌊*M* ÷ resolution⌋); also the highest resolution.
+    /// *M*: binning = min(4, ⌊*M* ÷ resolution⌋).
     public let maximumResolution: Int
-    /// Lowest resolution with a free frame (decision of 2026-11-19).
-    public let minimumResolution: Int
+    /// The closed menu of resolutions (ppi) a frame may be scanned at: only
+    /// resolutions captured with this holder whose windows the calculator
+    /// reproduces within the decided criteria (docs/decisions.md, "Window
+    /// calculator v1").
+    public let resolutions: [Int]
     /// Across the CCD: the frame origin is this many inches from CCD pixel
     /// 3 996 (*x*, protocol.md §9).
     public let acrossOrigin: Double
@@ -53,6 +56,9 @@ public struct WindowCalibration: Sendable, Equatable {
     ///   +24 of FlexColor's value on those captures [confirmed]; the formula,
     ///   [hypothesis].
     /// - *M* = 3 200: [hypothesis]; the scans bound it to 3 000-3 999.
+    /// - The menu (user's decision, 2026-11-19): 1 000, 1 500, 2 000, 3 000,
+    ///   3 200 ppi. 600 ppi is captured but left out: offset 62 predicted
+    ///   there is 43 to 53 units above FlexColor's, beyond the 32 decided.
     /// - The origin is the centre of essai-I's "centred" 1.0 × 1.0 cm frame
     ///   (sessions 2-7: 1.6427 to 1.6442 in along the drum, protocol.md §9),
     ///   centred by eye in FlexColor: a convention, not a measured centre of
@@ -62,7 +68,7 @@ public struct WindowCalibration: Sendable, Equatable {
         holder: "6×7",
         holderFactor: 10_000,
         maximumResolution: 3_200,
-        minimumResolution: 600,
+        resolutions: [1_000, 1_500, 2_000, 3_000, 3_200],
         acrossOrigin: -0.129,
         alongOrigin: 1.644,
         lens: LensModel(a58: 1_136_908, b58: 896_886_417, a54: 1_094_694, b54: 896_148_801, c54: 112.511),
@@ -159,8 +165,8 @@ public struct ScanWindowFields: Sendable, Equatable {
 public enum ScanWindowCalculatorError: Error, Equatable, Sendable {
     /// Only the calibration's holder is supported.
     case unsupportedHolder(String)
-    /// Below the minimum (no free frame under 600 ppi) or above *M*.
-    case resolutionOutOfRange(Int)
+    /// Not in the calibration's menu of resolutions.
+    case resolutionNotInMenu(Int)
     /// Width or height rounds to no pixel or line.
     case emptyFrame
     /// The frame does not fit the CCD (offset 14 + width ≤ 7 992 ÷ binning).
@@ -169,13 +175,16 @@ public enum ScanWindowCalculatorError: Error, Equatable, Sendable {
     case outsideDrum
     /// A coordinate is not finite, or 100 inches or more from the origin.
     case invalidFrame
+    /// The focus line chosen plus the correction is not one of the 400
+    /// lines swept (0-399).
+    case focusOutsideSweep(Int)
 }
 
 /// The image window (before the 400-line step) and the 400-line window.
 public struct ScanWindows: Sendable, Equatable {
     /// The image window as sent before the 400-line step. After that step
-    /// FlexColor sends it again with offsets 54 / 58 moved by its focus
-    /// correction, which this calculator does not compute.
+    /// it is sent again with offsets 54 / 58 at the focus chosen:
+    /// `ScanWindowCalculator.imageWindow(_:focus:sharpestLine:correction:)`.
     public let image: ScanWindowFields
     /// The 400-line window. Its offset 50 (the position read on page 0x20
     /// just before it) is left at 0: it is read during the scan, not computed.
@@ -224,13 +233,47 @@ public enum ScanWindowCalculator {
         return (Int(o54.rounded()), Int(o58.rounded()))
     }
 
-    /// The two windows for `frame` at `resolution` ppi with `holder`
-    /// (FlexColor's format name).
+    /// Units of offsets 54 / 58 per line of the 400-line step (user's
+    /// decision, 2026-11-19, from protocol.md §9 [hypothesis]: the focus is
+    /// swept from base + 10 000 down by 50 per line).
+    public static let focusUnitsPerLine = 50
+
+    /// The two windows for `frame` at `resolution` ppi (one of the
+    /// calibration's menu) with `holder` (FlexColor's format name).
     public static func windows(frame: FilmFrame, resolution: Int, holder: String,
                                calibration c: WindowCalibration = .origin20261119) throws -> ScanWindows {
         guard holder == c.holder else { throw ScanWindowCalculatorError.unsupportedHolder(holder) }
-        guard (c.minimumResolution...c.maximumResolution).contains(resolution) else {
-            throw ScanWindowCalculatorError.resolutionOutOfRange(resolution)
+        guard c.resolutions.contains(resolution) else { throw ScanWindowCalculatorError.resolutionNotInMenu(resolution) }
+        return try windowsWithoutMenu(frame: frame, resolution: resolution, calibration: c)
+    }
+
+    /// The image window as sent after the 400-line step: offsets 54 / 58 of
+    /// the 400-line window minus 50 × (*i* + `correction`), *i* being the
+    /// line chosen (0-399, `FocusSweep` in X1Image) and `correction` the
+    /// user's, in lines (default 0). Refused unless *i* + `correction` is
+    /// one of the 400 lines swept: the value sent is always a position the
+    /// sweep went through.
+    public static func imageWindow(_ image: ScanWindowFields, focus: ScanWindowFields,
+                                   sharpestLine: Int, correction: Int = 0) throws -> ScanWindowFields {
+        let (line, overflow) = sharpestLine.addingReportingOverflow(correction)
+        guard !overflow, (0..<focusSweepLines).contains(line) else {
+            throw ScanWindowCalculatorError.focusOutsideSweep(overflow ? Int.max : line)
+        }
+        var result = image
+        result.lens54 = focus.lens54 - focusUnitsPerLine * line
+        result.lens58 = focus.lens58 - focusUnitsPerLine * line
+        return result
+    }
+
+    /// Lines read in the 400-line step.
+    public static let focusSweepLines = 400
+
+    /// `windows` without the menu check, for the tests that measure the
+    /// resolutions left out of the menu (600 ppi). Not public.
+    static func windowsWithoutMenu(frame: FilmFrame, resolution: Int,
+                                   calibration c: WindowCalibration) throws -> ScanWindows {
+        guard (1...c.maximumResolution).contains(resolution) else {
+            throw ScanWindowCalculatorError.resolutionNotInMenu(resolution)
         }
         guard [frame.left, frame.top, frame.width, frame.height].allSatisfy({ $0.isFinite && abs($0) < 100 }) else {
             throw ScanWindowCalculatorError.invalidFrame

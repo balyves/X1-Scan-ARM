@@ -1074,7 +1074,8 @@ X1Kit product: nothing in the app, the transport, the guards or the scan
 script can reach it. Later, only X1Preview may depend on it, in that
 direction only, after CLAUDE.md rule 4 is changed.
 
-- **Limits**: 6×7 holder only; 600 to 3 200 ppi (*M*); a frame that
+- **Limits**: 6×7 holder only; the menu of resolutions of "Window
+  calculator v1" below (first 600 to 3 200 ppi); a frame that
   rounds to no pixel, leaves the CCD (offset 14 + width > 7 992 ÷
   binning) or starts before line 0 is refused. The length of the opening
   along the drum is not known: no check there beyond 16 bits.
@@ -1108,8 +1109,8 @@ direction only, after CLAUDE.md rule 4 is changed.
   being the same in all 31 captured scans (`focusWindowConstants`).
   Offset 14 was proposed within 1, but it is within 1 only in the round
   trip; predicted across resolutions it differs by up
-  to 5 pixels (family 2). **Open, for the user**: offset 14, and 600 ppi
-  (below). For
+  to 5 pixels (family 2). **Open, for the user**: offset 14 (600 ppi:
+  decided, "Window calculator v1" below). For
   the real X1, no decision yet: before rule 4 is changed, a table of each
   field (rule, unit, largest difference observed, in mm, proposal) goes
   to the user.
@@ -1128,10 +1129,57 @@ direction only, after CLAUDE.md rule 4 is changed.
     62 beyond the 32 units at 600 ppi: +48, +43, +53** (FlexColor's value
     is about one 600 ppi output pixel lower there, protocol.md §9, part
     K). **The decided criterion (32 units at 600 ppi and above) is not
-    met at 600 ppi in prediction.** The calculator still accepts 600 ppi;
-    the choice is the user's (open): raise the minimum, take the tolerance
-    max(32, 28 800 ÷ resolution) [hypothesis] (section above), or keep
-    600 ppi knowingly.
+    met at 600 ppi in prediction.** Decided by the user: 600 ppi is left
+    out of the menu, the criterion stays 32 units ("Window calculator
+    v1" below).
   - the three scans with other holders are refused.
 - **Before any real use**: a validation on the real X1 (a target; the
   frame asked against the frame obtained), after the change of rule 4.
+
+## Window calculator v1: menu, focus, guard (2026-11-19, simulator only)
+
+**User's decisions (2026-11-19)**, on top of "Window calculator" above.
+Nothing computed is sent to the real X1: CLAUDE.md rule 4 is unchanged,
+to be decided after part J.
+
+- **Holder**: the 6×7 only. The other holders stay on captured replays.
+- **Menu of resolutions**: 1 000, 1 500, 2 000, 3 000, 3 200 ppi
+  (`WindowCalibration.resolutions`; any other value refused). All were
+  captured with the 6×7, with their binning, *O* and order of the
+  references (1 000 and 1 500: references first; 2 000: after; 3 000 and
+  3 200: first; protocol.md §9). 600 ppi was in the brief but is left out:
+  offset 62 predicted there is 43 to 53 units above FlexColor's (family
+  2), beyond the 32 units, which stay the criterion (docs/hypotheses.md).
+  Nothing below 600 ppi; other resolutions only after a capture.
+- **Focus: our own measure on the 400 lines, plus a manual correction.**
+  Offsets 54 / 58 of the image window sent after the 400-line step =
+  those of the 400-line window (base + 10 000) − 50 × (*i* +
+  correction): *i* the line our measure finds sharpest, the correction in
+  lines (1 line = 50 units, protocol.md §9 [hypothesis]), default 0
+  (`ScanWindowCalculator.imageWindow(_:focus:sharpestLine:correction:)`).
+  *i* + correction must be one of the 400 lines swept (0-399), otherwise
+  refused. The value chosen, *i* and the correction go in the scan's log
+  and, later, in the master file (step 2).
+- **Our measure** (`X1Image.FocusSweep`, green channel flat-fielded with
+  the calibration read of the scan resolution): three simple measures
+  proposed, each a [hypothesis] (gradient energy, variance of the 1-D
+  Laplacian, gradient energy over the squared mean level). Compared with
+  FlexColor's *i* on the 36 captured scans with 400 lines
+  (`FocusSweepReportTests`, data exported by `tools/decode/
+  export_focus.py`, outside the repository): see the journal of
+  2026-11-19. **No acceptance criterion and no measure chosen yet: the
+  user decides from that report.**
+- **Offset 50** of the 400-line window: the position read on page 0x20
+  just before, as today (not computed).
+- **Guard** (`X1Geometry.ComputedWindowGuard`, simulator only; not an
+  extension of `CapturedSequenceGuard`, so that it stays in X1Geometry,
+  which nothing in the app or the transport can reach): offset 62 of the
+  400-line window recomputed from the image window by option A with the
+  calculator's own function (exact, one rounding in one place), the
+  400-line window's other fields (calibration constants, the image
+  window's column, width, binning, 54 / 58 + 10 000), and the image
+  window after the step: every field but 54 / 58 unchanged, 54 / 58 one of
+  the 400 positions swept, the same line for both.
+- **Not done in this step** (the user's choice, 2026-11-19): the start,
+  calibration and reference windows and their order are not computed yet;
+  step 2 (the app, simulator only) after the user's approval.

@@ -849,3 +849,34 @@ validation on the real X1 (target, frame asked against frame obtained)
 is needed before any real use, after CLAUDE.md rule 4 is changed.
 Open for the user: offset 14 in prediction, and whether 600 ppi stays
 allowed given offset 62 there.
+
+## 2026-11-19: window calculator v1, step 1 (library, simulator only)
+
+User's decisions (docs/decisions.md, "Window calculator v1"): 6×7 only;
+menu 1 000, 1 500, 2 000, 3 000, 3 200 ppi (600 left out: offset 62 there
+43 to 53 units above FlexColor's in prediction; the 32 units stay the
+criterion); focus by our own measure on the 400 lines plus a manual
+correction in lines, the result always one of the 400 lines swept.
+
+- `ScanWindowCalculator.imageWindow(_:focus:sharpestLine:correction:)`:
+  with FlexColor's *i* it gives 54 / 58 of FlexColor's image window
+  exactly in all 31 captured scans (*i* = 149 to 224).
+- `ComputedWindowGuard` (X1Geometry, simulator only): offset 62 recomputed
+  by option A, the 400-line window's other fields, 54 / 58 one of the
+  positions swept, every other field of the image window unchanged by the
+  step. It accepts the calculator's windows of the 28 6×7 scans and
+  refuses each field the tests alter.
+- Sharpness: `tools/decode/export_focus.py` exports the 400 lines of the
+  36 captured scans that have them (essai-C to -N; essai-L session 5,
+  cancelled, left out), and `FocusSweepReportTests` (X1_FOCUS_CHECK_DIR)
+  compares our line with FlexColor's. Our − FlexColor, in lines:
+  - all 36 scans: gradient energy max 47, mean |diff| 7.8; Laplacian
+    variance 47, 8.4; normalised gradient energy 47, 8.2;
+  - 29 scans of the 6×7 at the menu's resolutions: 31 / 6.6, 31 / 6.9,
+    31 / 7.1; within 5 lines: 19, 18, 18 scans; within 10: 22, 21, 21.
+  - The largest: essai-I 2 (600 ppi) −47, essai-N 4 (2 000 ppi) −31,
+    essai-I 4 (1 500 ppi) −27; the three measures agree on most scans.
+  No criterion chosen: the user's decision. Scans whose session has no
+  calibration read use the last earlier one of the capture with the same
+  width (essai-D 2, essai-I 2-4, the other holders).
+

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 import Testing
-import X1Geometry
+@testable import X1Geometry
 import X1TestSupport
 
 /// The window calculator against the 31 scans FlexColor made with the
@@ -14,9 +14,12 @@ import X1TestSupport
 ///   validation; offsets 14, 18, 22, 26 are equal by construction;
 /// - family 2 takes the frame of one scan and predicts the other scans of
 ///   the same untouched frame at other resolutions: the real prediction.
-/// Every field is compared on its own; offset 62 of the 400-line window
-/// must be within 32 units (option A), every other field equal. The fields
-/// that differ are listed below as they are, not fitted away.
+/// Every field is compared on its own and the fields that differ are
+/// listed below as they are, not fitted away: any change fails the test
+/// (non-regression). The decided criterion for offset 62 (within 32 units)
+/// is checked on its own by `focusLineAgainstFlexColor` (family 1); family
+/// 2 lists it beyond 32 at 600 ppi, the reason 600 ppi is not in the menu.
+/// Both families use `windowsWithoutMenu`, to keep measuring 600 ppi.
 struct ScanWindowCalculatorTests {
     private static let calibration = WindowCalibration.origin20261119
     private static let loaded = Result { try ScanWindowFixtures.load() }
@@ -102,13 +105,22 @@ struct ScanWindowCalculatorTests {
         }
     }
 
-    @Test func limits() throws {
+    /// The menu (user's decision, 2026-11-19): 1 000, 1 500, 2 000, 3 000,
+    /// 3 200 ppi; 600 ppi and any other value refused.
+    @Test func menu() throws {
         let frame = FilmFrame(left: -0.1, top: -0.1, width: 0.2, height: 0.2)
-        for resolution in [300, 599, 3_201] {
-            #expect(throws: ScanWindowCalculatorError.resolutionOutOfRange(resolution)) {
+        #expect(Self.calibration.resolutions == [1_000, 1_500, 2_000, 3_000, 3_200])
+        for resolution in Self.calibration.resolutions {
+            _ = try ScanWindowCalculator.windows(frame: frame, resolution: resolution, holder: "6×7")
+        }
+        for resolution in [0, 300, 599, 600, 960, 2_500, 3_201] {
+            #expect(throws: ScanWindowCalculatorError.resolutionNotInMenu(resolution)) {
                 try ScanWindowCalculator.windows(frame: frame, resolution: resolution, holder: "6×7")
             }
         }
+    }
+
+    @Test func limits() throws {
         #expect(throws: ScanWindowCalculatorError.emptyFrame) {
             try ScanWindowCalculator.windows(frame: FilmFrame(left: 0, top: 0, width: 0, height: 0.2),
                                              resolution: 2_000, holder: "6×7")
@@ -177,8 +189,9 @@ struct ScanWindowCalculatorTests {
     @Test func familyOneRoundTrip() throws {
         var found: [String] = []
         for c in try sixBySeven {
-            let computed = try ScanWindowCalculator.windows(frame: Self.frame(of: c), resolution: c.scan.ppi,
-                                                            holder: "6×7")
+            let computed = try ScanWindowCalculator.windowsWithoutMenu(frame: Self.frame(of: c),
+                                                                       resolution: c.scan.ppi,
+                                                                       calibration: Self.calibration)
             found += Self.differences("\(c.capture) \(c.session)", computed: computed,
                                       image: Self.fields(c.image), base: Self.fields(c.base),
                                       focus: Self.fields(c.focus))
@@ -206,15 +219,18 @@ struct ScanWindowCalculatorTests {
     ]
 
     /// Offset 62 by option A, against FlexColor's value, on the 28 scans
-    /// (family 1): within −6 to +24 (protocol.md §9).
+    /// (family 1): within −6 to +24 (protocol.md §9), so within the 32
+    /// units decided.
     @Test func focusLineAgainstFlexColor() throws {
         var spread: [Int] = []
         for c in try sixBySeven {
-            let computed = try ScanWindowCalculator.windows(frame: Self.frame(of: c), resolution: c.scan.ppi,
-                                                            holder: "6×7")
+            let computed = try ScanWindowCalculator.windowsWithoutMenu(frame: Self.frame(of: c),
+                                                                       resolution: c.scan.ppi,
+                                                                       calibration: Self.calibration)
             spread.append(computed.focus.focusLine - Self.fields(c.focus).focusLine)
         }
         #expect(spread.min() == -6 && spread.max() == 24, "\(spread.sorted())")
+        #expect(spread.allSatisfy { abs($0) <= 32 })
     }
 
     /// Family 2, prediction: the frame of the first scan of each group,
@@ -235,7 +251,8 @@ struct ScanWindowCalculatorTests {
             let scans = try sessions.map { s in try #require(all.first { $0.capture == capture && $0.session == s }) }
             let frame = Self.frame(of: scans[0])
             for c in scans.dropFirst() {
-                let computed = try ScanWindowCalculator.windows(frame: frame, resolution: c.scan.ppi, holder: "6×7")
+                let computed = try ScanWindowCalculator.windowsWithoutMenu(frame: frame, resolution: c.scan.ppi,
+                                                                           calibration: Self.calibration)
                 found += Self.differences("\(capture) \(scans[0].session)→\(c.session)", computed: computed,
                                           image: Self.fields(c.image), base: Self.fields(c.base),
                                           focus: Self.fields(c.focus), only: fields)
@@ -287,4 +304,115 @@ struct ScanWindowCalculatorTests {
         "essai-N 8→9 focus.14 1",
         "essai-N 8→9 focus.62 53",
     ]
+
+    // MARK: Focus correction and guard
+
+    /// FlexColor's line *i* of a captured scan: (base + 10 000 − image) ÷ 50.
+    private static func flexColorLine(_ c: ScanWindowFixtures.ScanCase) throws -> Int {
+        try ComputedWindowGuard.checkFocusPosition(imageAfterStep: fields(c.image), focus: fields(c.focus))
+    }
+
+    /// In all 31 captured scans, FlexColor's image window after the step is
+    /// one of the 400 positions swept, the same line for 54 and 58; with
+    /// that line and no correction, `imageWindow` gives its 54 / 58 exactly.
+    @Test func focusCorrectionReproducesFlexColor() throws {
+        var lines: [Int] = []
+        for c in try cases {
+            let i = try Self.flexColorLine(c)
+            lines.append(i)
+            let result = try ScanWindowCalculator.imageWindow(Self.fields(c.base), focus: Self.fields(c.focus),
+                                                              sharpestLine: i)
+            #expect(result.lens54 == Self.fields(c.image).lens54 && result.lens58 == Self.fields(c.image).lens58,
+                    "\(c.label)")
+        }
+        #expect(lines.min() == 149 && lines.max() == 224, "\(lines.sorted())")
+    }
+
+    /// The correction moves 54 / 58 by 50 per line, downwards for a positive
+    /// correction; the result must stay one of the lines 0-399.
+    @Test func focusCorrectionLimits() throws {
+        let image = ScanWindowFields(ratio: 33_333_333, column: 100, line: 4_800, pixels: 394, lines: 698,
+                                     byte48: 1, binning: 1, target: 0, lens54: 421_597, lens58: 688_465,
+                                     focusLine: 15_500)
+        var focus = image
+        focus.lens54 += 10_000
+        focus.lens58 += 10_000
+        let base = try ScanWindowCalculator.imageWindow(image, focus: focus, sharpestLine: 200)
+        let moved = try ScanWindowCalculator.imageWindow(image, focus: focus, sharpestLine: 200, correction: 3)
+        #expect(base.lens54 - moved.lens54 == 150 && base.lens58 - moved.lens58 == 150)
+        #expect(try ScanWindowCalculator.imageWindow(image, focus: focus, sharpestLine: 0).lens54 == focus.lens54)
+        #expect(try ScanWindowCalculator.imageWindow(image, focus: focus, sharpestLine: 390, correction: 9).lens54
+                == focus.lens54 - 50 * 399)
+        #expect(throws: ScanWindowCalculatorError.focusOutsideSweep(400)) {
+            try ScanWindowCalculator.imageWindow(image, focus: focus, sharpestLine: 399, correction: 1)
+        }
+        #expect(throws: ScanWindowCalculatorError.focusOutsideSweep(-1)) {
+            try ScanWindowCalculator.imageWindow(image, focus: focus, sharpestLine: 0, correction: -1)
+        }
+        #expect(throws: ScanWindowCalculatorError.focusOutsideSweep(Int.max)) {
+            try ScanWindowCalculator.imageWindow(image, focus: focus, sharpestLine: 1, correction: Int.max)
+        }
+    }
+
+    /// The guard accepts the calculator's windows for the 28 6×7 scans,
+    /// with FlexColor's line, and returns that line.
+    @Test func guardAcceptsTheCalculatorsWindows() throws {
+        for c in try sixBySeven {
+            let w = try ScanWindowCalculator.windowsWithoutMenu(frame: Self.frame(of: c), resolution: c.scan.ppi,
+                                                                calibration: Self.calibration)
+            try ComputedWindowGuard.checkFocusWindow(w.focus, image: w.image, calibration: Self.calibration)
+            let i = try Self.flexColorLine(c)
+            let after = try ScanWindowCalculator.imageWindow(w.image, focus: w.focus, sharpestLine: i)
+            #expect(try ComputedWindowGuard.checkImageWindowAfterStep(after, before: w.image, focus: w.focus) == i)
+        }
+    }
+
+    @Test func guardRefusesAlteredWindows() throws {
+        let c = try #require(try sixBySeven.first)
+        let w = try ScanWindowCalculator.windowsWithoutMenu(frame: Self.frame(of: c), resolution: c.scan.ppi,
+                                                            calibration: Self.calibration)
+        let expected = ScanWindowCalculator.focusLinePosition(imageWindow: w.image, calibration: Self.calibration)
+        for delta in [-1, 1] {
+            var f = w.focus
+            f.focusLine += delta
+            #expect(throws: ComputedWindowError.focusLine(sent: f.focusLine, expected: expected)) {
+                try ComputedWindowGuard.checkFocusWindow(f, image: w.image, calibration: Self.calibration)
+            }
+        }
+        let alterations: [(String, (inout ScanWindowFields) -> Void)] = [
+            ("ratio", { $0.ratio += 1 }), ("column", { $0.column += 1 }), ("line", { $0.line = 1 }),
+            ("pixels", { $0.pixels += 1 }), ("lines", { $0.lines = 400 }), ("byte48", { $0.byte48 = 0 }),
+            ("binning", { $0.binning = 2 }), ("lens54", { $0.lens54 += 50 }), ("lens58", { $0.lens58 -= 1 }),
+        ]
+        for (name, alter) in alterations {
+            var f = w.focus
+            alter(&f)
+            #expect(throws: ComputedWindowError.focusWindowField(name)) {
+                try ComputedWindowGuard.checkFocusWindow(f, image: w.image, calibration: Self.calibration)
+            }
+        }
+        let after = try ScanWindowCalculator.imageWindow(w.image, focus: w.focus, sharpestLine: 200)
+        #expect(try ComputedWindowGuard.checkImageWindowAfterStep(after, before: w.image, focus: w.focus) == 200)
+        let imageAlterations: [(String, (inout ScanWindowFields) -> Void)] = [
+            ("ratio", { $0.ratio += 1 }), ("column", { $0.column += 1 }), ("line", { $0.line += 1 }),
+            ("pixels", { $0.pixels -= 1 }), ("lines", { $0.lines += 1 }), ("byte48", { $0.byte48 = 0 }),
+            ("binning", { $0.binning = 2 }), ("target", { $0.target = 1 }), ("focusLine", { $0.focusLine += 1 }),
+        ]
+        for (name, alter) in imageAlterations {
+            var a = after
+            alter(&a)
+            #expect(throws: ComputedWindowError.imageWindowField(name)) {
+                try ComputedWindowGuard.checkImageWindowAfterStep(a, before: w.image, focus: w.focus)
+            }
+        }
+        let bad: [(Int, Int)] = [(0, 1), (1, 1), (25, 25), (50 * 201, 50 * 201), (50, 0), (-50 * 200, -50 * 200)]
+        for (d54, d58) in bad {
+            var a = after
+            a.lens54 += d54
+            a.lens58 += d58
+            #expect(throws: ComputedWindowError.focusNotSwept(lens54: a.lens54, lens58: a.lens58), "\(d54) \(d58)") {
+                try ComputedWindowGuard.checkFocusPosition(imageAfterStep: a, focus: w.focus)
+            }
+        }
+    }
 }

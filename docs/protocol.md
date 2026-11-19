@@ -300,9 +300,19 @@ of three values are in capture order: 2 000, 1 000 and 3 200 ppi.
   **[confirmed]** Consistent with a focus value swept from base + 10 000
   down in 400 steps of 50 (one per line), FlexColor keeping base + 10 000
   − 50 × *i* for the line *i* it finds sharpest (*i* = 149 to 224 here).
-  **[hypothesis]** With a simple sharpness measure (mean squared difference
-  between neighbouring pixels), the sharpest line is within about 15 lines
-  of that *i*, never exactly on it: FlexColor's measure is not known. Page
+  **[hypothesis]** In all 31 scans of `scan-windows-2026-11-18.json` and
+  `-19.json`, the image window after the step is base + 10 000 − 50 × *i*
+  for 54 and 58 with the same whole *i*, 149 to 224 **[confirmed]**
+  (`ScanWindowCalculatorTests`). FlexColor's measure is not known. Three
+  simple measures on the flat-fielded green channel (`X1Image.FocusSweep`:
+  gradient energy, variance of the 1-D Laplacian, gradient energy over the
+  squared mean) give a line 0 to 47 lines from that *i* on the 36 captured
+  scans with 400 lines (mean of the absolute difference 7.8 to 8.4 lines);
+  on the 29 scans of the 6×7 at 1 000-3 200 ppi, 0 to 31 (6.6 to 7.1)
+  **[confirmed]** for those captures, with `tools/decode/export_focus.py`'s
+  choice of calibration read (2026-11-19 journal). Which measure
+  is closest to FlexColor's, and whether the difference matters for the
+  image: **[hypothesis]**, docs/hypotheses.md. Page
   0x24, read before each 400-line step, is identical in all the scans, so
   it is not the source.
 - The base values of offsets 54 and 58 (windows before the 400-line step)
