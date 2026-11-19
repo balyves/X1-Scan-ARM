@@ -278,6 +278,27 @@ struct CropFollowsOrientationTests {
         #expect(!original.portrait)
     }
 
+    @Test func customRatioTurnsWithTheFrame() throws {
+        // As the model sets a typed ratio (13 wide, 18 high, not exchanged);
+        // a quarter turn exchanges it like the others.
+        var crop = CropSettings()
+        crop.aspect = try #require(CropAspect.custom(13, 18))
+        crop.portrait = false
+        let start = CGRect(x: 0.1, y: 0.1, width: 0.13, height: 0.18)
+        crop.frame = start
+        let square = CGSize(width: 100, height: 100)
+        #expect(abs((crop.ratio(imageSize: square) ?? 0) - 13.0 / 18) < 1e-12)
+        crop.turnQuarter(clockwise: true)
+        #expect(abs((crop.ratio(imageSize: square) ?? 0) - 18.0 / 13) < 1e-12, "13×18 becomes 18×13")
+        let turned = try #require(crop.frame)
+        #expect(abs(turned.width - 0.18) < 1e-12 && abs(turned.height - 0.13) < 1e-12)
+        crop.turnQuarter(clockwise: false)
+        #expect(abs((crop.ratio(imageSize: square) ?? 0) - 13.0 / 18) < 1e-12, "and back")
+        let back = try #require(crop.frame)
+        #expect(abs(back.minX - start.minX) < 1e-12 && abs(back.minY - start.minY) < 1e-12
+                && abs(back.width - start.width) < 1e-12 && abs(back.height - start.height) < 1e-12)
+    }
+
     @Test func mirrorIsExact() {
         var crop = sample
         crop.mirrorHorizontally()
