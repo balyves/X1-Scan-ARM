@@ -46,7 +46,7 @@ struct ExposureMeterTests {
         let raw: [UInt16] = [65_000, 10, 10,   500, 900, 1_000,   30_000, 30_000, 30_000]
         let mask = ExposureMeter.zoneMask(raw: raw, thresholds: thresholds)
         #expect(Array(mask[0..<4]) == [255, 0, 0, 255], "clipped: red")
-        #expect(Array(mask[4..<8]) == [0, 0, 255, 255], "noise: blue")
+        #expect(Array(mask[4..<8]) == [150, 40, 220, 255], "noise: violet")
         #expect(Array(mask[8..<12]) == [0, 0, 0, 0], "elsewhere: transparent")
     }
 

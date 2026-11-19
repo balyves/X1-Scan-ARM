@@ -3497,24 +3497,6 @@
         }
       }
     },
-    "On the preview: clipped pixels in red, pixels near the noise floor in blue. Display only.": {
-      "comment": "Tooltip of the exposure zones checkbox",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "On the preview: clipped pixels in red, pixels near the noise floor in blue. Display only."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sur l'aperçu : pixels écrêtés en rouge, pixels proches du plancher de bruit en bleu. Affichage seulement."
-          }
-        }
-      }
-    },
     "Sizes in pixels; millimetres once the preview resolution is confirmed. Input: the scanner's pixels under the frame. Output: the file Export writes, turned, straightened and cropped. Resolution and scale apply to the scan in a later step.": {
       "comment": "Tooltip and VoiceOver hint of the Input and Output size rows of the settings panel",
       "extractionState": "manual",
@@ -4177,6 +4159,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "Noir"
+          }
+        }
+      }
+    },
+    "On the preview: clipped pixels in red, pixels near the noise floor in violet. Display only.": {
+      "comment": "Tooltip of the exposure zones checkbox",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On the preview: clipped pixels in red, pixels near the noise floor in violet. Display only."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur l'aperçu : pixels écrêtés en rouge, pixels proches du plancher de bruit en violet. Affichage seulement."
           }
         }
       }

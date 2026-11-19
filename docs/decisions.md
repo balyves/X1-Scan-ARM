@@ -1232,7 +1232,7 @@ nothing is sent to the scanner and nothing in the image changes.
   floor; green: the levels used; red: above the clipping level, solid
   from 0.1 % of clipped pixels, the precision of the text), the text
   "CCD range used NN % · N.N % clipped", and a checkbox that overlays the
-  clipped pixels (red) and those near the noise floor (blue) on the
+  clipped pixels (red) and those near the noise floor (violet) on the
   preview, display only.
 - **Advice**: planned (it will point to quality modes: several passes,
   HDR), hidden in lot 1 (`ExposureSection.showsAdvice`), because those

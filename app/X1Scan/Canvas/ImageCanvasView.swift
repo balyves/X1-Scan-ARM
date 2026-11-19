@@ -23,8 +23,9 @@ final class ImageCanvasView: NSView {
     private let zonesLayer = CALayer()
     private let cropLayer = CAShapeLayer()
     /// The grid (lot 1), in display coordinates; never part of an export.
-    /// One line of one screen point; green by default (apart from the crop
-    /// frame, the rule in yellow and the exposure zones in red and blue),
+    /// One line of one screen point; green by default (distinct from the crop
+    /// frame and the rule, in the accent colour, and the exposure zones, red
+    /// and violet),
     /// colour and opacity chosen by the user.
     private let gridLayer = CAShapeLayer()
     /// Crop mode (lot 1): the image outside the frame darkened, the frame's handles.
@@ -70,11 +71,11 @@ final class ImageCanvasView: NSView {
         shadeLayer.fillRule = .evenOdd
         handlesLayer.fillColor = NSColor.white.cgColor
         handlesLayer.strokeColor = NSColor.black.withAlphaComponent(0.6).cgColor
-        rulerLayer.fillColor = NSColor.systemYellow.cgColor
-        rulerLayer.strokeColor = NSColor.systemYellow.cgColor
         rulerEdgeLayer.strokeColor = NSColor.black.withAlphaComponent(0.6).cgColor
         rulerEdgeLayer.fillColor = nil
-        rulerLabel.foregroundColor = NSColor.systemYellow.cgColor
+        rulerLayer.fillColor = nil  // a line: nothing to fill
+        // White text: legible on the dark background whatever the image under it.
+        rulerLabel.foregroundColor = NSColor.white.cgColor
         rulerLabel.backgroundColor = NSColor.black.withAlphaComponent(0.6).cgColor
         rulerLabel.cornerRadius = 3
         rulerLabel.alignmentMode = .center
@@ -194,7 +195,7 @@ final class ImageCanvasView: NSView {
          CGPoint(x: rect.minX, y: rect.maxY), CGPoint(x: rect.maxX, y: rect.maxY)]
     }
 
-    /// The rule: a dashed yellow line and its result ("−1.3° · horizontal") next to its end.
+    /// The rule: a dashed line in the crop frame's colour and its result ("−1.3° · horizontal") next to its end.
     private func updateRuler(_ viewport: Viewport) {
         guard let ruler, model.tools.selected == .straighten else {
             rulerLayer.isHidden = true
@@ -210,7 +211,9 @@ final class ImageCanvasView: NSView {
         rulerLayer.lineWidth = 2 * point
         rulerLayer.lineDashPattern = [NSNumber(value: 6 * point), NSNumber(value: 4 * point)]
         rulerLayer.isHidden = false
-        // A dark edge under the dashes: visible on light and yellow areas.
+        // The same colour as the crop frame's line, read at each update (accent and appearance may change).
+        rulerLayer.strokeColor = NSColor.controlAccentColor.cgColor
+        // A dark edge under the dashes: visible on light areas and areas of the accent colour.
         rulerEdgeLayer.path = path
         rulerEdgeLayer.lineWidth = 4 * point
         rulerEdgeLayer.isHidden = false

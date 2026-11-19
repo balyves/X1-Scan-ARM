@@ -94,7 +94,10 @@ public enum ExposureMeter {
         return histogram.count - 1
     }
 
-    /// The overlay of the clipped (red) and near-noise (blue) pixels, RGBA
+    /// Colour of the pixels near the noise floor in the overlay (opaque, sRGB).
+    public static let noiseColor: (red: UInt8, green: UInt8, blue: UInt8) = (150, 40, 220)
+
+    /// The overlay of the clipped (red) and near-noise (violet) pixels, RGBA
     /// 8-bit premultiplied, same size as the raw image; transparent elsewhere.
     public static func zoneMask(raw: [UInt16], thresholds: ExposureThresholds = .provisional) -> [UInt8] {
         let count = raw.count / 3
@@ -107,7 +110,11 @@ public enum ExposureMeter {
                     if high >= thresholds.clipLevel {
                         out[pixel * 4] = 255; out[pixel * 4 + 3] = 255
                     } else if high <= thresholds.noiseFloor {
-                        out[pixel * 4 + 2] = 255; out[pixel * 4 + 3] = 255
+                        // Violet, apart from the blue of the crop frame and the rule.
+                        out[pixel * 4] = Self.noiseColor.red
+                        out[pixel * 4 + 1] = Self.noiseColor.green
+                        out[pixel * 4 + 2] = Self.noiseColor.blue
+                        out[pixel * 4 + 3] = 255
                     }
                 }
             }

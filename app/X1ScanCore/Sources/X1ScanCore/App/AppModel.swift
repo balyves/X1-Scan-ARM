@@ -296,7 +296,7 @@ public final class AppModel {
     /// Exposure indicator (lot 1): measured read-only on the raw samples of
     /// the last complete preview; kept while a scan is shown.
     public private(set) var exposure: ExposureReading?
-    /// Clipped (red) and near-noise (blue) pixels of that preview, for the overlay.
+    /// Clipped (red) and near-noise (violet) pixels of that preview, for the overlay.
     public private(set) var exposureZones: CGImage?
     /// Size of the preview `exposureZones` was made from.
     public private(set) var exposureZonesSize: (width: Int, height: Int)?

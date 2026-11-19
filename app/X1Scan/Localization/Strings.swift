@@ -377,7 +377,7 @@ enum Strings {
     }
 
     static var exposureZonesHelp: String {
-        String(localized: "On the preview: clipped pixels in red, pixels near the noise floor in blue. Display only.",
+        String(localized: "On the preview: clipped pixels in red, pixels near the noise floor in violet. Display only.",
                comment: "Tooltip of the exposure zones checkbox")
     }
 
