@@ -680,3 +680,13 @@ instructions and decisions.md allow the holder's name in `LICENSE` on
 that line only.
 The About panel's copyright line follows: "© 2026 <holder>. Code: MIT
 licence; icon not under the MIT licence" (and in French).
+
+## 2026-11-19: part H planned (offset 62)
+
+docs/test-session.md part H and the guide (`--part H`, steps 23-32): one
+FlexColor run, 6×7 holder: one 0.50 × 0.50 cm frame left untouched at
+2 000, 600 and 3 200 ppi (does offset 62 follow the frame or the rounded
+window lines?), then moved by FlexColor's smallest steps and given two
+other heights, to find the rounding behind the −6 to +21 residuals of
+offset 62. Its unit is probably 1/28 800 inch (about 0.88 µm) [hypothesis]. Not
+run yet.

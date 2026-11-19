@@ -546,7 +546,8 @@ launch, kept outside the repository (they hold the serial number). Purpose: the 
 §12) and one first preview per holder (§13). Nothing is sent by X1 Scan.
 
 **Guided**: `tools/capture/guided-session.sh` (copy the `tools/capture/`
-folder to the reference Mac) walks through steps 1-22. It starts each
+folder to the reference Mac) walks through steps 1-22 (part H: steps
+23-32, `--part H`). It starts each
 FlexColor run under lldb with `cap3.py` and a new name (`essai-I`,
 `essai-J1`…, `-2` added if the name exists), waits for FlexColor to be
 quit, shows each step in French with the state of the X1 and FlexColor,
@@ -645,3 +646,45 @@ cold-type preview. Step 6 was scanned at 3 000 ppi, step 12 kept a
 made with the 24×36×4 by mistake and made again with the 24×36
 (`essai-J3-2`). Analysis: docs/protocol.md §9 ("Window rules"), §12, §13;
 `tests/fixtures/scan-windows-2026-11-18.json`.
+
+## Part H: offset 62 of the focus window (one capture, "essai-L")
+
+Purpose: offset 62 of the 400-line window follows 15 500 + 28 800 × the
+middle of the frame's image lines in inches, within −6 to +21
+(docs/protocol.md §9). The residual looks like rounding: one line is 8.6
+units at 2 000 ppi, 28.8 at 600 ppi, 5.4 at 3 200 ppi (line pitch = ratio
+÷ 10 000 lines per inch, §9). The windows give the frame only in whole
+lines. So the key scans are one frame left untouched at three line
+pitches: if offset 62 stays the same, FlexColor computes it from the frame
+itself; if it follows the rounded lines, from the window. Then a few more
+positions and heights, each with another (unknown) fraction of a line.
+Same set-up as part G (reference Mac, cap3.py, the guide), **X1: on**,
+FlexColor launched by the guide, 6×7 holder with the IT8 target, the
+Format menu not touched. `tools/capture/guided-session.sh --part H` (or
+`--from 23`) walks through the steps; a run of part G never goes on into
+part H.
+
+23. Launch FlexColor (essai-L), make a preview.
+24. Frame 0.50 × 0.50 cm at the centre of the opening (frame P0): scan at
+    2 000 ppi.
+25. The same frame, **untouched**: 600 ppi.
+26. The same frame, **untouched**: 3 200 ppi.
+27. The same frame moved down by the smallest step FlexColor allows (the
+    down arrow if FlexColor moves the frame with the keyboard, otherwise
+    the shortest drag; probably more than one line): 2 000 ppi.
+28. One more step down: 2 000 ppi.
+29. One more step down: 2 000 ppi.
+30. Without moving it, height 0.51 cm (width 0.50): 2 000 ppi.
+31. Without moving it, height 0.52 cm: 2 000 ppi.
+32. Quit FlexColor.
+
+At every scan, note the width and height FlexColor shows (all decimals);
+the screenshots keep them too. If FlexColor stops in the middle, the guide
+starts a new run with a preview and a new frame P0 (resuming at step 25
+or 26, it has step 24 made again first, so that the new frame has its
+2 000 ppi scan). The guide notes the size typed at each scan in
+`essai-notes.txt`. Keep FlexColor's TIFFs
+and the screenshots outside the repository. At 600 ppi the frame is about
+200 lines, fewer than the 400 of the focus step: a possible limit case
+(part G's 1.0 cm frame at 600 ppi, about 400 lines, followed the rule).
+About 15 minutes.

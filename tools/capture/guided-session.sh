@@ -1,7 +1,8 @@
 #!/bin/bash
 # SPDX-License-Identifier: MIT
 #
-# Guided FlexColor capture session (docs/test-session.md, part G, steps 1-22)
+# Guided FlexColor capture sessions (docs/test-session.md, part G, steps 1-22;
+# part H, steps 23-32)
 # for the reference Mac (Mojave): bash 3.2 and what macOS ships (lldb from the
 # Command Line Tools, screencapture, /usr/bin/python with PyObjC). Nothing to
 # install.
@@ -11,8 +12,10 @@
 # the time and takes screenshots. Only FlexColor talks to the scanner.
 #
 # Usage:
-#   tools/capture/guided-session.sh                 from step 1
-#   tools/capture/guided-session.sh --from 8        resume at step 8
+#   tools/capture/guided-session.sh                 part G, from step 1
+#   tools/capture/guided-session.sh --part H        part H (steps 23-32)
+#   tools/capture/guided-session.sh --from 8        resume at step 8 (to the
+#                                                   end of that step's part)
 #   tools/capture/guided-session.sh --list          list the steps
 # The output folder is named after the day: to resume on another day, give
 # the first day's folder with X1GUIDE_DIR.
@@ -24,7 +27,7 @@
 #   X1GUIDE_DIR         output folder (default: ~/Desktop/captures-YYYY-MM-DD)
 #   X1CAP_SCAN_MB       image data kept after each SCAN, in MiB (default: 64, as
 #                       in docs/test-session.md C2; expected to hold every scan of
-#                       part G whole: check "RAW skipped" in the logs)
+#                       parts G and H whole: check "RAW skipped" in the logs)
 #   X1GUIDE_DRY_RUN=1   try the script without FlexColor nor lldb: a placeholder
 #                       process stands for FlexColor, Entrée "quits" it, the
 #                       screenshots are empty files, and the default folder is
@@ -43,7 +46,8 @@ else
 fi
 SCAN_MB=${X1CAP_SCAN_MB:-64}
 NOTES="$DIR/essai-notes.txt"
-LAST_STEP=22
+PART_G_LAST=22  # part G: steps 1-22; part H: steps 23-LAST_STEP
+LAST_STEP=32
 CURRENT_STEP=1
 
 CAPTURE=""      # name of the capture running (essai-I, essai-J1...), "" if none
@@ -270,6 +274,49 @@ ensure_essai_i() {  # steps 2-13: FlexColor must still run under lldb, else a ne
     screenshot "$CURRENT_STEP" apercu-reprise
 }
 
+ensure_essai_l() {  # steps 24-31: FlexColor must still run under lldb, else a new run with its preview
+    if capture_alive; then return; fi
+    if [ -n "$CAPTURE" ]; then
+        say ""
+        say "ATTENTION : FlexColor ou lldb s'est arrêté (capture $CAPTURE)."
+        end_capture
+    fi
+    state "allumé" "fermé, puis relancé par le guide"
+    say "Porte-film 6×7 avec la mire IT8, comme à l'étape 23 : vérifiez qu'il est en place."
+    wait_enter "Entrée quand le porte-film 6×7 est en place."
+    note "étape $CURRENT_STEP : reprise, porte-film 6×7 en place"
+    start_capture essai-L
+    say "Reprise : FlexColor vient d'être relancé. Faites d'abord un aperçu."
+    wait_enter "Entrée quand l'aperçu est fini."
+    note "étape $CURRENT_STEP : aperçu de reprise fait"
+    screenshot "$CURRENT_STEP" apercu-reprise
+    say "Le cadre P0 est perdu : faites un nouveau cadre 0,50 × 0,50 cm au centre ;"
+    say "les étapes suivantes partent de ce nouveau cadre."
+    note "étape $CURRENT_STEP : nouveau cadre P0"
+    if [ "$CURRENT_STEP" -ge 25 ] && [ "$CURRENT_STEP" -le 26 ]; then
+        # Steps 25-26 compare P0 at three line pitches: the new P0 needs its 2 000 ppi scan first.
+        say "Refaites d'abord l'étape 24 avec ce nouveau cadre : 2 000 ppi, cliquez sur Scan."
+        wait_enter "Entrée quand le TIFF est enregistré."
+        note "étape 24 (refaite à la reprise) : scan fait (2000 ppi, nouveau cadre P0)"
+        frame_size 24
+        screenshot 24 scan-2000ppi-reprise
+    fi
+}
+
+frame_size() {  # frame_size STEP: notes the frame size FlexColor shows, as typed
+    local size
+    if [ -t 0 ]; then
+        while read -r -t 1 _; do :; done
+    fi
+    printf '%s ' "Largeur × hauteur affichées par FlexColor (ex. 0,50 × 0,51 ; Entrée si illisible) :"
+    if ! read -r size; then
+        say ""
+        say "Entrée standard fermée : arrêt du guide."
+        stop_guide 1
+    fi
+    note "étape $1 : cadre affiché ${size:-non noté}"
+}
+
 holder_size() {  # holder_size STEP: reference and opening in mm and inches (holders.json)
     case $1 in
         1)  echo "réf. 50200403, ouverture 57 × 70 mm (2¼″ × 2,76″)" ;;
@@ -285,6 +332,7 @@ holder_size() {  # holder_size STEP: reference and opening in mm and inches (hol
 
 do_step() {  # do_step STEP: shows the step, waits, notes, screenshots
     local s=$1 res="" frame=""
+    if [ "$s" -gt "$PART_G_LAST" ]; then do_part_h "$s"; return; fi
     case $s in
         1)
             banner "Étape 1/22 : aperçu (porte-film 6×7, capture essai-I)"
@@ -401,6 +449,67 @@ do_step() {  # do_step STEP: shows the step, waits, notes, screenshots
     fi
 }
 
+# Part H (docs/test-session.md): offset 62 of the 400-line window. One run
+# (essai-L), 6×7 holder: one 0.50 × 0.50 cm frame left untouched at 2 000,
+# 600 and 3 200 ppi, then moved by FlexColor's smallest steps along the
+# drum, then two other heights.
+do_part_h() {  # do_part_h STEP
+    local s=$1 res=2000 frame=""
+    case $s in
+        23)
+            banner "Étape 23/32 : aperçu (porte-film 6×7, mire IT8, capture essai-L)"
+            state "allumé" "fermé, puis lancé par le guide"
+            say "Porte-film 6×7 avec la mire IT8, dans le même sens que pour essai-I."
+            say "  $(holder_size 1)"
+            wait_enter "Entrée quand le porte-film 6×7 est en place."
+            note "étape 23 : porte-film 6×7 en place"
+            [ -z "$CAPTURE" ] || end_capture
+            start_capture essai-L
+            say "Dans FlexColor : cliquez sur Aperçu et attendez la fin."
+            wait_enter "Entrée quand l'aperçu est fini."
+            note "étape 23 : aperçu fait"
+            if ask_yes "Le X1 venait-il d'être allumé, sans aperçu depuis (aperçu à froid) ?"; then
+                note "étape 23 : aperçu à froid (X1 allumé sans aperçu avant)"
+            else
+                note "étape 23 : aperçu après un autre depuis la mise sous tension"
+            fi
+            screenshot 23 apercu
+            return ;;
+        24) frame="0,50 × 0,50 cm au centre de l'ouverture (cadre P0)" ;;
+        25) res=600; frame="le même cadre P0, SANS LE TOUCHER" ;;
+        26) res=3200; frame="le même cadre P0, SANS LE TOUCHER" ;;
+        27) frame="le même, descendu du plus petit pas possible (P0 + 1 pas)" ;;
+        28) frame="le même, descendu encore d'un pas (P0 + 2 pas)" ;;
+        29) frame="le même, descendu encore d'un pas (P0 + 3 pas)" ;;
+        30) frame="sans le déplacer, hauteur 0,51 cm (largeur 0,50)" ;;
+        31) frame="sans le déplacer, hauteur 0,52 cm (largeur 0,50)" ;;
+        32)
+            banner "Étape 32/32 : fin de la capture essai-L"
+            state "allumé" "à quitter"
+            if [ -n "$CAPTURE" ]; then end_capture; else say "Aucune capture en cours."; fi
+            note "étape 32 : fin"
+            return ;;
+    esac
+    banner "Étape $s/32 : scan (porte-film 6×7, capture essai-L)"
+    ensure_essai_l
+    state "allumé" "ouvert sous lldb (capture en cours)"
+    say "Cadre : $frame."
+    say "Résolution : $res ppi. Pas de nouvel aperçu."
+    if [ "$s" -ge 25 ] && [ "$s" -le 26 ]; then
+        say "Ne touchez pas au cadre : seule la résolution change (champ PPP de FlexColor)."
+    fi
+    if [ "$s" -ge 27 ] && [ "$s" -le 29 ]; then
+        say "Un pas : la flèche ↓ si FlexColor déplace le cadre au clavier, sinon"
+        say "un glissement le plus court possible. Chaque position donne une autre"
+        say "fraction de ligne ; leur valeur exacte n'est pas connue, il en faut seulement plusieurs."
+    fi
+    say "Cliquez sur Scan et attendez la fin de l'enregistrement du TIFF."
+    wait_enter "Entrée quand le TIFF est enregistré."
+    note "étape $s : scan fait ($res ppi, $frame)"
+    frame_size "$s"
+    screenshot "$s" "scan-${res}ppi"
+}
+
 list_steps() {
     say "Étapes (docs/test-session.md, partie G) :"
     say "  1      essai-I : lancer FlexColor, aperçu (6×7)"
@@ -410,21 +519,38 @@ list_steps() {
     say "  14     essai-I : quitter FlexColor"
     say "  15-21  essai-J1 à J7 : un aperçu par porte-film (+ un scan 1 000 ppi en 17 et 18)"
     say "  22     essai-K (facultatif) : X1 éteint puis rallumé, aperçu 6×7"
+    say ""
+    say "Partie H (offset 62 de la mise au point ; --part H ou --from 23) :"
+    say "  23     essai-L : lancer FlexColor, aperçu (6×7, mire IT8)"
+    say "  24-26  essai-L : cadre 0,50 × 0,50 cm centré (P0), 2 000 puis 600 et 3 200 ppi sans le toucher"
+    say "  27-29  essai-L : le même, descendu de 1, 2, 3 petits pas, 2 000 ppi"
+    say "  30-31  essai-L : sans le déplacer, hauteur 0,51 puis 0,52 cm, 2 000 ppi"
+    say "  32     essai-L : quitter FlexColor"
 }
 
 # ---------------------------------------------------------------------------
 
 FROM=1
+FROM_GIVEN=""
+PART_GIVEN=""
 while [ $# -gt 0 ]; do
     case $1 in
         --from)
             [ $# -ge 2 ] || { say "--from attend un numéro d'étape (1 à $LAST_STEP)"; exit 2; }
-            FROM=$2; shift 2 ;;
+            FROM=$2; FROM_GIVEN=1; shift 2 ;;
+        --part)
+            [ $# -ge 2 ] || { say "--part attend G ou H"; exit 2; }
+            case $2 in G|g) FROM=1 ;; H|h) FROM=$((PART_G_LAST + 1)) ;; *) say "--part attend G ou H"; exit 2 ;; esac
+            PART_GIVEN=1; shift 2 ;;
         --list) list_steps; exit 0 ;;
-        -h|--help) sed -n '3,30p' "$0"; exit 0 ;;
+        -h|--help) sed -n '3,34p' "$0"; exit 0 ;;
         *) say "Option inconnue : $1 (voir --help)"; exit 2 ;;
     esac
 done
+if [ -n "$FROM_GIVEN" ] && [ -n "$PART_GIVEN" ]; then
+    say "--part et --from ne vont pas ensemble : --from choisit déjà la partie de son étape."
+    exit 2
+fi
 case $FROM in
     ''|*[!0-9]*) say "--from attend un numéro d'étape (1 à $LAST_STEP)"; exit 2 ;;
 esac
@@ -446,18 +572,33 @@ fi
 mkdir -p "$DIR" || exit 1
 
 banner "Session de captures guidée — dossier : $DIR"
-say "Avant de commencer (docs/test-session.md, C1 et partie G) :"
+if [ "$FROM" -le "$PART_G_LAST" ]; then PART=G; else PART=H; fi
+# The first preview of this run: a resume preview in the middle of a capture
+# (essai-I: 2-13, essai-L: 24-31), the next step after a step that only quits.
+case $FROM in
+    [2-9]|1[0-3]|2[4-9]|3[01]) FIRST_PREVIEW="$FROM (aperçu de reprise)" ;;
+    14) FIRST_PREVIEW=15 ;;
+    *) FIRST_PREVIEW=$FROM ;;
+esac
+say "Avant de commencer (docs/test-session.md, C1 et partie $PART) :"
 state "allumé, branché sur ce Mac" "fermé"
-say "Le X1 doit avoir fait au moins un aperçu depuis sa mise sous tension ;"
-say "sinon l'aperçu de l'étape 1 sera un aperçu à froid (à noter)."
+case $FROM in
+    22) say "L'étape 22 fait exprès un aperçu à froid (X1 éteint puis rallumé)." ;;
+    32) ;;
+    *)
+        say "Le X1 doit avoir fait au moins un aperçu depuis sa mise sous tension ;"
+        say "sinon l'aperçu de l'étape $FIRST_PREVIEW sera un aperçu à froid (à noter)." ;;
+esac
 say "Pour chaque scan, FlexColor enregistre son TIFF : gardez-le, hors du dépôt."
 say "Vérifiez qu'aucun numéro de série ni nom de client n'apparaît sur les captures d'écran."
 say "Le guide ne parle jamais au X1 : seul FlexColor le fait."
 note "guide démarré à l'étape $FROM (dossier $DIR)"
 wait_enter "Entrée pour commencer à l'étape $FROM."
 
+# A run stays within the part of its first step.
+if [ "$FROM" -le "$PART_G_LAST" ]; then END_STEP=$PART_G_LAST; else END_STEP=$LAST_STEP; fi
 step=$FROM
-while [ "$step" -le "$LAST_STEP" ]; do
+while [ "$step" -le "$END_STEP" ]; do
     CURRENT_STEP=$step
     do_step "$step"
     step=$((step + 1))

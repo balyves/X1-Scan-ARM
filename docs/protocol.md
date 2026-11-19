@@ -325,8 +325,10 @@ of three values are in capture order: 2 000, 1 000 and 3 200 ppi.
   the 15 scans of 2026-11-18. So offset 62
   is the drum position of the line where the focus is measured (the
   400-line step reads the middle of the frame, §12), 15 500 being line 0
-  of every other window, at 28 800 per inch. **[hypothesis]**, strongly
-  supported. The exact rounding is not known (computed − captured: −6 to +21, 17 of
+  of every other window, at 28 800 per inch (one unit = 1/28 800 in ≈
+  0.88 µm; 15 500 ≈ 13.67 mm from position 0 of offset 62). **[hypothesis]**, strongly
+  supported. docs/test-session.md part H lists the scans that would show
+  the rounding. The exact rounding is not known (computed − captured: −6 to +21, 17 of
   the 20 positive, mean about +7: the constant or the rounding may differ
   slightly): a
   calculator can compute it to within about 0.02 mm, not byte for byte.
