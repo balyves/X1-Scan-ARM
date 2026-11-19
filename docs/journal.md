@@ -796,3 +796,10 @@ alone the formula stays within −6 to +24 on all 37 focus windows: no
 byte-for-byte formula. A tolerance limited to that field is proposed for
 the user's decision (decisions.md). `ScanWindowRulesTests` now covers 31
 scans; the lens model of offsets 54 / 58 holds for part K too.
+
+## 2026-11-19: decision on offset 62
+
+User's decision (decisions.md, "Offset 62 of the 400-line window"): a
+future window calculator takes offset 62 from its own window (option A,
+recomputable by the guard); 32 units are the validation criterion on
+captured frames, at 600 ppi and above; no free frame below 600 ppi.

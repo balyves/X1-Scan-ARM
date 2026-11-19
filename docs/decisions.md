@@ -1001,7 +1001,18 @@ licences.
 - Simulator: the other holders' code lines are generated in the tests from
   their bar pattern; no other raw code line enters the repository.
 
-## Offset 62 of the 400-line window (2026-11-19): proposal, not decided
+## Offset 62 of the 400-line window (2026-11-19)
+
+**Decided by the user (2026-11-19)**: option A below (the value from the
+calculator's window, recomputable by the guard); 32 units accepted as the
+validation criterion on captured frames, at 600 ppi and above; below 600
+ppi, no free frame. Not implemented yet; the rounding is fixed with the
+implementation. The guards below (1 to 5) were proposed with it and are
+to be confirmed with the implementation. A window calculator goes beyond
+"byte for byte" (CLAUDE.md rule 4): rule 4 must be changed, with the
+user's approval, before anything it computes is sent to the real X1.
+
+The proposal as it was made:
 
 Parts H and K (protocol.md §9) show that FlexColor computes offset 62
 from its own frame coordinates [hypothesis, strongly supported], which
