@@ -22,6 +22,8 @@ public enum CompactPanelMetrics {
     public static let groupSpacing: CGFloat = 8
     /// Between a disclosure title and its content.
     public static let contentTopInset: CGFloat = 4
+    /// Height of a gauge bar (exposure).
+    public static let gaugeHeight: CGFloat = 10
     /// Inside a section, around its rows.
     public static let sectionInsets = EdgeInsets(top: 4, leading: 12, bottom: 8, trailing: 12)
 }

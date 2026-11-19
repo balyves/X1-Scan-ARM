@@ -6,6 +6,7 @@ import Observation
 public enum PanelSection: String, Sendable, Hashable, CaseIterable, Codable {
     case original
     case scan
+    case exposure
     case histogram
     case output
 

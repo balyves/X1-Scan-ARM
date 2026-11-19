@@ -19,6 +19,8 @@ final class ImageCanvasView: NSView {
     private let sourceLayer = CALayer()
     private let pendingLayer = CALayer()
     private let imageLayer = CALayer()
+    /// Clipped and near-noise pixels of the preview (lot 1), over the image, turned with it.
+    private let zonesLayer = CALayer()
     private let cropLayer = CAShapeLayer()
     /// The grid (lot 1), in display coordinates; never part of an export.
     /// A light line over a wider dark one, visible on light and dark images.
@@ -50,7 +52,11 @@ final class ImageCanvasView: NSView {
         sourceLayer.anchorPoint = .zero
         sourceLayer.addSublayer(pendingLayer)
         sourceLayer.addSublayer(imageLayer)
-        for sublayer in [sourceLayer, pendingLayer, imageLayer, cropLayer, gridEdgeLayer, gridLayer] {
+        zonesLayer.contentsGravity = .resize
+        zonesLayer.magnificationFilter = .nearest
+        zonesLayer.opacity = 0.75
+        sourceLayer.addSublayer(zonesLayer)
+        for sublayer in [sourceLayer, pendingLayer, imageLayer, zonesLayer, cropLayer, gridEdgeLayer, gridLayer] {
             sublayer.actions = ["contents": NSNull(), "bounds": NSNull(), "position": NSNull(), "path": NSNull(),
                                 "transform": NSNull(), "lineWidth": NSNull(), "hidden": NSNull()]
         }
@@ -100,6 +106,7 @@ final class ImageCanvasView: NSView {
             imageLayer.frame = CGRect(x: 0, y: 0, width: CGFloat(image.width),
                                       height: CGFloat(image.height) * pixelAspect)
         }
+        updateZones(viewport)
         updateGrid(viewport)
         if let crop {
             cropLayer.path = CGPath(rect: viewport.documentRect(forPixelRect: crop), transform: nil)
@@ -108,6 +115,20 @@ final class ImageCanvasView: NSView {
             cropLayer.isHidden = true
         }
         CATransaction.commit()
+    }
+
+    /// The zone overlay: only on the preview it was measured on.
+    private func updateZones(_ viewport: Viewport) {
+        let size = model.exposureZonesSize
+        guard model.showsExposureZones, model.session.kind == .preview, let zones = model.exposureZones,
+              let size, size.width == viewport.imageWidth, size.height == viewport.imageHeight else {
+            zonesLayer.isHidden = true
+            zonesLayer.contents = nil
+            return
+        }
+        zonesLayer.contents = zones
+        zonesLayer.frame = CGRect(origin: .zero, size: viewport.sourceDocumentSize)
+        zonesLayer.isHidden = false
     }
 
     /// The grid over the whole image shown, one screen point wide at any zoom.

@@ -231,6 +231,9 @@ final class AppModelTests {
         await model.waitForRendering()
         #expect(model.displayImage?.width == 2004)
         #expect(model.histogram.pixelCount == 2004 * 817)
+        // Lot 1: the exposure indicator is measured on the complete preview, read-only.
+        #expect(model.exposure?.pixelCount == 2004 * 817)
+        #expect(model.exposureZones?.width == 2004 && model.exposureZones?.height == 817)
         #expect(model.viewport.imageHeight == 817 && model.viewport.mode == .fit)
         // A crop: the histogram counts its pixels only; removing it counts the whole image again.
         model.cropRect = PixelRect(x: 100, y: 50, width: 300, height: 200)

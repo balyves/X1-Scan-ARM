@@ -1204,3 +1204,36 @@ to be decided after part J.
   `FocusSweep` errors for the two widths; the sharpness report setting
   aside a badly exported folder instead of stopping; `FocusSweep` in
   CLAUDE.md.
+
+## Lot 1: exposure indicator (2026-11-19, provisional thresholds)
+
+User's brief of 2026-11-19 (lot 1, part D). The Exposure section of the
+panel shows how much of the CCD's range the last preview uses. Read only:
+nothing is sent to the scanner and nothing in the image changes.
+
+- **What is measured** (`ExposureMeter`): the preview's raw samples
+  (`PreviewImage.raw`, realigned, before the flat field), once the preview
+  is complete. Clipped: pixels with at least one channel at or above the
+  clipping level. Near the noise floor: pixels whose channels are all at
+  or below the noise floor. Range used: from the darkest level (per-pixel
+  minimum channel) to the brightest (per-pixel maximum), each at the
+  0.1 % percentile so that isolated defects do not count, as a share of
+  the span noise floor → clipping level.
+- **Thresholds** (`ExposureThresholds.provisional`, the only place they
+  are set): clipping level 64 000, noise floor 1 024, on the 16-bit raw
+  scale (0 to 65 535); tails 0.1 %. **[hypothesis] Not measured**: round
+  values near both ends of the scale, chosen so that the indicator could
+  be built. To be replaced by measurements on the X1: dark frames (lamp
+  off or an opaque holder) for the noise floor, an over-exposed frame
+  (empty holder) for the clipping level; an empty holder reads up to
+  about 58 000 (protocol.md §10), which suggests the clipping level may
+  be lower than 64 000.
+- **Display**: a gauge over the full raw scale (hatched: below the noise
+  floor; green: the levels used; red: above the clipping level, solid
+  from 0.1 % of clipped pixels, the precision of the text), the text
+  "CCD range used NN % · N.N % clipped", and a checkbox that overlays the
+  clipped pixels (red) and those near the noise floor (blue) on the
+  preview, display only.
+- **Advice**: planned (it will point to quality modes: several passes,
+  HDR), hidden in lot 1 (`ExposureSection.showsAdvice`), because those
+  modes do not exist yet.

@@ -4,7 +4,7 @@ import SwiftUI
 import X1Image
 import X1ScanCore
 
-/// The settings panel on the right (lot 1): Original, Scan, Histogram,
+/// The settings panel on the right (lot 1): Original, Scan, Exposure, Histogram,
 /// Output, and the Preview and Scan buttons. Small controls everywhere. All
 /// sections follow the compact panel conventions
 /// (.claude/skills/compact-settings-panel/SKILL.md); a folded section shows
@@ -18,6 +18,7 @@ struct SettingsPanelView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     section(.original) { OriginalSection(model: model) }
                     section(.scan) { ScanSection(model: model) }
+                    section(.exposure) { ExposureSection(model: model) }
                     section(.histogram) { HistogramView(model: model) }
                     section(.output) {
                         OutputSection(model: model)

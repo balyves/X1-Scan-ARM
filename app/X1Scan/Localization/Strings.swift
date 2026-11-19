@@ -311,6 +311,7 @@ enum Strings {
         case .original: String(localized: "Original", comment: "Panel section: the film")
         case .scan: String(localized: "panel.section.scan", defaultValue: "Scan",
                            comment: "Panel section: resolution, scale, sizes")
+        case .exposure: String(localized: "Exposure", comment: "Panel section: share of the CCD range the preview uses")
         case .histogram: String(localized: "Histogram", comment: "Palette title")
         case .output: String(localized: "Output", comment: "Panel section: export")
         }
@@ -327,6 +328,59 @@ enum Strings {
     static var mirrorHorizontally: String {
         String(localized: "Flip Horizontal", comment: "Menu item and tooltip: mirror the image left to right")
     }
+
+    // MARK: Exposure (lot 1)
+
+    private static func percent(_ fraction: Double, digits: Int) -> String {
+        fraction.formatted(.percent.precision(.fractionLength(digits)).grouping(.never))
+    }
+
+    /// The share of clipped pixels the text rounds to 0.1 % (below: "< 0.1 %").
+    static let clippedShownFrom = 0.0005
+
+    private static func clippedText(_ fraction: Double) -> String {
+        guard fraction > 0, fraction < clippedShownFrom else { return percent(fraction, digits: 1) }
+        return "< " + percent(0.001, digits: 1)
+    }
+
+    /// "83 % · 0.4 % clipped": the folded section and VoiceOver.
+    static func exposureSummary(_ reading: ExposureReading) -> String {
+        let clipped = clippedText(reading.clippedFraction)
+        return String(localized: "\(percent(reading.usedRange, digits: 0)) · \(clipped) clipped",
+                      comment: "Folded Exposure section: CCD range used, then share of clipped pixels")
+    }
+
+    /// "CCD range used 83 % · 0.4 % clipped", under the gauge.
+    static func exposureLine(_ reading: ExposureReading) -> String {
+        let clipped = clippedText(reading.clippedFraction)
+        return String(localized: "CCD range used \(percent(reading.usedRange, digits: 0)) · \(clipped) clipped",
+                      comment: "Exposure section, under the gauge")
+    }
+
+    static var exposureGaugeLabel: String {
+        String(localized: "CCD range used", comment: "VoiceOver label of the exposure gauge")
+    }
+
+    static var exposureEmpty: String {
+        String(localized: "Measured after each preview.", comment: "Exposure section before the first preview")
+    }
+
+    static var exposureHelp: String {
+        String(localized: "Measured on the preview's raw CCD values, before any correction. Left: the noise floor; right: clipping. Provisional thresholds, to be measured on the X1.",
+               comment: "Tooltip of the exposure gauge")
+    }
+
+    static var exposureZonesToggle: String {
+        String(localized: "Show clipped and noise zones", comment: "Exposure section checkbox")
+    }
+
+    static var exposureZonesHelp: String {
+        String(localized: "On the preview: clipped pixels in red, pixels near the noise floor in blue. Display only.",
+               comment: "Tooltip of the exposure zones checkbox")
+    }
+
+    /// Advice under the gauge; hidden in lot 1 (it will point to quality modes).
+    static func exposureAdvice(_ reading: ExposureReading) -> String? { nil }
 
     // MARK: Grid (lot 1)
 
@@ -378,6 +432,8 @@ enum Strings {
             let ppi = String(localized: "ppi", comment: "Unit: pixels per inch")
             let scale = (Double(settings.scalePercent) / 100).formatted(.percent.grouping(.never))
             return "\(settings.resolution.formatted(.number.grouping(.never))) \(ppi) · \(scale)"
+        case .exposure:
+            return model.exposure.map(exposureSummary) ?? ""
         case .histogram:
             return ""
         case .output:

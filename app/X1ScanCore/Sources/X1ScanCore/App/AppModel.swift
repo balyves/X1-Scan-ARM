@@ -151,6 +151,19 @@ public final class AppModel {
     public var pointer: PixelCoordinate?
     public private(set) var displayImage: CGImage?
     public private(set) var histogram = Histogram.empty
+    /// Exposure indicator (lot 1): measured read-only on the raw samples of
+    /// the last complete preview; kept while a scan is shown.
+    public private(set) var exposure: ExposureReading?
+    /// Clipped (red) and near-noise (blue) pixels of that preview, for the overlay.
+    public private(set) var exposureZones: CGImage?
+    /// Size of the preview `exposureZones` was made from.
+    public private(set) var exposureZonesSize: (width: Int, height: Int)?
+    /// The overlay of the zones is shown on the preview (saved).
+    public var showsExposureZones: Bool {
+        didSet { defaults.set(showsExposureZones, forKey: Keys.showsExposureZones) }
+    }
+    private var exposureTask: Task<Void, Never>?
+    private var measuredRevision = -1
     private var histogramTask: Task<Void, Never>?
     private var renderedRevision = -1
     /// Set by startPreview: the next image gets the zoom of Settings > Display.
@@ -173,6 +186,7 @@ public final class AppModel {
         static let exportSettings = "ExportSettings"
         static let scanSettings = "ScanSettings"
         static let grid = "GridSettings"
+        static let showsExposureZones = "ShowExposureZones"
         /// Hidden setting, no interface: `defaults write org.x1scanarm.X1Scan EnableRealPreview -bool YES`.
         static let enableRealPreview = "EnableRealPreview"
         /// Set when a real preview starts, cleared when it completes: true
@@ -248,6 +262,7 @@ public final class AppModel {
         case .last: source = defaults.string(forKey: Keys.source).flatMap(ScannerSourceKind.init) ?? .virtual
         }
         viewport = Viewport(imageWidth: 0, imageHeight: 0, mode: settings.startupZoom == .fit ? .fit : .fixed)
+        showsExposureZones = defaults.bool(forKey: Keys.showsExposureZones)
         grid = defaults.data(forKey: Keys.grid)
             .flatMap { try? JSONDecoder().decode(GridSettings.self, from: $0) } ?? GridSettings()
         exportSettings = defaults.data(forKey: Keys.exportSettings)
@@ -395,7 +410,7 @@ public final class AppModel {
     /// saved in the export folder at the end.
     public func startScan() {
         guard source == .virtual, toolbar.canScan, let virtualScanner else { return }
-        prepareNewPreview()
+        prepareNewPreview(forScan: true)
         realPreviewActive = false
         lastPreviewWasReal = false
         previewLog = nil
@@ -439,7 +454,7 @@ public final class AppModel {
         } catch {
             return .failure(.log(String(describing: error)))
         }
-        prepareNewPreview()
+        prepareNewPreview(forScan: true)
         lastPreviewLog = log.textURL
         realPreviewActive = true
         lastPreviewWasReal = true
@@ -486,8 +501,17 @@ public final class AppModel {
         if case .success = result, exportSettings.incrementsFrame { exportSettings.frame += 1 }
     }
 
-    private func prepareNewPreview() {
+    /// `forScan`: the exposure measured on the preview stays shown during and after the scan.
+    private func prepareNewPreview(forScan: Bool = false) {
         lastExport = nil
+        measuredRevision = -1
+        if !forScan {
+            // A new preview: no measure of the previous one over its rows.
+            exposureTask?.cancel()
+            exposure = nil
+            exposureZones = nil
+            exposureZonesSize = nil
+        }
         scanMaster = nil
         // Every new preview gets the zoom of Settings > Display when its first
         // rows arrive (refreshImage). The crop rectangle is kept if the size is the same.
@@ -666,6 +690,7 @@ public final class AppModel {
             startupZoomPending = false
             if settings.startupZoom == .fit { viewport.fit() } else { viewport.actualSize() }
         }
+        measureExposure(image, revision: revision)
         renderTask?.cancel()
         histogramTask?.cancel()
         let region = histogramRegion
@@ -678,6 +703,35 @@ public final class AppModel {
             self.displayImage = rendered.0?.image
             if region == self.histogramRegion { self.histogram = rendered.1 }
         }
+    }
+
+    /// Once a preview is complete: the exposure reading and the zone overlay,
+    /// off the main actor. Read-only: nothing is changed in the image.
+    private func measureExposure(_ image: PreviewImage, revision: Int) {
+        guard session.kind == .preview, image.isComplete, revision != measuredRevision else { return }
+        measuredRevision = revision
+        exposureTask?.cancel()
+        exposureTask = Task {
+            let result = await Task.detached(priority: .userInitiated) {
+                (ExposureMeter.measure(raw: image.raw),
+                 Self.zoneImage(ExposureMeter.zoneMask(raw: image.raw), width: image.width, height: image.height)
+                    .map(SendableImage.init))
+            }.value
+            guard !Task.isCancelled else { return }
+            self.exposure = result.0
+            self.exposureZones = result.1?.image
+            self.exposureZonesSize = (image.width, image.height)
+        }
+    }
+
+    /// RGBA premultiplied, 8 bits, sRGB.
+    nonisolated static func zoneImage(_ mask: [UInt8], width: Int, height: Int) -> CGImage? {
+        guard width > 0, height > 0, mask.count == width * height * 4,
+              let provider = CGDataProvider(data: Data(mask) as CFData),
+              let space = CGColorSpace(name: CGColorSpace.sRGB) else { return nil }
+        return CGImage(width: width, height: height, bitsPerComponent: 8, bitsPerPixel: 32, bytesPerRow: width * 4,
+                       space: space, bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue),
+                       provider: provider, decode: nil, shouldInterpolate: false, intent: .defaultIntent)
     }
 
     /// The crop the histogram counts: none below 2 × 2 pixels (a click with the
@@ -714,6 +768,7 @@ public final class AppModel {
     /// Waits for the latest `refreshImage` / histogram work (tests).
     public func waitForRendering() async {
         await renderTask?.value
+        await exposureTask?.value
         await histogramTask?.value
     }
 

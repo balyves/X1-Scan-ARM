@@ -13,6 +13,7 @@ import X1ScanCore
 ///   -X1ScanOpenHistogram YES     unfold the histogram in the panel
 ///   -X1ScanQuarterTurns <n>      turn the image n quarters clockwise (lot 1)
 ///   -X1ScanMirror YES            mirror the image (lot 1)
+///   -X1ScanZones YES             show the exposure zones over the preview (lot 1)
 ///   -X1ScanGrid <kind>           show the grid: thirds, fine or centre (lot 1)
 ///   -X1ScanCropDemo YES          draw a centred crop on the preview before the snapshot
 ///                                (needs -X1ScanAutoPreview YES)
@@ -36,6 +37,7 @@ enum DebugSnapshot {
         }
         for _ in 0..<max(arguments.integer(forKey: "X1ScanQuarterTurns"), 0) { model.rotateClockwise() }
         if arguments.bool(forKey: "X1ScanMirror") { model.mirrorHorizontally() }
+        if arguments.bool(forKey: "X1ScanZones") { model.showsExposureZones = true }
         if let kind = arguments.string(forKey: "X1ScanGrid").flatMap(GridKind.init(rawValue:)) { model.showGrid(kind) }
         if arguments.bool(forKey: "X1ScanAutoPreview") { model.startPreview() }
         if arguments.bool(forKey: "X1ScanResizeProbe"), let window {

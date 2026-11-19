@@ -3408,6 +3408,150 @@
           }
         }
       }
+    },
+    "Exposure": {
+      "comment": "Panel section: share of the CCD range the preview uses",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exposure"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exposition"
+          }
+        }
+      }
+    },
+    "%@ · %@ clipped": {
+      "comment": "Folded Exposure section: CCD range used, then share of clipped pixels",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · %@ clipped"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · %2$@ écrêté"
+          }
+        }
+      }
+    },
+    "CCD range used %@ · %@ clipped": {
+      "comment": "Exposure section, under the gauge",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CCD range used %@ · %@ clipped"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plage CCD utilisée %1$@ · %2$@ écrêté"
+          }
+        }
+      }
+    },
+    "CCD range used": {
+      "comment": "VoiceOver label of the exposure gauge",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CCD range used"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plage CCD utilisée"
+          }
+        }
+      }
+    },
+    "Measured after each preview.": {
+      "comment": "Exposure section before the first preview",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Measured after each preview."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mesurée après chaque aperçu."
+          }
+        }
+      }
+    },
+    "Measured on the preview's raw CCD values, before any correction. Left: the noise floor; right: clipping. Provisional thresholds, to be measured on the X1.": {
+      "comment": "Tooltip of the exposure gauge",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Measured on the preview's raw CCD values, before any correction. Left: the noise floor; right: clipping. Provisional thresholds, to be measured on the X1."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mesurée sur les valeurs brutes du CCD de l'aperçu, avant toute correction. À gauche : le plancher de bruit ; à droite : l'écrêtage. Seuils provisoires, à mesurer sur le X1."
+          }
+        }
+      }
+    },
+    "Show clipped and noise zones": {
+      "comment": "Exposure section checkbox",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show clipped and noise zones"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Voir les zones écrêtées et sous le bruit"
+          }
+        }
+      }
+    },
+    "On the preview: clipped pixels in red, pixels near the noise floor in blue. Display only.": {
+      "comment": "Tooltip of the exposure zones checkbox",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On the preview: clipped pixels in red, pixels near the noise floor in blue. Display only."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur l'aperçu : pixels écrêtés en rouge, pixels proches du plancher de bruit en bleu. Affichage seulement."
+          }
+        }
+      }
     }
   },
   "version": "1.0"
