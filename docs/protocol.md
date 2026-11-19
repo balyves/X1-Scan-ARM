@@ -422,7 +422,14 @@ on the captures.
   1 998 pixels at binning 4 and *O* = 3 200, 800 pixels per inch) fits the
   same rules. Mapped into the preview this way, the frames fall where
   FlexColor drew them on its preview (screenshots of steps 5 and 12,
-  within about 2 preview pixels). With the other holders the origin along
+  within about 2 preview pixels). The middle of that frame along the
+  drum: offset 18 ÷ (ratio ÷ 10 000) + TIFF height ÷ resolution ÷ 2 =
+  1.6427 to 1.6442 in at the six resolutions **[confirmed]**; that this is
+  the middle of the frame (image lines starting at offset 18, not after
+  the priming lines) **[hypothesis]**; the window
+  calculator takes 1.644 in as its origin along the drum, a convention
+  (the frame was centred by eye; docs/decisions.md, "Window calculator").
+  With the other holders the origin along
   the drum is not known (one scan each).
 - **54 / 58 before the 400-line step**, 6×7 holder: a function of *O* only.
   58 = 1 136 908 − 896 886 417 ÷ *O* and 54 = 1 094 694 − 896 148 801 ÷ *O*

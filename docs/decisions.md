@@ -1006,8 +1006,8 @@ licences.
 **Decided by the user (2026-11-19)**: option A below (the value from the
 calculator's window, recomputable by the guard); 32 units accepted as the
 validation criterion on captured frames, at 600 ppi and above; below 600
-ppi, no free frame. Not implemented yet; the rounding is fixed with the
-implementation. The guards below (1 to 5) were proposed with it and are
+ppi, no free frame. Implemented on 2026-11-19 in the simulator only
+(see "Window calculator" below), with the rounding to the nearest unit. The guards below (1 to 5) were proposed with it and are
 to be confirmed with the implementation. A window calculator goes beyond
 "byte for byte" (CLAUDE.md rule 4): rule 4 must be changed, with the
 user's approval, before anything it computes is sent to the real X1.
@@ -1063,3 +1063,75 @@ that FlexColor never scanned), for the user's decision:
      a confirmation before each run, every command logged.
   5. Any other field the calculator computes (offsets 14, 18, 22, 26,
      54 / 58 and the rest) needs its own decision.
+
+## Window calculator (2026-11-19, simulator only)
+
+**User's decisions (2026-11-19).** `X1Kit/Sources/X1Geometry/
+ScanWindowCalculator.swift`: a frame on the film (inches) and a
+resolution give the image window (before the 400-line step) and the
+400-line window. Target `X1Geometry` has no dependency and is not in the
+X1Kit product: nothing in the app, the transport, the guards or the scan
+script can reach it. Later, only X1Preview may depend on it, in that
+direction only, after CLAUDE.md rule 4 is changed.
+
+- **Limits**: 6×7 holder only; 600 to 3 200 ppi (*M*); a frame that
+  rounds to no pixel, leaves the CCD (offset 14 + width > 7 992 ÷
+  binning) or starts before line 0 is refused. The length of the opening
+  along the drum is not known: no check there beyond 16 bits.
+- **Constants**: all in one named set, `WindowCalibration.origin20261119`
+  ("origine-2026-11-19"): *f* = 1.000, *M* = 3 200, *x* = −0.129 in
+  (the frame origin from CCD pixel 3 996), 1.644 in (the frame origin
+  from line 0 along the drum: the centre of essai-I's "centred" frame,
+  1.6427 to 1.6442 in, protocol.md §9; centred by eye, a convention), the lens model of 54 / 58, +10 000,
+  ratio 21 674 665, 15 500 and 28 800 per inch. A new set is added after
+  a recalibration (docs/test-session.md J3); sets are not edited.
+- **Rules** (protocol.md §9; [confirmed] on the captured scans, as rules
+  for other frames [hypothesis]): offset 10 = ⌊resolution × *f* × 50 000 /
+  3⌋; byte 48 = 1; byte 49 = min(4, ⌊*M* ÷ resolution⌋); offset 14 =
+  3 996 ÷ binning + (*x* + left) × resolution, offset 22 = width ×
+  resolution, offset 18 = (1.644 + top) × ratio ÷ 10 000, TIFF height =
+  height × resolution, each rounded to the nearest; offset 26 = ⌊TIFF height ×
+  5/3⌋ + 2 × gap + 2; offsets 54 / 58 = the lens model at *O*, rounded;
+  image window offsets 50 = 0, 62 = 15 500. 400-line window: ratio
+  21 674 665, offsets 14 / 22 of the image window, 18 = 0, 26 = 401, 54 /
+  58 + 10 000, offset 62 by option A (`focusLinePosition(imageWindow:)`,
+  rounded to the nearest; the one place of that rounding). A future check
+  of offset 62 during a scan would call that function from X1Preview,
+  before the transport: X1Transport does not depend on X1Geometry.
+- **Not computed** (read or replayed): offset 50 of the 400-line window
+  (left at 0), FlexColor's focus correction of 54 / 58 in the image window
+  sent after the 400-line step, the binned start window, the reference
+  windows and their order.
+- **Field decisions (guard 5), for the simulator**: the exact fields (10,
+  48, 49, 50, 62 of the image window, 26) and the fields within 1 (18,
+  22, base 54 / 58) are accepted, and the 400-line window's constants,
+  being the same in all 31 captured scans (`focusWindowConstants`).
+  Offset 14 was proposed within 1, but it is within 1 only in the round
+  trip; predicted across resolutions it differs by up
+  to 5 pixels (family 2). **Open, for the user**: offset 14, and 600 ppi
+  (below). For
+  the real X1, no decision yet: before rule 4 is changed, a table of each
+  field (rule, unit, largest difference observed, in mm, proposal) goes
+  to the user.
+- **Tests** (`X1Kit/Tests/X1GeometryTests`; the captures do not hold
+  FlexColor's frame, only its description):
+  - family 1, consistency and non-regression, not a validation: each of
+    the 28 6×7 scans with the frame taken from its own window (a round
+    trip; offsets 14, 18, 22, 26 equal by construction). Differences, as
+    they are: offset 54 is 1 too high at *O* = 2 000, 2 880 and 3 000 (14
+    scans, both windows). Offset 62 (option A) is within −6 to +24 of
+    FlexColor's.
+  - family 2, the prediction: the frame of one scan predicts the same
+    untouched frame at other resolutions (essai-I 7 → 2-6, essai-L 2 →
+    3-4, essai-N 2 → 3-6 and 8 → 9). Differences: offset 14 up to 5 pixels
+    (3 200 → 2 000 ppi, binning 1), offsets 18 and 22 by 1, and **offset
+    62 beyond the 32 units at 600 ppi: +48, +43, +53** (FlexColor's value
+    is about one 600 ppi output pixel lower there, protocol.md §9, part
+    K). **The decided criterion (32 units at 600 ppi and above) is not
+    met at 600 ppi in prediction.** The calculator still accepts 600 ppi;
+    the choice is the user's (open): raise the minimum, take the tolerance
+    max(32, 28 800 ÷ resolution) [hypothesis] (section above), or keep
+    600 ppi knowingly.
+  - the three scans with other holders are refused.
+- **Before any real use**: a validation on the real X1 (a target; the
+  frame asked against the frame obtained), after the change of rule 4.

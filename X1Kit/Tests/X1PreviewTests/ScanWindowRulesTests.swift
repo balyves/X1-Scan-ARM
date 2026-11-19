@@ -10,29 +10,6 @@ import X1TestSupport
 /// window calculator, and this test shows that they reproduce every captured
 /// value.
 struct ScanWindowRulesTests {
-    private struct File: Decodable {
-        struct Capture: Decodable {
-            let capture: String
-            let sessions: [Session]
-        }
-        struct Session: Decodable {
-            let session: Int
-            let events: [Event]
-            let scan: Scan?
-        }
-        struct Scan: Decodable {
-            let ppi: Int
-            let tiff_width: Int
-            let tiff_height: Int
-        }
-        struct Event: Decodable {
-            let window: String?
-            let position: Int?
-            let cdb: String?
-        }
-        let captures: [Capture]
-    }
-
     /// Per holder: drum factor × 10 000 (calibration ratio ÷ resolution) and
     /// *M* (binning = min(4, *M* ÷ resolution)). *M* is a [hypothesis]: the
     /// scans only bound it (§9); 6 300 for the 24×36 is not even observed at
@@ -48,7 +25,7 @@ struct ScanWindowRulesTests {
 
     private struct Window {
         let bytes: [UInt8]
-        init(_ hex: String) { bytes = hex.split(separator: " ").map { UInt8($0, radix: 16)! } }
+        init(_ bytes: [UInt8]) { self.bytes = bytes }
         func le(_ offset: Int, _ size: Int) -> Int {
             (0..<size).reduce(0) { $0 | Int(bytes[offset + $1]) << (8 * $1) }
         }
@@ -67,7 +44,7 @@ struct ScanWindowRulesTests {
     private struct ScanCase {
         let capture: String
         let session: Int
-        let scan: File.Scan
+        let scan: ScanWindowFixtures.Scan
         let image: Window
         let focus: Window
         let focusTarget: Int?
@@ -77,40 +54,11 @@ struct ScanWindowRulesTests {
     }
 
     private static func loadCases() throws -> [ScanCase] {
-        var captures: [File.Capture] = []
-        for name in ["scan-windows-2026-11-18.json", "scan-windows-2026-11-19.json"] {
-            let url = Fixtures.directory.appending(path: name)
-            captures += try JSONDecoder().decode(File.self, from: Data(contentsOf: url)).captures
+        try ScanWindowFixtures.load().map {
+            ScanCase(capture: $0.capture, session: $0.session, scan: $0.scan, image: Window($0.image),
+                     focus: Window($0.focus), focusTarget: $0.focusTarget, base: Window($0.base),
+                     referencesFirst: $0.referencesFirst)
         }
-        var result: [ScanCase] = []
-        for capture in captures {
-            for session in capture.sessions {
-                guard let scan = session.scan else { continue }
-                var windows: [(Window, Int?)] = []
-                var position: Int?
-                var image: Window?
-                var focusIndex: Int?
-                var referencesIndex: Int?
-                for event in session.events {
-                    if let p = event.position { position = p }
-                    if let hex = event.window {
-                        let window = Window(hex)
-                        if window.ratio == 21_674_665 { focusIndex = windows.count }
-                        windows.append((window, position))
-                    }
-                    if event.cdb == "1b 00 00 01 01 00" { image = windows.last?.0 }
-                    if event.cdb?.hasPrefix("f0 00 01 01 00 01") == true { referencesIndex = windows.count }
-                }
-                let label = "\(capture.capture) session \(session.session)"
-                let focus = try #require(focusIndex, "\(label): no 400-line window")
-                result.append(ScanCase(capture: capture.capture, session: session.session, scan: scan,
-                                       image: try #require(image, "\(label): no image window"),
-                                       focus: windows[focus].0, focusTarget: windows[focus].1,
-                                       base: windows[try #require(focus > 0 ? focus - 1 : nil)].0,
-                                       referencesFirst: referencesIndex.map { $0 <= focus }))
-            }
-        }
-        return result
     }
 
     private static let loaded = Result { try loadCases() }

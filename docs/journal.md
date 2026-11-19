@@ -836,3 +836,16 @@ docs/test-session.md J2 now runs part K again after the previews
 `scan-windows-2026-11-19.json`: offsets 54 / 58 and the focus positions
 decide J4; offset 62 is noted only. The guide still writes `essai-N`
 (its name is fixed in `guided-session.sh`); essai-N2 is the analysis name.
+
+## 2026-11-19: window calculator, simulator only
+
+`X1Geometry.ScanWindowCalculator` (docs/decisions.md, "Window
+calculator"): 6×7, 600-3 200 ppi, constants in one set
+"origine-2026-11-19". Family 1 (round trip, consistency only): offset 54
+1 too high at O = 2 000, 2 880, 3 000. Family 2 (prediction across
+resolutions): offset 14 up to 5 pixels, 18 and 22 by 1, and offset 62
+43 to 53 units above FlexColor's at 600 ppi, beyond the 32 accepted. A
+validation on the real X1 (target, frame asked against frame obtained)
+is needed before any real use, after CLAUDE.md rule 4 is changed.
+Open for the user: offset 14 in prediction, and whether 600 ppi stays
+allowed given offset 62 there.
