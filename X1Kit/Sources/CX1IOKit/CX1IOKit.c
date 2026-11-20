@@ -117,6 +117,43 @@ int32_t cx1_open(cx1_device **out_device, char *description, size_t description_
     return result;
 }
 
+// Presence check (lot A, discovery mode): only looks up the I/O Registry for a
+// matching service and reads its vendor and product properties. It never
+// creates the plug-in interface, never opens the device and never sends a
+// command: FlexColor or another program keeps the scanner if it has it open.
+int32_t cx1_find(char *description, size_t description_size) {
+    if (description && description_size) description[0] = 0;
+
+    CFMutableDictionaryRef matching = CFDictionaryCreateMutable(NULL, 0,
+        &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+    CFMutableDictionaryRef property = CFDictionaryCreateMutable(NULL, 0,
+        &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+    CFDictionarySetValue(property, CFSTR(kIOPropertySCSITaskDeviceCategory),
+                         CFSTR(kIOPropertySCSITaskUserClientDevice));
+    CFDictionarySetValue(matching, CFSTR(kIOPropertyMatchKey), property);
+    CFRelease(property);
+
+    io_iterator_t iterator = IO_OBJECT_NULL;
+    kern_return_t kr = IOServiceGetMatchingServices(kIOMainPortDefault, matching, &iterator);
+    if (kr != KERN_SUCCESS) return kr;
+
+    IOReturn result = kIOReturnNotFound;
+    io_service_t service;
+    while ((service = IOIteratorNext(iterator))) {
+        char vendor[64], product[64];
+        copy_property(service, "Vendor Identification", vendor, sizeof vendor);
+        copy_property(service, "Product Identification", product, sizeof product);
+        IOObjectRelease(service);
+        if (!is_supported_vendor(vendor)) continue;
+        if (description && description_size)
+            snprintf(description, description_size, "%s %s", vendor, product);
+        result = kIOReturnSuccess;
+        break;
+    }
+    IOObjectRelease(iterator);
+    return result;
+}
+
 int32_t cx1_execute(cx1_device *device,
                     const uint8_t *cdb, uint8_t cdb_length,
                     uint8_t *buffer, uint32_t buffer_length, int32_t direction,

@@ -2327,17 +2327,6 @@
         }
       }
     },
-    "The real X1 is never read at launch: use Scanner > Read Identity.": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Le X1 réel n'est jamais lu au démarrage : utilisez Scanner > Lire l'identité."
-          }
-        }
-      }
-    },
     "Scanner Information": {
       "extractionState": "manual",
       "localizations": {
@@ -3176,17 +3165,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Certaines lignes n'ont pas pu être écrites : le journal est incomplet."
-          }
-        }
-      }
-    },
-    "Read Identity is in Scanner > Scanner Information (⌘I); the state is in the bottom bar.": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "« Lire l'identité » est dans Scanner › Informations sur le scanner (⌘I) ; l'état est dans la barre du bas."
           }
         }
       }
@@ -7021,6 +6999,168 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ouvrir l’entrée Dépannage de ce message"
+          }
+        }
+      }
+    },
+    "discovery.enter": {
+      "comment": "File menu item and button of the No X1 found message: discovery mode, the app on the virtual X1 without a scanner",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try Without a Scanner"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Essayer sans scanner"
+          }
+        }
+      }
+    },
+    "discovery.leave": {
+      "comment": "Banner button and File menu item: leaves discovery mode",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leave Discovery Mode"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quitter le mode découverte"
+          }
+        }
+      }
+    },
+    "discovery.leave.help": {
+      "comment": "Tooltip of the banner's Leave Discovery Mode button",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back to the source used before; the real X1 is looked for again"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revenir à la source d’avant ; le X1 réel est cherché à nouveau"
+          }
+        }
+      }
+    },
+    "discovery.banner": {
+      "comment": "Banner above the image in discovery mode (an em dash between the two parts)",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Discovery mode — no scanner connected"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mode découverte — aucun scanner branché"
+          }
+        }
+      }
+    },
+    "discovery.fileSuffix": {
+      "comment": "Suffix added to the names of files written in discovery mode, before .tif: letters, digits, _ or - only",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "_sample"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "_exemple"
+          }
+        }
+      }
+    },
+    "discovery.noScanner.details": {
+      "comment": "Details of the No X1 found message after the presence check (at launch, or on leaving discovery mode): what was done",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Presence check: no Imacon or Hasselblad device in the I/O Registry. Nothing was opened or sent to a scanner."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recherche de présence : aucun appareil Imacon ou Hasselblad dans le registre des appareils. Rien n’a été ouvert ni envoyé à un scanner."
+          }
+        }
+      }
+    },
+    "Read Identity is in Scanner > Scanner Information (%@); the state is in the bottom bar.": {
+      "comment": "Settings > Scanner note; %@ is the shortcut of Scanner Information (⌘I), from the shortcuts' own source",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Read Identity is in Scanner > Scanner Information (%@); the state is in the bottom bar."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "« Lire l'identité » est dans Scanner › Informations sur le scanner (%@) ; l'état est dans la barre du bas."
+          }
+        }
+      }
+    },
+    "discovery.sourceNote": {
+      "comment": "Settings > Scanner note under the Source menu, disabled in discovery mode",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leave discovery mode (File menu) to choose the real X1."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quittez le mode découverte (menu Fichier) pour choisir le X1 réel."
+          }
+        }
+      }
+    },
+    "settings.launchPresenceNote": {
+      "comment": "Settings > Scanner note under Source at launch: the presence check (nothing opened or sent)",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "At launch, with the real X1 as the source, X1 Scan only looks whether an X1 is connected, without reading it: use Scanner > Read Identity."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Au lancement, avec le X1 réel comme source, X1 Scan regarde seulement si un X1 est branché, sans le lire : utilisez Scanner › Lire l'identité."
           }
         }
       }

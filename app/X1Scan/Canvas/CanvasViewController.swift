@@ -36,6 +36,12 @@ final class CanvasViewController: NSViewController {
         scrollView.drawsBackground = true
         root.addSubview(scrollView)
 
+        // Discovery mode's banner (lot A): no height outside the mode.
+        let banner = NSHostingView(rootView: DiscoveryBanner(model: model))
+        banner.translatesAutoresizingMaskIntoConstraints = false
+        banner.sizingOptions = [.intrinsicContentSize]
+        root.addSubview(banner)
+
         let status = NSHostingView(rootView: StatusBarView(model: model))
         status.translatesAutoresizingMaskIntoConstraints = false
         root.addSubview(status)
@@ -44,7 +50,10 @@ final class CanvasViewController: NSViewController {
             scrollView.leadingAnchor.constraint(equalTo: root.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: root.trailingAnchor),
             // Below the toolbar, so that Zoom to Fit shows the whole image.
-            scrollView.topAnchor.constraint(equalTo: root.safeAreaLayoutGuide.topAnchor),
+            banner.topAnchor.constraint(equalTo: root.safeAreaLayoutGuide.topAnchor),
+            banner.leadingAnchor.constraint(equalTo: root.leadingAnchor),
+            banner.trailingAnchor.constraint(equalTo: root.trailingAnchor),
+            scrollView.topAnchor.constraint(equalTo: banner.bottomAnchor),
             scrollView.bottomAnchor.constraint(equalTo: status.topAnchor),
             status.leadingAnchor.constraint(equalTo: root.leadingAnchor),
             status.trailingAnchor.constraint(equalTo: root.trailingAnchor),

@@ -25,6 +25,13 @@ typedef struct cx1_device cx1_device;
 int32_t cx1_open(cx1_device *_Nullable *_Nonnull out_device,
                  char *_Nullable description, size_t description_size);
 
+/// Presence check only: looks up the I/O Registry for a device whose vendor
+/// identification contains "Imacon" or "Hasselbl" and reads its properties.
+/// Never creates the plug-in interface, never opens the device, never sends
+/// a command. Returns 0 when one is found (`description` receives "vendor
+/// product"), kIOReturnNotFound otherwise, or the registry's error.
+int32_t cx1_find(char *_Nullable description, size_t description_size);
+
 /// Executes one command synchronously. Returns an IOReturn code (0 when the
 /// task ran). `service_response` receives the SCSIServiceResponse (0 if it
 /// could not be read): `status` is a SCSI status only when it is

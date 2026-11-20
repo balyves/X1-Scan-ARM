@@ -38,7 +38,12 @@ real scanner.
 - **Real X1**: otherwise only Read Identity (INQUIRY, page 0x26, log page
   0x30, 0xDF), in Scanner > Scanner Information (⌘I). Before reading: **X1 on,
   FlexColor closed** (only one program can open the scanner). Preview is
-  disabled. The real X1 is never read at launch.
+  disabled. The real X1 is never read at launch: with the real X1 as the
+  source at launch, the application only looks in the I/O Registry whether
+  one is connected (nothing opened or sent) and says "No X1 found" otherwise.
+- **Discovery mode** (File > Try Without a Scanner): the virtual X1 with a
+  banner; no transport to a real X1 is opened; exported files are marked as
+  samples. Help > X1 Scan Help (⌘?) opens the built-in help (`docs/help`).
 
 ## Shortcuts
 

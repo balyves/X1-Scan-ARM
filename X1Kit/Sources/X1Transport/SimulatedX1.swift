@@ -330,9 +330,19 @@ public struct SyntheticFilm: Sendable {
     public static let denseTransmission = 0.002
 
     public let hasExposurePatches: Bool
+    /// A film given by its transmission (the application's discovery mode,
+    /// once it has a photograph); nil: the pattern below.
+    private let custom: (@Sendable (_ row: Int, _ column: Int, _ channel: Int, _ width: Int) -> Double)?
 
     public init(exposurePatches: Bool = false) {
         hasExposurePatches = exposurePatches
+        custom = nil
+    }
+
+    /// A film whose transmission at a row (counted from SCAN), column and channel is `transmission`.
+    public init(transmission: @escaping @Sendable (_ row: Int, _ column: Int, _ channel: Int, _ width: Int) -> Double) {
+        hasExposurePatches = false
+        custom = transmission
     }
 
     /// Columns of the bright (clipped) and dense patches in a line of `width` pixels.
@@ -344,6 +354,7 @@ public struct SyntheticFilm: Sendable {
     /// Transmission at a scan row (counted from SCAN), column and channel
     /// (0 R, 1 G, 2 B): in 0...1, except the bright patch (1.5).
     public func transmission(row: Int, column: Int, channel: Int, width: Int) -> Double {
+        if let custom { return custom(max(row, 0), column, channel, width) }
         let row = max(row, 0)
         if hasExposurePatches, Self.patchRows.contains(row) {
             let patches = Self.patchColumns(width: width)

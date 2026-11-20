@@ -213,6 +213,22 @@ public enum ExportError: Error, Hashable, CustomStringConvertible {
     }
 }
 
+/// The mark of a file written in discovery mode (lot A, step C): a suffix in
+/// its name, a TIFF description and `"sample": true` in its recipe, so that a
+/// sample is never taken for a scan. No personal data.
+public struct SampleMark: Sendable, Hashable {
+    /// Before the extension: "X1-preview-2026-11-20-001_sample.tif".
+    public var suffix: String
+    public static let defaultSuffix = "_sample"
+    /// The TIFF ImageDescription of a sample (metadata, in English in every language).
+    public static let description = "X1 Scan discovery mode sample: synthetic image, not a scan."
+
+    public init(suffix: String) {
+        let cleaned = ExportService.sanitizedFileName(suffix) ?? Self.defaultSuffix
+        self.suffix = cleaned
+    }
+}
+
 /// Writes the corrected preview as a 16-bit RGB TIFF: linear, no profile,
 /// no curve (decisions.md, version 1). Never overwrites a file.
 public enum ExportService {
@@ -232,7 +248,7 @@ public enum ExportService {
     /// are added. An empty roll name removes `{roll}` and its separators
     /// first; an empty result uses the default template.
     public static func fileName(settings: ExportSettings, date: Date, calendar: Calendar = .current,
-                                exists: (String) -> Bool) -> String {
+                                suffix: String = "", exists: (String) -> Bool) -> String {
         let parts = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
         let day = String(format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
         let time = String(format: "%02d-%02d-%02d", parts.hour ?? 0, parts.minute ?? 0, parts.second ?? 0)
@@ -259,9 +275,9 @@ public enum ExportService {
             let formatted = padded(number, digits)
             let candidate: String
             if hasCounter {
-                candidate = name(template.replacingOccurrences(of: counter, with: formatted))! + ".tif"
+                candidate = name(template.replacingOccurrences(of: counter, with: formatted))! + suffix + ".tif"
             } else {
-                candidate = name(template)! + (number == 1 ? "" : "-" + formatted) + ".tif"
+                candidate = name(template)! + (number == 1 ? "" : "-" + formatted) + suffix + ".tif"
             }
             if !exists(candidate) { return candidate }
             number += 1
@@ -277,14 +293,15 @@ public enum ExportService {
     }
 
     /// The TIFF bytes for any RGB image (the preview or scan with its recipe applied).
-    public static func tiffData(for image: RGB16Image, settings: ExportSettings, resolution: Int = 72) -> Data {
+    public static func tiffData(for image: RGB16Image, settings: ExportSettings, resolution: Int = 72,
+                                description: String? = nil) -> Data {
         let profile: Data? = switch settings.format {
         case .rgb8: ExportService.srgbProfile
         case .gray8: ICCProfiles.graySRGB
         case .rgb16, .gray16: nil
         }
         return TIFFWriter.data(for: image, format: settings.format, compression: settings.compression,
-                               iccProfile: profile, resolution: resolution)
+                               iccProfile: profile, resolution: resolution, description: description)
     }
 
     /// ColorSync's sRGB profile. 8 bits is never written without it: if it were
@@ -312,10 +329,12 @@ public enum ExportService {
     /// Same rules as `export`: a version of `master` if given, and a name
     /// counts as taken when the image or (`withRecipe`) its recipe exists.
     public static func nextFileName(settings: ExportSettings, date: Date = Date(), versionOf master: URL? = nil,
-                                    withRecipe: Bool = false, fileManager: FileManager = .default) -> String {
+                                    withRecipe: Bool = false, sample: SampleMark? = nil,
+                                    fileManager: FileManager = .default) -> String {
         let folder = master?.deletingLastPathComponent() ?? settings.folder
         let taken = isTaken(in: folder, withRecipe: withRecipe, fileManager: fileManager)
-        return master.map { versionFileName(of: $0, exists: taken) } ?? fileName(settings: settings, date: date, exists: taken)
+        return master.map { versionFileName(of: $0, exists: taken) }
+            ?? fileName(settings: settings, date: date, suffix: sample?.suffix ?? "", exists: taken)
     }
 
     /// A file name is taken in `folder` when the image exists, or its recipe (`withRecipe`).
@@ -338,7 +357,7 @@ public enum ExportService {
     /// replaces the master or another version.
     public static func export(_ image: PreviewImage?, settings: ExportSettings, date: Date = Date(),
                               resolution: Int = 72, recipe: Recipe? = nil, applyRecipe: Bool = false,
-                              pixelAspectRatio: Double = 1, versionOf master: URL? = nil,
+                              pixelAspectRatio: Double = 1, versionOf master: URL? = nil, sample: SampleMark? = nil,
                               fileManager: FileManager = .default) throws(ExportError) -> URL {
         guard let folder = master?.deletingLastPathComponent() ?? settings.folder else { throw .noFolder }
         guard let image, image.height > 0 else { throw .noImage }
@@ -347,7 +366,9 @@ public enum ExportService {
             throw .folderMissing(folder.path)
         }
         let taken = isTaken(in: folder, withRecipe: recipe != nil, fileManager: fileManager)
-        let name = master.map { versionFileName(of: $0, exists: taken) } ?? fileName(settings: settings, date: date, exists: taken)
+        // A version of a sample's master keeps the master's name, suffix included.
+        let name = master.map { versionFileName(of: $0, exists: taken) }
+            ?? fileName(settings: settings, date: date, suffix: sample?.suffix ?? "", exists: taken)
         let url = folder.appending(path: name)
         let pixels = if let recipe, applyRecipe {
             RecipeRenderer.render(image.exportImage, pixelAspectRatio: pixelAspectRatio, recipe: recipe)
@@ -358,12 +379,16 @@ public enum ExportService {
         // If a file appeared in between, fail rather than replace it (cannot be combined with .atomic).
         let recipeURL = recipe.map { _ in Recipe.fileURL(forImage: url) }
         do {
-            if let recipe, let recipeURL { try recipe.jsonData().write(to: recipeURL, options: .withoutOverwriting) }
+            if var recipe, let recipeURL {
+                recipe.sample = sample != nil
+                try recipe.jsonData().write(to: recipeURL, options: .withoutOverwriting)
+            }
         } catch {
             throw .write(error.localizedDescription)
         }
         do {
-            try tiffData(for: pixels, settings: settings, resolution: resolution).write(to: url, options: .withoutOverwriting)
+            try tiffData(for: pixels, settings: settings, resolution: resolution, description: sample.map { _ in SampleMark.description })
+                .write(to: url, options: .withoutOverwriting)
         } catch {
             if let recipeURL { try? fileManager.removeItem(at: recipeURL) }
             throw .write(error.localizedDescription)

@@ -26,6 +26,11 @@ public struct VirtualScanner: Sendable {
 
     /// Identity, counters and state as recorded in the capture.
     public let info: ScannerInfo
+    /// The film of the previews (the test pattern with its exposure patches),
+    /// and of the scans (the plain test pattern). Discovery mode puts a
+    /// photograph in both once the application has one (`SampleFilm`).
+    public var film: SyntheticFilm = VirtualScanner.defaultFilm
+    public var scanFilm: SyntheticFilm = .testPattern
     /// Tests only: wraps the transport of every preview (e.g. to pause the
     /// virtual X1 at a chosen command until the test lets it go on).
     var transportWrapper: (@Sendable (any SCSITransport) -> any SCSITransport)?
@@ -61,7 +66,7 @@ public struct VirtualScanner: Sendable {
     /// A fresh replay of the scan session, for one scan.
     func makeScanTransport() -> (transport: any SCSITransport, simulator: SimulatedX1)? {
         guard let scanFixture, let start = scanSessionSeq else { return nil }
-        let simulator = SimulatedX1(fixture: scanFixture, profile: profile, fromSeq: start)
+        let simulator = SimulatedX1(fixture: scanFixture, profile: profile, film: scanFilm, fromSeq: start)
         let paced: any SCSITransport = pacing == .none ? simulator : PacedTransport(inner: simulator, pacing: pacing)
         return (transportWrapper.map { $0(paced) } ?? paced, simulator)
     }
@@ -69,7 +74,7 @@ public struct VirtualScanner: Sendable {
     /// A fresh replay, from the start of the capture. One per preview.
     /// Also returns the simulator itself, whose log the tests read.
     func makeTransport() -> (transport: any SCSITransport, simulator: SimulatedX1) {
-        let simulator = SimulatedX1(fixture: fixture, profile: profile, film: Self.film)
+        let simulator = SimulatedX1(fixture: fixture, profile: profile, film: film)
         let paced: any SCSITransport = pacing == .none ? simulator : PacedTransport(inner: simulator, pacing: pacing)
         return (transportWrapper.map { $0(paced) } ?? paced, simulator)
     }
@@ -79,7 +84,7 @@ public struct VirtualScanner: Sendable {
     /// exposure indicator and its overlay can be tried. With them the range
     /// used always reads 100 % on the virtual X1 (both ends reached). Scans
     /// keep the plain test pattern: the overlay is shown on the preview only.
-    static let film = SyntheticFilm.exposurePatches
+    public static let defaultFilm = SyntheticFilm.exposurePatches
 
     /// The simulator answers at once: no delay between 0xDF polls.
     var configuration: PreviewConfiguration { .simulator }

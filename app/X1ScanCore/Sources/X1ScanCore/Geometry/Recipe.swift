@@ -16,19 +16,31 @@ public struct Recipe: Sendable, Hashable, Codable {
     public var orientation: Orientation = .identity
     /// Fine angle and crop frame, after the turns.
     public var crop = CropSettings()
+    /// Written in discovery mode (lot A): the image is a sample, not a scan.
+    /// In the file only when true, so that other recipes stay as they were.
+    public var sample = false
 
     public init(orientation: Orientation = .identity, crop: CropSettings = CropSettings()) {
         self.orientation = orientation
         self.crop = crop
     }
 
-    private enum CodingKeys: String, CodingKey { case version, orientation, crop }
+    private enum CodingKeys: String, CodingKey { case version, orientation, crop, sample }
 
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         version = try container.decode(Int.self, forKey: .version)
         orientation = try container.decodeIfPresent(Orientation.self, forKey: .orientation) ?? .identity
         crop = try container.decodeIfPresent(CropSettings.self, forKey: .crop) ?? CropSettings()
+        sample = try container.decodeIfPresent(Bool.self, forKey: .sample) ?? false
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(version, forKey: .version)
+        try container.encode(orientation, forKey: .orientation)
+        try container.encode(crop, forKey: .crop)
+        if sample { try container.encode(true, forKey: .sample) }
     }
 
     /// The recipe as written to disk: pretty, keys sorted, stable.

@@ -93,8 +93,9 @@ public enum TIFFWriter {
     }
 
     /// `resolution`: pixels per inch written in XResolution / YResolution (72 by default).
+    /// `description`: an ImageDescription (ASCII), only when given (the application's samples).
     public static func data(for image: RGB16Image, format: TIFFFormat, compression: TIFFCompression,
-                            iccProfile: Data?, resolution: Int = 72) -> Data {
+                            iccProfile: Data?, resolution: Int = 72, description: String? = nil) -> Data {
         let samples = ExportConversion.samples(of: image, as: format)
         var pixels = bytes(of: samples, bitsPerSample: format.bitsPerSample)
         if compression != .none {
@@ -107,7 +108,8 @@ public enum TIFFWriter {
         case .deflate: Zlib.compress(pixels)
         }
         return container(width: image.width, height: image.height, format: format, compression: compression,
-                         strip: strip, iccProfile: iccProfile, resolution: UInt32(max(resolution, 1)))
+                         strip: strip, iccProfile: iccProfile, resolution: UInt32(max(resolution, 1)),
+                         description: description)
     }
 
     public static func write(_ image: RGB16Image, to url: URL) throws {
@@ -156,7 +158,7 @@ public enum TIFFWriter {
     }
 
     private static func container(width: Int, height: Int, format: TIFFFormat, compression: TIFFCompression,
-                                  strip: Data, iccProfile: Data?, resolution: UInt32) -> Data {
+                                  strip: Data, iccProfile: Data?, resolution: UInt32, description: String?) -> Data {
         // Layout: header | IFD | BitsPerSample (RGB) | XResolution | YResolution | ICC profile | strip
         var entries: [(tag: UInt16, type: UInt16, count: UInt32, value: UInt32, extra: Data?)] = []
         func short(_ tag: UInt16, _ value: UInt16) { entries.append((tag, 3, 1, UInt32(value), nil)) }
@@ -175,6 +177,10 @@ public enum TIFFWriter {
         }
         short(259, compression.tag)                                      // Compression
         short(262, format.isGray ? 1 : 2)                                // Photometric: BlackIsZero / RGB
+        if let description {                                             // ImageDescription: ASCII, NUL-terminated
+            let ascii = Data(description.unicodeScalars.map { $0.isASCII ? UInt8($0.value) : UInt8(ascii: "?") }) + Data([0])
+            block(270, 2, UInt32(ascii.count), ascii)
+        }
         long(273, 0)                                                     // StripOffsets (patched below)
         short(277, UInt16(format.channels))                              // SamplesPerPixel
         long(278, UInt32(height))                                        // RowsPerStrip

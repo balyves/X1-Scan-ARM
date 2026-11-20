@@ -32,6 +32,7 @@ import X1ScanCore
 ///                                (<path>-page.png, `WKWebView.takeSnapshot`), quit (lot A)
 ///   -X1ScanHelpPage <id[#anchor]> the help page to open (default: index)
 ///   -X1ScanHelpSearch <text>     typed into the help's search field
+///   -X1ScanDiscovery YES         enter discovery mode at launch (lot A)
 ///   -X1ScanIssueSnapshot <path>  write the message of -X1ScanIssue <id> (default no-scanner),
 ///                                Details unfolded with -X1ScanIssueDetails YES, then quit (lot A)
 /// The snapshot also writes each Settings pane, Scanner Information and the
@@ -67,6 +68,7 @@ enum DebugSnapshot {
             helpSnapshot(to: path, arguments: arguments)
             return
         }
+        if arguments.bool(forKey: "X1ScanDiscovery") { model.enterDiscovery(sampleSuffix: Strings.discoverySuffix) }
         if arguments.bool(forKey: "X1ScanHidePanel"), !model.panel.layout.isHidden { model.panel.toggleHidden() }
         if arguments.bool(forKey: "X1ScanZoomFill") { model.zoomToFill() }
         if arguments.bool(forKey: "X1ScanOpenHistogram"), model.panel.layout.isFolded(.histogram) {

@@ -205,15 +205,20 @@ private struct ScannerSettings: View {
             Picker(String(localized: "Source", comment: "Panel label: scanner source"), selection: $model.source) {
                 ForEach(ScannerSourceKind.allCases, id: \.self) { Text(Strings.source($0)).tag($0) }
             }
-            .disabled(model.session.isBusy)
-            Text("Read Identity is in Scanner > Scanner Information (⌘I); the state is in the bottom bar.",
-                 comment: "Settings > Scanner note")
+            .disabled(model.session.isBusy || model.discoveryMode)
+            if model.discoveryMode {
+                Text(Strings.sourceInDiscovery)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Text("Read Identity is in Scanner > Scanner Information (\(AppShortcut.scannerInformation.shortcut?.display(names: Strings.keyNames) ?? "")); the state is in the bottom bar.",
+                 comment: "Settings > Scanner note; %@ is the shortcut of Scanner Information (⌘I), from the shortcuts' own source")
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Picker(String(localized: "Source at launch", comment: "Setting"), selection: $settings.startupSource) {
                 ForEach(StartupSource.allCases, id: \.self) { Text(Strings.startupSource($0)).tag($0) }
             }
-            Text("The real X1 is never read at launch: use Scanner > Read Identity.", comment: "Setting note")
+            Text(Strings.launchPresenceNote)
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

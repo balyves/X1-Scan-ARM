@@ -83,6 +83,9 @@ enum MainMenu {
         menu.addItem(item(String(localized: "Choose Export Folder…", comment: "Menu item"),
                           #selector(MainWindowController.chooseExportFolder(_:))))
         menu.addItem(.separator())
+        // Lot A: discovery mode; the title becomes Leave Discovery Mode inside it (validateMenuItem).
+        menu.addItem(item(Strings.enterDiscovery, #selector(MainWindowController.toggleDiscoveryMode(_:))))
+        menu.addItem(.separator())
         menu.addItem(item(String(localized: "Close", comment: "Menu item"), #selector(NSWindow.performClose(_:)), "w"))
         return menu
     }

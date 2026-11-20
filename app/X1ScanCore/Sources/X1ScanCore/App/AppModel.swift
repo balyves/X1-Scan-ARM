@@ -102,13 +102,86 @@ public final class AppModel {
 
     public var source: ScannerSourceKind {
         didSet {
+            // Discovery mode (lot A): the virtual X1 only, whatever is chosen meanwhile.
+            if discoveryMode && source != .virtual { source = .virtual }
             guard source != oldValue else { return }
-            defaults.set(source.rawValue, forKey: Keys.source)
+            // Entering or leaving discovery mode never changes the saved "last chosen" source.
+            if !discoveryMode && !restoringSource { defaults.set(source.rawValue, forKey: Keys.source) }
             session.stop()  // a preview never goes on with another source
             realPreviewActive = false
         }
     }
+
+    // MARK: Discovery mode (lot A, step C)
+
+    /// The application runs on the virtual X1 without a scanner: a banner says
+    /// so, exports are marked as samples, and no transport to a real X1 is
+    /// opened, not even the presence check (docs/decisions.md, "Discovery
+    /// mode"). Not saved: every launch starts outside it.
+    public private(set) var discoveryMode = false
+    /// The source before discovery mode, put back when leaving it.
+    private var sourceBeforeDiscovery: ScannerSourceKind?
+    /// Set while leaving discovery mode puts the source back (not a choice of the user).
+    private var restoringSource = false
+    /// Suffix of the files written in discovery mode ("_sample"), given by the
+    /// application in its language.
+    private var sampleSuffix = SampleMark.defaultSuffix
+
+    /// Whether the real X1 is visible, as the presence check found it.
+    public enum Detection: Sendable, Hashable {
+        case notChecked
+        case checking
+        case found
+        case notFound
+    }
+    public private(set) var detection: Detection = .notChecked
+    /// The presence check: the I/O Registry only, nothing opened or sent
+    /// (`ScannerPresence`); replaced in tests.
+    private let presence: @Sendable () -> Bool
+
+    /// File > Try Without a Scanner, or the "No X1 found" message.
+    public func enterDiscovery(sampleSuffix: String) {
+        guard !discoveryMode, !isBusy else { return }
+        sourceBeforeDiscovery = source
+        self.sampleSuffix = sampleSuffix
+        discoveryMode = true
+        source = .virtual
+        detection = .notChecked
+    }
+
+    /// The banner's Leave Discovery Mode: the source of before, and the real
+    /// X1 looked for again.
+    public func leaveDiscovery() {
+        guard discoveryMode, !isBusy else { return }
+        discoveryMode = false
+        restoringSource = true
+        source = sourceBeforeDiscovery ?? .virtual
+        restoringSource = false
+        sourceBeforeDiscovery = nil
+        Task { await detectScanner() }
+    }
+
+    /// The presence check, for the real source outside discovery mode: at
+    /// launch, and when leaving discovery mode.
+    public func detectScanner() async {
+        guard !discoveryMode, source == .real, detection != .checking else { return }
+        detection = .checking
+        let presence = presence
+        let found = await Task.detached(priority: .userInitiated) { presence() }.value
+        // Discovery mode entered meanwhile: the result does not apply.
+        guard !discoveryMode, source == .real else {
+            detection = .notChecked
+            return
+        }
+        detection = found ? .found : .notFound
+    }
+
+    /// The mark of the files written now: in discovery mode only.
+    private var sampleMark: SampleMark? { discoveryMode ? SampleMark(suffix: sampleSuffix) : nil }
     public let virtualScanner: VirtualScanner?
+    /// The photograph discovery mode shows instead of the test pattern, once
+    /// the application has one (`SampleFilm`); set by the application.
+    public var sampleFilm: SyntheticFilm?
     /// Why the virtual X1 is unavailable, when it is.
     public let virtualScannerError: String?
     public let session: PreviewSession
@@ -487,8 +560,10 @@ public final class AppModel {
                 realConnection: @escaping @Sendable (CapturedSequenceGuard) -> any ScannerConnection = {
                     IOKitTransport(capturedSequence: $0)
                 },
-                captureFolder: URL = FileManager.default.homeDirectoryForCurrentUser.appending(path: "X1-captures")) {
+                captureFolder: URL = FileManager.default.homeDirectoryForCurrentUser.appending(path: "X1-captures"),
+                presence: @escaping @Sendable () -> Bool = { ScannerPresence.isScannerPresent }) {
         self.defaults = defaults
+        self.presence = presence
         self.inspector = inspector
         self.realConnection = realConnection
         self.captureFolder = captureFolder
@@ -587,7 +662,8 @@ public final class AppModel {
 
     /// Preview on the virtual X1. On the real X1 use `startRealPreview(_:)`.
     public func startPreview() {
-        guard source == .virtual, toolbar.canPreview, let virtualScanner else { return }
+        guard source == .virtual, toolbar.canPreview, var virtualScanner else { return }
+        if discoveryMode, let sampleFilm { virtualScanner.film = sampleFilm }
         prepareNewPreview()
         realPreviewActive = false
         lastPreviewWasReal = false
@@ -601,7 +677,7 @@ public final class AppModel {
     /// command and response is logged under `captureFolder`. Returns the log.
     @discardableResult
     public func startRealPreview(_ confirmation: RealPreviewConfirmation) -> Result<URL, RealPreviewError> {
-        guard source == .real, realPreviewEnabled,
+        guard !discoveryMode, source == .real, realPreviewEnabled,
               confirmation.isComplete(powerCycleRequired: realPreviewNeedsPowerCycle), toolbar.canPreview,
               realStatus != .reading else { return .failure(.notAllowed) }
         guard let cold = virtualScanner?.coldFixture, let warm = virtualScanner?.fixture else {
@@ -671,7 +747,8 @@ public final class AppModel {
     /// FlexColor's captured 2 000 ppi scan on the virtual X1; the TIFF is
     /// saved in the export folder at the end.
     public func startScan() {
-        guard source == .virtual, toolbar.canScan, let virtualScanner else { return }
+        guard source == .virtual, toolbar.canScan, var virtualScanner else { return }
+        if discoveryMode, let sampleFilm { virtualScanner.scanFilm = sampleFilm }
         prepareNewPreview(forScan: true)
         realPreviewActive = false
         lastPreviewWasReal = false
@@ -689,7 +766,7 @@ public final class AppModel {
     /// one substitution; every command is logged. The TIFF is saved at the end.
     @discardableResult
     public func startRealScan(_ confirmation: RealScanConfirmation) -> Result<URL, RealPreviewError> {
-        guard source == .real, confirmation.isComplete, toolbar.canScan, realStatus != .reading else {
+        guard !discoveryMode, source == .real, confirmation.isComplete, toolbar.canScan, realStatus != .reading else {
             return .failure(.notAllowed)
         }
         guard let fixture = virtualScanner?.scanFixture else {
@@ -756,7 +833,7 @@ public final class AppModel {
         let recipe = recipe
         let result = Result { () throws(ExportError) -> URL in
             try ExportService.export(session.image, settings: settings, date: date, resolution: ScanScript.resolution,
-                                     recipe: recipe)
+                                     recipe: recipe, sample: sampleMark)
         }
         lastScanSave = result
         if case .success(let url) = result { scanMaster = url }
@@ -825,7 +902,7 @@ public final class AppModel {
     /// Reads the real X1 (reads only, device closed afterwards).
     public func readRealScanner() async {
         // Never while a preview runs: the preview has the scanner open.
-        guard source == .real, realStatus != .reading, !session.isBusy else { return }
+        guard !discoveryMode, source == .real, realStatus != .reading, !session.isBusy else { return }
         realStatus = .reading
         do {
             realStatus = .read(try await inspector.read())
@@ -847,13 +924,14 @@ public final class AppModel {
         // a version of the scan's master, or a preview named by the template.
         let master = session.kind == .scan ? scanMaster : nil
         let resolution = session.kind == .scan ? ScanScript.resolution : 72
-        let image = session.image, settings = exportSettings, recipe = recipe
+        let image = session.image, settings = exportSettings, recipe = recipe, sample = sampleMark
         let aspect = viewport.pixelAspectRatio
         isExporting = true
         let result = await Task.detached(priority: .userInitiated) {
             Result { () throws(ExportError) -> URL in
                 try ExportService.export(image, settings: settings, date: date, resolution: resolution,
-                                         recipe: recipe, applyRecipe: true, pixelAspectRatio: aspect, versionOf: master)
+                                         recipe: recipe, applyRecipe: true, pixelAspectRatio: aspect, versionOf: master,
+                                         sample: sample)
             }
         }.value
         isExporting = false
@@ -935,7 +1013,8 @@ public final class AppModel {
         // As the export will write it: with the roll name validated, a version of the
         // scan's master when a saved scan is shown, a recipe beside it.
         ExportService.nextFileName(settings: exportSettings.validated, date: date,
-                                   versionOf: session.kind == .scan ? scanMaster : nil, withRecipe: true)
+                                   versionOf: session.kind == .scan ? scanMaster : nil, withRecipe: true,
+                                   sample: sampleMark)
     }
 
     // MARK: Viewport

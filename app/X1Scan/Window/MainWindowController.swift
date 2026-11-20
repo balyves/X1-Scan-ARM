@@ -13,6 +13,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     private let splitController: MainSplitViewController
     private var observers: [Observing] = []
     private var lastAlertedState: PreviewSession.State?
+    private var lastDetection: AppModel.Detection?
     /// Key X in crop mode, wherever the keyboard focus is in the window.
     private var cropKeyMonitor: Any?
 
@@ -65,6 +66,11 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
 
     /// Called whenever an observed model value changes.
     private func modelChanged() {
+        let detection = model.detection
+        if detection != lastDetection {
+            lastDetection = detection
+            if detection == .notFound { Task { @MainActor in self.showNoScannerFound() } }
+        }
         let state = model.session.state
         if state != lastAlertedState {
             lastAlertedState = state
@@ -104,6 +110,8 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         case #selector(selectPanelTab(_:)):
             let tab = (menuItem.representedObject as? String).flatMap(PanelTab.init(rawValue:))
             menuItem.state = !model.panel.layout.isHidden && tab == model.panel.layout.tab ? .on : .off
+        case #selector(toggleDiscoveryMode(_:)):
+            menuItem.title = model.discoveryMode ? Strings.leaveDiscovery : Strings.enterDiscovery
         case #selector(toggleSettingsPanel(_:)):
             menuItem.title = model.panel.layout.isHidden
                 ? String(localized: "Show Settings Panel", comment: "Menu item")
@@ -120,6 +128,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         case #selector(startScan(_:)): return toolbar.canScan
         case #selector(stopPreview(_:)): return toolbar.canStop
         case #selector(exportImage(_:)): return toolbar.canExport
+        case #selector(toggleDiscoveryMode(_:)): return !model.isBusy
         case #selector(zoomIn(_:)): return model.session.image != nil && model.viewport.canZoomIn
         case #selector(zoomOut(_:)): return model.session.image != nil && model.viewport.canZoomOut
         case #selector(zoomToFit(_:)), #selector(zoomToFill(_:)), #selector(zoomToActualSize(_:)),
@@ -163,6 +172,25 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         }
     }
     @objc func stopPreview(_ sender: Any?) { model.stop() }
+
+    /// File > Try Without a Scanner / Leave Discovery Mode (lot A).
+    @objc func toggleDiscoveryMode(_ sender: Any?) {
+        if model.discoveryMode {
+            model.leaveDiscovery()
+        } else {
+            model.enterDiscovery(sampleSuffix: Strings.discoverySuffix)
+        }
+    }
+
+    /// The presence check found no X1 (real source, at launch or after
+    /// discovery mode): "No X1 found", which also offers discovery mode.
+    func showNoScannerFound() {
+        let issue = UserIssue(.noScanner, details: Strings.noScannerAtLaunchDetails)
+        let enter: @MainActor () -> Void = { [weak self] in
+            self?.model.enterDiscovery(sampleSuffix: Strings.discoverySuffix)
+        }
+        showIssue(issue, extra: [(Strings.enterDiscovery, enter)])
+    }
 
     /// Esc: stops a running preview or scan; otherwise, in crop mode, cancels its changes
     /// (`AppModel.escape`). ⌘. goes to the menu's Stop while it is enabled, and here otherwise.

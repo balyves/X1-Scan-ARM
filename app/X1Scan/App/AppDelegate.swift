@@ -45,6 +45,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         self.windowController = windowController
         windowController.showWindow(nil)
         NSApp.activate()
+        // Lot A: with the real X1 as the source, the presence check (the I/O Registry only:
+        // nothing opened, nothing sent); none found gives "No X1 found" with discovery mode.
+        model.sampleFilm = SampleFilm.load(bundle: .main)
+        Task { await model.detectScanner() }
         #if DEBUG
         DebugSnapshot.run(window: windowController.window, model: model)
         #endif

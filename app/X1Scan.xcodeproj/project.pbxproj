@@ -50,6 +50,7 @@
 			membershipExceptions = (
 				"Icon/x1scan-logo-fond.svg",
 				"Icon/x1scan-logo-x1.svg",
+				Sample/README.md,
 			);
 			target = A10000000000000000007001 /* X1Scan */;
 		};
