@@ -115,6 +115,14 @@ enum MainMenu {
         tools.addItem(item(Strings.toolName(.straighten), #selector(MainWindowController.selectStraightenTool(_:))))
         menu.addItem(submenu(tools))
         menu.addItem(.separator())
+        // The panel's tabs (lot 1b): ⌥⌘1, ⌥⌘2…, in the tab bar's order (⌘0 and ⌘1 stay with the zoom).
+        for (index, tab) in PanelTab.visible.enumerated() {
+            let tabItem = item(Strings.panelTabMenuItem(tab), #selector(MainWindowController.selectPanelTab(_:)),
+                               String(index + 1), [.command, .option])
+            tabItem.representedObject = tab.rawValue
+            menu.addItem(tabItem)
+        }
+        menu.addItem(.separator())
         menu.addItem(item(String(localized: "Hide Settings Panel", comment: "Menu item"),
                           #selector(MainWindowController.toggleSettingsPanel(_:)), "p", [.command, .option]))
         menu.addItem(.separator())

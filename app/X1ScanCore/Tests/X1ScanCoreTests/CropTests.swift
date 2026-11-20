@@ -552,6 +552,24 @@ struct CropModeTests {
                 defaults, suite)
     }
 
+    /// Lot 1b: the Crop tool or the rule, from any tab, shows Prepare with Framing unfolded.
+    @Test func cropModeShowsTheFramingSection() throws {
+        let (model, defaults, suite) = try model()
+        defer { defaults.removePersistentDomain(forName: suite) }
+        model.panel.select(.scan)
+        model.panel.setFolded(.framing, true)
+        model.tools.selected = .zoom
+        #expect(model.panel.layout.tab == .scan, "other tools leave the panel alone")
+        model.tools.selected = .straighten
+        #expect(model.panel.layout.tab == .prepare && !model.panel.layout.isFolded(.framing))
+        model.panel.select(.output)
+        model.tools.selected = .crop
+        #expect(model.panel.layout.tab == .output, "already in crop mode: the tab chosen meanwhile stays")
+        model.finishCrop()
+        model.tools.selected = .crop
+        #expect(model.panel.layout.tab == .prepare)
+    }
+
     @Test func doneGoesBackToThePreviousTool() async throws {
         let (model, defaults, suite) = try model()
         defer { defaults.removePersistentDomain(forName: suite) }

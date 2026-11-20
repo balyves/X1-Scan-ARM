@@ -2,12 +2,13 @@
 import SwiftUI
 import X1ScanCore
 
-/// Crop and straighten options (lot 1): shown at the top of the panel while
-/// the Crop or Straightening Rule tool is selected, on a lightly tinted
-/// background (the user's brief: a mode, visibly apart from the settings).
-/// Done (Return) goes back to the tool used before; Esc cancels the
-/// changes made since; Reset gives the whole image and no angle.
-struct CropOptionsSection: View {
+/// The Framing section (lot 1b), always in the Prepare tab: orientation,
+/// proportions, fine angle, straightening, the crop grid and its tint, the
+/// constraint. Before lot 1b these options appeared at the top of the panel
+/// only while cropping. While the Crop or Straightening Rule tool is
+/// selected (crop mode), the section is lightly tinted and its title row
+/// carries Done and Reset (`FramingModeButtons`).
+struct FramingSection: View {
     @Bindable var model: AppModel
     @State private var customShown = false
     @State private var customWidth = ""
@@ -17,49 +18,50 @@ struct CropOptionsSection: View {
         range: CropSettings.angleRange, defaultValue: 0, step: CropSettings.angleStep, fractionDigits: 1)
 
     var body: some View {
-        VStack(alignment: .leading, spacing: CompactPanelMetrics.rowSpacing) {
+        OrientationRow(model: model)
+        proportionsRow
+        CompactSliderRow(value: Binding { model.recipe.crop.angle } set: { model.setCropAngle($0) },
+                         format: Self.angleFormat,
+                         texts: Strings.sliderRow(label: Strings.cropAngle, unit: "°", format: Self.angleFormat))
+            // An angle typed and confirmed with Return: back to the image, so that X, ← → and
+            // Return act on the frame again at once (as after the zoom field).
+            .onSubmit { if model.tools.showsCropOptions { NSApp.keyWindow?.focusImageCanvas() } }
+        straightenRow
+        let grid = Strings.gridTool
+        CompactControlRow(grid) {
+            CompactPopUp(grid, help: Strings.cropGridHelp,
+                         selection: Binding { model.cropGridKind } set: { model.cropGridKind = $0 },
+                         sections: [[.init(Strings.cropGridNone, nil)],
+                                    GridKind.allCases.map { .init(Strings.gridKind($0), Optional($0)) }])
+        }
+        tintRow
+        CompactDetailRow {
+            Toggle(Strings.cropConstrain,
+                   isOn: Binding { model.recipe.crop.constrained } set: { model.setCropConstrained($0) })
+                .toggleStyle(.checkbox)
+                .help(Strings.cropConstrainHelp)
+        }
+    }
+
+    /// Tint: the colour and opacity of the grid lines, the same settings as
+    /// the grid button's menu and Image > Grid.
+    private var tintRow: some View {
+        let label = Strings.gridTint
+        return CompactControlRow(label) {
             HStack(spacing: CompactPanelMetrics.columnSpacing) {
-                Text(Strings.cropTitle)
-                    .font(.callout.weight(.semibold))
-                    .lineLimit(1)
-                    .accessibilityAddTraits(.isHeader)
-                Spacer(minLength: 0)
-                Button { model.resetCrop() } label: { Image(systemName: "arrow.counterclockwise") }
-                    .buttonStyle(.bordered)
-                    .disabled(model.cropIsReset)
-                    .help(Strings.cropResetHelp)
-                    .accessibilityLabel(Strings.cropReset)
-                Button(Strings.cropDone) { model.finishCrop() }
-                    .buttonStyle(.borderedProminent)
-                    .help(Strings.cropDoneHelp)
-            }
-            proportionsRow
-            CompactSliderRow(value: Binding { model.recipe.crop.angle } set: { model.setCropAngle($0) },
-                             format: Self.angleFormat,
-                             texts: Strings.sliderRow(label: Strings.cropAngle, unit: "°", format: Self.angleFormat))
-                // An angle typed and confirmed with Return: back to the image, so that X, ← → and
-                // Return act on the frame again at once (as after the zoom field).
-                .onSubmit { NSApp.keyWindow?.focusImageCanvas() }
-            straightenRow
-            let grid = Strings.gridTool
-            CompactControlRow(grid) {
-                CompactPopUp(grid, help: Strings.cropGridHelp,
-                             selection: Binding { model.cropGridKind } set: { model.cropGridKind = $0 },
-                             sections: [[.init(Strings.cropGridNone, nil)],
-                                        GridKind.allCases.map { .init(Strings.gridKind($0), Optional($0)) }])
-            }
-            CompactDetailRow {
-                Toggle(Strings.cropConstrain,
-                       isOn: Binding { model.recipe.crop.constrained } set: { model.setCropConstrained($0) })
-                    .toggleStyle(.checkbox)
-                    .help(Strings.cropConstrainHelp)
+                CompactPopUp(Strings.gridColorMenu, help: Strings.gridColorHelp,
+                             selection: Binding { model.grid.color } set: { model.grid.color = $0 },
+                             items: GridColor.allCases.map { .init(Strings.gridColor($0), $0) })
+                CompactPopUp(Strings.gridOpacityMenu, help: Strings.gridOpacityHelp,
+                             selection: Binding { Self.nearestOpacity(model.grid.opacity) } set: { model.grid.opacity = $0 },
+                             items: GridSettings.opacityChoices.map { .init(Strings.gridOpacity($0), $0) })
             }
         }
-        .padding(CompactPanelMetrics.sectionInsets)
-        .background(Color.accentColor.opacity(0.07))
-        // VoiceOver's escape gesture (and Switch Control): the same as Esc.
-        .accessibilityElement(children: .contain)
-        .accessibilityAction(.escape) { model.escape() }
+    }
+
+    /// The menu's choice for a saved opacity (a value from another version falls on the nearest).
+    private static func nearestOpacity(_ value: Double) -> Double {
+        GridSettings.opacityChoices.min { abs($0 - value) < abs($1 - value) } ?? value
     }
 
     // MARK: Proportions
@@ -181,5 +183,78 @@ struct CropOptionsSection: View {
                     .help(Strings.cropAutoEdgesHelp)
             }
         }
+    }
+}
+
+/// Done and Reset, on the Framing title row while cropping. Done (Return)
+/// goes back to the tool used before; Reset gives the whole image and no
+/// angle; Esc cancels the changes made since the mode began.
+struct FramingModeButtons: View {
+    @Bindable var model: AppModel
+
+    var body: some View {
+        Button { model.resetCrop() } label: { Image(systemName: "arrow.counterclockwise") }
+            .buttonStyle(.bordered)
+            .disabled(model.cropIsReset)
+            .help(Strings.cropResetHelp)
+            .accessibilityLabel(Strings.cropReset)
+        Button(Strings.cropDone) { model.finishCrop() }
+            .buttonStyle(.borderedProminent)
+            .help(Strings.cropDoneHelp)
+    }
+}
+
+/// Orientation (lot 1): quarter turns and mirror, for the display and the
+/// export; the letter F drawn as the image is turned shows the state at a glance.
+private struct OrientationRow: View {
+    @Bindable var model: AppModel
+
+    var body: some View {
+        let label = String(localized: "Orientation", comment: "Panel label: turns and mirror of the image")
+        let orientation = model.recipe.orientation
+        CompactControlRow(label) {
+            HStack(spacing: CompactPanelMetrics.columnSpacing) {
+                button("rotate.left", Strings.withShortcut(Strings.rotateCounterclockwise, "⌘[")) {
+                    model.rotateCounterclockwise()
+                }
+                button("rotate.right", Strings.withShortcut(Strings.rotateClockwise, "⌘]")) { model.rotateClockwise() }
+                button("arrow.left.and.right.righttriangle.left.righttriangle.right", Strings.mirrorHorizontally) {
+                    model.mirrorHorizontally()
+                }
+                Spacer(minLength: 0)
+                OrientationGlyph(orientation: orientation)
+                    .help(Strings.orientationDescription(orientation))
+                    .accessibilityElement()
+                    .accessibilityLabel(label)
+                    .accessibilityValue(Strings.orientationDescription(orientation))
+            }
+        }
+    }
+
+    private func button(_ symbol: String, _ help: String, action: @escaping () -> Void) -> some View {
+        Button {
+            action()
+            // VoiceOver hears the new state without going to the glyph.
+            AccessibilityNotification.Announcement(Strings.orientationDescription(model.recipe.orientation)).post()
+        } label: {
+            Image(systemName: symbol)
+        }
+        .help(help)
+        .accessibilityLabel(help)
+    }
+}
+
+/// The letter F turned and mirrored like the image: a state, not a control
+/// (secondary colour, no frame, no animation).
+private struct OrientationGlyph: View {
+    let orientation: Orientation
+
+    var body: some View {
+        Text(verbatim: "F")
+            .font(.callout.weight(.semibold))
+            .foregroundStyle(.secondary)
+            .scaleEffect(x: orientation.mirrored ? -1 : 1, y: 1)
+            .rotationEffect(.degrees(Double(orientation.quarterTurns) * 90))
+            .frame(width: CompactPanelMetrics.unitWidth)
     }
 }

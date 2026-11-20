@@ -4,8 +4,9 @@ import SwiftUI
 import X1Image
 import X1ScanCore
 
-/// The settings panel on the right (lot 1): Original, Scan, Exposure, Histogram,
-/// Output, and the Preview and Scan buttons. Small controls everywhere. All
+/// The settings panel on the right (lot 1b), top to bottom: the tab bar
+/// (Prepare, Scan, Output), the tab's sections (scrolling), and the
+/// Preview and Scan buttons, fixed. Small controls everywhere. All
 /// sections follow the compact panel conventions
 /// (.claude/skills/compact-settings-panel/SKILL.md); a folded section shows
 /// a summary of its values next to its title.
@@ -14,19 +15,16 @@ struct SettingsPanelView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            PanelTabBar(selection: Binding { model.panel.layout.tab } set: { model.panel.select($0) })
+                .padding(CompactPanelMetrics.tabBarInsets)
+            Divider()
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    if model.tools.showsCropOptions {
-                        CropOptionsSection(model: model)
-                        Divider()
+                    ForEach(model.panel.layout.tab.sections, id: \.self) { section in
+                        self.section(section)
                     }
-                    section(.original) { OriginalSection(model: model) }
-                    section(.scan) { ScanSection(model: model) }
-                    section(.exposure) { ExposureSection(model: model) }
-                    section(.histogram) { HistogramView(model: model) }
-                    section(.output) {
-                        OutputSection(model: model)
-                    }
+                    section(.exposure)
+                    section(.histogram)
                 }
                 .padding(.bottom, 8)
             }
@@ -47,10 +45,53 @@ struct SettingsPanelView: View {
         .font(.callout)
     }
 
-    private func section(_ section: PanelSection, @ViewBuilder content: @escaping () -> some View) -> some View {
+    @ViewBuilder
+    private func section(_ section: PanelSection) -> some View {
+        switch section {
+        case .original: plain(section) { OriginalSection(model: model) }
+        case .framing: FramingPanelSection(model: model)
+        case .scan: plain(section) { ScanSection(model: model) }
+        case .exposure: plain(section) { ExposureSection(model: model) }
+        case .histogram: plain(section) { HistogramView(model: model) }
+        case .output: plain(section) { OutputSection(model: model) }
+        }
+    }
+
+    private func plain(_ section: PanelSection, @ViewBuilder content: @escaping () -> some View) -> some View {
         CompactSection(Strings.panelSection(section), summary: Strings.panelSummary(section, model: model),
                        foldTexts: Strings.foldTexts, isExpanded: model.panel.expansion(of: section),
                        content: content)
+    }
+}
+
+/// Framing, with Done and Reset on its title row and a light tint while
+/// cropping (the user's brief of lot 1: a mode, visibly apart from the
+/// settings). Esc (and VoiceOver's escape gesture) cancels the mode.
+private struct FramingPanelSection: View {
+    @Bindable var model: AppModel
+
+    var body: some View {
+        let cropping = model.tools.showsCropOptions
+        CompactSection(Strings.panelSection(.framing),
+                       summary: cropping ? "" : Strings.panelSummary(.framing, model: model),
+                       foldTexts: Strings.foldTexts, isExpanded: model.panel.expansion(of: .framing)) {
+            FramingSection(model: model)
+        } accessory: {
+            if cropping { FramingModeButtons(model: model) }
+        }
+        .background(cropping ? Color.accentColor.opacity(0.07) : Color.clear)
+        .accessibilityElement(children: .contain)
+        .modifier(EscapeAction(enabled: cropping) { model.escape() })
+    }
+}
+
+/// VoiceOver's escape gesture (and Switch Control), the same as Esc, only in crop mode.
+private struct EscapeAction: ViewModifier {
+    let enabled: Bool
+    let action: () -> Void
+
+    func body(content: Content) -> some View {
+        if enabled { content.accessibilityAction(.escape, action) } else { content }
     }
 }
 
@@ -88,62 +129,6 @@ private struct OriginalSection: View {
                 .accessibilityLabel(Text("Edit Holders", comment: "VoiceOver label of the … button next to the holder menu"))
             }
         }
-        OrientationRow(model: model)
-    }
-}
-
-/// Orientation (lot 1): quarter turns and mirror, for the display and the
-/// export; the letter F drawn as the image is turned shows the state at a glance.
-private struct OrientationRow: View {
-    @Bindable var model: AppModel
-
-    var body: some View {
-        let label = String(localized: "Orientation", comment: "Panel label: turns and mirror of the image")
-        let orientation = model.recipe.orientation
-        CompactControlRow(label) {
-            HStack(spacing: CompactPanelMetrics.columnSpacing) {
-                button("rotate.left", Strings.withShortcut(Strings.rotateCounterclockwise, "⌘[")) {
-                    model.rotateCounterclockwise()
-                }
-                button("rotate.right", Strings.withShortcut(Strings.rotateClockwise, "⌘]")) { model.rotateClockwise() }
-                button("arrow.left.and.right.righttriangle.left.righttriangle.right", Strings.mirrorHorizontally) {
-                    model.mirrorHorizontally()
-                }
-                Spacer(minLength: 0)
-                OrientationGlyph(orientation: orientation)
-                    .help(Strings.orientationDescription(orientation))
-                    .accessibilityElement()
-                    .accessibilityLabel(label)
-                    .accessibilityValue(Strings.orientationDescription(orientation))
-            }
-        }
-    }
-
-    private func button(_ symbol: String, _ help: String, action: @escaping () -> Void) -> some View {
-        Button {
-            action()
-            // VoiceOver hears the new state without going to the glyph.
-            AccessibilityNotification.Announcement(Strings.orientationDescription(model.recipe.orientation)).post()
-        } label: {
-            Image(systemName: symbol)
-        }
-        .help(help)
-        .accessibilityLabel(help)
-    }
-}
-
-/// The letter F turned and mirrored like the image: a state, not a control
-/// (secondary colour, no frame, no animation).
-private struct OrientationGlyph: View {
-    let orientation: Orientation
-
-    var body: some View {
-        Text(verbatim: "F")
-            .font(.callout.weight(.semibold))
-            .foregroundStyle(.secondary)
-            .scaleEffect(x: orientation.mirrored ? -1 : 1, y: 1)
-            .rotationEffect(.degrees(Double(orientation.quarterTurns) * 90))
-            .frame(width: CompactPanelMetrics.unitWidth)
     }
 }
 

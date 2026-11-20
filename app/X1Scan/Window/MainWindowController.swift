@@ -94,6 +94,9 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
             menuItem.state = (menuItem.representedObject as? Double).map { abs($0 - model.grid.opacity) < 1e-9 } == true ? .on : .off
         case #selector(chooseGridDivisions(_:)):
             menuItem.state = (menuItem.representedObject as? Int) == model.grid.fineDivisions ? .on : .off
+        case #selector(selectPanelTab(_:)):
+            let tab = (menuItem.representedObject as? String).flatMap(PanelTab.init(rawValue:))
+            menuItem.state = !model.panel.layout.isHidden && tab == model.panel.layout.tab ? .on : .off
         case #selector(toggleSettingsPanel(_:)):
             menuItem.title = model.panel.layout.isHidden
                 ? String(localized: "Show Settings Panel", comment: "Menu item")
@@ -184,6 +187,12 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     @objc func selectCropTool(_ sender: Any?) { model.tools.selected = .crop }
     @objc func selectStraightenTool(_ sender: Any?) { model.tools.selected = .straighten }
     @objc func toggleSettingsPanel(_ sender: Any?) { model.panel.toggleHidden() }
+    /// View > Prepare Tab… (⌥⌘1…): the tab, and the panel if it was hidden.
+    @objc func selectPanelTab(_ sender: Any?) {
+        guard let name = (sender as? NSMenuItem)?.representedObject as? String, let tab = PanelTab(rawValue: name) else { return }
+        model.panel.select(tab)
+        model.panel.layout.isHidden = false
+    }
     @objc func rotateCounterclockwise(_ sender: Any?) { model.rotateCounterclockwise() }
     @objc func rotateClockwise(_ sender: Any?) { model.rotateClockwise() }
     @objc func mirrorHorizontally(_ sender: Any?) { model.mirrorHorizontally() }

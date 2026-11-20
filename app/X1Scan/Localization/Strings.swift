@@ -311,12 +311,61 @@ enum Strings {
     static func panelSection(_ section: PanelSection) -> String {
         switch section {
         case .original: String(localized: "Original", comment: "Panel section: the film")
+        case .framing: String(localized: "panel.section.framing", defaultValue: "Framing",
+                              comment: "Panel section: orientation, proportions, angle, straightening, grid")
         case .scan: String(localized: "panel.section.scan", defaultValue: "Scan",
                            comment: "Panel section: resolution, scale, sizes")
         case .exposure: String(localized: "Exposure", comment: "Panel section: share of the CCD range the preview uses")
         case .histogram: String(localized: "Histogram", comment: "Palette title")
         case .output: String(localized: "Output", comment: "Panel section: export")
         }
+    }
+
+    // MARK: Panel tabs (lot 1b)
+
+    static func panelTab(_ tab: PanelTab) -> String {
+        switch tab {
+        case .prepare: String(localized: "panel.tab.prepare", defaultValue: "Prepare",
+                              comment: "Settings panel tab: the film, orientation and framing")
+        case .scan: String(localized: "panel.tab.scan", defaultValue: "Scan",
+                           comment: "Settings panel tab: resolution, scale, sizes")
+        case .develop: String(localized: "panel.tab.develop", defaultValue: "Develop",
+                              comment: "Settings panel tab: corrections (a later version; not shown yet)")
+        case .output: String(localized: "panel.tab.output", defaultValue: "Output",
+                             comment: "Settings panel tab: export")
+        }
+    }
+
+    /// Tooltip of a tab, without its shortcut (composed from the tab's place, as the menu's).
+    static func panelTabHelp(_ tab: PanelTab) -> String {
+        switch tab {
+        case .prepare: String(localized: "Film, holder, orientation and framing",
+                              comment: "Tooltip of the Prepare tab of the settings panel")
+        case .scan: String(localized: "Resolution, scale and sizes of the scan",
+                           comment: "Tooltip of the Scan tab of the settings panel")
+        case .develop: String(localized: "Corrections of the image", comment: "Tooltip of the Develop tab (not shown yet)")
+        case .output: String(localized: "Format, name and folder of the exported file",
+                             comment: "Tooltip of the Output tab of the settings panel")
+        }
+    }
+
+    /// Shortcut of a visible tab: ⌥⌘1, ⌥⌘2…, in the tab bar's order (the View menu's too).
+    static func panelTabShortcut(_ tab: PanelTab) -> String? {
+        PanelTab.visible.firstIndex(of: tab).map { "⌥⌘\($0 + 1)" }
+    }
+
+    /// View menu: "Prepare Tab".
+    static func panelTabMenuItem(_ tab: PanelTab) -> String {
+        switch tab {
+        case .prepare: String(localized: "Prepare Tab", comment: "View menu item: show the Prepare tab of the settings panel")
+        case .scan: String(localized: "Scan Tab", comment: "View menu item: show the Scan tab of the settings panel")
+        case .develop: String(localized: "Develop Tab", comment: "View menu item (not shown yet)")
+        case .output: String(localized: "Output Tab", comment: "View menu item: show the Output tab of the settings panel")
+        }
+    }
+
+    static var panelTabsLabel: String {
+        String(localized: "Settings Panel Tabs", comment: "VoiceOver label of the tab bar at the top of the settings panel")
     }
 
     // MARK: Orientation (lot 1)
@@ -384,7 +433,7 @@ enum Strings {
     /// Advice under the gauge; hidden in lot 1 (it will point to quality modes).
     static func exposureAdvice(_ reading: ExposureReading) -> String? { nil }
 
-    // MARK: Crop and straighten (lot 1)
+    // MARK: Framing: crop and straighten (lot 1, lot 1b)
 
     /// An angle in degrees with one decimal and a true minus sign: "−1.3°".
     static func angle(_ degrees: Double) -> String {
@@ -392,7 +441,6 @@ enum Strings {
         return (degrees < -0.05 ? "\u{2212}" : "") + text + "°"
     }
 
-    static var cropTitle: String { String(localized: "Crop and Straighten", comment: "Title of the crop options at the top of the panel") }
     static var cropDone: String { String(localized: "Done", comment: "Button: leave the crop tool") }
     static var cropDoneHelp: String {
         String(localized: "Keep the changes and go back to the previous tool (↩); Esc cancels them",
@@ -478,6 +526,14 @@ enum Strings {
         String(localized: "Fine Grid Squares", comment: "Image menu > Grid: submenu, number of squares across the image")
     }
 
+    static var gridTint: String { String(localized: "Tint", comment: "Framing section label: colour and opacity of the grid lines") }
+    static var gridColorHelp: String {
+        String(localized: "Colour of the grid lines, on the image and in the crop frame; display only.",
+               comment: "Tooltip of the grid colour menu of the Framing section")
+    }
+    static var gridOpacityHelp: String {
+        String(localized: "Opacity of the grid lines; display only.", comment: "Tooltip of the grid opacity menu of the Framing section")
+    }
     static var gridColorMenu: String { String(localized: "Grid Colour", comment: "Image menu and grid button's context menu: submenu of line colours") }
     static var gridOpacityMenu: String { String(localized: "Grid Opacity", comment: "Image menu and grid button's context menu: submenu of line opacities") }
 
@@ -525,6 +581,8 @@ enum Strings {
     static func panelSummary(_ section: PanelSection, model: AppModel) -> String {
         let settings = model.scanSettings
         switch section {
+        case .framing:
+            return framingSummary(model.recipe)
         case .original:
             let film = filmType(settings.filmType)
             guard let holder = model.selectedHolder else { return film }
@@ -540,6 +598,24 @@ enum Strings {
         case .output:
             return exportFormat(model.exportSettings.format)
         }
+    }
+
+    /// Framing folded: "6×7 · −1° · 90°", the proportions as named, then the
+    /// fine angle and the quarter turns when there are any, and the mirror.
+    static func framingSummary(_ recipe: Recipe) -> String {
+        var parts: [String] = []
+        switch recipe.crop.aspect {
+        case .free: parts.append(cropFree)
+        case .original: parts.append(cropOriginal)
+        case .ratio(let width, let height): parts.append(ratio(width, height))
+        }
+        if recipe.crop.angle != 0 { parts.append(angle(recipe.crop.angle)) }
+        let turns = recipe.orientation.quarterTurns
+        if turns != 0 { parts.append("\(turns * 90)°") }
+        if recipe.orientation.mirrored {
+            parts.append(String(localized: "mirrored", comment: "Framing section summary: the image is mirrored"))
+        }
+        return parts.joined(separator: " · ")
     }
 
     static func filmType(_ film: FilmType) -> String {

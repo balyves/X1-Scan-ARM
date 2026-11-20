@@ -78,6 +78,96 @@
         }
       }
     },
+    "Colour of the grid lines, on the image and in the crop frame; display only.": {
+      "comment": "Tooltip of the grid colour menu of the Framing section",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Colour of the grid lines, on the image and in the crop frame; display only."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couleur des lignes de la grille, sur l’image et dans le cadre ; affichage seulement."
+          }
+        }
+      }
+    },
+    "Corrections of the image": {
+      "comment": "Tooltip of the Develop tab (not shown yet)",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Corrections of the image"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Corrections de l’image"
+          }
+        }
+      }
+    },
+    "Develop Tab": {
+      "comment": "View menu item (not shown yet)",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Develop Tab"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Onglet Développer"
+          }
+        }
+      }
+    },
+    "Film, holder, orientation and framing": {
+      "comment": "Tooltip of the Prepare tab of the settings panel",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Film, holder, orientation and framing"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Film, porte-film, orientation et cadrage"
+          }
+        }
+      }
+    },
+    "Format, name and folder of the exported file": {
+      "comment": "Tooltip of the Output tab of the settings panel",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Format, name and folder of the exported file"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Format, nom et dossier du fichier exporté"
+          }
+        }
+      }
+    },
     "Icon licence (not MIT)": {
       "comment": "About panel: heading above the icon licence text",
       "extractionState": "manual",
@@ -514,6 +604,24 @@
         }
       }
     },
+    "mirrored": {
+      "comment": "Framing section summary: the image is mirrored",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "mirrored"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "miroir"
+          }
+        }
+      }
+    },
     "Model": {
       "extractionState": "manual",
       "localizations": {
@@ -569,6 +677,132 @@
         }
       }
     },
+    "Opacity of the grid lines; display only.": {
+      "comment": "Tooltip of the grid opacity menu of the Framing section",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opacity of the grid lines; display only."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opacité des lignes de la grille ; affichage seulement."
+          }
+        }
+      }
+    },
+    "Output Tab": {
+      "comment": "View menu item: show the Output tab of the settings panel",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Output Tab"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Onglet Sortie"
+          }
+        }
+      }
+    },
+    "panel.section.framing": {
+      "comment": "Panel section: orientation, proportions, angle, straightening, grid",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Framing"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cadrage"
+          }
+        }
+      }
+    },
+    "panel.tab.develop": {
+      "comment": "Settings panel tab: corrections (a later version; not shown yet)",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Develop"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Développer"
+          }
+        }
+      }
+    },
+    "panel.tab.output": {
+      "comment": "Settings panel tab: export",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Output"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sortie"
+          }
+        }
+      }
+    },
+    "panel.tab.prepare": {
+      "comment": "Settings panel tab: the film, orientation and framing",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prepare"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Préparer"
+          }
+        }
+      }
+    },
+    "panel.tab.scan": {
+      "comment": "Settings panel tab: resolution, scale, sizes",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scan"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scan"
+          }
+        }
+      }
+    },
     "Paste": {
       "extractionState": "manual",
       "localizations": {
@@ -576,6 +810,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "Coller"
+          }
+        }
+      }
+    },
+    "Prepare Tab": {
+      "comment": "View menu item: show the Prepare tab of the settings panel",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prepare Tab"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Onglet Préparer"
           }
         }
       }
@@ -723,6 +975,24 @@
         }
       }
     },
+    "Resolution, scale and sizes of the scan": {
+      "comment": "Tooltip of the Scan tab of the settings panel",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resolution, scale and sizes of the scan"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Résolution, échelle et tailles du scan"
+          }
+        }
+      }
+    },
     "RGB histogram": {
       "extractionState": "manual",
       "localizations": {
@@ -752,6 +1022,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "Numériser"
+          }
+        }
+      }
+    },
+    "Scan Tab": {
+      "comment": "View menu item: show the Scan tab of the settings panel",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scan Tab"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Onglet Scan"
           }
         }
       }
@@ -807,6 +1095,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "Services"
+          }
+        }
+      }
+    },
+    "Settings Panel Tabs": {
+      "comment": "VoiceOver label of the tab bar at the top of the settings panel",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings Panel Tabs"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Onglets du panneau de réglages"
           }
         }
       }
@@ -1000,6 +1306,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "This scanner is not a Flextight X1 (%1$@ %2$@). Nothing more was sent."
+          }
+        }
+      }
+    },
+    "Tint": {
+      "comment": "Framing section label: colour and opacity of the grid lines",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tint"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teinte"
           }
         }
       }
@@ -3583,24 +3907,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@ · verticale"
-          }
-        }
-      }
-    },
-    "Crop and Straighten": {
-      "comment": "Title of the crop options at the top of the panel",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Crop and Straighten"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Recadrage et redressement"
           }
         }
       }

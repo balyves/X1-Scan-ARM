@@ -19,6 +19,7 @@ import X1ScanCore
 ///                                (needs -X1ScanAutoPreview YES)
 ///   -X1ScanTool <tool>           select a tool: hand, zoom, crop, straighten (lot 1)
 ///   -X1ScanAngle <degrees>       fine angle, after the crop demo (lot 1)
+///   -X1ScanTab <tab>             show a panel tab: prepare, scan, output (lot 1b)
 ///   -X1ScanResizeProbe YES       resize the window, move the divider, hide and show the panel,
 ///                                print the sizes, put the window frame and panel layout back, quit
 /// The snapshot also writes each Settings pane, Scanner Information and the
@@ -40,6 +41,7 @@ enum DebugSnapshot {
         for _ in 0..<max(arguments.integer(forKey: "X1ScanQuarterTurns"), 0) { model.rotateClockwise() }
         if arguments.bool(forKey: "X1ScanMirror") { model.mirrorHorizontally() }
         if arguments.bool(forKey: "X1ScanZones") { model.showsExposureZones = true }
+        if let tab = arguments.string(forKey: "X1ScanTab").flatMap(PanelTab.init(rawValue:)) { model.panel.select(tab) }
         if let kind = arguments.string(forKey: "X1ScanGrid").flatMap(GridKind.init(rawValue:)) { model.showGrid(kind) }
         if arguments.bool(forKey: "X1ScanAutoPreview") { model.startPreview() }
         if arguments.bool(forKey: "X1ScanResizeProbe"), let window {

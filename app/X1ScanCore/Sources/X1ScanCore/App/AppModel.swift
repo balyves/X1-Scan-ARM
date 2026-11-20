@@ -226,12 +226,14 @@ public final class AppModel {
                                    width: rect.width / size.width, height: rect.height / size.height)
     }
 
-    /// Entering crop mode remembers the tool before it and the recipe;
-    /// leaving it by any means forgets them (choosing another tool keeps
-    /// the changes, like Done).
+    /// Entering crop mode remembers the tool before it and the recipe, and
+    /// shows the Framing section (Prepare tab, unfolded; lot 1b); leaving it
+    /// by any means forgets them (choosing another tool keeps the changes,
+    /// like Done).
     private func trackCropMode(from old: ToolState) {
         if !old.showsCropOptions, tools.showsCropOptions {
             cropEntry = (old.selected, recipe)
+            panel.showFraming()
         } else if old.showsCropOptions, !tools.showsCropOptions {
             cropEntry = nil
         }

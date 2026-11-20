@@ -8,8 +8,10 @@ description: Interface conventions for the settings panel on the right of the X1
 The panel on the right of the main window holds the scan and export
 settings. It is a working tool used for hours: dense, quiet and aligned, with
 every number readable and editable in one place. These rules apply to every
-section of the panel (today Original, Scan, Exposure, Histogram, Output;
-the crop options at the top while the crop tool is selected).
+section of the panel. Since lot 1b the panel is, top to bottom: a tab bar
+(Prepare: Original, Framing; Scan: Scan; Output: Output), the tab's
+sections, the Information area common to every tab (Histogram, Exposure),
+and the Preview and Scan buttons.
 
 ## Components (X1ScanCore, `Sources/X1ScanCore/UI/CompactPanel.swift`)
 
@@ -18,6 +20,15 @@ the crop options at the top while the crop tool is selected).
   "collapsed"); `isExpanded` is `model.panel.expansion(of: section)`;
   `summary` (from `Strings.panelSummary`) is shown next to the title while
   the section is folded.
+- `CompactSection(…) { … } accessory: { … }`: buttons of a mode on the
+  right of the title row, outside the fold button (Framing: Reset and Done
+  while cropping). Pass an empty summary while the accessory is shown.
+- The tab bar (`app/X1Scan/Panel/PanelTabBar.swift`): a native
+  `NSSegmentedControl`, regular size (a tab bar, not a row), one segment per
+  tab of `PanelTab.visible`, each with its tooltip and the tab's shortcut
+  (⌥⌘1, ⌥⌘2…, from its place, as in the View menu). A tab of a later lot
+  (Develop) is declared in `PanelTab` but stays out of `visible`: no empty
+  tab, no inactive control. The tab shown is saved with the panel layout.
 - `CompactDisclosureStyle(texts:isHeader:)`: the disclosure style of the
   panel (one button for chevron and title, content not indented).
   `CompactSection` uses it with the header trait, and gives its content the

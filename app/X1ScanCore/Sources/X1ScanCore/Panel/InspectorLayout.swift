@@ -5,6 +5,8 @@ import Observation
 /// A section of the settings panel, folded or not, in the panel's order.
 public enum PanelSection: String, Sendable, Hashable, CaseIterable, Codable {
     case original
+    /// Framing (lot 1b): orientation, proportions, angle, straightening, grid.
+    case framing
     case scan
     case exposure
     case histogram
@@ -17,9 +19,37 @@ public enum PanelSection: String, Sendable, Hashable, CaseIterable, Codable {
     }
 }
 
-/// The settings panel on the right (step 3): width, hidden or shown,
-/// folded sections. Replaces the palettes (PaletteLayout) of step 2. The
-/// Main / Advanced tab of step 3 is gone (lot 1); its saved value is ignored.
+/// A tab of the settings panel (lot 1b), in the tab bar's order. Develop
+/// (corrections, lot 3) has its place between Scan and Output but is not
+/// shown yet: only `visible` tabs reach the tab bar, the menu and the
+/// saved layout.
+public enum PanelTab: String, Sendable, Hashable, CaseIterable, Codable {
+    case prepare
+    case scan
+    case develop
+    case output
+
+    /// The tabs shown, in order (lot 1b: no Develop).
+    public static let visible: [PanelTab] = [.prepare, .scan, .output]
+
+    public var isVisible: Bool { Self.visible.contains(self) }
+
+    /// The sections of the tab, top to bottom. Histogram and Exposure are
+    /// in the Information area, common to every tab.
+    public var sections: [PanelSection] {
+        switch self {
+        case .prepare: [.original, .framing]
+        case .scan: [.scan]
+        case .develop: []
+        case .output: [.output]
+        }
+    }
+}
+
+/// The settings panel on the right (step 3): width, hidden or shown, the
+/// tab shown (lot 1b), folded sections. Replaces the palettes
+/// (PaletteLayout) of step 2. The Main / Advanced tab of step 3 is gone
+/// (lot 1); its saved value ("main", "advanced") is read as Prepare.
 public struct InspectorLayout: Sendable, Hashable, Codable {
     /// Bounds of the user-resizable panel (compact settings panel conventions):
     /// at the minimum a slider row keeps a usable slider next to a 5-digit
@@ -31,6 +61,8 @@ public struct InspectorLayout: Sendable, Hashable, Codable {
 
     public private(set) var width: Double = InspectorLayout.defaultWidth
     public var isHidden = false
+    /// The tab shown; Prepare at first launch, then remembered. Always a visible tab.
+    public private(set) var tab: PanelTab = .prepare
     /// At first launch every section is open except the histogram (lot 1);
     /// then remembered.
     public private(set) var folded: Set<PanelSection> = InspectorLayout.defaultFolded
@@ -40,6 +72,11 @@ public struct InspectorLayout: Sendable, Hashable, Codable {
 
     public mutating func setWidth(_ value: Double) {
         width = min(max(value.isFinite ? value : Self.defaultWidth, Self.minimumWidth), Self.maximumWidth)
+    }
+
+    /// A hidden tab (Develop, lot 3) is not selected: the tab stays as it was.
+    public mutating func select(_ tab: PanelTab) {
+        if tab.isVisible { self.tab = tab }
     }
 
     public func isFolded(_ section: PanelSection) -> Bool { folded.contains(section) }
@@ -52,13 +89,17 @@ public struct InspectorLayout: Sendable, Hashable, Codable {
         if isFolded { folded.insert(section) } else { folded.remove(section) }
     }
 
-    private enum CodingKeys: String, CodingKey { case width, isHidden, folded }
+    private enum CodingKeys: String, CodingKey { case width, isHidden, tab, folded }
 
-    /// Unknown sections (another version) are dropped, not fatal.
+    /// Unknown sections (another version) are dropped, not fatal; an
+    /// unknown or hidden tab gives Prepare.
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         setWidth(try container.decodeIfPresent(Double.self, forKey: .width) ?? Self.defaultWidth)
         isHidden = try container.decodeIfPresent(Bool.self, forKey: .isHidden) ?? false
+        if let name = try container.decodeIfPresent(String.self, forKey: .tab), let saved = PanelTab(rawValue: name) {
+            select(saved)
+        }
         if let names = try container.decodeIfPresent([String].self, forKey: .folded) {
             folded = Set(names.compactMap(PanelSection.decoded))
         }
@@ -68,6 +109,7 @@ public struct InspectorLayout: Sendable, Hashable, Codable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(width, forKey: .width)
         try container.encode(isHidden, forKey: .isHidden)
+        try container.encode(tab, forKey: .tab)
         try container.encode(folded.map(\.rawValue).sorted(), forKey: .folded)
     }
 }
@@ -97,6 +139,13 @@ public final class PanelController {
     public func toggleFolded(_ section: PanelSection) { layout.toggleFolded(section) }
     public func setFolded(_ section: PanelSection, _ isFolded: Bool) { layout.setFolded(section, isFolded) }
     public func setWidth(_ width: Double) { layout.setWidth(width) }
+    public func select(_ tab: PanelTab) { layout.select(tab) }
+
+    /// The Crop tool or the rule chosen (lot 1b): the Prepare tab, with Framing unfolded.
+    public func showFraming() {
+        layout.select(.prepare)
+        layout.setFolded(.framing, false)
+    }
 
     private func save() {
         if let data = try? JSONEncoder().encode(layout) { defaults.set(data, forKey: Self.key) }

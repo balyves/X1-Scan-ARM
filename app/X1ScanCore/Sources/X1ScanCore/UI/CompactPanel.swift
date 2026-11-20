@@ -24,6 +24,10 @@ public enum CompactPanelMetrics {
     public static let contentTopInset: CGFloat = 4
     /// Height of a gauge bar (exposure).
     public static let gaugeHeight: CGFloat = 10
+    /// Around the panel's tab bar: the sections' side insets, so that it lines up with their rows.
+    public static let tabBarInsets = EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12)
+    /// Height of a section's title row (callout semibold), to centre what sits on it.
+    public static let titleRowHeight: CGFloat = 16
     /// Inside a section, around its rows.
     public static let sectionInsets = EdgeInsets(top: 4, leading: 12, bottom: 8, trailing: 12)
 }
@@ -81,21 +85,26 @@ public struct CompactDisclosureStyle: DisclosureGroupStyle {
 /// A foldable section: short title, thin separator below, folded state kept
 /// by the caller (the panel layout, saved between launches). When folded,
 /// `summary` (already translated, may be empty) shows the section's main
-/// values on the right of the title, in the secondary colour.
-public struct CompactSection<Content: View>: View {
+/// values on the right of the title, in the secondary colour. `accessory`
+/// (buttons of a mode, such as Done and Reset while cropping) sits at the
+/// right end of the title row, outside the fold button; pass an empty
+/// summary while it is shown.
+public struct CompactSection<Content: View, Accessory: View>: View {
     let title: String
     let summary: String
     let foldTexts: CompactFoldTexts
     @Binding var isExpanded: Bool
     @ViewBuilder var content: () -> Content
+    @ViewBuilder var accessory: () -> Accessory
 
     public init(_ title: String, summary: String = "", foldTexts: CompactFoldTexts, isExpanded: Binding<Bool>,
-                @ViewBuilder content: @escaping () -> Content) {
+                @ViewBuilder content: @escaping () -> Content, @ViewBuilder accessory: @escaping () -> Accessory) {
         self.title = title
         self.summary = summary
         self.foldTexts = foldTexts
         _isExpanded = isExpanded
         self.content = content
+        self.accessory = accessory
     }
 
     public var body: some View {
@@ -123,9 +132,23 @@ public struct CompactSection<Content: View>: View {
                 .accessibilityElement(children: .combine)
             }
             .disclosureGroupStyle(CompactDisclosureStyle(texts: foldTexts, isHeader: true))
+            // The accessory's buttons are not inside the fold button (a button in a button
+            // would not take the click): laid over the title row, on its right.
+            .overlay(alignment: .topTrailing) {
+                HStack(spacing: CompactPanelMetrics.columnSpacing) { accessory() }
+                    .alignmentGuide(.top) { $0[VerticalAlignment.center] - CompactPanelMetrics.titleRowHeight / 2 }
+            }
             .padding(CompactPanelMetrics.sectionInsets)
             Divider()
         }
+    }
+}
+
+extension CompactSection where Accessory == EmptyView {
+    public init(_ title: String, summary: String = "", foldTexts: CompactFoldTexts, isExpanded: Binding<Bool>,
+                @ViewBuilder content: @escaping () -> Content) {
+        self.init(title, summary: summary, foldTexts: foldTexts, isExpanded: isExpanded, content: content,
+                  accessory: { EmptyView() })
     }
 }
 

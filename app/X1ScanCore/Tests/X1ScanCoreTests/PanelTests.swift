@@ -30,6 +30,7 @@ struct InspectorLayoutTests {
         let layout = try JSONDecoder().decode(InspectorLayout.self, from: Data(json.utf8))
         #expect(layout.width == InspectorLayout.maximumWidth && layout.isHidden)
         #expect(layout.folded == [.output])
+        #expect(layout.tab == .prepare, "an unknown tab gives Prepare")
         var changed = InspectorLayout()
         changed.toggleFolded(.original)
         #expect(try JSONDecoder().decode(InspectorLayout.self, from: JSONEncoder().encode(changed)) == changed)
@@ -40,8 +41,44 @@ struct InspectorLayoutTests {
         let json = #"{"width":300,"isHidden":false,"folded":["settings"],"tab":"advanced"}"#
         let layout = try JSONDecoder().decode(InspectorLayout.self, from: Data(json.utf8))
         #expect(layout.folded == [.scan], "histogram open: it was open in the saved layout")
+        #expect(layout.tab == .prepare, "the Advanced tab of step 3 is not a panel tab of lot 1b")
         let saved = String(decoding: try JSONEncoder().encode(layout), as: UTF8.self)
-        #expect(!saved.contains("tab") && !saved.contains("settings"))
+        #expect(!saved.contains("advanced") && !saved.contains("settings") && saved.contains(#""tab":"prepare""#))
+    }
+
+    /// Lot 1b: Prepare, Scan, Output; Develop (lot 3) has its place but is not shown.
+    @Test func tabsAndTheirSections() throws {
+        #expect(PanelTab.visible == [.prepare, .scan, .output])
+        #expect(PanelTab.allCases == [.prepare, .scan, .develop, .output], "Develop between Scan and Output")
+        #expect(PanelTab.prepare.sections == [.original, .framing])
+        #expect(PanelTab.scan.sections == [.scan] && PanelTab.output.sections == [.output])
+        let inTabs = Set(PanelTab.allCases.flatMap(\.sections))
+        #expect(!inTabs.contains(.histogram) && !inTabs.contains(.exposure), "common to every tab")
+        var layout = InspectorLayout()
+        #expect(layout.tab == .prepare, "Prepare at first launch")
+        layout.select(.output)
+        #expect(layout.tab == .output)
+        layout.select(.develop)
+        #expect(layout.tab == .output, "a hidden tab is not selected")
+        let saved = try JSONDecoder().decode(InspectorLayout.self, from: JSONEncoder().encode(layout))
+        #expect(saved.tab == .output)
+        let hidden = try JSONDecoder().decode(InspectorLayout.self, from: Data(#"{"tab":"develop"}"#.utf8))
+        #expect(hidden.tab == .prepare, "a saved hidden tab gives Prepare")
+    }
+
+    @MainActor
+    @Test func tabAndFoldsAreRememberedAndFramingShown() {
+        withTemporaryDefaults { defaults in
+            let controller = PanelController(defaults: defaults)
+            controller.select(.scan)
+            controller.setFolded(.framing, true)
+            controller.setFolded(.exposure, true)
+            let reloaded = PanelController(defaults: defaults)
+            #expect(reloaded.layout.tab == .scan && reloaded.layout.isFolded(.framing) && reloaded.layout.isFolded(.exposure))
+            reloaded.showFraming()
+            #expect(reloaded.layout.tab == .prepare && !reloaded.layout.isFolded(.framing))
+            #expect(reloaded.layout.isFolded(.exposure), "other sections keep their state")
+        }
     }
 
     @MainActor
