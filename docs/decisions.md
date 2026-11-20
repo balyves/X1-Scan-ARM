@@ -1259,8 +1259,9 @@ received, on the display or on exported files.
   Main / Advanced tabs are gone; they come back with corrections.
 - **Recipe** (`Recipe`, JSON `"version": 1`, `<name>.x1recipe.json` next
   to the image): orientation (quarter turns clockwise after an optional
-  horizontal mirror), fine angle (degrees, −45 to 45, steps of 0.1,
-  positive clockwise on screen), crop frame normalised in the image after
+  horizontal mirror), fine angle (degrees, −45 to 45, steps of 0.1 in the
+  recipe; lot 1b: the controls move by whole degrees, see below; positive
+  clockwise on screen), crop frame normalised in the image after
   the quarter turns and before the fine angle (physical units: a preview
   pixel counts 3 in height), proportions, portrait, lock, constraint. The
   pixels are never turned in place: the frame and the angle can later be
@@ -1368,7 +1369,6 @@ the interface only: nothing sent to the scanner changes.
 - **Language** (user's decision, replacing the brief's point F): the
   Language menu of Settings > General stays, with the sentence "Restart X1
   Scan to apply the language." next to it.
-
 - **Fine angle** (user's decision): the slider, the typed field and the
   arrow keys move by whole degrees (−45° to 45°); ⇧ + arrow moves 5°. An
   arrow moves at most its step and lands on a whole degree (from −1.3°,

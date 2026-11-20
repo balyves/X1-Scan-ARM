@@ -81,7 +81,8 @@ passes every string, already translated (see Text and languages).
   has a simple tooltip (lot 1b, a rule for every lot): native, one
   sentence, in the String Catalog with its French translation; a row's
   label gets the same tooltip as its control (`CompactControlRow(help:)`),
-  a slider row its own (`Strings.sliderRow(help:)`). Detailed help (⌥ +
+  a slider row its own (`Strings.sliderRow(help:)`). The standard Cancel
+  and OK buttons of a popover or dialog need none. Detailed help (⌥ +
   hover) comes later.
 - Explanations go in the tooltip of the row they explain
   (`CompactInfoRow(_:value:help:)`, `.help(_:)` on a control), not as notes

@@ -301,7 +301,8 @@ public final class AppModel {
         setCropFrame(documentRect: rect)
     }
 
-    /// The fine angle (degrees, clockwise; ±45°, steps of 0.1°).
+    /// The fine angle (degrees, clockwise; ±45°), kept to the tenth
+    /// (`CropSettings.angleResolution`); the controls step by whole degrees.
     public func setCropAngle(_ angle: Double) {
         recipe.crop.angle = angle
         reconstrainCrop()

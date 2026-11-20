@@ -59,5 +59,6 @@ real scanner.
 | Return (crop) | Done |
 | Space (held) | Hand, temporarily |
 | Option-click (zoom tool) | Zoom out |
+| ⌥⌘1 / ⌥⌘2 / ⌥⌘3 | Prepare / Scan / Output tab (shows the panel if hidden) |
 | ⌥⌘P | Hide / show the settings panel |
 | ⌃⌘F | Full screen |
