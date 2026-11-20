@@ -34,14 +34,14 @@ Cette page suit le chemin complet, du branchement au fichier enregistré.
 
 ## 4. Mettre le film dans le porte-film {#holder}
 
-État du X1 : **allumé**.
+État du X1 : **allumé**. FlexColor : **fermé**.
 
 - Placez le film dans le porte-film, puis le porte-film dans le X1.
 - Dans le panneau, onglet Préparer, choisissez le [film et le porte-film](prepare.md#original).
 
 ## 5. Faire un aperçu {#preview}
 
-État du X1 : **allumé**, porte-film en place.
+État du X1 : **allumé**, porte-film en place. FlexColor : **fermé**.
 
 - Cliquez sur « Aperçu » en bas du panneau, ou choisissez Scanner › Aperçu (⌘R).
 - L’image se construit ligne par ligne.
@@ -58,7 +58,7 @@ Cette page suit le chemin complet, du branchement au fichier enregistré.
 
 ## 7. Numériser {#scan}
 
-État du X1 : **allumé**, rien n’a bougé depuis l’aperçu.
+État du X1 : **allumé**, rien n’a bougé depuis l’aperçu. FlexColor : **fermé**.
 
 - Choisissez d’abord un [dossier d’export](output.md#folder) : la numérisation y est enregistrée.
 - Cliquez sur « Numériser » en bas du panneau.

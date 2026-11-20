@@ -28,7 +28,7 @@ Le volet « Détails » d’un message contient le texte technique. « Copier le
 ### Le X1 n’a pas pu être lu {#scanner-read-failed}
 
 - La lecture n’envoie que des demandes d’information. Elle ne fait rien bouger.
-- Un redémarrage du X1 suffit souvent.
+- Éteignez puis rallumez le X1, puis réessayez.
 - Si le problème revient, le volet « Détails » donne le code à joindre à un rapport.
 
 ### Le X1 ne répond plus {#disconnected}
@@ -67,12 +67,12 @@ Après un arrêt par un garde-fou, éteignez puis rallumez le X1 avant de recomm
 ### État inattendu {#unexpected-state}
 
 - Pendant une séquence, le scanner annonce régulièrement son état. Un état imprévu arrête la séquence.
-- Un porte-film mal engagé peut en être la cause.
+- L’état seul ne dit pas la cause. Le volet « Détails » donne l’état reçu.
 
 ### Attente trop longue {#state-timeout}
 
 - Le scanner devait atteindre un état dans un délai donné. Il ne l’a pas atteint.
-- Vérifiez que rien ne gêne le mouvement du porte-film.
+- Si le porte-film a pu bouger, vérifiez qu’il est bien engagé.
 
 ### Position inattendue {#position-out-of-tolerance}
 

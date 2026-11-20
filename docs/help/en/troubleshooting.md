@@ -28,7 +28,7 @@ The “Details” part of a message holds the technical text. “Copy Details”
 ### The X1 could not be read {#scanner-read-failed}
 
 - Reading only sends requests for information. Nothing moves.
-- Restarting the X1 is often enough.
+- Switch the X1 off and on, then try again.
 - If it happens again, the “Details” part gives the code to add to a report.
 
 ### The X1 no longer answers {#disconnected}
@@ -67,12 +67,12 @@ After a stop by a safety check, switch the X1 off and on again before starting a
 ### Unexpected state {#unexpected-state}
 
 - During a sequence, the scanner reports its state regularly. An unexpected state stops the sequence.
-- A holder not fully in can cause it.
+- The cause is not known from the state alone. The “Details” part gives the state received.
 
 ### Waited too long {#state-timeout}
 
 - The scanner had to reach a state within a time limit. It did not.
-- Check that nothing hinders the holder’s movement.
+- If the holder may have moved, check that it is fully in.
 
 ### Unexpected position {#position-out-of-tolerance}
 

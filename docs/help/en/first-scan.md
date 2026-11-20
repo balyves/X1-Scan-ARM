@@ -34,14 +34,14 @@ X1: **on**. FlexColor must be **closed**: only one program can open the scanner.
 
 ## 4. Put the film in the holder {#holder}
 
-X1: **on**.
+X1: **on**. FlexColor: **closed**.
 
 - Put the film in the holder, and the holder in the X1.
 - In the panel, Prepare tab, choose the [film and the holder](prepare.md#original).
 
 ## 5. Run a preview {#preview}
 
-X1: **on**, holder in place.
+X1: **on**, holder in place. FlexColor: **closed**.
 
 - Click “Preview” at the bottom of the panel, or choose Scanner › Preview (⌘R).
 - The image builds up line by line.
@@ -58,7 +58,7 @@ X1: **either** (nothing is sent to the scanner).
 
 ## 7. Scan {#scan}
 
-X1: **on**, nothing moved since the preview.
+X1: **on**, nothing moved since the preview. FlexColor: **closed**.
 
 - First choose an [export folder](output.md#folder): the scan is saved there.
 - Click “Scan” at the bottom of the panel.

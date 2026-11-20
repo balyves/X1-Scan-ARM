@@ -6074,13 +6074,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Check that the holder is fully in and that nothing blocks it."
+            "value": "If the holder may have moved, check that it is fully in."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Vérifiez que le porte-film est bien engagé et que rien ne le bloque."
+            "value": "Si le porte-film a pu bouger, vérifiez qu’il est bien engagé."
           }
         }
       }
