@@ -263,7 +263,7 @@ private struct OutputSection: View {
                 Task { await model.export() }
             }
                 .disabled(!model.toolbar.canExport)
-                .help(Strings.exportHelp)
+                .help(Strings.tooltip(.export))
         }
         switch model.lastExport {
         case .success(let url):
@@ -311,9 +311,7 @@ private struct ActionButtons: View {
                 }
                 .tint(toolbar.stopIsProminent ? .red : nil)
                 .disabled(toolbar.isStopping)
-                .help(model.session.kind == .scan
-                      ? String(localized: "Stop the scan (⌘. or Esc)", comment: "Tooltip")
-                      : String(localized: "Stop the preview (⌘. or Esc)", comment: "Tooltip"))
+                .help(Strings.tooltip(model.session.kind == .scan ? .stopScan : .stopPreview))
             } else {
                 Button {
                     // Through the window: on the real X1 it asks for the confirmation first.
@@ -325,8 +323,7 @@ private struct ActionButtons: View {
                 .tint(toolbar.canPreview ? nil : .gray)  // a disabled prominent button stays tinted in dark mode
                 .help(toolbar.previewBlock.map(Strings.previewBlockShort)
                       ?? (toolbar.previewNeedsConfirmation
-                          ? String(localized: "Run FlexColor's captured preview on the real X1 (⌘R)", comment: "Tooltip")
-                          : String(localized: "Run a preview on the virtual X1 (⌘R)", comment: "Tooltip")))
+                          ? Strings.tooltip(.previewReal) : Strings.tooltip(.previewVirtual)))
             }
             Button {
                 NSApp.sendAction(#selector(MainWindowController.startScan(_:)), to: nil, from: nil)

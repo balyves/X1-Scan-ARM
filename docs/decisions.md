@@ -1384,7 +1384,12 @@ the interface only: nothing sent to the scanner changes.
   user's decision). The pipettes and the densitometer come with lot 3.
 - **Tooltips** (a rule for every lot from now on): every control of the
   panel, every tab and every tool has a native one-sentence tooltip, in
-  English and French. Detailed help (⌥ + hover) comes later.
+  English and French. Detailed help (⌥ + hover) comes later. A function
+  with a keyboard shortcut ends its tooltip with the shortcut in
+  parentheses, in Mac symbols ("Crop: … (C)", "Scan Tab (⌥⌘2)"; user's
+  decision after the push of lot 1b), taken from the source the menus and
+  the key handling use (`AppShortcut`), never copied by hand; a test checks
+  that every shortcut is mentioned and that no translation copies one.
 - **Not in this lot**: the RGB values under the pointer in the
   Information area come with the pipettes and the densitometer, in lot 3
   (user's decision after the tests of lot 1b); nothing is shown for them

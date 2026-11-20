@@ -24,7 +24,7 @@ struct FramingSection: View {
         CompactSliderRow(value: Binding { model.recipe.crop.angle } set: { model.setCropAngle($0) },
                          format: Self.angleFormat,
                          texts: Strings.sliderRow(label: Strings.cropAngle, unit: "°", format: Self.angleFormat,
-                                                  help: Strings.angleHelp))
+                                                  help: Strings.tooltip(.angle)))
             // An angle typed and confirmed with Return: back to the image, so that X, ← → and
             // Return act on the frame again at once (as after the zoom field).
             .onSubmit { if model.tools.showsCropOptions { NSApp.keyWindow?.focusImageCanvas() } }
@@ -102,7 +102,7 @@ struct FramingSection: View {
                         upright: (model.cropRatio ?? model.cropFrameInDocument.map { $0.width / $0.height } ?? 1) < 1)
                 }
                 .buttonStyle(.borderless)
-                .help(Strings.withShortcut(Strings.cropSwap, "X"))
+                .help(Strings.tooltip(.swapProportions))
                 .accessibilityLabel(Strings.cropSwap)
                 .accessibilityValue(model.recipe.crop.portrait ? Strings.cropSwapped : Strings.cropAsNamed)
                 Toggle(isOn: Binding { model.recipe.crop.locked } set: { model.setCropLocked($0) }) {
@@ -170,14 +170,14 @@ struct FramingSection: View {
     private var straightenRow: some View {
         let label = Strings.cropStraighten
         let ruleSelected = model.tools.selected == .straighten
-        return CompactControlRow(label, help: Strings.straightenRowHelp) {
+        return CompactControlRow(label, help: Strings.tooltip(.straightenRow)) {
             HStack(spacing: CompactPanelMetrics.columnSpacing) {
                 Button(Strings.cropRule) {
                     model.tools.selected = ruleSelected ? .crop : .straighten
                 }
                 .tint(ruleSelected ? .accentColor : nil)
                 .buttonStyle(.bordered)
-                .help(Strings.withShortcut(Strings.cropRuleHelp, "R"))
+                .help(Strings.tooltip(.ruleButton))
                 .accessibilityLabel(Strings.toolName(.straighten))
                 .accessibilityAddTraits(ruleSelected ? .isSelected : [])
                 // Detection of the frame's edges on the film comes in a later lot.
@@ -201,12 +201,12 @@ struct FramingHeaderButtons: View {
         Button { reset() } label: { Image(systemName: "arrow.counterclockwise") }
             .buttonStyle(.bordered)
             .disabled(model.framingIsReset)
-            .help(Strings.framingResetHelp)
+            .help(Strings.tooltip(.reset))
             .accessibilityLabel(Strings.framingReset)
         if model.tools.showsCropOptions {
             Button(Strings.cropDone) { model.finishCrop() }
                 .buttonStyle(.borderedProminent)
-                .help(Strings.cropDoneHelp)
+                .help(Strings.tooltip(.done))
         }
     }
 
@@ -234,11 +234,14 @@ private struct OrientationRow: View {
                     .accessibilityLabel(label)
                     .accessibilityValue(Strings.orientationDescription(orientation))
                     .padding(.trailing, CompactPanelMetrics.groupSpacing - CompactPanelMetrics.columnSpacing)
-                button("rotate.left", Strings.withShortcut(Strings.rotateCounterclockwise, "⌘[")) {
+                button("rotate.left", Strings.rotateCounterclockwise, help: Strings.tooltip(.rotateCounterclockwise)) {
                     model.rotateCounterclockwise()
                 }
-                button("rotate.right", Strings.withShortcut(Strings.rotateClockwise, "⌘]")) { model.rotateClockwise() }
-                button("arrow.left.and.right.righttriangle.left.righttriangle.right", Strings.mirrorHorizontally) {
+                button("rotate.right", Strings.rotateClockwise, help: Strings.tooltip(.rotateClockwise)) {
+                    model.rotateClockwise()
+                }
+                button("arrow.left.and.right.righttriangle.left.righttriangle.right", Strings.mirrorHorizontally,
+                       help: Strings.mirrorHorizontally) {
                     model.mirrorHorizontally()
                 }
             }
@@ -246,7 +249,8 @@ private struct OrientationRow: View {
         }
     }
 
-    private func button(_ symbol: String, _ help: String, action: @escaping () -> Void) -> some View {
+    /// `label` for VoiceOver, `help` (with the shortcut) for the tooltip.
+    private func button(_ symbol: String, _ label: String, help: String, action: @escaping () -> Void) -> some View {
         Button {
             action()
             // VoiceOver hears the new state without going to the glyph.
@@ -255,7 +259,7 @@ private struct OrientationRow: View {
             Image(systemName: symbol)
         }
         .help(help)
-        .accessibilityLabel(help)
+        .accessibilityLabel(label)
     }
 }
 

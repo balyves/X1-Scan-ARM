@@ -1,23 +1,6 @@
 {
   "sourceLanguage": "en",
   "strings": {
-    "%@ (%@)": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@ (%2$@)"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@ (%2$@)"
-          }
-        }
-      }
-    },
     "%@ inches": {
       "comment": "VoiceOver: an opening in inches, e.g. “2.24 × 2.76 inches”",
       "extractionState": "manual",
@@ -84,20 +67,20 @@
         }
       }
     },
-    "Click: show or hide (⌘') · Right click: kind, colour, opacity": {
-      "comment": "Tooltip of the Grid button of the tool column",
+    "Click: show or hide · Right click: kind, colour, opacity": {
+      "comment": "Tooltip of the Grid button of the tool column; the app adds its shortcut in parentheses",
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Click: show or hide (⌘') · Right click: kind, colour, opacity"
+            "value": "Click: show or hide · Right click: kind, colour, opacity"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Clic : afficher ou masquer (⌘') · Clic droit : type, couleur, opacité"
+            "value": "Clic : afficher ou masquer · Clic droit : type, couleur, opacité"
           }
         }
       }
@@ -150,38 +133,20 @@
         }
       }
     },
-    "Corrections of the image": {
-      "comment": "Tooltip of the Develop tab (not shown yet)",
+    "Crop: draw and adjust the frame, in Prepare › Framing": {
+      "comment": "Tooltip of the Crop tool; the app adds its shortcut in parentheses",
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Corrections of the image"
+            "value": "Crop: draw and adjust the frame, in Prepare › Framing"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Corrections de l’image"
-          }
-        }
-      }
-    },
-    "Crop: draw and adjust the frame, in Prepare › Framing (C)": {
-      "comment": "Tooltip of the Crop tool",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Crop: draw and adjust the frame, in Prepare › Framing (C)"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Recadrage : tracer et ajuster le cadre, dans Préparer › Cadrage (C)"
+            "value": "Recadrage : tracer et ajuster le cadre, dans Préparer › Cadrage"
           }
         }
       }
@@ -200,6 +165,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "Onglet Développer"
+          }
+        }
+      }
+    },
+    "Export the image shown, turned, straightened and cropped, with its recipe. A saved scan is never replaced: its versions are named _v1, _v2…": {
+      "comment": "Tooltip of the panel's Export button; the app adds its shortcut in parentheses",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export the image shown, turned, straightened and cropped, with its recipe. A saved scan is never replaced: its versions are named _v1, _v2…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exporter l’image affichée, tournée, redressée et recadrée, avec sa recette. Un scan enregistré n’est jamais remplacé : ses versions sont nommées _v1, _v2…"
           }
         }
       }
@@ -258,20 +241,20 @@
         }
       }
     },
-    "Fine rotation of the image in degrees; ← → in crop mode, ⇧ by multiples of 5°.": {
-      "comment": "Tooltip of the Angle slider and field of the Framing section",
+    "Fine rotation of the image in degrees; in crop mode the arrows go to the next whole degree, to the next multiple of 5° with Shift": {
+      "comment": "Tooltip of the Angle slider and field; the app adds the arrow keys in parentheses",
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Fine rotation of the image in degrees; ← → in crop mode, ⇧ by multiples of 5°."
+            "value": "Fine rotation of the image in degrees; in crop mode the arrows go to the next whole degree, to the next multiple of 5° with Shift"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Rotation fine de l’image en degrés ; ← → en mode Recadrage, ⇧ par multiples de 5°."
+            "value": "Rotation fine de l’image en degrés ; en mode Recadrage, les flèches vont au degré entier suivant, au multiple de 5° suivant avec Maj"
           }
         }
       }
@@ -330,20 +313,20 @@
         }
       }
     },
-    "Hand: move the image (H, or hold Space)": {
-      "comment": "Tooltip of the Hand tool",
+    "Hand: move the image; the space bar held gives it for a moment": {
+      "comment": "Tooltip of the Hand tool; the app adds its shortcuts (H, the space bar) in parentheses",
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Hand: move the image (H, or hold Space)"
+            "value": "Hand: move the image; the space bar held gives it for a moment"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Main : déplacer l’image (H, ou maintenir Espace)"
+            "value": "Main : déplacer l’image ; la barre d’espace maintenue la donne un instant"
           }
         }
       }
@@ -765,6 +748,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "Initialisation"
+          }
+        }
+      }
+    },
+    "Keep the changes and go back to the previous tool, or cancel them": {
+      "comment": "Tooltip of the Done button of the Framing section; the app adds its shortcuts (Return, then Esc for cancel) in parentheses",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep the changes and go back to the previous tool, or cancel them"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Garder les changements et revenir à l’outil précédent, ou les annuler"
           }
         }
       }
@@ -1299,20 +1300,20 @@
         }
       }
     },
-    "Reset the orientation, proportions, angle and frame to the original (⌘Z undoes it)": {
-      "comment": "Tooltip of the Reset button of the Framing section",
+    "Reset the orientation, proportions, angle and frame to the original; Edit › Undo cancels it": {
+      "comment": "Tooltip of the Reset button of the Framing section; the app adds Undo's shortcut in parentheses",
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Reset the orientation, proportions, angle and frame to the original (⌘Z undoes it)"
+            "value": "Reset the orientation, proportions, angle and frame to the original; Edit › Undo cancels it"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Remettre l’orientation, les proportions, l’angle et le cadre à l’état d’origine (⌘Z l’annule)"
+            "value": "Remettre l’orientation, les proportions, l’angle et le cadre à l’état d’origine ; réversible par Édition › Annuler"
           }
         }
       }
@@ -1364,13 +1365,38 @@
         }
       }
     },
-    "Run a preview on the virtual X1 (⌘R)": {
+    "Run a preview on the virtual X1": {
+      "comment": "Tooltip of the Preview button; the app adds its shortcut in parentheses",
       "extractionState": "manual",
       "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Run a preview on the virtual X1"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Lancer un aperçu sur le X1 virtuel (⌘R)"
+            "value": "Lancer un aperçu sur le X1 virtuel"
+          }
+        }
+      }
+    },
+    "Run FlexColor's captured preview on the real X1": {
+      "comment": "Tooltip of the Preview button (real X1); the app adds its shortcut in parentheses",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Run FlexColor's captured preview on the real X1"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lancer l’aperçu capturé de FlexColor sur le X1 réel"
           }
         }
       }
@@ -1586,13 +1612,38 @@
         }
       }
     },
-    "Stop the preview (⌘. or Esc)": {
+    "Stop the preview": {
+      "comment": "Tooltip of the Stop button; the app adds its shortcuts in parentheses",
       "extractionState": "manual",
       "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop the preview"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Arrêter l’aperçu (⌘. ou Échap)"
+            "value": "Arrêter l’aperçu"
+          }
+        }
+      }
+    },
+    "Stop the scan": {
+      "comment": "Tooltip of the Stop button during a scan; the app adds its shortcuts in parentheses",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop the scan"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêter la numérisation"
           }
         }
       }
@@ -1608,38 +1659,38 @@
         }
       }
     },
-    "Straighten the image with the rule (R); from the frame's edges in a later version.": {
-      "comment": "Tooltip of the Straighten label of the Framing section",
+    "Straighten the image with the rule, or from the frame's edges in a later version": {
+      "comment": "Tooltip of the Straighten label of the Framing section; the app adds the rule's shortcut in parentheses",
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Straighten the image with the rule (R); from the frame's edges in a later version."
+            "value": "Straighten the image with the rule, or from the frame's edges in a later version"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Redresser l’image avec la règle (R) ; à partir des bords de la vue dans une version ultérieure."
+            "value": "Redresser l’image avec la règle, ou à partir des bords de la vue dans une version ultérieure"
           }
         }
       }
     },
-    "Straightening Rule: draw a line along what should be horizontal or vertical (R)": {
-      "comment": "Tooltip of the Straightening Rule tool",
+    "Straightening Rule: draw a line along what should be horizontal or vertical": {
+      "comment": "Tooltip of the Straightening Rule tool; the app adds its shortcut in parentheses",
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Straightening Rule: draw a line along what should be horizontal or vertical (R)"
+            "value": "Straightening Rule: draw a line along what should be horizontal or vertical"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Règle de redressement : tracer une ligne le long de ce qui doit être horizontal ou vertical (R)"
+            "value": "Règle de redressement : tracer une ligne le long de ce qui doit être horizontal ou vertical"
           }
         }
       }
@@ -2538,20 +2589,20 @@
         }
       }
     },
-    "Zoom: click to zoom in, ⌥-click to zoom out (Z)": {
-      "comment": "Tooltip of the Zoom tool (magnifier)",
+    "Zoom: click to zoom in, ⌥-click to zoom out": {
+      "comment": "Tooltip of the Zoom tool (magnifier); the app adds its shortcut in parentheses",
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Zoom: click to zoom in, ⌥-click to zoom out (Z)"
+            "value": "Zoom: click to zoom in, ⌥-click to zoom out"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Loupe : clic pour agrandir, ⌥-clic pour réduire (Z)"
+            "value": "Loupe : clic pour agrandir, ⌥-clic pour réduire"
           }
         }
       }
@@ -3087,17 +3138,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Lancer l'aperçu"
-          }
-        }
-      }
-    },
-    "Run FlexColor's captured preview on the real X1 (⌘R)": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lancer l'aperçu capturé de FlexColor sur le X1 réel (⌘R)"
           }
         }
       }
@@ -3841,18 +3881,6 @@
         }
       }
     },
-    "Stop the scan (⌘. or Esc)": {
-      "comment": "Tooltip",
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Arrêter la numérisation (⌘. ou Échap)"
-          }
-        }
-      }
-    },
     "The scan needs an X1 that has already been used: switch the X1 off and on, then run a complete real preview. Only reads and the session start were sent: no window, mode, exposure, image read or scan.": {
       "comment": "Real scan stopped: the X1 was not in the state the scan needs",
       "extractionState": "manual",
@@ -4375,24 +4403,6 @@
         }
       }
     },
-    "Export the image shown, turned, straightened and cropped, with its recipe (⇧⌘E). A saved scan is never replaced: its versions are named _v1, _v2…": {
-      "comment": "Tooltip of the panel's Export button",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Export the image shown, turned, straightened and cropped, with its recipe (⇧⌘E). A saved scan is never replaced: its versions are named _v1, _v2…"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Exporte l'image affichée, tournée, redressée et recadrée, avec sa recette (⇧⌘E). Un scan enregistré n'est jamais remplacé : ses versions sont nommées _v1, _v2…"
-          }
-        }
-      }
-    },
     "tool.straighten": {
       "comment": "Tool: draw a line along what should be horizontal or vertical",
       "extractionState": "manual",
@@ -4664,7 +4674,7 @@
       }
     },
     "Draw a line along what should be horizontal or vertical": {
-      "comment": "Tooltip of the Straightening Rule button",
+      "comment": "Tooltip of the Straightening Rule button; the app adds its shortcut in parentheses",
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -4676,7 +4686,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tirer un trait le long de ce qui devrait être horizontal ou vertical"
+            "value": "Tracer une ligne le long de ce qui doit être horizontal ou vertical"
           }
         }
       }
@@ -5001,24 +5011,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sur l'aperçu : pixels écrêtés en rouge, pixels proches du plancher de bruit en violet. Affichage seulement."
-          }
-        }
-      }
-    },
-    "Keep the changes and go back to the previous tool (↩); Esc cancels them": {
-      "comment": "Help of the Done button of the crop options",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Keep the changes and go back to the previous tool (↩); Esc cancels them"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Garder les changements et revenir à l’outil précédent (↩) ; Échap les annule"
           }
         }
       }

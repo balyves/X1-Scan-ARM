@@ -338,24 +338,6 @@ enum Strings {
         }
     }
 
-    /// Tooltip of a tab, without its shortcut (composed from the tab's place, as the menu's).
-    static func panelTabHelp(_ tab: PanelTab) -> String {
-        switch tab {
-        case .prepare: String(localized: "Film, holder, orientation and framing",
-                              comment: "Tooltip of the Prepare tab of the settings panel")
-        case .scan: String(localized: "Resolution, scale and sizes of the scan",
-                           comment: "Tooltip of the Scan tab of the settings panel")
-        case .develop: String(localized: "Corrections of the image", comment: "Tooltip of the Develop tab (not shown yet)")
-        case .output: String(localized: "Format, name and folder of the exported file",
-                             comment: "Tooltip of the Output tab of the settings panel")
-        }
-    }
-
-    /// Shortcut of a visible tab: ⌥⌘1, ⌥⌘2…, in the tab bar's order (the View menu's too).
-    static func panelTabShortcut(_ tab: PanelTab) -> String? {
-        PanelTab.visible.firstIndex(of: tab).map { "⌥⌘\($0 + 1)" }
-    }
-
     /// View menu: "Prepare Tab".
     static func panelTabMenuItem(_ tab: PanelTab) -> String {
         switch tab {
@@ -466,17 +448,9 @@ enum Strings {
         String(localized: "Size of the output relative to the input, in percent; saved, applied in a later step.",
                comment: "Tooltip of the Scale slider and field of the settings panel")
     }
-    static var angleHelp: String {
-        String(localized: "Fine rotation of the image in degrees; ← → in crop mode, ⇧ by multiples of 5°.",
-               comment: "Tooltip of the Angle slider and field of the Framing section")
-    }
     static var orientationHelp: String {
         String(localized: "Quarter turns and mirror of the image, for the display and the export.",
                comment: "Tooltip of the Orientation label of the Framing section")
-    }
-    static var straightenRowHelp: String {
-        String(localized: "Straighten the image with the rule (R); from the frame's edges in a later version.",
-               comment: "Tooltip of the Straighten label of the Framing section")
     }
     static var gridTintHelp: String {
         String(localized: "Colour and opacity of the grid lines; display only.", comment: "Tooltip of the Tint label of the Framing section")
@@ -510,21 +484,7 @@ enum Strings {
     static var logarithmicHelp: String {
         String(localized: "Logarithmic scale: shows small counts next to large peaks.", comment: "Tooltip of the histogram's Logarithmic checkbox")
     }
-    static var gridButtonHelp: String {
-        String(localized: "Click: show or hide (⌘') · Right click: kind, colour, opacity",
-               comment: "Tooltip of the Grid button of the tool column")
-    }
 
-    /// Tooltip of a tool of the column, with its key.
-    static func toolHelp(_ tool: Tool) -> String {
-        switch tool {
-        case .hand: String(localized: "Hand: move the image (H, or hold Space)", comment: "Tooltip of the Hand tool")
-        case .zoom: String(localized: "Zoom: click to zoom in, ⌥-click to zoom out (Z)", comment: "Tooltip of the Zoom tool (magnifier)")
-        case .crop: String(localized: "Crop: draw and adjust the frame, in Prepare › Framing (C)", comment: "Tooltip of the Crop tool")
-        case .straighten: String(localized: "Straightening Rule: draw a line along what should be horizontal or vertical (R)",
-                                 comment: "Tooltip of the Straightening Rule tool")
-        }
-    }
 
     // MARK: Framing: crop and straighten (lot 1, lot 1b)
 
@@ -536,20 +496,18 @@ enum Strings {
     }
 
     static var cropDone: String { String(localized: "Done", comment: "Button: leave the crop tool") }
-    static var cropDoneHelp: String {
-        String(localized: "Keep the changes and go back to the previous tool (↩); Esc cancels them",
-               comment: "Help of the Done button of the crop options")
-    }
     static var framingReset: String {
         String(localized: "Reset Framing", comment: "VoiceOver label of the Reset button (icon) of the Framing section: orientation, proportions, angle and frame back to the original")
     }
+    /// A tooltip with its shortcuts at the end, from the shortcuts' own source
+    /// (`ShortcutTooltip`, `AppShortcut`): "Crop: … (C)" (user's decision after lot 1b).
+    static func tooltip(_ tooltip: ShortcutTooltip) -> String {
+        tooltip.text(Bundle.main.localizedString(forKey: tooltip.key, value: tooltip.key, table: "Localizable"))
+    }
+
     /// Name of the action in Edit > Undo / Redo (a noun: "Undo Framing Reset").
     static var framingResetAction: String {
         String(localized: "Framing Reset", comment: "Undo action name, after Undo / Redo in the Edit menu (a noun)")
-    }
-    static var framingResetHelp: String {
-        String(localized: "Reset the orientation, proportions, angle and frame to the original (⌘Z undoes it)",
-               comment: "Tooltip of the Reset button of the Framing section")
     }
     static var cropProportions: String { String(localized: "Proportions", comment: "Crop options label: aspect ratio") }
     static var cropProportionsHelp: String {
@@ -571,9 +529,6 @@ enum Strings {
     }
     static var cropAngle: String { String(localized: "Angle", comment: "Crop options label: fine rotation") }
     static var cropStraighten: String { String(localized: "Straighten", comment: "Crop options label") }
-    static var cropRuleHelp: String {
-        String(localized: "Draw a line along what should be horizontal or vertical", comment: "Tooltip of the Straightening Rule button")
-    }
     static var cropRule: String { String(localized: "crop.rule", defaultValue: "Rule", comment: "Crop options button: the straightening rule (short)") }
     static var cropAutoEdges: String { String(localized: "Auto (Edges)", comment: "Crop options button, not available yet") }
     static var cropAutoEdgesHelp: String {
@@ -588,10 +543,6 @@ enum Strings {
     }
     static var cropConstrainHelp: String {
         String(localized: "Keeps the frame entirely inside the turned image, with no empty corners.", comment: "Tooltip of the constrain checkbox")
-    }
-    static var exportHelp: String {
-        String(localized: "Export the image shown, turned, straightened and cropped, with its recipe (⇧⌘E). A saved scan is never replaced: its versions are named _v1, _v2…",
-               comment: "Tooltip of the panel's Export button")
     }
     static var ok: String { String(localized: "OK", comment: "Button") }
     static var cancel: String { String(localized: "Cancel", comment: "Button") }
@@ -657,10 +608,6 @@ enum Strings {
         }
     }
 
-    /// A tooltip with its shortcut: "Rotate 90° Clockwise (⌘])".
-    static func withShortcut(_ title: String, _ shortcut: String) -> String {
-        String(localized: "\(title) (\(shortcut))", comment: "Tooltip: an action and its keyboard shortcut")
-    }
 
     /// VoiceOver description of the orientation, e.g. "Turned 90° clockwise, mirrored".
     static func orientationDescription(_ orientation: Orientation) -> String {

@@ -435,19 +435,21 @@ final class ImageCanvasView: NSView {
     /// handles Space, the arrows, Return and Esc.
     override func keyDown(with event: NSEvent) {
         guard event.modifierFlags.intersection([.command, .control, .option]).isEmpty,
-              let characters = event.charactersIgnoringModifiers, let first = characters.first else {
+              let characters = event.charactersIgnoringModifiers, !characters.isEmpty else {
             super.keyDown(with: event)
             return
         }
         let cropping = model.tools.showsCropOptions
-        if first == " " {
+        if KeyShortcut.Key.space.keyCodes.contains(event.keyCode) {
             if !event.isARepeat { model.tools.spaceHeld = true }
-        } else if cropping, event.keyCode == 123 || event.keyCode == 124 {  // ← →: the next whole degree (⇧: the next multiple of 5°)
+        } else if cropping, KeyShortcut.Key.leftRight.keyCodes.contains(event.keyCode) {
+            // ← →: the next whole degree (⇧: the next multiple of 5°).
             let step = event.modifierFlags.contains(.shift) ? CropSettings.angleLargeStep : CropSettings.angleStep
-            model.setCropAngle(CropSettings.nudgedAngle(model.recipe.crop.angle, by: event.keyCode == 124 ? step : -step))
-        } else if cropping, event.keyCode == 36 || event.keyCode == 76 {  // Return: Done
+            model.setCropAngle(CropSettings.nudgedAngle(model.recipe.crop.angle,
+                                                     by: event.keyCode == KeyShortcut.Key.rightArrowKeyCode ? step : -step))
+        } else if cropping, KeyShortcut.Key.returnKey.keyCodes.contains(event.keyCode) {  // Return: Done
             model.finishCrop()
-        } else if event.keyCode == 53 {  // Esc: stop a preview or scan first; in crop mode, cancel its changes
+        } else if KeyShortcut.Key.escape.keyCodes.contains(event.keyCode) {  // Esc: stop a preview or scan first; in crop mode, cancel its changes
             model.escape()
         } else {
             super.keyDown(with: event)
@@ -455,7 +457,7 @@ final class ImageCanvasView: NSView {
     }
 
     override func keyUp(with event: NSEvent) {
-        if event.charactersIgnoringModifiers == " " {
+        if KeyShortcut.Key.space.keyCodes.contains(event.keyCode) {
             model.tools.spaceHeld = false
         } else {
             super.keyUp(with: event)

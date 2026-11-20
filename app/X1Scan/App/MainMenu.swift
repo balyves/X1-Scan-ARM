@@ -37,6 +37,19 @@ enum MainMenu {
         return item
     }
 
+    /// An item whose shortcut comes from `AppShortcut`, the source the tooltips use too.
+    private static func item(_ title: String, _ action: Selector?, shortcut: AppShortcut) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: action, keyEquivalent: shortcut.shortcut?.keyEquivalent ?? "")
+        var mask: NSEvent.ModifierFlags = []
+        let modifiers = shortcut.shortcut?.modifiers ?? []
+        if modifiers.contains(.control) { mask.insert(.control) }
+        if modifiers.contains(.option) { mask.insert(.option) }
+        if modifiers.contains(.shift) { mask.insert(.shift) }
+        if modifiers.contains(.command) { mask.insert(.command) }
+        item.keyEquivalentModifierMask = mask
+        return item
+    }
+
     private static func appMenu() -> NSMenu {
         let name = ProcessInfo.processInfo.processName
         let menu = NSMenu(title: name)
@@ -63,7 +76,7 @@ enum MainMenu {
     private static func fileMenu() -> NSMenu {
         let menu = NSMenu(title: String(localized: "File", comment: "Menu"))
         menu.addItem(item(String(localized: "Export…", comment: "Menu item"),
-                          #selector(MainWindowController.exportImage(_:)), "e", [.command, .shift]))
+                          #selector(MainWindowController.exportImage(_:)), shortcut: .export))
         menu.addItem(item(String(localized: "Choose Export Folder…", comment: "Menu item"),
                           #selector(MainWindowController.chooseExportFolder(_:))))
         menu.addItem(.separator())
@@ -73,7 +86,7 @@ enum MainMenu {
 
     private static func editMenu() -> NSMenu {
         let menu = NSMenu(title: String(localized: "Edit", comment: "Menu"))
-        menu.addItem(item(String(localized: "Undo", comment: "Menu item"), Selector(("undo:")), "z"))
+        menu.addItem(item(String(localized: "Undo", comment: "Menu item"), Selector(("undo:")), shortcut: .undo))
         menu.addItem(item(String(localized: "Redo", comment: "Menu item"), Selector(("redo:")), "z", [.command, .shift]))
         menu.addItem(.separator())
         menu.addItem(item(String(localized: "Cut", comment: "Menu item"), #selector(NSText.cut(_:)), "x"))
@@ -115,10 +128,10 @@ enum MainMenu {
         tools.addItem(item(Strings.toolName(.straighten), #selector(MainWindowController.selectStraightenTool(_:))))
         menu.addItem(submenu(tools))
         menu.addItem(.separator())
-        // The panel's tabs (lot 1b): ⌥⌘1, ⌥⌘2…, in the tab bar's order (⌘0 and ⌘1 stay with the zoom).
-        for (index, tab) in PanelTab.visible.enumerated() {
+        // The panel's tabs (lot 1b): ⌥⌘1, ⌥⌘2…, in the tab bar's order (AppShortcut.panelTab).
+        for tab in PanelTab.visible {
             let tabItem = item(Strings.panelTabMenuItem(tab), #selector(MainWindowController.selectPanelTab(_:)),
-                               String(index + 1), [.command, .option])
+                               shortcut: .panelTab(tab))
             tabItem.representedObject = tab.rawValue
             menu.addItem(tabItem)
         }
@@ -133,12 +146,13 @@ enum MainMenu {
     /// Lot 1: orientation of the image (display and export, never the scan) and the grid (display only).
     private static func imageMenu() -> NSMenu {
         let menu = NSMenu(title: String(localized: "menu.image", defaultValue: "Image", comment: "Menu: orientation of the image and grid"))
-        menu.addItem(item(Strings.rotateCounterclockwise, #selector(MainWindowController.rotateCounterclockwise(_:)), "["))
-        menu.addItem(item(Strings.rotateClockwise, #selector(MainWindowController.rotateClockwise(_:)), "]"))
+        menu.addItem(item(Strings.rotateCounterclockwise, #selector(MainWindowController.rotateCounterclockwise(_:)),
+                          shortcut: .rotateCounterclockwise))
+        menu.addItem(item(Strings.rotateClockwise, #selector(MainWindowController.rotateClockwise(_:)), shortcut: .rotateClockwise))
         menu.addItem(item(Strings.mirrorHorizontally, #selector(MainWindowController.mirrorHorizontally(_:))))
         menu.addItem(.separator())
         // Display only: the grid is never scanned nor exported.
-        menu.addItem(item(Strings.showGrid, #selector(MainWindowController.toggleGrid(_:)), "'"))
+        menu.addItem(item(Strings.showGrid, #selector(MainWindowController.toggleGrid(_:)), shortcut: .toggleGrid))
         for kind in GridKind.allCases {
             let kindItem = item(Strings.gridKind(kind), #selector(MainWindowController.chooseGridKind(_:)))
             kindItem.representedObject = kind.rawValue
@@ -178,9 +192,9 @@ enum MainMenu {
     private static func scannerMenu() -> NSMenu {
         let menu = NSMenu(title: String(localized: "Scanner", comment: "Menu"))
         menu.addItem(item(String(localized: "Preview", comment: "Menu item and toolbar button"),
-                          #selector(MainWindowController.startPreview(_:)), "r"))
+                          #selector(MainWindowController.startPreview(_:)), shortcut: .preview))
         menu.addItem(item(String(localized: "Stop", comment: "Menu item and toolbar button"),
-                          #selector(MainWindowController.stopPreview(_:)), "."))
+                          #selector(MainWindowController.stopPreview(_:)), shortcut: .stop))
         // The source is chosen in Settings > Scanner; Read Identity is in Scanner Information.
         menu.addItem(.separator())
         menu.addItem(item(String(localized: "Scanner Information…", comment: "Menu item"),

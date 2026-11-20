@@ -20,6 +20,7 @@ import X1ScanCore
 ///   -X1ScanTool <tool>           select a tool: hand, zoom, crop, straighten (lot 1)
 ///   -X1ScanAngle <degrees>       fine angle, after the crop demo (lot 1)
 ///   -X1ScanTab <tab>             show a panel tab: prepare, scan, output (lot 1b)
+///   -X1ScanPrintTooltips YES     print every tooltip with a shortcut (in the launch's language), quit
 ///   -X1ScanPanelWidth <points>   panel width (bounded to 280-480; saved like a drag)
 ///   -X1ScanAspect <a>            crop proportions: free, original or W:H, e.g. 24:36
 ///   -X1ScanKeyProbe YES          click the tabs and a field, press C or R after each, print
@@ -37,6 +38,13 @@ import X1ScanCore
 enum DebugSnapshot {
     static func run(window: NSWindow?, model: AppModel) {
         let arguments = UserDefaults.standard
+        if arguments.bool(forKey: "X1ScanPrintTooltips") {
+            for tooltip in ShortcutTooltip.allCases {
+                FileHandle.standardError.write(Data("TOOLTIP \(tooltip.rawValue): \(Strings.tooltip(tooltip))\n".utf8))
+            }
+            NSApp.terminate(nil)
+            return
+        }
         if arguments.bool(forKey: "X1ScanHidePanel"), !model.panel.layout.isHidden { model.panel.toggleHidden() }
         if arguments.bool(forKey: "X1ScanZoomFill") { model.zoomToFill() }
         if arguments.bool(forKey: "X1ScanOpenHistogram"), model.panel.layout.isFolded(.histogram) {

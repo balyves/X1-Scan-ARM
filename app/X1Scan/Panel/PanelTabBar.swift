@@ -20,8 +20,7 @@ struct PanelTabBar: NSViewRepresentable {
         control.setContentHuggingPriority(.defaultLow, for: .horizontal)
         control.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         for (index, tab) in tabs.enumerated() {
-            let help = Strings.panelTabHelp(tab)
-            control.setToolTip(Strings.panelTabShortcut(tab).map { Strings.withShortcut(help, $0) } ?? help, forSegment: index)
+            control.setToolTip(ShortcutTooltip.tab(tab).map(Strings.tooltip), forSegment: index)
         }
         control.setAccessibilityLabel(Strings.panelTabsLabel)
         return control

@@ -37,7 +37,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
             guard let self, let key = self.windowKey(event) else { return event }
             // Held down: one action only; the repeats are swallowed.
             guard !event.isARepeat else { return nil }
-            if key == "x" {
+            if key == Self.swapKey {
                 self.model.toggleCropPortrait()
             } else if let tool = Tool.forKey(key) {
                 self.model.tools.selected = tool
@@ -45,6 +45,12 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
             return nil
         }
     }
+
+    /// X, from `AppShortcut` (the tooltip's source too).
+    private static let swapKey: Character = {
+        guard case .character(let key) = AppShortcut.swapProportions.shortcut?.key else { return "x" }
+        return key
+    }()
 
     /// Single keys handled by the window, whatever has the keyboard focus in
     /// it (a tab, a menu or a checkbox of the panel after a click, the
@@ -60,7 +66,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
               event.modifierFlags.intersection([.command, .control, .option]).isEmpty,
               let characters = event.charactersIgnoringModifiers?.lowercased(), characters.count == 1,
               let key = characters.first else { return nil }
-        guard key == "x" ? model.tools.showsCropOptions : Tool.forKey(key) != nil else { return nil }
+        guard key == Self.swapKey ? model.tools.showsCropOptions : Tool.forKey(key) != nil else { return nil }
         // A text field being edited has the window's field editor (an NSText) as first responder.
         return window.firstResponder is NSText ? nil : key
     }
