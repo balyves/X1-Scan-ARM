@@ -78,20 +78,20 @@ struct SettingsPanelView: View {
     }
 }
 
-/// Framing, with Done and Reset on its title row and a light tint while
-/// cropping (the user's brief of lot 1: a mode, visibly apart from the
-/// settings). Esc (and VoiceOver's escape gesture) cancels the mode.
+/// Framing, with Reset on its title row (always, lot 1b) and Done with a
+/// light tint while cropping (the user's brief of lot 1: a mode, visibly
+/// apart from the settings). Esc (and VoiceOver's escape gesture) cancels
+/// the mode.
 private struct FramingPanelSection: View {
     @Bindable var model: AppModel
 
     var body: some View {
         let cropping = model.tools.showsCropOptions
-        CompactSection(Strings.panelSection(.framing),
-                       summary: cropping ? "" : Strings.panelSummary(.framing, model: model),
+        CompactSection(Strings.panelSection(.framing), summary: Strings.panelSummary(.framing, model: model),
                        foldTexts: Strings.foldTexts, isExpanded: model.panel.expansion(of: .framing)) {
             FramingSection(model: model)
         } accessory: {
-            if cropping { FramingModeButtons(model: model) }
+            FramingHeaderButtons(model: model)
         }
         .background(cropping ? Color.accentColor.opacity(0.07) : Color.clear)
         .accessibilityElement(children: .contain)

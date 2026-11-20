@@ -540,12 +540,16 @@ enum Strings {
         String(localized: "Keep the changes and go back to the previous tool (↩); Esc cancels them",
                comment: "Help of the Done button of the crop options")
     }
-    static var cropReset: String {
-        String(localized: "Reset", comment: "Button (icon) of the crop options: whole image, free proportions, no angle")
+    static var framingReset: String {
+        String(localized: "Reset Framing", comment: "VoiceOver label of the Reset button (icon) of the Framing section: orientation, proportions, angle and frame back to the original")
     }
-    static var cropResetHelp: String {
-        String(localized: "Reset: whole image, free proportions, no fine angle; quarter turns kept (Esc goes back to the state before)",
-               comment: "Help of the Reset button of the crop options")
+    /// Name of the action in Edit > Undo / Redo (a noun: "Undo Framing Reset").
+    static var framingResetAction: String {
+        String(localized: "Framing Reset", comment: "Undo action name, after Undo / Redo in the Edit menu (a noun)")
+    }
+    static var framingResetHelp: String {
+        String(localized: "Reset the orientation, proportions, angle and frame to the original (⌘Z undoes it)",
+               comment: "Tooltip of the Reset button of the Framing section")
     }
     static var cropProportions: String { String(localized: "Proportions", comment: "Crop options label: aspect ratio") }
     static var cropProportionsHelp: String {

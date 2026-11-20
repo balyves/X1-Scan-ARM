@@ -5,9 +5,9 @@ import X1ScanCore
 /// The Framing section (lot 1b), always in the Prepare tab: orientation,
 /// proportions, fine angle, straightening, the crop grid and its tint, the
 /// constraint. Before lot 1b these options appeared at the top of the panel
-/// only while cropping. While the Crop or Straightening Rule tool is
-/// selected (crop mode), the section is lightly tinted and its title row
-/// carries Done and Reset (`FramingModeButtons`).
+/// only while cropping. Its title row carries Reset, and Done in crop mode
+/// (Crop or Straightening Rule tool), when the section is lightly tinted
+/// (`FramingHeaderButtons`).
 struct FramingSection: View {
     @Bindable var model: AppModel
     @State private var customShown = false
@@ -190,21 +190,29 @@ struct FramingSection: View {
     }
 }
 
-/// Done and Reset, on the Framing title row while cropping. Done (Return)
-/// goes back to the tool used before; Reset gives the whole image and no
-/// angle; Esc cancels the changes made since the mode began.
-struct FramingModeButtons: View {
+/// The Framing title row: Reset, always (lot 1b), and Done while cropping.
+/// Reset puts back the orientation, the proportions, the angle and the
+/// frame, and ⌘Z undoes it; Done (Return) goes back to the tool used before;
+/// Esc cancels the changes made since the crop mode began.
+struct FramingHeaderButtons: View {
     @Bindable var model: AppModel
 
     var body: some View {
-        Button { model.resetCrop() } label: { Image(systemName: "arrow.counterclockwise") }
+        Button { reset() } label: { Image(systemName: "arrow.counterclockwise") }
             .buttonStyle(.bordered)
-            .disabled(model.cropIsReset)
-            .help(Strings.cropResetHelp)
-            .accessibilityLabel(Strings.cropReset)
-        Button(Strings.cropDone) { model.finishCrop() }
-            .buttonStyle(.borderedProminent)
-            .help(Strings.cropDoneHelp)
+            .disabled(model.framingIsReset)
+            .help(Strings.framingResetHelp)
+            .accessibilityLabel(Strings.framingReset)
+        if model.tools.showsCropOptions {
+            Button(Strings.cropDone) { model.finishCrop() }
+                .buttonStyle(.borderedProminent)
+                .help(Strings.cropDoneHelp)
+        }
+    }
+
+    /// Reset, undone by Edit > Undo (⌘Z) through the window's undo manager (`AppModel.undoManager`).
+    private func reset() {
+        model.resetFraming(actionName: Strings.framingResetAction)
     }
 }
 

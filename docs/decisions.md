@@ -1352,7 +1352,17 @@ the interface only: nothing sent to the scanner changes.
   is Framing everywhere; the tool keeps its name (Crop, « Recadrage » in
   French). Choosing the Crop tool or the rule (C, R) shows Prepare with
   Framing unfolded; in crop mode the section is lightly tinted and its
-  title row carries Reset and Done (Done, Return and Esc unchanged). The
+  title row carries Done (Done, Return and Esc unchanged). **Reset** (user's
+  decision after the tests of lot 1b) is always on the title row: it puts
+  back the orientation, the proportions, the fine angle and the frame (not
+  turned, free, 0°, the whole image), keeps the lock and the constraint,
+  and Edit > Undo (⌘Z) undoes it (Redo resets again) as long as nothing
+  else has changed the recipe and the image area is the same: a turn, a
+  frame, Esc in crop mode or the scan after the preview removes the Undo,
+  so that ⌘Z never brings back a state left in between or the frame of
+  another image; in crop mode Esc still goes back to the state on entering
+  the mode. This replaces lot 1's Reset, which kept the
+  turns and worked only in crop mode. The
   tool keys H, Z, C, R work wherever the keyboard focus is in the main
   window (a tab or a control of the panel after a click), except while
   text is typed in a field, as X does; a tab clicked with the mouse gives

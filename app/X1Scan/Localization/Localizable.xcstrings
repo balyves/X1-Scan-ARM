@@ -312,6 +312,24 @@
         }
       }
     },
+    "Framing Reset": {
+      "comment": "Undo action name, after Undo / Redo in the Edit menu (a noun)",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Framing Reset"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "la réinitialisation du cadrage"
+          }
+        }
+      }
+    },
     "Hand: move the image (H, or hold Space)": {
       "comment": "Tooltip of the Hand tool",
       "extractionState": "manual",
@@ -1259,6 +1277,42 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rétablir"
+          }
+        }
+      }
+    },
+    "Reset Framing": {
+      "comment": "VoiceOver label of the Reset button (icon) of the Framing section: orientation, proportions, angle and frame back to the original",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset Framing"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réinitialiser le cadrage"
+          }
+        }
+      }
+    },
+    "Reset the orientation, proportions, angle and frame to the original (⌘Z undoes it)": {
+      "comment": "Tooltip of the Reset button of the Framing section",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset the orientation, proportions, angle and frame to the original (⌘Z undoes it)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remettre l’orientation, les proportions, l’angle et le cadre à l’état d’origine (⌘Z l’annule)"
           }
         }
       }
@@ -4951,24 +5005,6 @@
         }
       }
     },
-    "Reset": {
-      "comment": "Button (icon) of the crop options: whole image, free proportions, no angle",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reset"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Réinitialiser"
-          }
-        }
-      }
-    },
     "Keep the changes and go back to the previous tool (↩); Esc cancels them": {
       "comment": "Help of the Done button of the crop options",
       "extractionState": "manual",
@@ -4983,24 +5019,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Garder les changements et revenir à l’outil précédent (↩) ; Échap les annule"
-          }
-        }
-      }
-    },
-    "Reset: whole image, free proportions, no fine angle; quarter turns kept (Esc goes back to the state before)": {
-      "comment": "Help of the Reset button of the crop options",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reset: whole image, free proportions, no fine angle; quarter turns kept (Esc goes back to the state before)"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Réinitialiser : image entière, proportions libres, angle fin nul ; quarts de tour gardés (Échap revient à l’état d’avant)"
           }
         }
       }

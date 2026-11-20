@@ -647,14 +647,11 @@ struct CropModeTests {
         model.setCropAngle(1.5)
         model.tools.selected = .crop  // entering the mode with a frame, an angle and a ratio
         let before = model.recipe
-        #expect(!model.cropIsReset)
-        model.resetCrop()
-        #expect(model.cropIsReset)
+        #expect(!model.framingIsReset)
+        model.resetFraming()
+        #expect(model.framingIsReset)
         model.escape()
         #expect(model.recipe == before && model.tools.selected == .hand)
-        // Reset outside crop mode does nothing.
-        model.resetCrop()
-        #expect(model.recipe == before)
     }
 
     /// Esc stops a running preview first, whatever the tool; the recipe and the mode stay.
@@ -685,27 +682,67 @@ struct CropModeTests {
         #expect(model.tools.selected == .hand && model.recipe.crop.angle == 0)
     }
 
-    @Test func resetGivesTheWholeImageAndNoAngle() async throws {
+    /// Lot 1b (user's decision of 2026-11-20): Reset is always there, and
+    /// also puts back the orientation; the lock and the constraint stay.
+    @Test func resetPutsBackOrientationProportionsAngleAndFrame() async throws {
         let (model, defaults, suite) = try model()
         defer { defaults.removePersistentDomain(forName: suite) }
         model.startPreview()
         await model.session.waitUntilIdle()
         model.refreshImage()
-        model.tools.selected = .crop
+        #expect(model.framingIsReset && !model.resetFraming(), "nothing to reset")
         model.rotateClockwise()
+        model.mirrorHorizontally()
         model.setCropLocked(true)
         model.setCropFrame(documentRect: CGRect(x: 100, y: 100, width: 300, height: 200))
         model.setCropAspect(.ratio(width: 6, height: 7))
         model.setCropAngle(-3)
-        let turns = model.recipe.orientation
-        model.resetCrop()
-        #expect(model.recipe.crop.frame == nil && model.recipe.crop.angle == 0)
-        #expect(model.recipe.crop.aspect == .free && !model.recipe.crop.portrait)
-        #expect(model.cropFrameInDocument == nil)
-        #expect(model.recipe.orientation == turns && model.recipe.crop.locked && model.recipe.crop.constrained)
-        // Esc after Reset: back to the recipe of the mode's start.
-        model.cancelCrop()
-        #expect(model.recipe.crop.frame == nil && model.recipe.crop.angle == 0)
-        #expect(model.recipe.orientation == Orientation())
+        #expect(!model.tools.showsCropOptions, "out of crop mode")
+        #expect(model.resetFraming())
+        #expect(model.recipe.orientation == Orientation() && model.recipe.crop.frame == nil)
+        #expect(model.recipe.crop.angle == 0 && model.recipe.crop.aspect == .free && !model.recipe.crop.portrait)
+        #expect(model.cropFrameInDocument == nil && model.framingIsReset)
+        #expect(model.recipe.crop.locked && model.recipe.crop.constrained)
+    }
+
+    /// ⌘Z undoes Reset, ⇧⌘Z redoes it; any other change of the recipe or
+    /// Esc in crop mode removes the Undo (never a state left in between).
+    /// Another image area: ScanTests.undoOfResetDoesNotReachTheScan.
+    @Test func undoAndRedoOfReset() async throws {
+        let (model, defaults, suite) = try model()
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let undo = UndoManager()
+        undo.groupsByEvent = false
+        model.undoManager = undo
+        model.startPreview()
+        await model.session.waitUntilIdle()
+        model.refreshImage()
+        model.rotateClockwise()
+        model.setCropAngle(2.3)
+        let changed = model.recipe
+        func reset() {
+            undo.beginUndoGrouping()
+            model.resetFraming(actionName: "Framing Reset")
+            undo.endUndoGrouping()
+        }
+        reset()
+        #expect(undo.canUndo && undo.undoActionName == "Framing Reset")
+        undo.undo()
+        #expect(model.recipe == changed, "the recipe before Reset, the rule's tenth included")
+        #expect(undo.canRedo)
+        undo.redo()
+        #expect(model.framingIsReset)
+        undo.undo()
+        #expect(model.recipe == changed)
+        // Another change after Reset: no Undo any more.
+        reset()
+        model.setCropAngle(1)
+        #expect(!undo.canUndo && !undo.canRedo)
+        // Reset in crop mode, then Esc: the mode's start comes back, and ⌘Z cannot revive the mode's changes.
+        model.tools.selected = .crop
+        model.setCropAngle(4)
+        reset()
+        model.escape()
+        #expect(model.recipe.crop.angle == 1 && !undo.canUndo)
     }
 }

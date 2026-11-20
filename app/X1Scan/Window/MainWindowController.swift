@@ -31,6 +31,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         window.setFrameAutosaveName("MainWindow")
         super.init(window: window)
         window.delegate = self
+        model.undoManager = window.undoManager  // Reset of the Framing section, undone by ⌘Z
         observers.append(Observing { [weak self] in self?.modelChanged() })
         cropKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             guard let self, let key = self.windowKey(event) else { return event }

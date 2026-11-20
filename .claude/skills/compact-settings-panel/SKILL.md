@@ -20,9 +20,9 @@ and the Preview and Scan buttons.
   "collapsed"); `isExpanded` is `model.panel.expansion(of: section)`;
   `summary` (from `Strings.panelSummary`) is shown next to the title while
   the section is folded.
-- `CompactSection(…) { … } accessory: { … }`: buttons of a mode on the
-  right of the title row, outside the fold button (Framing: Reset and Done
-  while cropping). Pass an empty summary while the accessory is shown.
+- `CompactSection(…) { … } accessory: { … }`: buttons on the right of the
+  title row, outside the fold button (Framing: Reset, always; Done while
+  cropping). The summary of a folded section stops before them.
 - The tab bar (`app/X1Scan/Panel/PanelTabBar.swift`): a native
   `NSSegmentedControl`, regular size (a tab bar, not a row), one segment per
   tab of `PanelTab.visible`, each with its tooltip and the tab's shortcut

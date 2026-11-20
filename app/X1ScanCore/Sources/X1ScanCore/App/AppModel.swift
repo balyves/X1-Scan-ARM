@@ -148,6 +148,10 @@ public final class AppModel {
     /// scan covers another area).
     public private(set) var recipe = Recipe() {
         didSet {
+            // Undo covers Reset only, right after it: any other change of the recipe
+            // (a turn, a frame, Esc in crop mode…) removes it, so that ⌘Z never brings
+            // back a state the user has left in between.
+            if !applyingUndoableChange, recipe != oldValue { undoManager?.removeAllActions(withTarget: self) }
             viewport.orientation = recipe.orientation
             viewport.angle = recipe.crop.angle
             if recipe.crop != oldValue.crop || recipe.orientation != oldValue.orientation {
@@ -157,6 +161,10 @@ public final class AppModel {
         }
     }
     private var lastHistogramRegion: PixelRect?
+    /// The main window's undo manager (Edit > Undo, ⌘Z), set by the window.
+    @ObservationIgnored public weak var undoManager: UndoManager?
+    /// Set while Reset, or its Undo or Redo, changes the recipe.
+    @ObservationIgnored private var applyingUndoableChange = false
     /// The grid drawn inside the crop frame while cropping (thirds by default); nil: none. Saved.
     public var cropGridKind: GridKind? {
         didSet { defaults.set(cropGridKind?.rawValue ?? "none", forKey: Keys.cropGrid) }
@@ -269,20 +277,46 @@ public final class AppModel {
         }
     }
 
-    /// Nothing for Reset to do: no frame, no angle, free proportions.
-    public var cropIsReset: Bool {
-        recipe.crop.frame == nil && recipe.crop.angle == 0 && recipe.crop.aspect == .free && !recipe.crop.portrait
+    /// Nothing for Reset to do: not turned or mirrored, no frame, no angle,
+    /// free proportions.
+    public var framingIsReset: Bool {
+        recipe.orientation == Orientation() && recipe.crop.frame == nil && recipe.crop.angle == 0
+            && recipe.crop.aspect == .free && !recipe.crop.portrait
     }
 
-    /// Reset: the whole image (no frame, free proportions) and no fine
-    /// angle. The quarter turns, the mirror, the lock and the constraint
-    /// are kept. Esc still puts back what was there on entering the mode.
-    public func resetCrop() {
-        guard tools.showsCropOptions else { return }
-        recipe.crop.frame = nil
-        recipe.crop.angle = 0
-        recipe.crop.aspect = .free
-        recipe.crop.portrait = false
+    /// Reset (the Framing section's title row, lot 1b; user's decision of
+    /// 2026-11-20): the orientation, the proportions, the fine angle and the
+    /// frame back to their original state (not turned, free, 0°, the whole
+    /// image), in or out of crop mode. The lock and the constraint are
+    /// kept; in crop mode, Esc still puts back the state on entering it.
+    /// Registered with `undoManager` under `actionName`: Undo puts the
+    /// recipe back, Redo resets again, as long as nothing else changed the
+    /// recipe and the image area is the same. Returns false when there was
+    /// nothing to reset.
+    @discardableResult
+    public func resetFraming(actionName: String? = nil) -> Bool {
+        guard !framingIsReset else { return false }
+        var reset = recipe
+        reset.orientation = Orientation()
+        reset.crop.frame = nil
+        reset.crop.angle = 0
+        reset.crop.aspect = .free
+        reset.crop.portrait = false
+        setRecipeUndoably(reset, actionName: actionName)
+        return true
+    }
+
+    /// The recipe changed by Reset, Undo or Redo: the opposite change is registered.
+    private func setRecipeUndoably(_ new: Recipe, actionName: String?) {
+        let old = recipe
+        applyingUndoableChange = true
+        recipe = new
+        applyingUndoableChange = false
+        guard let undoManager else { return }
+        undoManager.registerUndo(withTarget: self) { model in
+            MainActor.assumeIsolated { model.setRecipeUndoably(old, actionName: actionName) }
+        }
+        if let actionName { undoManager.setActionName(actionName) }
     }
 
     /// A corner of the frame dragged (or a new frame drawn from `fixed`),
@@ -949,6 +983,7 @@ public final class AppModel {
             // scans FlexColor's captured window, and the frame must fit inside the area scanned.
             recipe.crop.frame = nil
             cropEntry?.recipe.crop.frame = nil  // Esc cannot bring back a frame of the previous image
+            undoManager?.removeAllActions(withTarget: self)  // nor ⌘Z the recipe of the previous image
         }
         if startupZoomPending {
             // A new preview: the zoom of Settings > Display, Fit by default.

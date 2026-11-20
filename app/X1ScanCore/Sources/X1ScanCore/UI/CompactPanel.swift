@@ -89,9 +89,9 @@ public struct CompactDisclosureStyle: DisclosureGroupStyle {
 /// by the caller (the panel layout, saved between launches). When folded,
 /// `summary` (already translated, may be empty) shows the section's main
 /// values on the right of the title, in the secondary colour. `accessory`
-/// (buttons of a mode, such as Done and Reset while cropping) sits at the
-/// right end of the title row, outside the fold button; pass an empty
-/// summary while it is shown.
+/// (buttons such as Framing's Reset, and Done while cropping) sits at the
+/// right end of the title row, outside the fold button; the summary stops
+/// before it.
 public struct CompactSection<Content: View, Accessory: View>: View {
     let title: String
     let summary: String
@@ -99,6 +99,8 @@ public struct CompactSection<Content: View, Accessory: View>: View {
     @Binding var isExpanded: Bool
     @ViewBuilder var content: () -> Content
     @ViewBuilder var accessory: () -> Accessory
+    /// Width of the accessory, measured: the title row leaves it the room.
+    @State private var accessoryWidth: CGFloat = 0
 
     public init(_ title: String, summary: String = "", foldTexts: CompactFoldTexts, isExpanded: Binding<Bool>,
                 @ViewBuilder content: @escaping () -> Content, @ViewBuilder accessory: @escaping () -> Accessory) {
@@ -133,12 +135,14 @@ public struct CompactSection<Content: View, Accessory: View>: View {
                     }
                 }
                 .accessibilityElement(children: .combine)
+                .padding(.trailing, accessoryWidth > 0 ? accessoryWidth + CompactPanelMetrics.columnSpacing : 0)
             }
             .disclosureGroupStyle(CompactDisclosureStyle(texts: foldTexts, isHeader: true))
             // The accessory's buttons are not inside the fold button (a button in a button
             // would not take the click): laid over the title row, on its right.
             .overlay(alignment: .topTrailing) {
                 HStack(spacing: CompactPanelMetrics.columnSpacing) { accessory() }
+                    .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { accessoryWidth = $0 }
                     .alignmentGuide(.top) { $0[VerticalAlignment.center] - CompactPanelMetrics.titleRowHeight / 2 }
             }
             .padding(CompactPanelMetrics.sectionInsets)

@@ -64,6 +64,28 @@ final class ScanTests {
         #expect(model.recipe.crop.frame == nil && model.tools.selected == .hand)
     }
 
+    /// Lot 1b: Reset on the preview, then the scan (another area): ⌘Z cannot
+    /// bring back the preview's recipe (its frame) on the scan.
+    @Test func undoOfResetDoesNotReachTheScan() async throws {
+        let model = try model()
+        let undo = UndoManager()
+        undo.groupsByEvent = false
+        model.undoManager = undo
+        model.startPreview()
+        await model.session.waitUntilIdle()
+        model.refreshImage()
+        model.setCropFrame(documentRect: CGRect(x: 100, y: 100, width: 300, height: 200))
+        model.rotateClockwise()
+        undo.beginUndoGrouping()
+        model.resetFraming(actionName: "Framing Reset")
+        undo.endUndoGrouping()
+        #expect(undo.canUndo)
+        model.startScan()
+        await model.session.waitUntilIdle()
+        model.refreshImage()
+        #expect(model.session.kind == .scan && !undo.canUndo)
+    }
+
     @Test func virtualScanDecodesAndSavesTheTIFF() async throws {
         let model = try model()
         #expect(model.toolbar.canScan && !model.toolbar.scanNeedsConfirmation)
