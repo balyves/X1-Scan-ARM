@@ -398,6 +398,13 @@ enum Strings {
         String(localized: "Keep the changes and go back to the previous tool (↩); Esc cancels them",
                comment: "Help of the Done button of the crop options")
     }
+    static var cropReset: String {
+        String(localized: "Reset", comment: "Button (icon) of the crop options: whole image, free proportions, no angle")
+    }
+    static var cropResetHelp: String {
+        String(localized: "Reset: whole image, free proportions, no fine angle; quarter turns kept (Esc goes back to the state before)",
+               comment: "Help of the Reset button of the crop options")
+    }
     static var cropProportions: String { String(localized: "Proportions", comment: "Crop options label: aspect ratio") }
     static var cropProportionsHelp: String {
         String(localized: "Proportions of the frame, width × height as named: 6×7 is 6 wide and 7 high; X exchanges them.",

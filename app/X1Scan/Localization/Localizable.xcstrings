@@ -4181,6 +4181,24 @@
         }
       }
     },
+    "Reset": {
+      "comment": "Button (icon) of the crop options: whole image, free proportions, no angle",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réinitialiser"
+          }
+        }
+      }
+    },
     "Keep the changes and go back to the previous tool (↩); Esc cancels them": {
       "comment": "Help of the Done button of the crop options",
       "extractionState": "manual",
@@ -4195,6 +4213,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "Garder les changements et revenir à l’outil précédent (↩) ; Échap les annule"
+          }
+        }
+      }
+    },
+    "Reset: whole image, free proportions, no fine angle; quarter turns kept (Esc goes back to the state before)": {
+      "comment": "Help of the Reset button of the crop options",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset: whole image, free proportions, no fine angle; quarter turns kept (Esc goes back to the state before)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réinitialiser : image entière, proportions libres, angle fin nul ; quarts de tour gardés (Échap revient à l’état d’avant)"
           }
         }
       }

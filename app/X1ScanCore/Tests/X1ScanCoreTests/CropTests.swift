@@ -540,7 +540,8 @@ struct CropResizeTests {
 }
 
 /// Crop mode (user's tests of lot 1, 2026-11-20): Done goes back to the
-/// tool used before, Esc cancels the changes made in the mode.
+/// tool used before, Esc cancels the changes made in the mode, Reset gives
+/// the whole image and no angle.
 @MainActor
 struct CropModeTests {
     private func model() throws -> (AppModel, UserDefaults, String) {
@@ -600,6 +601,27 @@ struct CropModeTests {
         #expect(model.recipe.crop.angle == 1)
     }
 
+    @Test func escapeAfterResetPutsBackTheFrameAndAngle() async throws {
+        let (model, defaults, suite) = try model()
+        defer { defaults.removePersistentDomain(forName: suite) }
+        model.startPreview()
+        await model.session.waitUntilIdle()
+        model.refreshImage()
+        model.setCropFrame(documentRect: CGRect(x: 100, y: 100, width: 300, height: 200))
+        model.setCropAspect(.ratio(width: 6, height: 7))
+        model.setCropAngle(1.5)
+        model.tools.selected = .crop  // entering the mode with a frame, an angle and a ratio
+        let before = model.recipe
+        #expect(!model.cropIsReset)
+        model.resetCrop()
+        #expect(model.cropIsReset)
+        model.escape()
+        #expect(model.recipe == before && model.tools.selected == .hand)
+        // Reset outside crop mode does nothing.
+        model.resetCrop()
+        #expect(model.recipe == before)
+    }
+
     /// Esc stops a running preview first, whatever the tool; the recipe and the mode stay.
     @Test func escapeStopsARunningPreviewFirst() async throws {
         let suite = "X1ScanCoreTests-\(UUID().uuidString)"
@@ -626,5 +648,29 @@ struct CropModeTests {
         // Nothing running any more: Esc now cancels the mode's changes.
         model.escape()
         #expect(model.tools.selected == .hand && model.recipe.crop.angle == 0)
+    }
+
+    @Test func resetGivesTheWholeImageAndNoAngle() async throws {
+        let (model, defaults, suite) = try model()
+        defer { defaults.removePersistentDomain(forName: suite) }
+        model.startPreview()
+        await model.session.waitUntilIdle()
+        model.refreshImage()
+        model.tools.selected = .crop
+        model.rotateClockwise()
+        model.setCropLocked(true)
+        model.setCropFrame(documentRect: CGRect(x: 100, y: 100, width: 300, height: 200))
+        model.setCropAspect(.ratio(width: 6, height: 7))
+        model.setCropAngle(-3)
+        let turns = model.recipe.orientation
+        model.resetCrop()
+        #expect(model.recipe.crop.frame == nil && model.recipe.crop.angle == 0)
+        #expect(model.recipe.crop.aspect == .free && !model.recipe.crop.portrait)
+        #expect(model.cropFrameInDocument == nil)
+        #expect(model.recipe.orientation == turns && model.recipe.crop.locked && model.recipe.crop.constrained)
+        // Esc after Reset: back to the recipe of the mode's start.
+        model.cancelCrop()
+        #expect(model.recipe.crop.frame == nil && model.recipe.crop.angle == 0)
+        #expect(model.recipe.orientation == Orientation())
     }
 }

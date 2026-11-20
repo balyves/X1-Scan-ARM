@@ -267,6 +267,22 @@ public final class AppModel {
         }
     }
 
+    /// Nothing for Reset to do: no frame, no angle, free proportions.
+    public var cropIsReset: Bool {
+        recipe.crop.frame == nil && recipe.crop.angle == 0 && recipe.crop.aspect == .free && !recipe.crop.portrait
+    }
+
+    /// Reset: the whole image (no frame, free proportions) and no fine
+    /// angle. The quarter turns, the mirror, the lock and the constraint
+    /// are kept. Esc still puts back what was there on entering the mode.
+    public func resetCrop() {
+        guard tools.showsCropOptions else { return }
+        recipe.crop.frame = nil
+        recipe.crop.angle = 0
+        recipe.crop.aspect = .free
+        recipe.crop.portrait = false
+    }
+
     /// A corner of the frame dragged (or a new frame drawn from `fixed`),
     /// displayed document coordinates: the frame keeps its side of `fixed`
     /// (`direction`), is at least `minimumSide` where there is room, and

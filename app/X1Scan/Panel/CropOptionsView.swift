@@ -6,7 +6,7 @@ import X1ScanCore
 /// the Crop or Straightening Rule tool is selected, on a lightly tinted
 /// background (the user's brief: a mode, visibly apart from the settings).
 /// Done (Return) goes back to the tool used before; Esc cancels the
-/// changes made since.
+/// changes made since; Reset gives the whole image and no angle.
 struct CropOptionsSection: View {
     @Bindable var model: AppModel
     @State private var customShown = false
@@ -24,6 +24,11 @@ struct CropOptionsSection: View {
                     .lineLimit(1)
                     .accessibilityAddTraits(.isHeader)
                 Spacer(minLength: 0)
+                Button { model.resetCrop() } label: { Image(systemName: "arrow.counterclockwise") }
+                    .buttonStyle(.bordered)
+                    .disabled(model.cropIsReset)
+                    .help(Strings.cropResetHelp)
+                    .accessibilityLabel(Strings.cropReset)
                 Button(Strings.cropDone) { model.finishCrop() }
                     .buttonStyle(.borderedProminent)
                     .help(Strings.cropDoneHelp)
