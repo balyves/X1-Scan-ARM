@@ -226,6 +226,14 @@ private struct OrientationRow: View {
         let orientation = model.recipe.orientation
         CompactControlRow(label, help: Strings.orientationHelp) {
             HStack(spacing: CompactPanelMetrics.columnSpacing) {
+                // The state first, in its small frame (user's tests of lot 1b), set a little apart
+                // from the actions so that it does not read as a fourth button.
+                OrientationGlyph(orientation: orientation)
+                    .help(Strings.orientationDescription(orientation))
+                    .accessibilityElement()
+                    .accessibilityLabel(label)
+                    .accessibilityValue(Strings.orientationDescription(orientation))
+                    .padding(.trailing, CompactPanelMetrics.groupSpacing - CompactPanelMetrics.columnSpacing)
                 button("rotate.left", Strings.withShortcut(Strings.rotateCounterclockwise, "⌘[")) {
                     model.rotateCounterclockwise()
                 }
@@ -233,13 +241,8 @@ private struct OrientationRow: View {
                 button("arrow.left.and.right.righttriangle.left.righttriangle.right", Strings.mirrorHorizontally) {
                     model.mirrorHorizontally()
                 }
-                Spacer(minLength: 0)
-                OrientationGlyph(orientation: orientation)
-                    .help(Strings.orientationDescription(orientation))
-                    .accessibilityElement()
-                    .accessibilityLabel(label)
-                    .accessibilityValue(Strings.orientationDescription(orientation))
             }
+            .fixedSize(horizontal: false, vertical: true)  // the glyph's frame takes the buttons' height
         }
     }
 
@@ -257,7 +260,9 @@ private struct OrientationRow: View {
 }
 
 /// The letter F turned and mirrored like the image: a state, not a control
-/// (secondary colour, no frame, no animation).
+/// (secondary colour, no animation), in a small thin frame at the start of
+/// the Orientation row, like a thumbnail of the image's direction (user's
+/// tests of lot 1b; the frame is not a button: no fill, no shadow).
 private struct OrientationGlyph: View {
     let orientation: Orientation
 
@@ -267,7 +272,12 @@ private struct OrientationGlyph: View {
             .foregroundStyle(.secondary)
             .scaleEffect(x: orientation.mirrored ? -1 : 1, y: 1)
             .rotationEffect(.degrees(Double(orientation.quarterTurns) * 90))
-            .frame(width: CompactPanelMetrics.unitWidth)
+            .frame(width: CompactPanelMetrics.indicatorWidth)
+            .frame(maxHeight: .infinity)
+            .overlay {
+                RoundedRectangle(cornerRadius: CompactPanelMetrics.indicatorCornerRadius)
+                    .strokeBorder(.tertiary, lineWidth: 1)
+            }
     }
 }
 

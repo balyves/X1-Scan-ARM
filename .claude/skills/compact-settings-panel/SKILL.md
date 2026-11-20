@@ -153,6 +153,10 @@ passes every string, already translated (see Text and languages).
   sections. Structure comes from alignment, spacing and one thin `Divider`
   under each section.
 - No icons in labels unless the icon is the control (a menu or a tool).
+- One exception: a small state indicator at the start of a row (Framing's
+  orientation "F", user's decision) may have a thin `.tertiary` outline,
+  no fill (`CompactPanelMetrics.indicatorWidth`); never around rows or
+  sections.
 - Colour only for meaning: secondary for labels and units, the system
   warning and error colours for warnings and errors. Never a fixed colour
   for text or backgrounds.

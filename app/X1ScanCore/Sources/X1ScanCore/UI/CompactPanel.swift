@@ -29,6 +29,11 @@ public enum CompactPanelMetrics {
     /// The tab's content keeps at least this height when the window is low
     /// (the Information area and the buttons below it do not shrink).
     public static let minimumTabContentHeight: CGFloat = 120
+    /// Width of a small state indicator at the start of a row (Framing's
+    /// orientation "F"); its height follows the row's buttons.
+    public static let indicatorWidth: CGFloat = 20
+    /// Corner radius of that indicator's thin outline.
+    public static let indicatorCornerRadius: CGFloat = 3
     /// Height of a section's title row (callout semibold), to centre what sits on it.
     public static let titleRowHeight: CGFloat = 16
     /// Inside a section, around its rows.
