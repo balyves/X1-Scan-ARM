@@ -89,6 +89,24 @@ enum KeyProbe {
                     window.makeFirstResponder(bar)
                 }
             }
+            // The canvas's keys in crop mode: → (1°), ⇧→ (to 5°), Return (Done); then Esc; Space held.
+            window.focusImageCanvas()
+            model.tools.selected = .zoom
+            model.tools.selected = .crop
+            let startAngle = model.recipe.crop.angle
+            pressKey(code: 124, characters: String(UnicodeScalar(NSRightArrowFunctionKey)!), shift: false, in: window)
+            let afterArrow = model.recipe.crop.angle
+            pressKey(code: 124, characters: String(UnicodeScalar(NSRightArrowFunctionKey)!), shift: true, in: window)
+            let afterShiftArrow = model.recipe.crop.angle
+            pressKey(code: 36, characters: "\r", shift: false, in: window)
+            let afterReturn = model.tools.selected
+            model.tools.selected = .crop
+            pressKey(code: 53, characters: "\u{1b}", shift: false, in: window)
+            let afterEscape = model.tools.selected
+            pressKey(code: 49, characters: " ", shift: false, in: window, only: .keyDown)
+            let spaceHeld = model.tools.spaceHeld
+            pressKey(code: 49, characters: " ", shift: false, in: window, only: .keyUp)
+            lines.append("PROBE canvas keys: angle \(startAngle) -> → \(afterArrow) -> ⇧→ \(afterShiftArrow); Return -> \(afterReturn.rawValue) (zoom expected); Esc -> \(afterEscape.rawValue) (zoom expected); Space held -> \(spaceHeld), released -> \(model.tools.spaceHeld)")
             model.panel.select(savedTab)  // the tab is saved with the panel layout: put it back
             for line in lines { FileHandle.standardError.write(Data((line + "\n").utf8)) }
             NSApp.terminate(nil)
@@ -102,6 +120,19 @@ enum KeyProbe {
             if let event = NSEvent.keyEvent(with: type, location: .zero, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
                                             windowNumber: window.windowNumber, context: nil, characters: key,
                                             charactersIgnoringModifiers: key, isARepeat: false, keyCode: code) {
+                NSApp.sendEvent(event)
+            }
+        }
+    }
+
+    /// A key pressed and released, or only one of the two (`only`).
+    private static func pressKey(code: UInt16, characters: String, shift: Bool, in window: NSWindow,
+                                 only: NSEvent.EventType? = nil) {
+        for type in only.map({ [$0] }) ?? [.keyDown, .keyUp] {
+            if let event = NSEvent.keyEvent(with: type, location: .zero, modifierFlags: shift ? [.shift] : [],
+                                            timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber,
+                                            context: nil, characters: characters, charactersIgnoringModifiers: characters,
+                                            isARepeat: false, keyCode: code) {
                 NSApp.sendEvent(event)
             }
         }

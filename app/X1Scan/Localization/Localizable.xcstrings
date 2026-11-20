@@ -313,20 +313,20 @@
         }
       }
     },
-    "Hand: move the image, or for a moment while the second key is held": {
-      "comment": "Tooltip of the Hand tool; the app adds its shortcuts (H, then the space bar) in parentheses",
+    "Hand: move the image; hold %@ to use the Hand for a moment": {
+      "comment": "Tooltip of the Hand tool; %@ is the name of the space bar, added by the app with the tool's shortcut in parentheses",
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Hand: move the image, or for a moment while the second key is held"
+            "value": "Hand: move the image; hold %@ to use the Hand for a moment"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Main : déplacer l’image, ou un instant tant que la seconde touche est maintenue"
+            "value": "Main : déplacer l’image ; maintenir %@ pour prendre la Main un instant"
           }
         }
       }

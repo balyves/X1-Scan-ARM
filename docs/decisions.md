@@ -1386,12 +1386,34 @@ the interface only: nothing sent to the scanner changes.
   panel, every tab and every tool has a native one-sentence tooltip, in
   English and French. Detailed help (⌥ + hover) comes later. A function
   with a keyboard shortcut ends its tooltip with the shortcut in
-  parentheses ("Crop: … (C)", "Scan Tab (⌥⌘2)"; user's decision after the
-  push of lot 1b): Mac symbols for ⌘ ⌥ ⇧ and the arrows, the keys without
-  a letter in full, in the application's language (Return, Esc, Space;
-  Retour, Échap, Espace). It is taken from the source the menus and the
-  key handling use (`AppShortcut`), never copied by hand; a test checks
-  that every shortcut is mentioned and that no translation copies one.
+  parentheses ("Crop: draw and adjust the frame, in Prepare › Framing
+  (C)", "Resolution, scale and sizes of the scan (⌥⌘2)"; user's decision
+  after the push of lot 1b): Mac symbols for ⌘ ⌥ ⇧ and the arrows, the
+  keys without a letter in full, in the application's language (Return,
+  Esc, Space; Retour, Échap, Espace). A key may also be named inside the
+  sentence ("Hand: move the image; hold Space to use the Hand for a moment
+  (H)"). It is taken from the source the menus and the key handling use
+  (`AppShortcut`), never copied by hand. `ShortcutTests` checks that:
+  - every shortcut is mentioned in a tooltip, at the end or inside it;
+  - each key the window and the canvas handle (their lists `windowKeys`
+    and `canvasKeys`) is recognised from its own shortcut by the matcher
+    they both use (`AppShortcut.matching`), letters and keys without a
+    letter alike, with Shift ignored except for the arrows, as before;
+  - the other shortcuts are in a list of menu shortcuts, with a key
+    equivalent;
+  - every sentence is in the catalogue, translated into French, with a
+    comment, with the place of a key named inside it ("%@") exactly once
+    where there is one and nowhere else;
+  - no translation contains a shortcut with a symbol (⌃ ⌥ ⇧ ⌘ or an
+    arrow), nor a key's name in parentheses ("(Esc)", "(Espace)").
+
+  It does not detect: a lone letter copied by hand ("(C)"), nor a key's
+  name copied as a word of the sentence ("hold Space"), since a sentence
+  may hold such words; a case missing from the window's or the canvas's
+  own `switch` (the key would be recognised but do nothing); a menu item
+  that does not take its key from `AppShortcut` (the list of menu
+  shortcuts in the test is written by hand). The debug probe
+  (`-X1ScanKeyProbe`) presses the keys in the application itself.
   Not changed (user's decision): the real X1's confirmations keep their
   "(⌘. or Esc)"; the Settings note "Scanner Information (⌘I)" is to be
   aligned on the same source in lot A.

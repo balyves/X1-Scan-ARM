@@ -83,13 +83,21 @@ passes every string, already translated (see Text and languages).
   label gets the same tooltip as its control (`CompactControlRow(help:)`),
   a slider row its own (`Strings.sliderRow(help:)`). The standard Cancel
   and OK buttons of a popover or dialog need none. A function with a
-  keyboard shortcut ends its tooltip with it in parentheses ("Crop: …
-  (C)", "Scan Tab (⌥⌘2)": symbols for ⌘ ⌥ ⇧ and the arrows, Return, Esc
+  keyboard shortcut ends its tooltip with it in parentheses ("Crop: draw
+  and adjust the frame, in Prepare › Framing (C)", "Resolution, scale and
+  sizes of the scan (⌥⌘2)": symbols for ⌘ ⌥ ⇧ and the arrows, Return, Esc
   and Space in full and translated), never typed by hand: add the
   shortcut to `AppShortcut` (X1ScanCore, also used by the menus and the
   key handling) and the tooltip to `ShortcutTooltip` (its sentence without
   the shortcut, translated in the catalog), then use
-  `Strings.tooltip(_:)`; `ShortcutTests` checks both. Detailed help (⌥ +
+  `Strings.tooltip(_:)`; a key the window or the canvas handles goes
+  through `AppShortcut.matching` (`windowKeys`, `canvasKeys`).
+  `ShortcutTests` checks the mentions, that each handled key is recognised
+  from its own shortcut by that matcher, and the translations (symbol
+  shortcuts and key names in parentheses; "%@" where a key is named
+  inside). It cannot see a lone letter or a key's name copied as a word,
+  nor a case missing from the app's `switch`: see docs/decisions.md,
+  "Lot 1b", Tooltips. Detailed help (⌥ +
   hover) comes later.
 - Explanations go in the tooltip of the row they explain
   (`CompactInfoRow(_:value:help:)`, `.help(_:)` on a control), not as notes
@@ -187,7 +195,8 @@ passes every string, already translated (see Text and languages).
   One exception: the sentences of `ShortcutTooltip` (English, the
   catalogue's keys, translated by `Strings.tooltip(_:)` at run time, kept
   `manual` in the catalogue); `ShortcutTests` checks that each one is in
-  the catalogue, translated, without a shortcut copied by hand.
+  the catalogue and translated, without a symbol shortcut or a key's name
+  in parentheses copied by hand (its limits: docs/decisions.md, "Lot 1b").
 
 ## Light and dark mode
 

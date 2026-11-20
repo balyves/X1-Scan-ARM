@@ -430,28 +430,27 @@ final class ImageCanvasView: NSView {
 
     // MARK: Keyboard
 
-    /// The tool keys (H, Z, C, R) and X are handled by the window, wherever
-    /// the focus is (`MainWindowController.windowKey(_:)`); the canvas
-    /// handles Space, the arrows, Return and Esc.
+    /// The tool keys and X are handled by the window, wherever the focus is
+    /// (`MainWindowController.windowKey(_:)`); the canvas handles the space
+    /// bar, Esc, and in crop mode the arrows and Return
+    /// (`AppShortcut.canvasKeys`, the source of their tooltips too).
     override func keyDown(with event: NSEvent) {
-        guard event.modifierFlags.intersection([.command, .control, .option]).isEmpty,
-              let characters = event.charactersIgnoringModifiers, !characters.isEmpty else {
-            super.keyDown(with: event)
-            return
-        }
         let cropping = model.tools.showsCropOptions
-        if KeyShortcut.Key.space.keyCodes.contains(event.keyCode) {
+        let shortcut: AppShortcut? = AppShortcut.matching(KeyPress(event), among: AppShortcut.canvasKeys(cropping: cropping))
+        switch shortcut {
+        case .temporaryHand:
             if !event.isARepeat { model.tools.spaceHeld = true }
-        } else if cropping, KeyShortcut.Key.leftRight.keyCodes.contains(event.keyCode) {
+        case .angle, .angleLarge:
             // ← →: the next whole degree (⇧: the next multiple of 5°).
-            let step = event.modifierFlags.contains(.shift) ? CropSettings.angleLargeStep : CropSettings.angleStep
+            let step = shortcut == .angleLarge ? CropSettings.angleLargeStep : CropSettings.angleStep
             model.setCropAngle(CropSettings.nudgedAngle(model.recipe.crop.angle,
                                                      by: event.keyCode == KeyShortcut.Key.rightArrowKeyCode ? step : -step))
-        } else if cropping, KeyShortcut.Key.returnKey.keyCodes.contains(event.keyCode) {  // Return: Done
+        case .done:
             model.finishCrop()
-        } else if KeyShortcut.Key.escape.keyCodes.contains(event.keyCode) {  // Esc: stop a preview or scan first; in crop mode, cancel its changes
+        case .escape:
+            // Stop a preview or scan first; in crop mode, cancel its changes.
             model.escape()
-        } else {
+        default:
             super.keyDown(with: event)
         }
     }

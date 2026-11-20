@@ -22,10 +22,6 @@ public enum Tool: String, Sendable, Hashable, CaseIterable, Codable {
         }
     }
 
-    public static func forKey(_ key: Character) -> Tool? {
-        allCases.first { $0.key == Character(key.lowercased()) }
-    }
-
     /// Only these work at this stage.
     public var isImplemented: Bool { true }
 }

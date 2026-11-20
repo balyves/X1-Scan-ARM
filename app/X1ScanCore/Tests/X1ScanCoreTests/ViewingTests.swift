@@ -135,8 +135,7 @@ struct ViewportTests {
     }
 
     @Test func toolsAndSpaceHand() {
-        #expect(Tool.forKey("Z") == .zoom && Tool.forKey("h") == .hand && Tool.forKey("c") == .crop)
-        #expect(Tool.forKey("x") == nil)
+        // The tool keys themselves: ShortcutTests (AppShortcut.matching).
         var state = ToolState()
         state.selected = .crop
         state.spaceHeld = true

@@ -153,6 +153,54 @@ public enum AppShortcut: Sendable, Hashable {
     }
 }
 
+/// A key pressed, as the window or the canvas receives it.
+public struct KeyPress: Sendable, Hashable {
+    public var keyCode: UInt16
+    /// The characters ignoring modifiers ("c", " ").
+    public var characters: String
+    public var modifiers: KeyShortcut.Modifiers
+
+    public init(keyCode: UInt16, characters: String, modifiers: KeyShortcut.Modifiers) {
+        self.keyCode = keyCode
+        self.characters = characters
+        self.modifiers = modifiers
+    }
+}
+
+extension AppShortcut {
+    /// Whether `press` is this shortcut. A typed key compares its character
+    /// (either case), a named key its key codes. The modifiers must be the
+    /// same, except Shift when the shortcut has none, as before (⇧C is C,
+    /// ⇧Esc is Esc); for the arrows Shift counts (← → and ⇧← → differ).
+    public func matches(_ press: KeyPress) -> Bool {
+        guard let shortcut else { return false }
+        let sameKey: Bool = switch shortcut.key {
+        case .character(let character): press.characters.lowercased() == String(character).lowercased()
+        case .returnKey, .escape, .leftRight, .space: shortcut.key.keyCodes.contains(press.keyCode)
+        }
+        let shiftCounts: Bool = shortcut.modifiers.contains(.shift) || shortcut.key == .leftRight
+        let pressed = shiftCounts ? press.modifiers : press.modifiers.subtracting(.shift)
+        return sameKey && pressed == shortcut.modifiers
+    }
+
+    /// The first of `candidates` that `press` is.
+    public static func matching(_ press: KeyPress, among candidates: [AppShortcut]) -> AppShortcut? {
+        candidates.first { $0.matches(press) }
+    }
+
+    /// Single keys the window handles wherever the focus is (except while
+    /// typing in a field): the tools, and X in crop mode.
+    public static func windowKeys(cropping: Bool) -> [AppShortcut] {
+        Tool.allCases.map(AppShortcut.tool) + (cropping ? [.swapProportions] : [])
+    }
+
+    /// Keys the image canvas handles when it has the focus: the space bar,
+    /// Esc, and in crop mode the arrows and Return.
+    public static func canvasKeys(cropping: Bool) -> [AppShortcut] {
+        [.temporaryHand, .escape] + (cropping ? [.angle, .angleLarge, .done] : [])
+    }
+}
+
 /// A tooltip of a function with a shortcut: its sentence (the String
 /// Catalog's key, in English, without the shortcut) and its shortcuts,
 /// added at the end in parentheses by `text(_:)`. The application
@@ -166,7 +214,7 @@ public enum ShortcutTooltip: String, Sendable, CaseIterable {
 
     public var key: String {
         switch self {
-        case .handTool: "Hand: move the image, or for a moment while the second key is held"
+        case .handTool: "Hand: move the image; hold %@ to use the Hand for a moment"
         case .zoomTool: "Zoom: click to zoom in, ⌥-click to zoom out"
         case .cropTool: "Crop: draw and adjust the frame, in Prepare › Framing"
         case .ruleTool: "Straightening Rule: draw a line along what should be horizontal or vertical"
@@ -192,7 +240,7 @@ public enum ShortcutTooltip: String, Sendable, CaseIterable {
 
     public var shortcuts: [AppShortcut] {
         switch self {
-        case .handTool: [.tool(.hand), .temporaryHand]
+        case .handTool: [.tool(.hand)]
         case .zoomTool: [.tool(.zoom)]
         case .cropTool: [.tool(.crop)]
         case .ruleTool, .ruleButton, .straightenRow: [.tool(.straighten)]
@@ -232,10 +280,21 @@ public enum ShortcutTooltip: String, Sendable, CaseIterable {
         }
     }
 
-    /// The translated sentence, then its shortcuts, with the keys' names
-    /// translated too: "Crop: … (C)", "Stop the preview (⌘., Esc)".
+    /// A shortcut named inside the sentence, at its "%@" (the hand's space
+    /// bar: "hold Space to take it for a moment"), from the same source.
+    public var inlineShortcut: AppShortcut? {
+        self == .handTool ? .temporaryHand : nil
+    }
+
+    /// The translated sentence (its "%@" replaced by `inlineShortcut`), then
+    /// its shortcuts, with the keys' names translated too: "Crop: … (C)",
+    /// "Stop the preview (⌘., Esc)".
     public func text(_ translated: String, names: KeyShortcut.KeyNames) -> String {
+        var sentence = translated
+        if let inline = inlineShortcut?.shortcut?.display(names: names) {
+            sentence = sentence.replacingOccurrences(of: "%@", with: inline)
+        }
         let keys = shortcuts.compactMap { $0.shortcut?.display(names: names) }
-        return keys.isEmpty ? translated : "\(translated) (\(keys.joined(separator: ", ")))"
+        return keys.isEmpty ? sentence : "\(sentence) (\(keys.joined(separator: ", ")))"
     }
 }

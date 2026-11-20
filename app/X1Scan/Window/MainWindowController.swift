@@ -34,41 +34,30 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         model.undoManager = window.undoManager  // Reset of the Framing section, undone by ⌘Z
         observers.append(Observing { [weak self] in self?.modelChanged() })
         cropKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            guard let self, let key = self.windowKey(event) else { return event }
+            guard let self, let shortcut = self.windowKey(event) else { return event }
             // Held down: one action only; the repeats are swallowed.
             guard !event.isARepeat else { return nil }
-            if key == Self.swapKey {
-                self.model.toggleCropPortrait()
-            } else if let tool = Tool.forKey(key) {
-                self.model.tools.selected = tool
+            switch shortcut {
+            case .swapProportions: self.model.toggleCropPortrait()
+            case .tool(let tool): self.model.tools.selected = tool
+            default: break
             }
             return nil
         }
     }
 
-    /// X, from `AppShortcut` (the tooltip's source too).
-    private static let swapKey: Character = {
-        guard case .character(let key) = AppShortcut.swapProportions.shortcut?.key else { return "x" }
-        return key
-    }()
-
     /// Single keys handled by the window, whatever has the keyboard focus in
     /// it (a tab, a menu or a checkbox of the panel after a click, the
     /// canvas…), except while text is being typed (a field's editor) or a
     /// sheet is open; other windows (the custom ratio popover, Settings) are
-    /// left alone:
-    /// - the tool keys H, Z, C, R (lot 1b: from any tab, C and R open
-    ///   Prepare > Framing; before, they reached only a focused canvas);
-    /// - X, as soon as the crop mode is on (Crop or Straightening Rule
-    ///   tool): exchanges the frame's width and height.
-    private func windowKey(_ event: NSEvent) -> Character? {
+    /// left alone: the tool keys (lot 1b: from any tab, C and R open
+    /// Prepare > Framing) and, in crop mode, the swap of width and height
+    /// (`AppShortcut.windowKeys`, the source of their tooltips too).
+    private func windowKey(_ event: NSEvent) -> AppShortcut? {
         guard let window, event.window === window, window.attachedSheet == nil,
-              event.modifierFlags.intersection([.command, .control, .option]).isEmpty,
-              let characters = event.charactersIgnoringModifiers?.lowercased(), characters.count == 1,
-              let key = characters.first else { return nil }
-        guard key == Self.swapKey ? model.tools.showsCropOptions : Tool.forKey(key) != nil else { return nil }
-        // A text field being edited has the window's field editor (an NSText) as first responder.
-        return window.firstResponder is NSText ? nil : key
+              // A text field being edited has the window's field editor (an NSText) as first responder.
+              !(window.firstResponder is NSText) else { return nil }
+        return AppShortcut.matching(KeyPress(event), among: AppShortcut.windowKeys(cropping: model.tools.showsCropOptions))
     }
 
     @available(*, unavailable)
