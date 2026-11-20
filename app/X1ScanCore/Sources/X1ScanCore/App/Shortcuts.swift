@@ -39,6 +39,22 @@ public struct KeyShortcut: Sendable, Hashable {
         }
     }
 
+    /// The names of the keys without a letter, written in full (user's
+    /// decision after lot 1b): translated by the application; English here.
+    public struct KeyNames: Sendable, Hashable {
+        public var returnKey: String
+        public var escape: String
+        public var space: String
+
+        public init(returnKey: String, escape: String, space: String) {
+            self.returnKey = returnKey
+            self.escape = escape
+            self.space = space
+        }
+
+        public static let english = KeyNames(returnKey: "Return", escape: "Esc", space: "Space")
+    }
+
     public let key: Key
     public let modifiers: Modifiers
 
@@ -52,8 +68,9 @@ public struct KeyShortcut: Sendable, Hashable {
         self.init(.character(character), modifiers)
     }
 
-    /// As in the menus: "⌥⌘2", "⇧⌘E", "C", "↩", "⎋", "← →".
-    public var display: String {
+    /// Symbols for the modifiers and the arrows, as in the menus, the keys
+    /// without a letter in full: "⌥⌘2", "⇧⌘E", "C", "← →", "Return", "Esc", "Space".
+    public func display(names: KeyNames = .english) -> String {
         var text = ""
         if modifiers.contains(.control) { text += "⌃" }
         if modifiers.contains(.option) { text += "⌥" }
@@ -61,10 +78,10 @@ public struct KeyShortcut: Sendable, Hashable {
         if modifiers.contains(.command) { text += "⌘" }
         switch key {
         case .character(let character): text += String(character).uppercased()
-        case .returnKey: text += "↩"
-        case .escape: text += "⎋"
+        case .returnKey: text += names.returnKey
+        case .escape: text += names.escape
         case .leftRight: text += "← →"
-        case .space: text += "␣"
+        case .space: text += names.space
         }
         return text
     }
@@ -149,7 +166,7 @@ public enum ShortcutTooltip: String, Sendable, CaseIterable {
 
     public var key: String {
         switch self {
-        case .handTool: "Hand: move the image; the space bar held gives it for a moment"
+        case .handTool: "Hand: move the image, or for a moment while the second key is held"
         case .zoomTool: "Zoom: click to zoom in, ⌥-click to zoom out"
         case .cropTool: "Crop: draw and adjust the frame, in Prepare › Framing"
         case .ruleTool: "Straightening Rule: draw a line along what should be horizontal or vertical"
@@ -215,9 +232,10 @@ public enum ShortcutTooltip: String, Sendable, CaseIterable {
         }
     }
 
-    /// The translated sentence, then its shortcuts: "Crop: … (C)", "Stop the preview (⌘., ⎋)".
-    public func text(_ translated: String) -> String {
-        let keys = shortcuts.compactMap { $0.shortcut?.display }
+    /// The translated sentence, then its shortcuts, with the keys' names
+    /// translated too: "Crop: … (C)", "Stop the preview (⌘., Esc)".
+    public func text(_ translated: String, names: KeyShortcut.KeyNames) -> String {
+        let keys = shortcuts.compactMap { $0.shortcut?.display(names: names) }
         return keys.isEmpty ? translated : "\(translated) (\(keys.joined(separator: ", ")))"
     }
 }

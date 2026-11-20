@@ -1386,10 +1386,15 @@ the interface only: nothing sent to the scanner changes.
   panel, every tab and every tool has a native one-sentence tooltip, in
   English and French. Detailed help (⌥ + hover) comes later. A function
   with a keyboard shortcut ends its tooltip with the shortcut in
-  parentheses, in Mac symbols ("Crop: … (C)", "Scan Tab (⌥⌘2)"; user's
-  decision after the push of lot 1b), taken from the source the menus and
-  the key handling use (`AppShortcut`), never copied by hand; a test checks
+  parentheses ("Crop: … (C)", "Scan Tab (⌥⌘2)"; user's decision after the
+  push of lot 1b): Mac symbols for ⌘ ⌥ ⇧ and the arrows, the keys without
+  a letter in full, in the application's language (Return, Esc, Space;
+  Retour, Échap, Espace). It is taken from the source the menus and the
+  key handling use (`AppShortcut`), never copied by hand; a test checks
   that every shortcut is mentioned and that no translation copies one.
+  Not changed (user's decision): the real X1's confirmations keep their
+  "(⌘. or Esc)"; the Settings note "Scanner Information (⌘I)" is to be
+  aligned on the same source in lot A.
 - **Not in this lot**: the RGB values under the pointer in the
   Information area come with the pipettes and the densitometer, in lot 3
   (user's decision after the tests of lot 1b); nothing is shown for them

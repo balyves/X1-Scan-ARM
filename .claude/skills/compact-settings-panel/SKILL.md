@@ -83,8 +83,9 @@ passes every string, already translated (see Text and languages).
   label gets the same tooltip as its control (`CompactControlRow(help:)`),
   a slider row its own (`Strings.sliderRow(help:)`). The standard Cancel
   and OK buttons of a popover or dialog need none. A function with a
-  keyboard shortcut ends its tooltip with it in parentheses, in Mac
-  symbols ("Crop: … (C)", "Scan Tab (⌥⌘2)"), never typed by hand: add the
+  keyboard shortcut ends its tooltip with it in parentheses ("Crop: …
+  (C)", "Scan Tab (⌥⌘2)": symbols for ⌘ ⌥ ⇧ and the arrows, Return, Esc
+  and Space in full and translated), never typed by hand: add the
   shortcut to `AppShortcut` (X1ScanCore, also used by the menus and the
   key handling) and the tooltip to `ShortcutTooltip` (its sentence without
   the shortcut, translated in the catalog), then use

@@ -9,11 +9,14 @@ import Testing
 /// French.
 struct ShortcutTests {
     @Test func displayInMacSymbols() {
-        #expect(KeyShortcut("c").display == "C")
-        #expect(KeyShortcut("2", [.option, .command]).display == "⌥⌘2")
-        #expect(KeyShortcut("e", [.command, .shift]).display == "⇧⌘E", "modifiers in the menus' order")
-        #expect(KeyShortcut(.returnKey).display == "↩" && KeyShortcut(.escape).display == "⎋")
-        #expect(KeyShortcut(.leftRight, .shift).display == "⇧← →")
+        #expect(KeyShortcut("c").display() == "C")
+        #expect(KeyShortcut("2", [.option, .command]).display() == "⌥⌘2")
+        #expect(KeyShortcut("e", [.command, .shift]).display() == "⇧⌘E", "modifiers in the menus' order")
+        #expect(KeyShortcut(.leftRight, .shift).display() == "⇧← →", "symbols for the arrows")
+        // The keys without a letter in full, in the application's language (user's decision).
+        #expect(KeyShortcut(.returnKey).display() == "Return" && KeyShortcut(.escape).display() == "Esc")
+        let french = KeyShortcut.KeyNames(returnKey: "Retour", escape: "Échap", space: "Espace")
+        #expect(KeyShortcut(.space).display(names: french) == "Espace" && KeyShortcut(.escape).display(names: french) == "Échap")
         #expect(KeyShortcut("e", [.command, .shift]).keyEquivalent == "e" && KeyShortcut(.leftRight).keyEquivalent == nil)
     }
 
@@ -22,7 +25,7 @@ struct ShortcutTests {
             let shortcut: KeyShortcut? = AppShortcut.tool(tool).shortcut
             #expect(shortcut == KeyShortcut(tool.key), "the tool key itself (Tool.key)")
         }
-        let tabs: [String] = PanelTab.visible.compactMap { AppShortcut.panelTab($0).shortcut?.display }
+        let tabs: [String] = PanelTab.visible.compactMap { AppShortcut.panelTab($0).shortcut?.display() }
         #expect(tabs == ["⌥⌘1", "⌥⌘2", "⌥⌘3"], "in the tab bar's order")
         #expect(AppShortcut.panelTab(.develop).shortcut == nil, "no shortcut for a tab not shown")
     }
@@ -35,14 +38,16 @@ struct ShortcutTests {
             #expect(mentioned, "\(shortcut) has no tooltip")
         }
         for tooltip in ShortcutTooltip.allCases {
-            let displays: [String] = tooltip.shortcuts.compactMap { $0.shortcut?.display }
+            let displays: [String] = tooltip.shortcuts.compactMap { $0.shortcut?.display() }
             #expect(!displays.isEmpty, "\(tooltip) has no shortcut")
-            let text: String = tooltip.text("Sentence")
+            let text: String = tooltip.text("Sentence", names: .english)
             #expect(text == "Sentence (\(displays.joined(separator: ", ")))", "\(tooltip): \(text)")
         }
-        #expect(ShortcutTooltip.stopPreview.text("Stop the preview") == "Stop the preview (⌘., ⎋)")
-        #expect(ShortcutTooltip.handTool.text("Hand") == "Hand (H, ␣)" && ShortcutTooltip.done.text("Done") == "Done (↩, ⎋)")
-        #expect(ShortcutTooltip.tool(.crop).text("Crop") == "Crop (C)")
+        #expect(ShortcutTooltip.stopPreview.text("Stop the preview", names: .english) == "Stop the preview (⌘., Esc)")
+        #expect(ShortcutTooltip.handTool.text("Hand", names: .english) == "Hand (H, Space)" && ShortcutTooltip.done.text("Done", names: .english) == "Done (Return, Esc)")
+        let french = KeyShortcut.KeyNames(returnKey: "Retour", escape: "Échap", space: "Espace")
+        #expect(ShortcutTooltip.done.text("Terminé", names: french) == "Terminé (Retour, Échap)")
+        #expect(ShortcutTooltip.tool(.crop).text("Crop", names: .english) == "Crop (C)")
     }
 
     /// Every tooltip's sentence is in the application's String Catalog,
@@ -50,10 +55,11 @@ struct ShortcutTests {
     /// hand (the parentheses are added from the source).
     @Test func sentencesAreTranslatedWithoutHandCopiedShortcuts() throws {
         let strings = try Self.catalog()
-        // Any shortcut copied by hand, anywhere in the sentence, except a lone letter
-        // (C, R…), which a sentence may contain as a word.
-        let displays: [String] = AppShortcut.all.compactMap { $0.shortcut?.display }
-            .filter { display in !(display.count == 1 && display.first?.isLetter == true) }
+        // Any shortcut with a symbol (⌘, ⌥, ⇧, the arrows) copied by hand, anywhere in the
+        // sentence; a lone letter (C, R…) or a key's name (Esc, Space…) may be a word of it.
+        let symbols: Set<Character> = ["⌃", "⌥", "⇧", "⌘", "←", "→"]
+        let displays: [String] = AppShortcut.all.compactMap { $0.shortcut?.display() }
+            .filter { display in display.contains { symbols.contains($0) } }
         for tooltip in ShortcutTooltip.allCases {
             let entry = try #require(strings[tooltip.key] as? [String: Any], "\(tooltip.key) is not in the catalog")
             let comment: String = entry["comment"] as? String ?? ""
@@ -68,9 +74,16 @@ struct ShortcutTests {
                 for display in displays {
                     #expect(!value.contains(display), "\(language) copies \(display) by hand: \(value)")
                 }
+                // A key's name may be a word of the sentence, but not in parentheses.
+                for name in Self.keyNames {
+                    #expect(!value.contains("(\(name)") && !value.contains("\(name))"), "\(language) copies \(name) by hand: \(value)")
+                }
             }
         }
     }
+
+    /// The keys' names in English and French (the catalog's key.return, key.escape, key.space).
+    private static let keyNames: [String] = ["Return", "Esc", "Space", "Retour", "Échap", "Espace"]
 
     /// The application's catalog: app/X1Scan/Localization/Localizable.xcstrings.
     private static func catalog() throws -> [String: Any] {

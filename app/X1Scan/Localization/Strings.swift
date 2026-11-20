@@ -502,7 +502,16 @@ enum Strings {
     /// A tooltip with its shortcuts at the end, from the shortcuts' own source
     /// (`ShortcutTooltip`, `AppShortcut`): "Crop: … (C)" (user's decision after lot 1b).
     static func tooltip(_ tooltip: ShortcutTooltip) -> String {
-        tooltip.text(Bundle.main.localizedString(forKey: tooltip.key, value: tooltip.key, table: "Localizable"))
+        tooltip.text(Bundle.main.localizedString(forKey: tooltip.key, value: tooltip.key, table: "Localizable"),
+                     names: keyNames)
+    }
+
+    /// The keys without a letter, in full in tooltips (user's decision after lot 1b).
+    static var keyNames: KeyShortcut.KeyNames {
+        KeyShortcut.KeyNames(
+            returnKey: String(localized: "key.return", defaultValue: "Return", comment: "Name of the Return key in a tooltip's shortcut"),
+            escape: String(localized: "key.escape", defaultValue: "Esc", comment: "Name of the Escape key in a tooltip's shortcut"),
+            space: String(localized: "key.space", defaultValue: "Space", comment: "Name of the space bar in a tooltip's shortcut"))
     }
 
     /// Name of the action in Edit > Undo / Redo (a noun: "Undo Framing Reset").

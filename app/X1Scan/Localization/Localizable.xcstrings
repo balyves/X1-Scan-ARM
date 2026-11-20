@@ -313,20 +313,20 @@
         }
       }
     },
-    "Hand: move the image; the space bar held gives it for a moment": {
-      "comment": "Tooltip of the Hand tool; the app adds its shortcuts (H, the space bar) in parentheses",
+    "Hand: move the image, or for a moment while the second key is held": {
+      "comment": "Tooltip of the Hand tool; the app adds its shortcuts (H, then the space bar) in parentheses",
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Hand: move the image; the space bar held gives it for a moment"
+            "value": "Hand: move the image, or for a moment while the second key is held"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Main : déplacer l’image ; la barre d’espace maintenue la donne un instant"
+            "value": "Main : déplacer l’image, ou un instant tant que la seconde touche est maintenue"
           }
         }
       }
@@ -784,6 +784,60 @@
           "stringUnit": {
             "state": "translated",
             "value": "Garde le cadre entièrement dans l’image tournée, sans coins vides."
+          }
+        }
+      }
+    },
+    "key.escape": {
+      "comment": "Name of the Escape key in a tooltip's shortcut",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esc"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Échap"
+          }
+        }
+      }
+    },
+    "key.return": {
+      "comment": "Name of the Return key in a tooltip's shortcut",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Return"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retour"
+          }
+        }
+      }
+    },
+    "key.space": {
+      "comment": "Name of the space bar in a tooltip's shortcut",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Space"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Espace"
           }
         }
       }
