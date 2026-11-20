@@ -936,3 +936,24 @@ not changed until the new organisation of the panel is approved.
 A custom ratio keeps the width and height typed, whatever the frame's
 direction, and turns with the frame at a quarter turn (13×18 becomes
 18×13), as lot 1 does (docs/decisions.md, "Lot 1: layout and geometry").
+
+## 2026-11-20: exposure patches on the virtual X1
+
+The virtual X1's previews now show two patches, one clipped and one
+dense, to try the exposure overlay (decisions.md, "Lot 1: exposure
+indicator"). Asked where the thin violet line at the edge of the overlay
+comes from: on the virtual X1, apart from the dense patch, the only
+pixels near the noise floor are preview columns 0-4, at the left edge,
+whose white reference is at the dark level in the calibration profile of
+2026-11-12 (protocol.md §10) **[confirmed]**; that they are masked CCD
+pixels is a **[hypothesis]**. A line elsewhere around the image would
+not come from the overlay's zones.
+
+## 2026-11-20: lot 1 fixes after the user's tests (virtual X1)
+
+From the user's tests of lot 1 on the virtual X1 (decisions.md, "Lot 1:
+layout and geometry"): crop handles stop at the image's edge and at a
+smallest size, never flipping over; Done and Return go back to the tool
+used before the crop mode, Esc puts back the recipe of the mode's start
+(a running preview or scan is stopped first), and Reset gives the whole
+image with no fine angle. Nothing sent to the scanner changed; not pushed.

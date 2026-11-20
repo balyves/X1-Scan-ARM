@@ -99,6 +99,13 @@ older ones in `docs/protocol.md` §1-§11 are still to be added.
 
 ## Application (lot 1)
 
+- Preview columns 0-4, whose white reference is at the dark level, are
+  masked or unlit CCD pixels (the preview's part of the width margin,
+  protocol.md §10), not image. The fixtures' image reads already hold
+  these columns (at most about 300-480), but the holder's edge is dark
+  there too, so they do not settle it. Settle: a preview whose image is
+  bright at its left edge (clear film or an empty holder at that edge).
+
 - The exposure indicator's thresholds, clipping at 64 000 and noise floor
   at 1 024 on the 16-bit raw samples (decisions.md, "Lot 1: exposure
   indicator"), are round guesses. Missing: measured levels. Settle: dark

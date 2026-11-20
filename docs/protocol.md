@@ -478,6 +478,15 @@ Data format **[confirmed]**:
   on an empty holder).
 - Preview: 2 004 pixels per line (1 998 requested + 6), 12 024 bytes per line.
   Full CCD width for calibration: 7 992 pixels.
+- Preview columns 0-4 (calibration profile of the 2026-11-12 preview,
+  `tests/fixtures/preview-calibration-profile.json`): the white reference
+  is at the dark level there (column 0: white 330 / 300 / 314, dark
+  314 / 285 / 310); column 5 is about half-way (26 325 / 24 952 / 21 542),
+  then about 50 000. **[confirmed]** on that capture. Like the scans' width
+  margin below (6 extra pixels at binning 4, the first ones), they are
+  probably masked or unlit CCD pixels, not image. **[hypothesis]** In the
+  application they read as near the noise floor: the violet line at the
+  left edge of the exposure overlay.
 - Image reads are issued asynchronously by FlexColor (next read queued while
   the previous block is processed). Everything else is synchronous.
 

@@ -1237,6 +1237,13 @@ nothing is sent to the scanner and nothing in the image changes.
 - **Advice**: planned (it will point to quality modes: several passes,
   HDR), hidden in lot 1 (`ExposureSection.showsAdvice`), because those
   modes do not exist yet.
+- **Virtual X1** (user's request of 2026-11-20): its previews show the
+  test pattern with a clipped patch (rows 200-299, columns 20-35 %) and a
+  dense one (columns 65-80 %), `SyntheticFilm.exposurePatches`, so that
+  the overlay can be tried; the range used then always reads 100 % there.
+  Its scans keep the plain test pattern. Columns 0-4 of every preview are
+  near the noise floor (protocol.md §10): the violet line at the left
+  edge; whether to leave them out of the measure is left for later.
 
 ## Lot 1: layout and geometry (2026-11-19)
 
@@ -1293,6 +1300,26 @@ received, on the display or on exported files.
   and height typed, whatever the frame's direction, and is exchanged by a
   quarter turn like a named ratio (13×18 becomes 18×13; user's decision of
   2026-11-20).
+- **Handles** (user's decision of 2026-11-20): a corner dragged keeps the
+  opposite corner in place and stays on its side (never flips over); it
+  stops at the image's edge (the turned image with the constraint on, the
+  image itself otherwise) and at a smallest side of 24 screen points, or
+  less where the room from the fixed corner is smaller. Free proportions:
+  the side that reaches an edge stops, the other goes on along it. A new
+  frame starts after a drag of 5 points and stops at the edge the same
+  way (`CropGeometry.resized`).
+- **Crop mode** (user's decisions of 2026-11-20): Done and Return leave
+  it with its changes, back to the tool used before it (hand or zoom);
+  choosing another tool also keeps the changes. Esc puts back the whole
+  recipe as it was when the mode was entered (frame, angle, proportions,
+  lock, constraint, turns and mirror), unless a preview or scan is
+  running: then Esc stops it first, whatever the tool, as the Stop button
+  and the confirmations promise; while the stop is under way Esc does
+  nothing. A new image area (the scan after the preview)
+  drops the frame Esc would put back. Reset (an icon next to Done): the
+  whole image, free proportions (proposed, to be confirmed by the user)
+  and no angle; the turns, mirror, lock and constraint are kept, and Esc
+  still goes back to the state on entering the mode.
 - **Straightening rule**: the line's direction folded into (−90°, 90°];
   within 45° of horizontal it is made horizontal, otherwise vertical; the
   angle is added to the current one.
