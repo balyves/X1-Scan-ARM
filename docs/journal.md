@@ -963,3 +963,15 @@ back the whole recipe (turns included) are confirmed; preview columns
 0-4 are to be left out of the exposure measure once part J has checked
 them on real captures; key X now works in crop mode wherever the focus
 is in the main window, except while typing in a field.
+
+## 2026-11-20: lot 1b, panel reorganisation (application, virtual X1)
+
+From the user's brief and a mock-up (decisions.md, "Lot 1b"): panel tabs
+Prepare, Scan and Output with a permanent Framing section, an
+Information area common to every tab, the tool column in groups with an
+exposure zones toggle, the fine angle by whole degrees while the
+straightening rule keeps its tenths, a tooltip on every control, and the
+language note in Settings. Seven commits (steps A to F, then the
+documentation), not pushed. Nothing sent to the scanner changed:
+sequences, guards and transport are untouched. Tried on the virtual X1
+only; the user tests the application next.

@@ -1337,6 +1337,38 @@ received, on the display or on exported files.
 User's brief of 2026-11-20 and decisions on the plan. A reorganisation of
 the interface only: nothing sent to the scanner changes.
 
+- **Tabs**: the panel is, top to bottom, a tab bar (Prepare, Scan,
+  Output; ⌥⌘1-3 in the View menu, ⌘0 and ⌘1 stay with the zoom), the
+  tab's sections (scrolling), the Information area and the Preview and
+  Scan buttons. Develop (corrections, lot 3) has its place between Scan
+  and Output but is not shown: no empty tab, no inactive control. The tab
+  shown and the folded sections are remembered between launches.
+- **Prepare**: Original (film, holder) and **Framing**, a permanent
+  section that replaces the crop options shown at the top of the panel in
+  lot 1: orientation, proportions and lock, angle, straighten (rule; Auto
+  (edges) disabled), grid kind, tint (colour and opacity of the grid),
+  constrain to image. The name "Crop and Straighten" is gone: the section
+  is Framing everywhere; the tool keeps its name (Crop, « Recadrage » in
+  French). Choosing the Crop tool or the rule (C, R) shows Prepare with
+  Framing unfolded; in crop mode the section is lightly tinted and its
+  title row carries Reset and Done (Done, Return and Esc unchanged).
+  Folded: "6×7 · −1° · 90°" (proportions, fine angle and turns when not
+  zero, mirror).
+- **Scan**: resolution, scale, input, output. **Output**: unchanged.
+- **Information** (common to every tab, not scrolling): Histogram then
+  Exposure, each foldable; when the window is low, the tab's content
+  scrolls (minimum height kept).
+- **Tool column**: Hand and Zoom, a line, Crop and Rule; at the bottom,
+  after a line, Grid (click: show or hide; right click: kind, colour,
+  opacity) and Exposure Zones (the Exposure section's checkbox, the same
+  setting). The pipettes and the densitometer come with lot 3.
+- **Tooltips** (a rule for every lot from now on): every control of the
+  panel, every tab and every tool has a native one-sentence tooltip, in
+  English and French. Detailed help (⌥ + hover) comes later.
+- **Language** (user's decision, replacing the brief's point F): the
+  Language menu of Settings > General stays, with the sentence "Restart X1
+  Scan to apply the language." next to it.
+
 - **Fine angle** (user's decision): the slider, the typed field and the
   arrow keys move by whole degrees (−45° to 45°); ⇧ + arrow moves 5°. An
   arrow moves at most its step and lands on a whole degree (from −1.3°,
