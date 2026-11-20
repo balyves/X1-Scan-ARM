@@ -52,12 +52,13 @@ private struct GeneralSettings: View {
 
     var body: some View {
         Form {
-            Picker(String(localized: "Language", comment: "Setting"), selection: $settings.language) {
+            // The note is the menu's subtitle: on the same row, read with it by VoiceOver.
+            Picker(selection: $settings.language) {
                 ForEach(InterfaceLanguage.allCases, id: \.self) { Text(Strings.language($0)).tag($0) }
+            } label: {
+                Text(String(localized: "Language", comment: "Setting"))
+                Text("Restart X1 Scan to apply the language.", comment: "Setting note under the Language menu")
             }
-            Text("The language changes at the next launch.", comment: "Setting note")
-                .font(.caption)
-                .foregroundStyle(.secondary)
             Toggle(String(localized: "Hide the serial number", comment: "Setting"), isOn: $settings.hidesSerialNumber)
             Text("Shown as FX1••••••• in Scanner Information.", comment: "Setting note")
                 .font(.caption)

@@ -1281,6 +1281,24 @@
         }
       }
     },
+    "Restart X1 Scan to apply the language.": {
+      "comment": "Setting note under the Language menu",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restart X1 Scan to apply the language."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Redémarrez X1 Scan pour appliquer la langue."
+          }
+        }
+      }
+    },
     "RGB histogram": {
       "extractionState": "manual",
       "localizations": {
@@ -2141,17 +2159,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Langue"
-          }
-        }
-      }
-    },
-    "The language changes at the next launch.": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La langue change au prochain lancement."
           }
         }
       }
