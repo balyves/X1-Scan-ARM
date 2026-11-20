@@ -98,8 +98,8 @@ struct FramingSection: View {
                     .popover(isPresented: $customShown, arrowEdge: .bottom) { customRatio }
                 Button { model.toggleCropPortrait() } label: {
                     // The frame's real direction (portrait means "exchanged", not "upright").
-                    Image(systemName: (model.cropRatio ?? model.cropFrameInDocument.map { $0.width / $0.height } ?? 1) < 1
-                          ? "rectangle.portrait" : "rectangle")
+                    SwapDimensionsIcon(
+                        upright: (model.cropRatio ?? model.cropFrameInDocument.map { $0.width / $0.height } ?? 1) < 1)
                 }
                 .buttonStyle(.borderless)
                 .help(Strings.withShortcut(Strings.cropSwap, "X"))
@@ -268,5 +268,78 @@ private struct OrientationGlyph: View {
             .scaleEffect(x: orientation.mirrored ? -1 : 1, y: 1)
             .rotationEffect(.degrees(Double(orientation.quarterTurns) * 90))
             .frame(width: CompactPanelMetrics.unitWidth)
+    }
+}
+
+/// The icon of "Swap Width and Height" (user's tests of lot 1b: the plain
+/// rectangle was not clear). Three proposals for the user to choose from,
+/// drawn in the frame's current direction (`upright`: higher than wide):
+/// - a: the system's rectangle with a turning arrow;
+/// - b: the frame drawn solid, the exchanged frame dashed over it;
+/// - c: the frame, a two-way arrow, the exchanged frame.
+/// A is shown until the user chooses; debug builds take `-X1ScanSwapIcon b`
+/// (or c) for the comparison captures.
+struct SwapDimensionsIcon: View {
+    enum Style: String { case a, b, c }
+
+    /// Drawn icons: the height of the lock symbol next to them (small controls).
+    static let drawnSize = CGSize(width: 16, height: 16)
+    /// Style c: two frames and the arrow between them.
+    static let wideSize = CGSize(width: 34, height: 16)
+
+    let upright: Bool
+
+    static var style: Style {
+        #if DEBUG
+        if let name = UserDefaults.standard.string(forKey: "X1ScanSwapIcon"), let style = Style(rawValue: name) { return style }
+        #endif
+        return .a
+    }
+
+    var body: some View {
+        switch Self.style {
+        case .a:
+            Image(systemName: upright ? "rectangle.portrait.rotate" : "rectangle.landscape.rotate")
+        case .b:
+            Canvas { context, size in
+                let long = min(size.width, size.height) - 2, short = long * 0.62
+                let centre = CGPoint(x: size.width / 2, y: size.height / 2)
+                func frame(_ width: CGFloat, _ height: CGFloat) -> Path {
+                    Path(roundedRect: CGRect(x: centre.x - width / 2, y: centre.y - height / 2, width: width, height: height),
+                         cornerRadius: 1.5)
+                }
+                let current = upright ? frame(short, long) : frame(long, short)
+                let exchanged = upright ? frame(long, short) : frame(short, long)
+                context.stroke(exchanged, with: .foreground, style: StrokeStyle(lineWidth: 1, dash: [2, 1.5]))
+                context.stroke(current, with: .foreground, lineWidth: 1.4)
+            }
+            .frame(width: Self.drawnSize.width, height: Self.drawnSize.height)
+        case .c:
+            Canvas { context, size in
+                let height = size.height - 5, narrow = height * 0.6
+                let y = (size.height - height) / 2
+                func frame(x: CGFloat, upright: Bool) -> Path {
+                    let rect = upright ? CGRect(x: x, y: y, width: narrow, height: height)
+                                       : CGRect(x: x, y: y + (height - narrow) / 2, width: height, height: narrow)
+                    return Path(roundedRect: rect, cornerRadius: 1.2)
+                }
+                context.stroke(frame(x: 1, upright: upright), with: .foreground, lineWidth: 1.3)
+                let secondX = size.width - 1 - (upright ? height : narrow)
+                context.stroke(frame(x: secondX, upright: !upright), with: .foreground, lineWidth: 1.3)
+                // A two-way arrow between them: the button exchanges, both ways.
+                let left = 1 + (upright ? narrow : height) + 2, right = secondX - 2, mid = size.height / 2
+                var arrow = Path()
+                arrow.move(to: CGPoint(x: left, y: mid))
+                arrow.addLine(to: CGPoint(x: right, y: mid))
+                arrow.move(to: CGPoint(x: right - 2.5, y: mid - 2.5))
+                arrow.addLine(to: CGPoint(x: right, y: mid))
+                arrow.addLine(to: CGPoint(x: right - 2.5, y: mid + 2.5))
+                arrow.move(to: CGPoint(x: left + 2.5, y: mid - 2.5))
+                arrow.addLine(to: CGPoint(x: left, y: mid))
+                arrow.addLine(to: CGPoint(x: left + 2.5, y: mid + 2.5))
+                context.stroke(arrow, with: .foreground, style: StrokeStyle(lineWidth: 1.2, lineCap: .round, lineJoin: .round))
+            }
+            .frame(width: Self.wideSize.width, height: Self.wideSize.height)
+        }
     }
 }
