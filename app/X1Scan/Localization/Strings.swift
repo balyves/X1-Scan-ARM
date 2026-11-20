@@ -467,7 +467,7 @@ enum Strings {
                comment: "Tooltip of the Scale slider and field of the settings panel")
     }
     static var angleHelp: String {
-        String(localized: "Fine rotation of the image in degrees; ← → in crop mode, ⇧ for 5°.",
+        String(localized: "Fine rotation of the image in degrees; ← → in crop mode, ⇧ by multiples of 5°.",
                comment: "Tooltip of the Angle slider and field of the Framing section")
     }
     static var orientationHelp: String {

@@ -175,14 +175,16 @@ public struct CropSettings: Sendable, Hashable, Codable {
         return min(max(rounded, angleRange.lowerBound), angleRange.upperBound)
     }
 
-    /// An arrow key (lot 1b): at most `delta` degrees in its direction,
-    /// landing on a whole degree. From −1.3°, → gives −1° and ← gives −2°;
-    /// from a whole degree, exactly `delta`.
+    /// An arrow key (lot 1b, user's decisions of 2026-11-20): the next
+    /// multiple of `delta` in its direction. With 1°, from −1.3°, → gives −1°
+    /// and ← gives −2°; with 5° (Shift), → gives 0°, then 5°.
     public static func nudgedAngle(_ angle: Double, by delta: Double) -> Double {
-        let target = angle + delta
-        // A tiny margin: −1 + 1 computed as −1.1102e-16 still lands on 0.
-        let whole = delta > 0 ? (target + 1e-9).rounded(.down) : (target - 1e-9).rounded(.up)
-        return clampedAngle(whole) + 0  // + 0: never −0 in the recipe
+        let step = abs(delta)
+        guard step > 0, angle.isFinite else { return clampedAngle(angle) }
+        // A tiny margin: a value already on a multiple (computed as −1.1102e-16) moves a whole step.
+        let next = delta > 0 ? ((angle + 1e-9) / step).rounded(.down) * step + step
+                             : ((angle - 1e-9) / step).rounded(.up) * step - step
+        return clampedAngle(next) + 0  // + 0: never −0 in the recipe
     }
 
     /// Nothing to do: no angle, no frame.

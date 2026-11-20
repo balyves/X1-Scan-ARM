@@ -258,20 +258,20 @@
         }
       }
     },
-    "Fine rotation of the image in degrees; ← → in crop mode, ⇧ for 5°.": {
+    "Fine rotation of the image in degrees; ← → in crop mode, ⇧ by multiples of 5°.": {
       "comment": "Tooltip of the Angle slider and field of the Framing section",
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Fine rotation of the image in degrees; ← → in crop mode, ⇧ for 5°."
+            "value": "Fine rotation of the image in degrees; ← → in crop mode, ⇧ by multiples of 5°."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Rotation fine de l’image en degrés ; ← → en mode Recadrage, ⇧ pour 5°."
+            "value": "Rotation fine de l’image en degrés ; ← → en mode Recadrage, ⇧ par multiples de 5°."
           }
         }
       }

@@ -1362,7 +1362,8 @@ the interface only: nothing sent to the scanner changes.
 - **Tool column**: Hand and Zoom, a line, Crop and Rule; at the bottom,
   after a line, Grid (click: show or hide; right click: kind, colour,
   opacity) and Exposure Zones (the Exposure section's checkbox, the same
-  setting). The pipettes and the densitometer come with lot 3.
+  setting; a neutral icon, a half-hatched circle, not a warning sign:
+  user's decision). The pipettes and the densitometer come with lot 3.
 - **Tooltips** (a rule for every lot from now on): every control of the
   panel, every tab and every tool has a native one-sentence tooltip, in
   English and French. Detailed help (⌥ + hover) comes later.
@@ -1370,9 +1371,10 @@ the interface only: nothing sent to the scanner changes.
   Language menu of Settings > General stays, with the sentence "Restart X1
   Scan to apply the language." next to it.
 - **Fine angle** (user's decision): the slider, the typed field and the
-  arrow keys move by whole degrees (−45° to 45°); ⇧ + arrow moves 5°. An
-  arrow moves at most its step and lands on a whole degree (from −1.3°,
-  → gives −1° and ← gives −2°; ⇧ → gives 3°). The straightening rule
+  arrow keys move by whole degrees (−45° to 45°). An arrow goes to the
+  next whole degree in its direction (from −1.3°, → gives −1° and ← gives
+  −2°); ⇧ + arrow to the next multiple of 5° (from −1.3°, → gives 0°,
+  then 5°). The straightening rule
   keeps the angle it measures to the tenth: the recipe keeps tenths, and
   the field, the summary and the rule's label show whole degrees, or a
   tenth when the rule measured one ("−1.3°").

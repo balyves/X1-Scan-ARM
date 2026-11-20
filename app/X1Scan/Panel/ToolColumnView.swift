@@ -56,7 +56,8 @@ struct ToolColumnView: View {
         return Button {
             model.showsExposureZones.toggle()
         } label: {
-            ToolIcon(symbol: "exclamationmark.triangle", highlighted: shown)
+            // Half hatched, echoing the hatched noise zone of the exposure gauge: a display, not a warning.
+            ToolIcon(symbol: "circle.lefthalf.striped.horizontal", highlighted: shown)
         }
         .buttonStyle(.plain)
         .disabled(model.exposure == nil)

@@ -9,15 +9,20 @@ import X1Transport
 struct CropGeometryTests {
     private let image = CGSize(width: 600, height: 400)
 
-    /// Lot 1b (user's decision of 2026-11-20): the arrows move by whole
-    /// degrees (⇧: 5°), landing on a whole degree; the recipe keeps tenths.
-    @Test func arrowsMoveByWholeDegrees() {
+    /// Lot 1b (user's decisions of 2026-11-20): the arrows go to the next
+    /// whole degree, Shift to the next multiple of 5°; the recipe keeps tenths.
+    @Test func arrowsGoToTheNextMultipleOfTheirStep() {
         #expect(CropSettings.angleStep == 1 && CropSettings.angleLargeStep == 5 && CropSettings.angleResolution == 0.1)
         #expect(CropSettings.nudgedAngle(-1.3, by: 1) == -1)
         #expect(CropSettings.nudgedAngle(-1.3, by: -1) == -2)
         #expect(CropSettings.nudgedAngle(-1, by: 1) == 0)
         #expect(CropSettings.nudgedAngle(0.4, by: -1) == 0 && CropSettings.nudgedAngle(0.4, by: -1).sign == .plus, "never −0")
-        #expect(CropSettings.nudgedAngle(3, by: 5) == 8 && CropSettings.nudgedAngle(-1.3, by: 5) == 3)
+        #expect(CropSettings.nudgedAngle(-1.3, by: 5) == 0 && CropSettings.nudgedAngle(0, by: 5) == 5)
+        #expect(CropSettings.nudgedAngle(3, by: 5) == 5 && CropSettings.nudgedAngle(-1.3, by: -5) == -5)
+        #expect(CropSettings.nudgedAngle(10, by: -5) == 5 && CropSettings.nudgedAngle(-1.3, by: 5).sign == .plus)
+        #expect(CropSettings.nudgedAngle(45, by: 5) == 45 && CropSettings.nudgedAngle(-45, by: -5) == -45)
+        let almostFifteen: Double = 14.999_999_999_999_998
+        #expect(CropSettings.nudgedAngle(almostFifteen, by: 5) == 20, "a multiple computed in floating point")
         #expect(CropSettings.nudgedAngle(44, by: 5) == 45 && CropSettings.nudgedAngle(-44.5, by: -1) == -45)
     }
 
