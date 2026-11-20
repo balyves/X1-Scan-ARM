@@ -67,6 +67,10 @@ journal, and [`tools/`](tools/) for the probe, capture and decode tools.
 7. Full scan, 3F/TIFF output.
 8. Colour: input ICC profile built from an IT8.7/1 target, film rendering.
 
+Planned for lot 3 of the application (`docs/decisions.md`, "Lot 1b"): RGB
+values under the pointer in the settings panel's Information area, with
+the pipettes and the densitometer (log10 densities next to RGB values).
+
 Future ideas, not scheduled, in no particular order. Those that drive the
 scanner (holder detection, HDR, averaging, all openings, guided calibration,
 Image Capture and Photoshop integration, strip thumbnails and batch
@@ -80,8 +84,6 @@ scanning) depend on sequences captured from FlexColor:
 - Image Capture and Photoshop integration.
 - Linear DNG export, for raw, non-destructive editing in Lightroom.
 - ICC profile embedded at export (Adobe RGB, ProPhoto, sRGB, Display P3).
-- Information area of the settings panel: RGB values under the pointer,
-  pipettes and densitometer (log10 densities next to RGB values).
 - Re-open existing 3F files with their FlexColor settings and export them to
   DNG/TIFF; settings that need a Hasselblad film profile are reported, not
   emulated (see `docs/decisions.md`).

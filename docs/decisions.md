@@ -1320,10 +1320,11 @@ received, on the display or on exported files.
   scan is running: then Esc stops it first, whatever the tool, as the
   Stop button and the confirmations promise; while the stop is under way
   Esc does nothing. A new image area (the scan after the preview) drops
-  the frame Esc would put back. Reset (an icon next to Done): the whole
-  image, free proportions and no angle; the turns, mirror, lock and
-  constraint are kept, and Esc still goes back to the state on entering
-  the mode. Key X exchanges the frame's width and height as soon as the
+  the frame Esc would put back. Reset (an icon next to Done; replaced in
+  lot 1b, see "Lot 1b" below: always shown, the orientation reset too, ⌘Z
+  undoes it): the whole image, free proportions and no angle; the turns,
+  mirror, lock and constraint are kept, and Esc still goes back to the
+  state on entering the mode. Key X exchanges the frame's width and height as soon as the
   mode is on, wherever the keyboard focus is in the main window, except
   while text is typed in a field or a sheet is open; held down, it acts
   once.
