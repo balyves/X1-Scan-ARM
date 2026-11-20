@@ -314,12 +314,42 @@ public actor SimulatedX1: SCSITransport {
 /// errors show up in tests.
 public struct SyntheticFilm: Sendable {
     public static let testPattern = SyntheticFilm()
+    /// The test pattern with two patches for the application's exposure
+    /// indicator (lot 1): one brighter than the white reference, so that
+    /// its raw samples clip, and one nearly opaque, near the dark level.
+    /// Rows 200-299, columns 20-35 % and 65-80 % of the width. Used by the
+    /// application's virtual X1 only; the X1Kit tests keep `testPattern`.
+    public static let exposurePatches = SyntheticFilm(exposurePatches: true)
 
-    public init() {}
+    /// Rows (counted from SCAN) of both patches. With the R/B line gap, the
+    /// row above and the row below each patch have only some channels in it.
+    public static let patchRows = 200..<300
+    /// Transmission of the bright patch: 1.5 × the white reference, above 16 bits on every column.
+    public static let clippedTransmission = 1.5
+    /// Transmission of the dense patch: a few counts above the dark level.
+    public static let denseTransmission = 0.002
 
-    /// Transmission in 0...1 at a scan row (counted from SCAN), column and channel (0 R, 1 G, 2 B).
+    public let hasExposurePatches: Bool
+
+    public init(exposurePatches: Bool = false) {
+        hasExposurePatches = exposurePatches
+    }
+
+    /// Columns of the bright (clipped) and dense patches in a line of `width` pixels.
+    public static func patchColumns(width: Int) -> (clipped: Range<Int>, dense: Range<Int>) {
+        func span(_ from: Double, _ to: Double) -> Range<Int> { Int(Double(width) * from)..<Int(Double(width) * to) }
+        return (span(0.20, 0.35), span(0.65, 0.80))
+    }
+
+    /// Transmission at a scan row (counted from SCAN), column and channel
+    /// (0 R, 1 G, 2 B): in 0...1, except the bright patch (1.5).
     public func transmission(row: Int, column: Int, channel: Int, width: Int) -> Double {
         let row = max(row, 0)
+        if hasExposurePatches, Self.patchRows.contains(row) {
+            let patches = Self.patchColumns(width: width)
+            if patches.clipped.contains(column) { return Self.clippedTransmission }
+            if patches.dense.contains(column) { return Self.denseTransmission }
+        }
         switch channel {
         case 0:  // horizontal ramp plus 5-line bands
             return 0.1 + 0.4 * Double(column) / Double(max(width - 1, 1)) + ((row / 5).isMultiple(of: 2) ? 0 : 0.4)

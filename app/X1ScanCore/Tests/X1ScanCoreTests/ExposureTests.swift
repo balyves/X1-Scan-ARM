@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import Foundation
 import Testing
+import X1Transport
 @testable import X1ScanCore
 
 struct ExposureMeterTests {
@@ -54,5 +55,52 @@ struct ExposureMeterTests {
         // Provisional (docs/decisions.md, "Lot 1: exposure indicator"): change both together.
         #expect(ExposureThresholds.provisional.clipLevel == 64_000)
         #expect(ExposureThresholds.provisional.noiseFloor == 1_024)
+    }
+}
+
+/// The virtual X1's film has a clipped and a dense patch (user's tests of
+/// lot 1, 2026-11-20), so that the overlay can be tried. Apart from the
+/// dense patch, the only pixels near the noise floor are the first columns
+/// of the preview, where the calibration's white reference is at the dark
+/// level: that is the thin violet line at the left edge of the image.
+@MainActor
+struct VirtualExposurePatchTests {
+    @Test func previewShowsBothZones() async throws {
+        let suite = "X1ScanCoreTests-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let inspector = ScannerInspector { FakeConnection(responses: [:], openError: TransportError.deviceBusy) }
+        let model = AppModel(virtualScanner: { try TestFixtures.scanner() }, inspector: inspector, defaults: defaults)
+        model.startPreview()
+        await model.session.waitUntilIdle()
+        model.viewSizeChanged(CGSize(width: 800, height: 600))
+        model.refreshImage()
+        await model.waitForRendering()
+        let image = try #require(model.session.image)
+        let reading = try #require(model.exposure)
+        #expect(reading.clippedFraction > 0.005 && reading.noiseFraction > 0.005)
+
+        let thresholds = ExposureThresholds.provisional
+        let patches = SyntheticFilm.patchColumns(width: image.width)
+        var clippedColumns = Set<Int>(), noiseColumns = Set<Int>(), noiseRows = Set<Int>()
+        for row in 0..<image.height {
+            for column in 0..<image.width {
+                let i = (row * image.width + column) * 3
+                let high = max(image.raw[i], image.raw[i + 1], image.raw[i + 2])
+                if high >= thresholds.clipLevel { clippedColumns.insert(column) }
+                if high <= thresholds.noiseFloor {
+                    noiseColumns.insert(column)
+                    if column >= 5 { noiseRows.insert(row) }
+                }
+            }
+        }
+        // Clipped: the bright patch only.
+        #expect(clippedColumns == Set(patches.clipped))
+        // Near the noise floor: the dense patch, and the first five columns (the left edge).
+        #expect(noiseColumns == Set(0..<5).union(patches.dense))
+        // The dense patch is a band of rows (100 film rows, give or take the R/B line gap).
+        let first = try #require(noiseRows.min()), last = try #require(noiseRows.max())
+        let rows = first...last
+        #expect(rows.count >= 98 && rows.count <= 102 && noiseRows.count == rows.count)
     }
 }

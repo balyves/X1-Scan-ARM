@@ -102,6 +102,7 @@ struct PreviewSessionTests {
 enum SimulatedX1Factory {
     static func make() throws -> SimulatedX1 {
         try SimulatedX1(sequenceURL: TestFixtures.directory.appending(path: "preview-sequence.json"),
-                                    calibrationProfileURL: TestFixtures.directory.appending(path: "preview-calibration-profile.json"))
+                                    calibrationProfileURL: TestFixtures.directory.appending(path: "preview-calibration-profile.json"),
+                                    film: VirtualScanner.film)  // the virtual X1's film, exposure patches included
     }
 }

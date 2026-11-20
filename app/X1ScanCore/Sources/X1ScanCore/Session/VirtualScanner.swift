@@ -69,10 +69,17 @@ public struct VirtualScanner: Sendable {
     /// A fresh replay, from the start of the capture. One per preview.
     /// Also returns the simulator itself, whose log the tests read.
     func makeTransport() -> (transport: any SCSITransport, simulator: SimulatedX1) {
-        let simulator = SimulatedX1(fixture: fixture, profile: profile)
+        let simulator = SimulatedX1(fixture: fixture, profile: profile, film: Self.film)
         let paced: any SCSITransport = pacing == .none ? simulator : PacedTransport(inner: simulator, pacing: pacing)
         return (transportWrapper.map { $0(paced) } ?? paced, simulator)
     }
+
+    /// The film of the virtual X1's previews: the test pattern with a
+    /// clipped and a dense patch (user's request of 2026-11-20), so that the
+    /// exposure indicator and its overlay can be tried. With them the range
+    /// used always reads 100 % on the virtual X1 (both ends reached). Scans
+    /// keep the plain test pattern: the overlay is shown on the preview only.
+    static let film = SyntheticFilm.exposurePatches
 
     /// The simulator answers at once: no delay between 0xDF polls.
     var configuration: PreviewConfiguration { .simulator }
