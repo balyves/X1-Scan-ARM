@@ -40,6 +40,10 @@ X1-Scan-ARM aims to let the X1 scan again from a current Mac.
 See [`docs/`](docs/) for the protocol, the hardware chain and the project
 journal, and [`tools/`](tools/) for the probe, capture and decode tools.
 
+The application has a built-in help in English and French (Help > X1 Scan
+Help, written in [`docs/help/`](docs/help/)) and a discovery mode to try it
+without a scanner (File > Try Without a Scanner).
+
 ## Scope
 
 - **Flextight X1 only.** Other Flextight / Imacon models are out of scope.

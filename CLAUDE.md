@@ -166,7 +166,8 @@ available; ask.
 ## Repository layout
 
 - `docs/`: protocol, hardware chain, FlexColor internals, 3F format, journal,
-  open hypotheses (`hypotheses.md`).
+  open hypotheses (`hypotheses.md`); `docs/help/fr` and `docs/help/en`: the
+  built-in help's Markdown pages (the only source of the help text).
 - `tools/x1probe/`: read-only probe (C, IOKit SCSITaskUserClient).
 - `tools/capture/`: lldb capture script for FlexColor on Mojave, and its
   converter to fixtures.
@@ -202,8 +203,14 @@ available; ask.
   models, plus the reusable views of the compact settings panel in `UI/`,
   `swift test`; `Geometry/`: the recipe, orientation, crop, straightening
   and Lanczos rendering of exported files, on pixels already received,
-  never sent to the scanner). The preview runs on the virtual X1; on the real X1,
-  only FlexColor's captured preview (cold or warm, chosen by the first page
+  never sent to the scanner; `Issues/`: the error catalogue, presentation
+  only; `Discovery/`: discovery mode's sample film). `X1Scan/Help/`: the help
+  window; `X1Scan/Issues/`: the error messages; `X1Scan/Discovery/`: the
+  banner; `X1Scan/Sample/`: the place of discovery mode's future photograph
+  (README only). Discovery mode runs on the virtual X1 and opens no
+  transport to a real X1; the presence check (`ScannerPresence`,
+  `cx1_find`) only looks up the I/O Registry. The preview runs on the
+  virtual X1; on the real X1, only FlexColor's captured preview (cold or warm, chosen by the first page
   0x20 read), behind the hidden setting `EnableRealPreview`, a confirmation
   before every run and `CapturedSequenceGuard` built from both captures
   (docs/decisions.md, step 4 and "Real X1: cold or warm sequence").

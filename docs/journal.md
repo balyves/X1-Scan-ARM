@@ -975,3 +975,20 @@ language note in Settings. Seven commits (steps A to F, then the
 documentation), not pushed. Nothing sent to the scanner changed:
 sequences, guards and transport are untouched. Tried on the virtual X1
 only; the user tests the application next.
+
+## 2026-11-20: lot A, help and welcome (application)
+
+From the user's brief and the answers to its plan (decisions.md, "Built-in
+help", "Lot A: error catalogue", "Lot A: discovery mode"): a built-in help
+in English and French from `docs/help`, with a Keyboard Shortcuts page made
+from the shortcuts' own table; error messages that say what to do, each
+with a stable identifier, a Help button to its Troubleshooting entry and
+the technical text in a folded Details part; and a discovery mode on the
+virtual X1, with a banner and exports marked as samples. A presence check
+(the I/O Registry only: nothing opened, nothing sent) gives "No X1 found"
+at launch when the source is the real X1. Four commits (steps A to C,
+then the documentation), not pushed. Nothing sent to the scanner changed:
+sequences, guards, runner and transport commands are untouched; X1Kit
+gained only `cx1_find`, `ScannerPresence`, a TIFF description for samples
+and a film from an image for the simulator. Tried in the application on
+the virtual X1 only (debug snapshots); the X1 was not touched.

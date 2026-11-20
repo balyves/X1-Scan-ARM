@@ -753,9 +753,10 @@ captures of 2026-11-17 (protocol.md §11). User's decisions.
   25 931 in four of 2026-11-18: +64 to +128, under the tolerance) and FlexColor then did not send the
   window with target 25 000 (protocol.md §11). Beyond the tolerance the
   preview stops there (`unexpectedCarriagePosition`) and nothing else is
-  sent; the alert says: "Unexpected carriage position: preview stopped
-  before the carriage was positioned. Switch the X1 off and on before
-  starting the preview again." The log has the read, expected and
+  sent; the message (`carriage-position` since lot A, "Lot A: error
+  catalogue") says the carriage was not where expected, that the preview
+  stopped before positioning it, and to switch the X1 off and on before
+  starting the preview again. The log has the read, expected and
   difference. As after any other stop (the session and modes may still be
   active), the next preview asks for the switched-off-and-on box: no
   exception (user's decision).
@@ -1415,8 +1416,8 @@ the interface only: nothing sent to the scanner changes.
   shortcuts in the test is written by hand). The debug probe
   (`-X1ScanKeyProbe`) presses the keys in the application itself.
   Not changed (user's decision): the real X1's confirmations keep their
-  "(⌘. or Esc)"; the Settings note "Scanner Information (⌘I)" is to be
-  aligned on the same source in lot A.
+  "(⌘. or Esc)". The Settings note "Scanner Information (⌘I)" takes its
+  shortcut from `AppShortcut` since lot A ("Built-in help").
 - **Not in this lot**: the RGB values under the pointer in the
   Information area come with the pipettes and the densitometer, in lot 3
   (user's decision after the tests of lot 1b); nothing is shown for them
@@ -1432,3 +1433,97 @@ the interface only: nothing sent to the scanner changes.
   keeps the angle it measures to the tenth: the recipe keeps tenths, and
   the field, the summary and the rule's label show whole degrees, or a
   tenth when the rule measured one ("−1.3°").
+
+## Built-in help (lot A, 2026-11-20)
+
+From the user's brief of 2026-11-20 and the answers to its plan (points 1,
+2, 9 and 10: the recommendations taken).
+
+- **One source**: Markdown pages in `docs/help/fr` and `docs/help/en`,
+  same file names and same anchors in both languages (tested). There is
+  no help text anywhere else; the error messages' texts are in the String
+  Catalog, and the Troubleshooting entries add to them (when it happens,
+  what it means) rather than repeat them.
+- **Format** (point 1): a help window in the application (Help > X1 Scan
+  Help, ⌘?), with its own search, and the pages in the results of the Help
+  menu's search field through `NSUserInterfaceItemSearching`; no Apple Help
+  Book. Reasons: testable, light and dark mode with the system's colours,
+  the Help button of a message opens an exact anchor, no cache of the
+  system's help viewer.
+- **Conversion** (point 2): the `.md` files are copied unchanged into the
+  application (folder reference `docs/help`) and turned into HTML when a
+  page is shown (`HelpMarkdown`, a small tested subset), not by a build
+  phase. The Keyboard Shortcuts page is completed at that moment from
+  `AppShortcut.helpTable`: never written by hand (tested, and the
+  shortcuts written in the other pages must be some shortcut of the table).
+- **The menu shortcuts without a tooltip** (zoom, Hide Settings Panel,
+  Redo, Scanner Information, Settings, Help) joined `AppShortcut`
+  (`menuOnly`); the menus take their keys from it, unchanged (tested). The
+  Settings > Scanner note now takes ⌘I from the same source (the point
+  left open by lot 1b).
+- **Content** (point 9): the public help does not name the hidden settings
+  of the real X1; it says that preview and scan on the real X1 are being
+  validated, and describes the path in discovery mode. Steps that involve
+  the scanner give the X1's state. X1 Scan needs macOS 26.
+- **Rule** (CLAUDE.md, "Built-in help"): every batch that adds or changes
+  a feature updates its help pages in both languages; x1-ui checks it.
+
+## Lot A: error catalogue (2026-11-20)
+
+- **Identifiers**: every case the user can see has a stable identifier
+  (`IssueID`, e.g. `no-scanner`, `unexpected-state`), its texts in the
+  String Catalog (`issue.<id>.title`, `.cause`, `.step1` to `.step3`, English
+  and French) and its Troubleshooting entry `troubleshooting.md#<id>`
+  (tested). A case not foreseen gives `unknown`, with its details.
+- **Presentation only**: `IssueClassifier` reads what the runner, the
+  guards, the transport and the export already decided. The alerts keep
+  their cases and their moment; the guards, the runner and the log are
+  unchanged. The message shows the operation, a title, the likely cause,
+  one to three steps (the advice to switch the X1 off and on first, and
+  only once), a Help button, and the technical text of before in a folded
+  Details part (Copy Details). A safety check's message says the stop is
+  on purpose, to protect the scanner.
+- **Transport errors** (plan, point 5): the runner keeps them as text
+  (`PreviewAnomaly.transport(String)`, `.couldNotOpen(String)`); X1Kit was
+  not changed. The text is compared with `TransportError`'s own
+  descriptions, so a changed wording fails the tests. Timeouts give
+  `scanner-timeout`, a device gone `disconnected`, a refusal of the guard
+  `guard-refused`, other IOKit errors `unknown`.
+- **ASFireWire** (point 4): not told apart from an X1 that is off (IOKit
+  sees no device in both cases); `no-scanner` names both causes.
+- **Holder** (point 8): no capture shows how the X1 answers without a
+  holder, and the holder code is not read by the application: the
+  identifier `holder-missing` and its entry are reserved, nothing leads to
+  them, nothing is guessed. `notJustSwitchedOn` (a fixed cold script the
+  application never runs) is shown as `unexpected-response`.
+
+## Lot A: discovery mode (2026-11-20)
+
+- **What it is**: File > Try Without a Scanner, or the button of the "No
+  X1 found" message. The application runs on the virtual X1 (the same
+  `VirtualScanner` and `PreviewSession` as `tools/run-virtual.sh`, which is
+  unchanged: it imposes the source at launch, with no banner and no mark).
+  A banner above the image says "Discovery mode — no scanner connected",
+  with Leave Discovery Mode. Not saved: every launch starts outside it.
+- **Safety** (user's decision): in discovery mode no transport to a real
+  X1 is opened, even when one is connected: `startRealPreview`,
+  `startRealScan`, `readRealScanner` and the presence check refuse, and the
+  source stays virtual (tested with spies on every way to the real X1).
+  Leaving puts back the source of before, without saving it, and looks for
+  the X1 again (point 7).
+- **Presence check** (point 3, user's decision): `cx1_find` looks up the
+  I/O Registry for an Imacon / Hasselblad device and reads its properties
+  only: no plug-in interface, no opening, no command (a test checks the
+  C source; x1-reviewer checks it). It runs at launch when the source at
+  launch is the real X1, and on leaving discovery mode; nothing with the
+  virtual source. None found: "No X1 found", which offers discovery mode.
+- **Samples**: a file written in discovery mode has a suffix (`_sample`,
+  `_exemple` in French), the TIFF ImageDescription "X1 Scan discovery mode
+  sample: synthetic image, not a scan." and `"sample": true` in its recipe
+  (written only when true: other recipes are unchanged). Files written
+  outside the mode have no description, as before.
+- **Image** (point 6): the virtual X1's synthetic test pattern for now.
+  The user's own photograph will go to `app/X1Scan/Sample/discovery-film.tiff`
+  with its licence in `LICENSE-SAMPLE` (as `LICENSE-ICON`); `SampleFilm`
+  then makes the virtual X1's film from it (`SyntheticFilm(transmission:)`,
+  simulator only). No photograph is in the repository (tested).
