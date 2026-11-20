@@ -12,9 +12,12 @@ private let allOrientations: [Orientation] = (0..<8).map { Orientation(quarterTu
 
 /// A 3 × 2 image whose red sample is the pixel's index (0...5), green 100 + index, blue 200 + index.
 private func indexImage(width: Int = 3, height: Int = 2) -> RGB16Image {
-    RGB16Image(width: width, height: height, samples: (0..<width * height).flatMap {
-        [UInt16($0), UInt16(100 + $0), UInt16(200 + $0)]
-    })
+    // Typed step by step: Swift 6.3 (the CI's Xcode 26.5) gives up on the one-expression form.
+    let samples: [UInt16] = (0..<width * height).flatMap { (index: Int) -> [UInt16] in
+        let green: Int = 100 + index, blue: Int = 200 + index
+        return [UInt16(index), UInt16(green), UInt16(blue)]
+    }
+    return RGB16Image(width: width, height: height, samples: samples)
 }
 
 /// Width and height of a written TIFF.

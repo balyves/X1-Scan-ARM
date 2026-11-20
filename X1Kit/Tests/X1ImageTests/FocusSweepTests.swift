@@ -23,8 +23,10 @@ struct FocusSweepTests {
 
     @Test func normalizedMeasureIgnoresBrightness() throws {
         // Same edge on every line; the brightness rises along the sweep.
-        let lines = (0..<FocusSweep.lineCount).map { k in
-            (0..<64).map { x in (1 + Double(k) / 100) * (x < 32 ? 0.2 : 0.4) }
+        // Typed step by step: Swift 6.3 (the CI's Xcode 26.5) gives up on the one-expression form.
+        let lines: [[Double]] = (0..<FocusSweep.lineCount).map { (k: Int) -> [Double] in
+            let gain: Double = 1 + Double(k) / 100
+            return (0..<64).map { (x: Int) -> Double in gain * (x < 32 ? 0.2 : 0.4) }
         }
         #expect(try FocusSweep.sharpestLine(lines, measure: .gradientEnergy) == 399)
         let scores = lines.map { FocusSweep.score($0, measure: .normalizedGradientEnergy) }
