@@ -191,21 +191,6 @@ enum Strings {
         }
     }
 
-    static func inspectorFailure(_ failure: ScannerInspector.Failure) -> String {
-        switch failure {
-        case .transport(.deviceNotFound):
-            String(localized: "No X1 found. Check that it is on and connected.", comment: "Real scanner read failure")
-        case .transport(.deviceBusy):
-            String(localized: "The X1 is open in another program (probably FlexColor). Quit it and try again.",
-                   comment: "Real scanner read failure")
-        case .notAFlextightX1(let vendor, let product):
-            String(localized: "This scanner is not a Flextight X1 (\(vendor) \(product)). Nothing more was sent.",
-                   comment: "Real scanner read failure")
-        default:
-            String(localized: "Reading failed: \(failure.description)", comment: "Real scanner read failure")
-        }
-    }
-
     static func exportError(_ error: ExportError) -> String {
         switch error {
         case .noFolder: String(localized: "Choose an export folder first.", comment: "Export error")

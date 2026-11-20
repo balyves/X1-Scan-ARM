@@ -32,6 +32,8 @@ import X1ScanCore
 ///                                (<path>-page.png, `WKWebView.takeSnapshot`), quit (lot A)
 ///   -X1ScanHelpPage <id[#anchor]> the help page to open (default: index)
 ///   -X1ScanHelpSearch <text>     typed into the help's search field
+///   -X1ScanIssueSnapshot <path>  write the message of -X1ScanIssue <id> (default no-scanner),
+///                                Details unfolded with -X1ScanIssueDetails YES, then quit (lot A)
 /// The snapshot also writes each Settings pane, Scanner Information and the
 /// About panel (`<path>-settings-<n>.png`, `<path>-info.png`,
 /// `<path>-floating-*.png`), serial always masked.
@@ -47,6 +49,17 @@ enum DebugSnapshot {
             for tooltip in ShortcutTooltip.allCases {
                 FileHandle.standardError.write(Data("TOOLTIP \(tooltip.rawValue): \(Strings.tooltip(tooltip))\n".utf8))
             }
+            NSApp.terminate(nil)
+            return
+        }
+        if let path = arguments.string(forKey: "X1ScanIssueSnapshot") {
+            let id = arguments.string(forKey: "X1ScanIssue").flatMap(IssueID.init(rawValue:)) ?? .noScanner
+            let issue = UserIssue(id, context: String(localized: "The preview stopped after an anomaly", comment: "Alert title"),
+                                  extraSteps: id.isSafetyStop ? [Strings.powerCycleBeforeAnything] : [],
+                                  details: "preview stopped at step 42 (5a 00 20 01 00 00 00 22 00 00): example details")
+            let actions = [IssueAction(title: String(localized: "OK", comment: "Button"), isDefault: true) {}]
+            render(AnyView(IssueView(issue: issue, actions: actions, detailsShown: arguments.bool(forKey: "X1ScanIssueDetails"),
+                                     help: {}).background(Color(nsColor: .windowBackgroundColor))), to: path)
             NSApp.terminate(nil)
             return
         }

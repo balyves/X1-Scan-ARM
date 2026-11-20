@@ -104,11 +104,11 @@ struct ScannerInfoView: View {
                 if model.realStatus == .reading { ProgressView().controlSize(.small) }
             }
             if case .failed(let failure) = model.realStatus {
-                Text(Strings.inspectorFailure(failure))
-                    .font(.caption)
-                    .foregroundStyle(.red)
-                    .textSelection(.enabled)
-                    .fixedSize(horizontal: false, vertical: true)
+                // The structured message (lot A, step B), inline; Help opens its Troubleshooting entry.
+                let issue = UserIssue(IssueClassifier.id(for: failure), details: failure.description)
+                IssueView(issue: issue, inline: true, help: {
+                    (NSApp.delegate as? AppDelegate)?.showHelp(page: IssueID.helpPage, anchor: issue.id.helpAnchor)
+                })
             }
             if model.toolbar.previewBlock == .realScannerReadOnly {
                 Text(Strings.previewBlock(.realScannerReadOnly))

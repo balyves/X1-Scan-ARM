@@ -140,9 +140,9 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         }
         guard let window else { return }
         RealPreviewConfirmationAlert.run(for: window, askPowerCycle: model.realPreviewNeedsPowerCycle) { [model] confirmation in
-            if case .failure(let error) = model.startRealPreview(confirmation), error != .notAllowed {
-                self.showAlert(String(localized: "The preview could not start", comment: "Alert title"),
-                               error.description)
+            if case .failure(let error) = model.startRealPreview(confirmation), let id = IssueClassifier.id(for: error) {
+                self.showIssue(UserIssue(id, context: String(localized: "The preview could not start", comment: "Alert title"),
+                                         details: error.description))
             }
         }
     }
@@ -156,9 +156,9 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         }
         guard let window else { return }
         RealScanConfirmationAlert.run(for: window) { [model] confirmation in
-            if case .failure(let error) = model.startRealScan(confirmation), error != .notAllowed {
-                self.showAlert(String(localized: "The scan could not start", comment: "Alert title"),
-                               error.description)
+            if case .failure(let error) = model.startRealScan(confirmation), let id = IssueClassifier.id(for: error) {
+                self.showIssue(UserIssue(id, context: String(localized: "The scan could not start", comment: "Alert title"),
+                                         details: error.description))
             }
         }
     }
@@ -171,7 +171,8 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     @objc func exportImage(_ sender: Any?) {
         Task {
             if case .failure(let error) = await model.export() {
-                showAlert(String(localized: "Export failed", comment: "Alert title"), Strings.exportError(error))
+                showIssue(UserIssue(IssueClassifier.id(for: error), context: String(localized: "Export failed", comment: "Alert title"),
+                                    details: Strings.exportError(error)))
             }
         }
     }
@@ -227,99 +228,113 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
 
     // MARK: Alerts
 
-    /// Anomalies and failed stop sequences are shown in an alert: they may
-    /// mean the scanner needs attention.
+    /// Anomalies and failed stop sequences are shown in a message: they may
+    /// mean the scanner needs attention. The cases and the moment are those of
+    /// the alerts before lot A; only the presentation changed (step B): the
+    /// technical text goes to Details, the advice to the steps.
     private func alertIfNeeded(for state: PreviewSession.State) {
         switch state {
         case .failed(let failure):
-            var text = failure.description
-            if let outcome = failure.emergencyStop { text += "\n\n" + Strings.emergencyStop(outcome) }
-            if model.lastPreviewWasReal {
-                switch failure.cause {
-                case .anomaly(.couldNotOpen):
-                    break  // nothing was sent: no advice to switch the scanner off
-                case .anomaly(.unexpectedCarriagePosition):
-                    // Stopped before the window with target 25 000 (docs/decisions.md, option A).
-                    text += "\n\n" + String(localized: "Unexpected carriage position: preview stopped before the carriage was positioned. Switch the X1 off and on before starting the preview again.",
-                                             comment: "Real preview stopped at the position check before the window with target 25 000")
-                    text += realPreviewAdvice(stoppedBeforeScan: nil)
-                case .anomaly(.startStateMismatch):
-                    // Scan: first page 0x20 read; only reads and the session start were sent.
-                    text += "\n\n" + String(localized: "The scan needs an X1 that has already been used: switch the X1 off and on, then run a complete real preview. Only reads and the session start were sent: no window, mode, exposure, image read or scan.",
-                                             comment: "Real scan stopped: the X1 was not in the state the scan needs")
-                    text += realPreviewAdvice(stoppedBeforeScan: nil)
-                case .anomaly(.unrecognisedStartState):
-                    // First page 0x20 read: only reads, D2 and the session start were sent.
-                    text += "\n\n" + String(localized: "The X1 showed neither its state right after power-on nor the state left by earlier use, so neither captured preview applies. Only reads, the startup command and the session start were sent: no window, mode, exposure, image read or scan.",
-                                             comment: "Real preview stopped: unrecognised scanner state at session start")
-                    text += realPreviewAdvice(stoppedBeforeScan: true)
-                case .decoding:
-                    // The scanner side completed, end of session included: only the log.
-                    text += realPreviewAdvice(stoppedBeforeScan: nil)
-                case .anomaly:
-                    text += realPreviewAdvice(stoppedBeforeScan: failure.emergencyStop == nil)
+            var details = failure.description
+            var context = model.session.kind == .scan
+                ? String(localized: "The scan stopped after an anomaly", comment: "Alert title")
+                : String(localized: "The preview stopped after an anomaly", comment: "Alert title")
+            var steps: [String] = []
+            if let outcome = failure.emergencyStop {
+                details += "\n\n" + Strings.emergencyStop(outcome)
+                if IssueClassifier.stopFailed(outcome) {
+                    // Visible, as in the alert before: the stop did not complete.
+                    context += "\n" + Strings.emergencyStop(outcome)
+                    steps.append(Strings.powerCycleBeforeAnything)
                 }
             }
-            showAlert(model.session.kind == .scan
-                      ? String(localized: "The scan stopped after an anomaly", comment: "Alert title")
-                      : String(localized: "The preview stopped after an anomaly", comment: "Alert title"), text)
+            if model.lastPreviewWasReal {
+                let advice: Advice
+                switch failure.cause {
+                case .anomaly(.couldNotOpen):
+                    advice = Advice()  // nothing was sent: no advice to switch the scanner off
+                case .anomaly(.unexpectedCarriagePosition), .anomaly(.startStateMismatch):
+                    // Their own steps already say to switch the X1 off and on.
+                    advice = realPreviewAdvice(stoppedBeforeScan: nil)
+                case .anomaly(.unrecognisedStartState):
+                    advice = realPreviewAdvice(stoppedBeforeScan: true)
+                case .decoding:
+                    // The scanner side completed, end of session included: only the log.
+                    advice = realPreviewAdvice(stoppedBeforeScan: nil)
+                case .anomaly:
+                    advice = realPreviewAdvice(stoppedBeforeScan: failure.emergencyStop == nil)
+                }
+                // One power-cycle step, the strongest: "before anything else" wins.
+                if steps.isEmpty { steps = advice.steps }
+                details += advice.log
+            }
+            showIssue(UserIssue(IssueClassifier.id(for: failure), context: context, extraSteps: steps, details: details))
         case .finished where model.session.kind == .scan:
             if case .failure(let error) = model.lastScanSave {
-                showAlert(String(localized: "The scan could not be saved", comment: "Alert title"),
-                          Strings.exportError(error))
+                showIssue(UserIssue(IssueClassifier.id(for: error),
+                                    context: String(localized: "The scan could not be saved", comment: "Alert title"),
+                                    details: Strings.exportError(error)))
             }
         case .stopped(let outcome) where model.lastPreviewWasReal && model.session.kind == .scan:
             // Stop, change of source or quit during a scan on the real X1. `1b 00 08 06 01 00`
             // counts as SCAN: after it, the stop command was sent.
-            var text = outcome.map(Strings.emergencyStop)
+            let text = outcome.map(Strings.emergencyStop)
                 ?? String(localized: "Scan stopped before its first SCAN; nothing more was sent.", comment: "Real scan stopped")
-            text += realPreviewAdvice(stoppedBeforeScan: outcome == nil)
-            showAlert(String(localized: "The scan on the real X1 was stopped", comment: "Alert title"), text)
+            showStopped(outcome, text: text, context: String(localized: "The scan on the real X1 was stopped", comment: "Alert title"))
         case .stopped(let outcome) where model.lastPreviewWasReal:
             // Stop, change of source or quit on the real X1: always reported, with the advice.
-            var text = outcome.map(Strings.emergencyStop)
+            let text = outcome.map(Strings.emergencyStop)
                 ?? String(localized: "Preview stopped before SCAN; nothing more was sent.", comment: "Real preview stopped")
-            text += realPreviewAdvice(stoppedBeforeScan: outcome == nil)
-            showAlert(String(localized: "The preview on the real X1 was stopped", comment: "Alert title"), text)
+            showStopped(outcome, text: text, context: String(localized: "The preview on the real X1 was stopped", comment: "Alert title"))
         case .stopped(let outcome?) where outcome != .stoppedAndReady:
-            showAlert(String(localized: "The stop sequence did not complete", comment: "Alert title"),
-                      Strings.emergencyStop(outcome))
+            showIssue(UserIssue(.stopIncomplete, details: Strings.emergencyStop(outcome)))
         default:
             break
         }
     }
 
-    /// Advice and log after a preview on the real X1 that did not complete.
-    /// `stoppedBeforeScan` nil: only the log (the scanner side completed, or the
-    /// alert already gives its own advice).
-    private func realPreviewAdvice(stoppedBeforeScan: Bool?) -> String {
-        var text = ""
-        if stoppedBeforeScan == true {
-            // The session and modes FlexColor set may still be active.
-            text += "\n\n" + String(localized: "Switch the X1 off and on again before anything else.",
-                                     comment: "Advice after a preview on the real X1 stopped before SCAN")
-        } else if stoppedBeforeScan == false {
-            // The end of session (CF 00 02) is not sent on the stop path.
-            text += "\n\n" + String(localized: "Switch the X1 off and on again before another preview.",
-                                     comment: "Advice after a preview on the real X1 stopped after SCAN")
-        }
-        if let log = model.lastPreviewLog {
-            text += "\n\n" + String(localized: "Log: \(log.path(percentEncoded: false))", comment: "Path of the preview log")
-            if model.lastPreviewLogIsIncomplete {
-                text += "\n" + String(localized: "Some lines could not be written: the log is incomplete.",
-                                      comment: "Preview log incomplete")
-            }
-        }
-        return text
+    /// A run on the real X1 stopped on request (or by a change of source, or quitting).
+    private func showStopped(_ outcome: EmergencyStopOutcome?, text: String, context: String) {
+        let advice = realPreviewAdvice(stoppedBeforeScan: outcome == nil)
+        let id: IssueID = IssueClassifier.stopFailed(outcome) ? .stopIncomplete : .stoppedByUser
+        // A failed stop has its own, stronger step ("before anything else"): no second one.
+        let steps = id == .stopIncomplete ? [] : advice.steps
+        showIssue(UserIssue(id, context: context, extraSteps: steps, details: text + advice.log))
     }
 
-    private func showAlert(_ title: String, _ text: String) {
+    /// Steps and log after a run on the real X1 that did not complete.
+    private struct Advice {
+        var steps: [String] = []
+        /// Appended to the details: the log's path.
+        var log = ""
+    }
+
+    /// `stoppedBeforeScan` nil: only the log (the scanner side completed, or
+    /// the message already gives its own advice).
+    private func realPreviewAdvice(stoppedBeforeScan: Bool?) -> Advice {
+        var advice = Advice()
+        if stoppedBeforeScan == true {
+            // The session and modes FlexColor set may still be active.
+            advice.steps.append(Strings.powerCycleBeforeAnything)
+        } else if stoppedBeforeScan == false {
+            // The end of session (CF 00 02) is not sent on the stop path.
+            advice.steps.append(String(localized: "Switch the X1 off and on again before another preview.",
+                                       comment: "Advice after a preview on the real X1 stopped after SCAN"))
+        }
+        if let log = model.lastPreviewLog {
+            advice.log += "\n\n" + String(localized: "Log: \(log.path(percentEncoded: false))", comment: "Path of the preview log")
+            if model.lastPreviewLogIsIncomplete {
+                advice.log += "\n" + String(localized: "Some lines could not be written: the log is incomplete.",
+                                             comment: "Preview log incomplete")
+            }
+        }
+        return advice
+    }
+
+    /// A message as a sheet of the main window.
+    func showIssue(_ issue: UserIssue, extra: [(String, @MainActor () -> Void)] = []) {
         guard let window else { return }
-        let alert = NSAlert()
-        alert.alertStyle = .warning
-        alert.messageText = title
-        alert.informativeText = text
-        alert.beginSheetModal(for: window)
+        IssueSheet.present(issue, on: window, extra: extra)
     }
 }
 

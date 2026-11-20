@@ -958,17 +958,6 @@
         }
       }
     },
-    "No X1 found. Check that it is on and connected.": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aucun X1 trouvé. Vérifiez qu’il est allumé et branché."
-          }
-        }
-      }
-    },
     "None": {
       "extractionState": "manual",
       "localizations": {
@@ -1277,17 +1266,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Quitter %@"
-          }
-        }
-      }
-    },
-    "Reading failed: %@": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Échec de la lecture : %@"
           }
         }
       }
@@ -1822,17 +1800,6 @@
         }
       }
     },
-    "The stop sequence did not complete": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La séquence d’arrêt n’a pas abouti"
-          }
-        }
-      }
-    },
     "The virtual X1 could not be loaded.": {
       "extractionState": "manual",
       "localizations": {
@@ -1844,17 +1811,6 @@
         }
       }
     },
-    "The X1 is open in another program (probably FlexColor). Quit it and try again.": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Le X1 est ouvert dans un autre programme (probablement FlexColor). Quittez-le et réessayez."
-          }
-        }
-      }
-    },
     "There is no image to export.": {
       "extractionState": "manual",
       "localizations": {
@@ -1862,23 +1818,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Il n’y a pas d’image à exporter."
-          }
-        }
-      }
-    },
-    "This scanner is not a Flextight X1 (%@ %@). Nothing more was sent.": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ce scanner n’est pas un Flextight X1 (%1$@ %2$@). Rien d’autre n’a été envoyé."
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "This scanner is not a Flextight X1 (%1$@ %2$@). Nothing more was sent."
           }
         }
       }
@@ -3128,7 +3067,8 @@
             "value": "Éteignez puis rallumez le X1 avant toute autre action."
           }
         }
-      }
+      },
+      "comment": "Step of an error message: after a preview or scan on the real X1 stopped before SCAN, or a stop sequence that failed"
     },
     "Log: %@": {
       "extractionState": "manual",
@@ -3587,18 +3527,6 @@
         }
       }
     },
-    "The X1 showed neither its state right after power-on nor the state left by earlier use, so neither captured preview applies. Only reads, the startup command and the session start were sent: no window, mode, exposure, image read or scan.": {
-      "comment": "Real preview stopped: unrecognised scanner state at session start",
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Le X1 n'a montré ni son état juste après la mise sous tension, ni l'état laissé par une utilisation précédente : aucun des aperçus capturés ne s'applique. Seules des lectures, la commande de démarrage et l'ouverture de session ont été envoyées : aucune fenêtre, aucun mode, aucune exposition, aucune lecture d'image, aucun scan."
-          }
-        }
-      }
-    },
     "The X1 has been switched off and on since the interrupted preview": {
       "comment": "Real preview check, asked only after a real preview that did not complete",
       "extractionState": "manual",
@@ -3619,18 +3547,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "L'un des deux aperçus capturés de FlexColor, choisi d'après l'état du scanner, sera envoyé au scanner commande par commande. Toute différence l'arrête ; Arrêter (⌘. ou Échap) reste disponible. Chaque commande est journalisée."
-          }
-        }
-      }
-    },
-    "Unexpected carriage position: preview stopped before the carriage was positioned. Switch the X1 off and on before starting the preview again.": {
-      "comment": "Real preview stopped at the position check before the window with target 25 000",
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Position du chariot inattendue : aperçu arrêté avant le positionnement du chariot. Éteignez puis rallumez le X1 avant de relancer l'aperçu."
           }
         }
       }
@@ -3931,18 +3847,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "La numérisation sur le X1 réel a été arrêtée"
-          }
-        }
-      }
-    },
-    "The scan needs an X1 that has already been used: switch the X1 off and on, then run a complete real preview. Only reads and the session start were sent: no window, mode, exposure, image read or scan.": {
-      "comment": "Real scan stopped: the X1 was not in the state the scan needs",
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La numérisation demande un X1 déjà utilisé : éteignez puis rallumez le X1, puis faites un aperçu réel complet. Seules des lectures et l'ouverture de session ont été envoyées : aucune fenêtre, aucun mode, aucune exposition, aucune lecture d'image, aucun scan."
           }
         }
       }
@@ -5389,6 +5293,1734 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aide de X1 Scan"
+          }
+        }
+      }
+    },
+    "issue.no-scanner.title": {
+      "comment": "Error message no-scanner: short title, what happened",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No X1 found"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun X1 trouvé"
+          }
+        }
+      }
+    },
+    "issue.no-scanner.cause": {
+      "comment": "Error message no-scanner: the likely cause, one sentence",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The Mac sees no Flextight scanner."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le Mac ne voit aucun scanner Flextight."
+          }
+        }
+      }
+    },
+    "issue.no-scanner.step1": {
+      "comment": "Error message no-scanner: step 1 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check that the X1 is on and that its FireWire cable and adapters are connected."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifiez que le X1 est allumé, et que son câble FireWire et ses adaptateurs sont branchés."
+          }
+        }
+      }
+    },
+    "issue.no-scanner.step2": {
+      "comment": "Error message no-scanner: step 2 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On macOS 26, check that the ASFireWire driver is installed and allowed in System Settings."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur macOS 26, vérifiez que le pilote ASFireWire est installé et autorisé dans Réglages Système."
+          }
+        }
+      }
+    },
+    "issue.no-scanner.step3": {
+      "comment": "Error message no-scanner: step 3 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "If the cable comes from another Mac: X1 off, then on again, and try again."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Si le câble vient d’un autre Mac : X1 éteint, puis rallumé, et réessayez."
+          }
+        }
+      }
+    },
+    "issue.scanner-busy.title": {
+      "comment": "Error message scanner-busy: short title, what happened",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The X1 is busy"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le X1 est occupé"
+          }
+        }
+      }
+    },
+    "issue.scanner-busy.cause": {
+      "comment": "Error message scanner-busy: the likely cause, one sentence",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Another program already has the scanner open, probably FlexColor."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un autre programme a déjà ouvert le scanner, probablement FlexColor."
+          }
+        }
+      }
+    },
+    "issue.scanner-busy.step1": {
+      "comment": "Error message scanner-busy: step 1 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quit FlexColor, or the other program that uses the X1. The X1 can stay on."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quittez FlexColor, ou l’autre programme qui utilise le X1. Le X1 peut rester allumé."
+          }
+        }
+      }
+    },
+    "issue.scanner-busy.step2": {
+      "comment": "Error message scanner-busy: step 2 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try again."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réessayez."
+          }
+        }
+      }
+    },
+    "issue.not-an-x1.title": {
+      "comment": "Error message not-an-x1: short title, what happened",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This scanner is not an X1"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce scanner n’est pas un X1"
+          }
+        }
+      }
+    },
+    "issue.not-an-x1.cause": {
+      "comment": "Error message not-an-x1: the likely cause, one sentence",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The scanner found is not a Flextight X1. Nothing more was sent to it."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le scanner trouvé n’est pas un Flextight X1. Rien d’autre ne lui a été envoyé."
+          }
+        }
+      }
+    },
+    "issue.not-an-x1.step1": {
+      "comment": "Error message not-an-x1: step 1 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "X1 Scan works with the Flextight X1 only. Connect an X1, or use another program for this scanner."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "X1 Scan ne fonctionne qu’avec le Flextight X1. Branchez un X1, ou utilisez un autre programme pour ce scanner."
+          }
+        }
+      }
+    },
+    "issue.scanner-read-failed.title": {
+      "comment": "Error message scanner-read-failed: short title, what happened",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The X1 could not be read"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le X1 n’a pas pu être lu"
+          }
+        }
+      }
+    },
+    "issue.scanner-read-failed.cause": {
+      "comment": "Error message scanner-read-failed: the likely cause, one sentence",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The scanner could not be opened, or it answered differently from what is known."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le scanner n’a pas pu être ouvert, ou il a répondu autrement que prévu."
+          }
+        }
+      }
+    },
+    "issue.scanner-read-failed.step1": {
+      "comment": "Error message scanner-read-failed: step 1 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "X1 off, then on again."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "X1 éteint, puis rallumé."
+          }
+        }
+      }
+    },
+    "issue.scanner-read-failed.step2": {
+      "comment": "Error message scanner-read-failed: step 2 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try again. If it happens again, copy the details for a bug report."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réessayez. Si cela se reproduit, copiez les détails pour un rapport de bug."
+          }
+        }
+      }
+    },
+    "issue.disconnected.title": {
+      "comment": "Error message disconnected: short title, what happened",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The X1 no longer answers"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le X1 ne répond plus"
+          }
+        }
+      }
+    },
+    "issue.disconnected.cause": {
+      "comment": "Error message disconnected: the likely cause, one sentence",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The scanner was disconnected or switched off during the operation."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le scanner a été débranché ou éteint pendant l’opération."
+          }
+        }
+      }
+    },
+    "issue.disconnected.step1": {
+      "comment": "Error message disconnected: step 1 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check the cable, the adapters and the X1’s power."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifiez le câble, les adaptateurs et l’alimentation du X1."
+          }
+        }
+      }
+    },
+    "issue.disconnected.step2": {
+      "comment": "Error message disconnected: step 2 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "X1 off, then on again, before starting again."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "X1 éteint, puis rallumé, avant de recommencer."
+          }
+        }
+      }
+    },
+    "issue.scanner-timeout.title": {
+      "comment": "Error message scanner-timeout: short title, what happened",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The X1 did not answer in time"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le X1 n’a pas répondu à temps"
+          }
+        }
+      }
+    },
+    "issue.scanner-timeout.cause": {
+      "comment": "Error message scanner-timeout: the likely cause, one sentence",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A command was not completed within its time limit."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une commande n’a pas abouti dans le délai prévu."
+          }
+        }
+      }
+    },
+    "issue.scanner-timeout.step1": {
+      "comment": "Error message scanner-timeout: step 1 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check the FireWire cable and the adapters."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifiez le câble FireWire et les adaptateurs."
+          }
+        }
+      }
+    },
+    "issue.scanner-timeout.step2": {
+      "comment": "Error message scanner-timeout: step 2 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "X1 off, then on again, before starting again."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "X1 éteint, puis rallumé, avant de recommencer."
+          }
+        }
+      }
+    },
+    "issue.capture-missing.title": {
+      "comment": "Error message capture-missing: short title, what happened",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reference sequences missing"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Séquences de référence absentes"
+          }
+        }
+      }
+    },
+    "issue.capture-missing.cause": {
+      "comment": "Error message capture-missing: the likely cause, one sentence",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The reference sequences built into the application are missing or unreadable. Nothing was sent to the scanner."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les séquences de référence intégrées à l’application sont absentes ou illisibles. Rien n’a été envoyé au scanner."
+          }
+        }
+      }
+    },
+    "issue.capture-missing.step1": {
+      "comment": "Error message capture-missing: step 1 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install X1 Scan again."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réinstallez X1 Scan."
+          }
+        }
+      }
+    },
+    "issue.log-failed.title": {
+      "comment": "Error message log-failed: short title, what happened",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The log could not be created"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le journal n’a pas pu être créé"
+          }
+        }
+      }
+    },
+    "issue.log-failed.cause": {
+      "comment": "Error message log-failed: the likely cause, one sentence",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Every command sent to the real X1 is written to a log. Without a log, nothing is sent."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chaque commande envoyée au X1 réel est écrite dans un journal. Sans journal, rien n’est envoyé."
+          }
+        }
+      }
+    },
+    "issue.log-failed.step1": {
+      "comment": "Error message log-failed: step 1 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check the free space on the disk."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifiez l’espace libre sur le disque."
+          }
+        }
+      }
+    },
+    "issue.log-failed.step2": {
+      "comment": "Error message log-failed: step 2 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check that the X1-captures folder in your home folder can be written to."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifiez que le dossier X1-captures de votre dossier personnel est accessible en écriture."
+          }
+        }
+      }
+    },
+    "issue.guard-refused.title": {
+      "comment": "Error message guard-refused: short title, what happened",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stopped by a safety check: command refused"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêt par un garde-fou : commande refusée"
+          }
+        }
+      }
+    },
+    "issue.guard-refused.cause": {
+      "comment": "Error message guard-refused: the likely cause, one sentence",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A command did not match the validated sequence. The safety check blocked it before it was sent, to protect the scanner."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une commande ne correspondait pas à la séquence validée. Le garde-fou l’a bloquée avant l’envoi, pour protéger le scanner."
+          }
+        }
+      }
+    },
+    "issue.guard-refused.step1": {
+      "comment": "Error message guard-refused: step 1 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy the details for a bug report."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiez les détails pour un rapport de bug."
+          }
+        }
+      }
+    },
+    "issue.unexpected-state.title": {
+      "comment": "Error message unexpected-state: short title, what happened",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stopped by a safety check: unexpected state"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêt par un garde-fou : état inattendu"
+          }
+        }
+      }
+    },
+    "issue.unexpected-state.cause": {
+      "comment": "Error message unexpected-state: the likely cause, one sentence",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The scanner reported a state other than the one expected. X1 Scan stopped to protect it."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le scanner a annoncé un autre état que celui attendu. X1 Scan s’est arrêté pour le protéger."
+          }
+        }
+      }
+    },
+    "issue.unexpected-state.step1": {
+      "comment": "Error message unexpected-state: step 1 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "If the holder may have moved, check that it is fully in."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Si le porte-film a pu bouger, vérifiez qu’il est bien engagé."
+          }
+        }
+      }
+    },
+    "issue.unexpected-state.step2": {
+      "comment": "Error message unexpected-state: step 2 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy the details for a bug report."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiez les détails pour un rapport de bug."
+          }
+        }
+      }
+    },
+    "issue.state-timeout.title": {
+      "comment": "Error message state-timeout: short title, what happened",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stopped by a safety check: waited too long"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêt par un garde-fou : attente trop longue"
+          }
+        }
+      }
+    },
+    "issue.state-timeout.cause": {
+      "comment": "Error message state-timeout: the likely cause, one sentence",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The scanner did not reach the expected state in time. X1 Scan stopped to protect it."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le scanner n’a pas atteint l’état attendu à temps. X1 Scan s’est arrêté pour le protéger."
+          }
+        }
+      }
+    },
+    "issue.state-timeout.step1": {
+      "comment": "Error message state-timeout: step 1 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "If the holder may have moved, check that it is fully in."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Si le porte-film a pu bouger, vérifiez qu’il est bien engagé."
+          }
+        }
+      }
+    },
+    "issue.state-timeout.step2": {
+      "comment": "Error message state-timeout: step 2 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy the details for a bug report."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiez les détails pour un rapport de bug."
+          }
+        }
+      }
+    },
+    "issue.position-out-of-tolerance.title": {
+      "comment": "Error message position-out-of-tolerance: short title, what happened",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stopped by a safety check: unexpected position"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêt par un garde-fou : position inattendue"
+          }
+        }
+      }
+    },
+    "issue.position-out-of-tolerance.cause": {
+      "comment": "Error message position-out-of-tolerance: the likely cause, one sentence",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The carriage was not where it was expected. X1 Scan stopped to protect the scanner."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le chariot n’était pas à la position attendue. X1 Scan s’est arrêté pour protéger le scanner."
+          }
+        }
+      }
+    },
+    "issue.position-out-of-tolerance.step1": {
+      "comment": "Error message position-out-of-tolerance: step 1 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check that the holder is fully in and that nothing blocks it."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifiez que le porte-film est bien engagé et que rien ne le bloque."
+          }
+        }
+      }
+    },
+    "issue.position-out-of-tolerance.step2": {
+      "comment": "Error message position-out-of-tolerance: step 2 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy the details for a bug report."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiez les détails pour un rapport de bug."
+          }
+        }
+      }
+    },
+    "issue.position-out-of-range.title": {
+      "comment": "Error message position-out-of-range: short title, what happened",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stopped by a safety check: position out of range"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêt par un garde-fou : position hors plage"
+          }
+        }
+      }
+    },
+    "issue.position-out-of-range.cause": {
+      "comment": "Error message position-out-of-range: the likely cause, one sentence",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Before focusing, the position read was outside the validated range. The scan stopped before that step, on purpose, to protect the scanner."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avant la mise au point, la position lue sortait de la plage validée. La numérisation s’est arrêtée avant cette étape, exprès, pour protéger le scanner."
+          }
+        }
+      }
+    },
+    "issue.position-out-of-range.step1": {
+      "comment": "Error message position-out-of-range: step 1 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Once the X1 has been switched off and on, run a complete preview without touching the holder, then scan."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Après avoir éteint puis rallumé le X1, faites un aperçu complet sans toucher au porte-film, puis numérisez."
+          }
+        }
+      }
+    },
+    "issue.carriage-position.title": {
+      "comment": "Error message carriage-position: short title, what happened",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stopped by a safety check: carriage position"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêt par un garde-fou : position du chariot"
+          }
+        }
+      }
+    },
+    "issue.carriage-position.cause": {
+      "comment": "Error message carriage-position: the likely cause, one sentence",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The carriage was not where it was expected. The preview stopped before the carriage was positioned, on purpose, to protect the scanner."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le chariot n’était pas à la position attendue. L’aperçu s’est arrêté avant de positionner le chariot, exprès, pour protéger le scanner."
+          }
+        }
+      }
+    },
+    "issue.carriage-position.step1": {
+      "comment": "Error message carriage-position: step 1 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "X1 off, then on again, before starting the preview again."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "X1 éteint, puis rallumé, avant de relancer l’aperçu."
+          }
+        }
+      }
+    },
+    "issue.start-state-unknown.title": {
+      "comment": "Error message start-state-unknown: short title, what happened",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stopped by a safety check: unknown starting state"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêt par un garde-fou : état de départ inconnu"
+          }
+        }
+      }
+    },
+    "issue.start-state-unknown.cause": {
+      "comment": "Error message start-state-unknown: the likely cause, one sentence",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The X1 showed neither its state right after power-on nor the state left by earlier use. X1 Scan stopped to protect it: only reads, the startup command and the session start were sent."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le X1 n’a montré ni son état juste après l’allumage, ni l’état laissé par un usage précédent. X1 Scan s’est arrêté pour le protéger : seules des lectures, la commande de démarrage et le début de session ont été envoyées."
+          }
+        }
+      }
+    },
+    "issue.start-state-unknown.step1": {
+      "comment": "Error message start-state-unknown: step 1 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy the details for a bug report."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiez les détails pour un rapport de bug."
+          }
+        }
+      }
+    },
+    "issue.scan-needs-preview.title": {
+      "comment": "Error message scan-needs-preview: short title, what happened",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stopped by a safety check: preview needed"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêt par un garde-fou : aperçu nécessaire"
+          }
+        }
+      }
+    },
+    "issue.scan-needs-preview.cause": {
+      "comment": "Error message scan-needs-preview: the likely cause, one sentence",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The scan needs an X1 that has just run a preview. X1 Scan stopped to protect it: only reads and the session start were sent."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La numérisation demande un X1 qui vient de faire un aperçu. X1 Scan s’est arrêté pour le protéger : seules des lectures et le début de session ont été envoyés."
+          }
+        }
+      }
+    },
+    "issue.scan-needs-preview.step1": {
+      "comment": "Error message scan-needs-preview: step 1 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "X1 off, then on again."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "X1 éteint, puis rallumé."
+          }
+        }
+      }
+    },
+    "issue.scan-needs-preview.step2": {
+      "comment": "Error message scan-needs-preview: step 2 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Run a complete preview, then scan."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Faites un aperçu complet, puis numérisez."
+          }
+        }
+      }
+    },
+    "issue.line-counter.title": {
+      "comment": "Error message line-counter: short title, what happened",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stopped by a safety check: line counter"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêt par un garde-fou : compteur de lignes"
+          }
+        }
+      }
+    },
+    "issue.line-counter.cause": {
+      "comment": "Error message line-counter: the likely cause, one sentence",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The scanner’s line counter went back. X1 Scan stopped to protect the scanner."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le compteur de lignes du scanner est revenu en arrière. X1 Scan s’est arrêté pour protéger le scanner."
+          }
+        }
+      }
+    },
+    "issue.line-counter.step1": {
+      "comment": "Error message line-counter: step 1 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy the details for a bug report."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiez les détails pour un rapport de bug."
+          }
+        }
+      }
+    },
+    "issue.unexpected-response.title": {
+      "comment": "Error message unexpected-response: short title, what happened",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stopped by a safety check: unexpected response"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêt par un garde-fou : réponse inattendue"
+          }
+        }
+      }
+    },
+    "issue.unexpected-response.cause": {
+      "comment": "Error message unexpected-response: the likely cause, one sentence",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The scanner answered differently from the validated sequence. X1 Scan stopped to protect it."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le scanner a répondu autrement que dans la séquence validée. X1 Scan s’est arrêté pour le protéger."
+          }
+        }
+      }
+    },
+    "issue.unexpected-response.step1": {
+      "comment": "Error message unexpected-response: step 1 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "If the holder may have moved, check that it is fully in."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Si le porte-film a pu bouger, vérifiez qu’il est bien engagé."
+          }
+        }
+      }
+    },
+    "issue.unexpected-response.step2": {
+      "comment": "Error message unexpected-response: step 2 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy the details for a bug report."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiez les détails pour un rapport de bug."
+          }
+        }
+      }
+    },
+    "issue.stopped-by-user.title": {
+      "comment": "Error message stopped-by-user: short title, what happened",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stopped on request"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêt demandé"
+          }
+        }
+      }
+    },
+    "issue.stopped-by-user.cause": {
+      "comment": "Error message stopped-by-user: the likely cause, one sentence",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The preview or the scan was stopped by Stop, by a change of source or by quitting."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’aperçu ou la numérisation a été arrêté par Arrêter, par un changement de source ou en quittant."
+          }
+        }
+      }
+    },
+    "issue.stop-incomplete.title": {
+      "comment": "Error message stop-incomplete: short title, what happened",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The stop sequence did not complete"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La séquence d’arrêt n’a pas abouti"
+          }
+        }
+      }
+    },
+    "issue.stop-incomplete.cause": {
+      "comment": "Error message stop-incomplete: the likely cause, one sentence",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "After the stop, the scanner did not report ready."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Après l’arrêt, le scanner ne s’est pas déclaré prêt."
+          }
+        }
+      }
+    },
+    "issue.stop-incomplete.step1": {
+      "comment": "Error message stop-incomplete: step 1 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch the X1 off and on again before anything else."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Éteignez puis rallumez le X1 avant toute autre action."
+          }
+        }
+      }
+    },
+    "issue.decoding-failed.title": {
+      "comment": "Error message decoding-failed: short title, what happened",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The image could not be decoded"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’image n’a pas pu être décodée"
+          }
+        }
+      }
+    },
+    "issue.decoding-failed.cause": {
+      "comment": "Error message decoding-failed: the likely cause, one sentence",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The scanner finished normally, but the lines received could not be turned into an image."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le scanner a terminé normalement, mais les lignes reçues n’ont pas pu devenir une image."
+          }
+        }
+      }
+    },
+    "issue.decoding-failed.step1": {
+      "comment": "Error message decoding-failed: step 1 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Run the preview or the scan again."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Relancez l’aperçu ou la numérisation."
+          }
+        }
+      }
+    },
+    "issue.decoding-failed.step2": {
+      "comment": "Error message decoding-failed: step 2 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "If it happens again, copy the details for a bug report."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Si cela se reproduit, copiez les détails pour un rapport de bug."
+          }
+        }
+      }
+    },
+    "issue.no-export-folder.title": {
+      "comment": "Error message no-export-folder: short title, what happened",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No export folder"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun dossier d’export"
+          }
+        }
+      }
+    },
+    "issue.no-export-folder.cause": {
+      "comment": "Error message no-export-folder: the likely cause, one sentence",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export and the scan save their files in a folder you choose."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’export et la numérisation enregistrent leurs fichiers dans un dossier à choisir."
+          }
+        }
+      }
+    },
+    "issue.no-export-folder.step1": {
+      "comment": "Error message no-export-folder: step 1 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a folder: File › Choose Export Folder…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez un dossier : Fichier › Choisir le dossier d’export…"
+          }
+        }
+      }
+    },
+    "issue.export-folder-missing.title": {
+      "comment": "Error message export-folder-missing: short title, what happened",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export folder not found"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dossier d’export introuvable"
+          }
+        }
+      }
+    },
+    "issue.export-folder-missing.cause": {
+      "comment": "Error message export-folder-missing: the likely cause, one sentence",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The folder chosen no longer exists, or its disk is not connected."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le dossier choisi n’existe plus, ou son disque n’est pas branché."
+          }
+        }
+      }
+    },
+    "issue.export-folder-missing.step1": {
+      "comment": "Error message export-folder-missing: step 1 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connect the disk, or choose another folder: File › Choose Export Folder…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Branchez le disque, ou choisissez un autre dossier : Fichier › Choisir le dossier d’export…"
+          }
+        }
+      }
+    },
+    "issue.write-failed.title": {
+      "comment": "Error message write-failed: short title, what happened",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The file could not be written"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le fichier n’a pas pu être écrit"
+          }
+        }
+      }
+    },
+    "issue.write-failed.cause": {
+      "comment": "Error message write-failed: the likely cause, one sentence",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS refused to write the file: disk full, protected folder or disk disconnected."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS a refusé d’écrire le fichier : disque plein, dossier protégé ou disque débranché."
+          }
+        }
+      }
+    },
+    "issue.write-failed.step1": {
+      "comment": "Error message write-failed: step 1 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check the free space and that the folder can be written to."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifiez l’espace libre et que le dossier est accessible en écriture."
+          }
+        }
+      }
+    },
+    "issue.write-failed.step2": {
+      "comment": "Error message write-failed: step 2 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try again, or choose another folder."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réessayez, ou choisissez un autre dossier."
+          }
+        }
+      }
+    },
+    "issue.holder-missing.title": {
+      "comment": "Error message holder-missing: short title, what happened",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No holder, or holder not supported"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Porte-film absent ou non pris en charge"
+          }
+        }
+      }
+    },
+    "issue.holder-missing.cause": {
+      "comment": "Error message holder-missing: the likely cause, one sentence",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The scanner has no usable holder in place."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le scanner n’a pas de porte-film utilisable en place."
+          }
+        }
+      }
+    },
+    "issue.holder-missing.step1": {
+      "comment": "Error message holder-missing: step 1 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Put a supported holder in the X1. The X1 can stay on."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mettez un porte-film pris en charge dans le X1. Le X1 peut rester allumé."
+          }
+        }
+      }
+    },
+    "issue.unknown.title": {
+      "comment": "Error message unknown: short title, what happened",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unexpected error"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erreur inattendue"
+          }
+        }
+      }
+    },
+    "issue.unknown.cause": {
+      "comment": "Error message unknown: the likely cause, one sentence",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Something happened that X1 Scan does not foresee."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il s’est produit un cas que X1 Scan ne prévoit pas."
+          }
+        }
+      }
+    },
+    "issue.unknown.step1": {
+      "comment": "Error message unknown: step 1 of what to do",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy the details for a bug report."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiez les détails pour un rapport de bug."
+          }
+        }
+      }
+    },
+    "issue.whatToDo": {
+      "comment": "Error message: heading above the steps to follow",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What to do"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Que faire"
+          }
+        }
+      }
+    },
+    "issue.details": {
+      "comment": "Error message: folded part with the technical text",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Details"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Détails"
+          }
+        }
+      }
+    },
+    "issue.copyDetails": {
+      "comment": "Error message: button that copies the technical details for a bug report",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy Details"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copier les détails"
+          }
+        }
+      }
+    },
+    "issue.help": {
+      "comment": "Error message: button that opens its Troubleshooting entry in the help",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Help"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aide"
+          }
+        }
+      }
+    },
+    "issue.help.tooltip": {
+      "comment": "Tooltip of an error message's Help button",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open the Troubleshooting entry for this message"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir l’entrée Dépannage de ce message"
           }
         }
       }
