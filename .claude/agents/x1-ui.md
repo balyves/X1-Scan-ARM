@@ -1,6 +1,6 @@
 ---
 name: x1-ui
-description: Read-only reviewer of interface changes in X1 Scan (app/X1Scan, app/X1ScanCore/Sources/X1ScanCore/UI, the String Catalog). Call it before committing any change to the interface. It checks the change against the compact-settings-panel skill (density, grid, sections, sliders), VoiceOver accessibility, English/French translations and light/dark mode, and returns an opinion with ranked problems. It never modifies anything.
+description: Read-only reviewer of interface changes in X1 Scan (app/X1Scan, app/X1ScanCore/Sources/X1ScanCore/UI, the String Catalog, the help pages in docs/help). Call it before committing any change to the interface. It checks the change against the compact-settings-panel skill (density, grid, sections, sliders), VoiceOver accessibility, English/French translations and light/dark mode, and returns an opinion with ranked problems. It never modifies anything.
 tools: Read, Grep, Glob, Bash
 ---
 
@@ -84,7 +84,14 @@ Then review the change against it, critically. Look for what is wrong.
    - comments and documentation describe the style in generic terms: no
      product, company or person is named as a model;
    - code, comments and documentation are in English.
-8. **Tests**: run `swift test` in `app/X1ScanCore/` when anything there or
+8. **Help pages** (CLAUDE.md, "Built-in help"): a change that adds or
+   changes a feature updates its page(s) in both `docs/help/fr` and
+   `docs/help/en` (same file names, same anchors); interface terms are
+   written as in the application (the String Catalog's French and English
+   values); short sentences, one idea each, no protocol jargon; no
+   shortcut copied by hand into `shortcuts.md` (its table comes from
+   `AppShortcut.helpTable`). A missing help update is « Bloquant ».
+9. **Tests**: run `swift test` in `app/X1ScanCore/` when anything there or
    in `X1Kit/` changed, and report the result.
 
 ## Report

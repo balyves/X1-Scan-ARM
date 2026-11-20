@@ -5068,6 +5068,330 @@
           }
         }
       }
+    },
+    "X1 Scan Help": {
+      "comment": "Menu item: opens the built-in help (Help menu); also its line on the help's Keyboard Shortcuts page",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "X1 Scan Help"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aide de X1 Scan"
+          }
+        }
+      }
+    },
+    "The help could not be loaded.": {
+      "comment": "Help window: the pages are missing from the application",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The help could not be loaded."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’aide n’a pas pu être chargée."
+          }
+        }
+      }
+    },
+    "Search the help": {
+      "comment": "Placeholder of the help window's search field",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search the help"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rechercher dans l’aide"
+          }
+        }
+      }
+    },
+    "help.group.tools": {
+      "comment": "Help, Keyboard Shortcuts page: heading of the tools' shortcuts",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tools"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Outils"
+          }
+        }
+      }
+    },
+    "help.group.framing": {
+      "comment": "Help, Keyboard Shortcuts page: heading of the crop mode's shortcuts",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Framing"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cadrage"
+          }
+        }
+      }
+    },
+    "help.group.image": {
+      "comment": "Help, Keyboard Shortcuts page: heading of orientation and grid shortcuts (the Image menu)",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Image"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Image"
+          }
+        }
+      }
+    },
+    "help.group.view": {
+      "comment": "Help, Keyboard Shortcuts page: heading of the zoom shortcuts",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom"
+          }
+        }
+      }
+    },
+    "help.group.panel": {
+      "comment": "Help, Keyboard Shortcuts page: heading of the panel's shortcuts",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings Panel"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Panneau de réglages"
+          }
+        }
+      }
+    },
+    "help.group.scanner": {
+      "comment": "Help, Keyboard Shortcuts page: heading of Preview and Stop",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scanner"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scanner"
+          }
+        }
+      }
+    },
+    "help.group.application": {
+      "comment": "Help, Keyboard Shortcuts page: heading of Export, Settings, Help…",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Application"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Application"
+          }
+        }
+      }
+    },
+    "help.shortcut.temporaryHand": {
+      "comment": "Help, Keyboard Shortcuts page: the space bar",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hand, while the key is held"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Main, tant que la touche est maintenue"
+          }
+        }
+      }
+    },
+    "help.shortcut.done": {
+      "comment": "Help, Keyboard Shortcuts page: Return in crop mode",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done: leave crop mode and keep the changes"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terminé : quitter le recadrage en gardant les changements"
+          }
+        }
+      }
+    },
+    "help.shortcut.escape": {
+      "comment": "Help, Keyboard Shortcuts page: Esc",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop a preview or a scan; in crop mode, cancel the changes"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêter un aperçu ou une numérisation ; en recadrage, annuler les changements"
+          }
+        }
+      }
+    },
+    "help.shortcut.angle": {
+      "comment": "Help, Keyboard Shortcuts page: left and right arrows",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fine rotation, to the next whole degree (Crop or Rule)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rotation fine, jusqu’au degré entier suivant (Recadrage ou Règle)"
+          }
+        }
+      }
+    },
+    "help.shortcut.angleLarge": {
+      "comment": "Help, Keyboard Shortcuts page: Shift with the arrows",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fine rotation, to the next multiple of 5° (Crop or Rule)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rotation fine, jusqu’au multiple de 5° suivant (Recadrage ou Règle)"
+          }
+        }
+      }
+    },
+    "help.shortcut.grid": {
+      "comment": "Help, Keyboard Shortcuts page",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show or hide the grid"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher ou masquer la grille"
+          }
+        }
+      }
+    },
+    "help.shortcut.panel": {
+      "comment": "Help, Keyboard Shortcuts page",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show or hide the settings panel"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher ou masquer le panneau de réglages"
+          }
+        }
+      }
+    },
+    "help.window.title": {
+      "comment": "Title of the built-in help's window",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "X1 Scan Help"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aide de X1 Scan"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

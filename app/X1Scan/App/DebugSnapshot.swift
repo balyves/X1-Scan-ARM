@@ -2,6 +2,7 @@
 #if DEBUG
 import AppKit
 import SwiftUI
+import WebKit
 import X1ScanCore
 
 /// Debug builds only: lets a developer check the window without screen
@@ -27,6 +28,10 @@ import X1ScanCore
 ///                                the keyboard focus and the tool selected, quit (KeyProbe)
 ///   -X1ScanResizeProbe YES       resize the window, move the divider, hide and show the panel,
 ///                                print the sizes, put the window frame and panel layout back, quit
+///   -X1ScanHelpSnapshot <path>   open the help window, write it (<path>, sidebar) and its page
+///                                (<path>-page.png, `WKWebView.takeSnapshot`), quit (lot A)
+///   -X1ScanHelpPage <id[#anchor]> the help page to open (default: index)
+///   -X1ScanHelpSearch <text>     typed into the help's search field
 /// The snapshot also writes each Settings pane, Scanner Information and the
 /// About panel (`<path>-settings-<n>.png`, `<path>-info.png`,
 /// `<path>-floating-*.png`), serial always masked.
@@ -43,6 +48,10 @@ enum DebugSnapshot {
                 FileHandle.standardError.write(Data("TOOLTIP \(tooltip.rawValue): \(Strings.tooltip(tooltip))\n".utf8))
             }
             NSApp.terminate(nil)
+            return
+        }
+        if let path = arguments.string(forKey: "X1ScanHelpSnapshot") {
+            helpSnapshot(to: path, arguments: arguments)
             return
         }
         if arguments.bool(forKey: "X1ScanHidePanel"), !model.panel.layout.isHidden { model.panel.toggleHidden() }
@@ -179,6 +188,37 @@ enum DebugSnapshot {
             }
             NSApp.terminate(nil)
         }
+    }
+
+    /// The help window at a page (and a search), then quit.
+    private static func helpSnapshot(to path: String, arguments: UserDefaults) {
+        Task { @MainActor in
+            guard let delegate = NSApp.delegate as? AppDelegate else { return }
+            let target = (arguments.string(forKey: "X1ScanHelpPage") ?? HelpLibrary.pageIDs[0])
+                .split(separator: "#", maxSplits: 1).map(String.init)
+            delegate.showHelp(page: target[0], anchor: target.count > 1 ? target[1] : nil)
+            if let query = arguments.string(forKey: "X1ScanHelpSearch") { delegate.helpControllerForDebug?.model.query = query }
+            try? await Task.sleep(for: .seconds(2))
+            if let view = delegate.helpControllerForDebug?.window?.contentView {
+                if let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) {
+                    view.cacheDisplay(in: view.bounds, to: rep)
+                    try? rep.representation(using: .png, properties: [:])?.write(to: URL(filePath: path))
+                }
+                if let web = firstSubview(of: WKWebView.self, in: view),
+                   let image = try? await web.takeSnapshot(configuration: nil),
+                   let tiff = image.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff) {
+                    try? rep.representation(using: .png, properties: [:])?
+                        .write(to: URL(filePath: path.replacingOccurrences(of: ".png", with: "-page.png")))
+                }
+            }
+            NSApp.terminate(nil)
+        }
+    }
+
+    private static func firstSubview<T: NSView>(of type: T.Type, in view: NSView) -> T? {
+        if let match = view as? T { return match }
+        for subview in view.subviews { if let match = firstSubview(of: type, in: subview) { return match } }
+        return nil
     }
 
     private static func render(_ view: AnyView, to path: String) {

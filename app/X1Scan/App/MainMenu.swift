@@ -19,6 +19,9 @@ enum MainMenu {
         menu.addItem(submenu(window))
         NSApp.windowsMenu = window
         let help = NSMenu(title: String(localized: "Help", comment: "Menu"))
+        // macOS adds the search field above; HelpSearch puts the help's pages in its results.
+        help.addItem(item(String(localized: "X1 Scan Help", comment: "Menu item: opens the built-in help (Help menu); also its line on the help's Keyboard Shortcuts page"),
+                          #selector(AppDelegate.showHelpWindow(_:)), shortcut: .help))
         menu.addItem(submenu(help))
         NSApp.helpMenu = help
         return menu
@@ -57,7 +60,7 @@ enum MainMenu {
                           #selector(AppDelegate.showAbout(_:))))
         menu.addItem(.separator())
         menu.addItem(item(String(localized: "Settings…", comment: "Menu item"),
-                          #selector(AppDelegate.showSettings(_:)), ","))
+                          #selector(AppDelegate.showSettings(_:)), shortcut: .settings))
         menu.addItem(.separator())
         let services = NSMenu(title: String(localized: "Services", comment: "Menu"))
         menu.addItem(submenu(services))
@@ -87,7 +90,7 @@ enum MainMenu {
     private static func editMenu() -> NSMenu {
         let menu = NSMenu(title: String(localized: "Edit", comment: "Menu"))
         menu.addItem(item(String(localized: "Undo", comment: "Menu item"), Selector(("undo:")), shortcut: .undo))
-        menu.addItem(item(String(localized: "Redo", comment: "Menu item"), Selector(("redo:")), "z", [.command, .shift]))
+        menu.addItem(item(String(localized: "Redo", comment: "Menu item"), Selector(("redo:")), shortcut: .redo))
         menu.addItem(.separator())
         menu.addItem(item(String(localized: "Cut", comment: "Menu item"), #selector(NSText.cut(_:)), "x"))
         menu.addItem(item(String(localized: "Copy", comment: "Menu item"), #selector(NSText.copy(_:)), "c"))
@@ -98,19 +101,20 @@ enum MainMenu {
 
     private static func viewMenu() -> NSMenu {
         let menu = NSMenu(title: String(localized: "View", comment: "Menu"))
-        menu.addItem(item(Strings.zoomMode(.fit), #selector(MainWindowController.zoomToFit(_:)), "0"))
-        menu.addItem(item(Strings.zoomMode(.fill), #selector(MainWindowController.zoomToFill(_:)), "0",
-                          [.command, .option]))
+        menu.addItem(item(Strings.zoomMode(.fit), #selector(MainWindowController.zoomToFit(_:)), shortcut: .zoomToFit))
+        menu.addItem(item(Strings.zoomMode(.fill), #selector(MainWindowController.zoomToFill(_:)), shortcut: .zoomToFill))
         menu.addItem(item(String(localized: "Actual Size", comment: "Menu item"),
-                          #selector(MainWindowController.zoomToActualSize(_:)), "1"))
-        menu.addItem(item(String(localized: "Zoom In", comment: "Menu item"), #selector(MainWindowController.zoomIn(_:)), "+"))
+                          #selector(MainWindowController.zoomToActualSize(_:)), shortcut: .actualSize))
+        menu.addItem(item(String(localized: "Zoom In", comment: "Menu item"), #selector(MainWindowController.zoomIn(_:)),
+                          shortcut: .zoomIn))
         // ⌘= also zooms in (same key as + without Shift on many layouts), hidden alternate.
         let zoomInAlternate = item(String(localized: "Zoom In", comment: "Menu item"),
                                    #selector(MainWindowController.zoomIn(_:)), "=")
         zoomInAlternate.isHidden = true
         zoomInAlternate.allowsKeyEquivalentWhenHidden = true
         menu.addItem(zoomInAlternate)
-        menu.addItem(item(String(localized: "Zoom Out", comment: "Menu item"), #selector(MainWindowController.zoomOut(_:)), "-"))
+        menu.addItem(item(String(localized: "Zoom Out", comment: "Menu item"), #selector(MainWindowController.zoomOut(_:)),
+                          shortcut: .zoomOut))
         let steps = NSMenu(title: String(localized: "zoom.steps", defaultValue: "Zoom", comment: "Menu: zoom steps (not the window zoom)"))
         for step in Viewport.steps {
             let stepItem = item(Strings.zoom(step), #selector(MainWindowController.zoomToStep(_:)))
@@ -137,7 +141,7 @@ enum MainMenu {
         }
         menu.addItem(.separator())
         menu.addItem(item(String(localized: "Hide Settings Panel", comment: "Menu item"),
-                          #selector(MainWindowController.toggleSettingsPanel(_:)), "p", [.command, .option]))
+                          #selector(MainWindowController.toggleSettingsPanel(_:)), shortcut: .toggleSettingsPanel))
         menu.addItem(.separator())
         // AppKit adds "Enter Full Screen" (⌃⌘F) to the View menu by itself.
         return menu
@@ -198,7 +202,7 @@ enum MainMenu {
         // The source is chosen in Settings > Scanner; Read Identity is in Scanner Information.
         menu.addItem(.separator())
         menu.addItem(item(String(localized: "Scanner Information…", comment: "Menu item"),
-                          #selector(AppDelegate.showScannerInformation(_:)), "i"))
+                          #selector(AppDelegate.showScannerInformation(_:)), shortcut: .scannerInformation))
         return menu
     }
 

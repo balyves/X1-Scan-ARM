@@ -119,6 +119,18 @@ public enum AppShortcut: Sendable, Hashable {
     case stop
     case export
     case undo
+    // Menu items without a tooltip (lot A): in the table too, so that the
+    // menus and the help's Keyboard Shortcuts page share one source.
+    case zoomToFit
+    case zoomToFill
+    case actualSize
+    case zoomIn
+    case zoomOut
+    case toggleSettingsPanel
+    case redo
+    case scannerInformation
+    case settings
+    case help
 
     /// Nil only for a panel tab not shown (Develop, lot 3).
     public var shortcut: KeyShortcut? {
@@ -141,6 +153,16 @@ public enum AppShortcut: Sendable, Hashable {
         case .stop: KeyShortcut(".", .command)
         case .export: KeyShortcut("e", [.shift, .command])
         case .undo: KeyShortcut("z", .command)
+        case .zoomToFit: KeyShortcut("0", .command)
+        case .zoomToFill: KeyShortcut("0", [.option, .command])
+        case .actualSize: KeyShortcut("1", .command)
+        case .zoomIn: KeyShortcut("+", .command)
+        case .zoomOut: KeyShortcut("-", .command)
+        case .toggleSettingsPanel: KeyShortcut("p", [.option, .command])
+        case .redo: KeyShortcut("z", [.shift, .command])
+        case .scannerInformation: KeyShortcut("i", .command)
+        case .settings: KeyShortcut(",", .command)
+        case .help: KeyShortcut("?", .command)
         }
     }
 
@@ -150,6 +172,32 @@ public enum AppShortcut: Sendable, Hashable {
             + [.temporaryHand, .swapProportions, .done, .escape, .angle, .angleLarge]
             + PanelTab.visible.map(AppShortcut.panelTab)
             + [.rotateCounterclockwise, .rotateClockwise, .toggleGrid, .preview, .stop, .export, .undo]
+    }
+
+    /// The menu shortcuts without a tooltip (lot A).
+    public static let menuOnly: [AppShortcut] = [
+        .zoomToFit, .zoomToFill, .actualSize, .zoomIn, .zoomOut, .toggleSettingsPanel, .redo,
+        .scannerInformation, .settings, .help,
+    ]
+
+    /// Every shortcut of the help's Keyboard Shortcuts page: the tooltips' and the menus'.
+    public static var helpTable: [AppShortcut] { all + menuOnly }
+
+    /// The groups of the Keyboard Shortcuts page, in order.
+    public enum HelpGroup: Sendable, Hashable, CaseIterable {
+        case tools, framing, image, view, panel, scanner, application
+    }
+
+    public var helpGroup: HelpGroup {
+        switch self {
+        case .tool, .temporaryHand: .tools
+        case .swapProportions, .done, .escape, .angle, .angleLarge, .undo, .redo: .framing
+        case .rotateCounterclockwise, .rotateClockwise, .toggleGrid: .image
+        case .zoomToFit, .zoomToFill, .actualSize, .zoomIn, .zoomOut: .view
+        case .panelTab, .toggleSettingsPanel: .panel
+        case .preview, .stop: .scanner
+        case .export, .scannerInformation, .settings, .help: .application
+        }
     }
 }
 

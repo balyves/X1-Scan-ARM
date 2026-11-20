@@ -221,6 +221,12 @@ available; ask.
 
 Captures and raw files stay outside the repository (see `.gitignore`).
 
+## Built-in help
+
+Every batch that adds or changes a feature updates its help page(s) in
+docs/help/fr and docs/help/en; x1-ui checks it. These Markdown pages are
+the only source of the help text (docs/decisions.md, "Built-in help").
+
 ## When something new is learned
 
 Update `docs/protocol.md` (with [confirmed] / [hypothesis]) and add a dated

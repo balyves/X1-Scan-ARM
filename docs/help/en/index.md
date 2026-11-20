@@ -1,0 +1,62 @@
+# X1 Scan Help
+
+X1 Scan drives a Hasselblad Flextight X1 scanner from a current Mac.
+This help describes the application as it is today.
+
+> On the real X1, X1 Scan reads the scanner’s identity and state for now. Preview and scan on the real X1 are being validated. To try every function without a scanner, use [discovery mode](discovery.md).
+
+## Getting started {#start}
+
+- [Your first scan, step by step](first-scan.md)
+- [Discovery mode](discovery.md)
+- [Keyboard shortcuts](shortcuts.md)
+- [Troubleshooting](troubleshooting.md)
+
+## The settings panel {#panel}
+
+- [Prepare: Original and Framing](prepare.md)
+- [Scan](scan.md)
+- [Output](output.md)
+- [Information: Histogram and Exposure](information.md)
+
+## The tools {#tools}
+
+- [Hand](tool-hand.md)
+- [Zoom](tool-zoom.md)
+- [Crop](tool-crop.md)
+- [Straightening Rule](tool-rule.md)
+- [Grid](tool-grid.md)
+- [Exposure Zones](tool-exposure-zones.md)
+
+## Index {#functions}
+
+- [About and licences](about.md)
+- [Angle](prepare.md#angle)
+- [Compression](output.md#compression)
+- [Constrain to image](prepare.md#constrain)
+- [Crop](tool-crop.md)
+- [Discovery mode](discovery.md)
+- [Export](output.md#export)
+- [Export folder](output.md#folder)
+- [Exposure](information.md#exposure)
+- [Exposure Zones](tool-exposure-zones.md)
+- [File name](output.md#name)
+- [Film](prepare.md#film)
+- [Format](output.md#format)
+- [Framing](prepare.md#framing)
+- [Grid](tool-grid.md)
+- [Hand](tool-hand.md)
+- [Histogram](information.md#histogram)
+- [Holder](prepare.md#holder)
+- [Keyboard shortcuts](shortcuts.md)
+- [Orientation](prepare.md#orientation)
+- [Preview](first-scan.md#preview)
+- [Proportions](prepare.md#proportions)
+- [Reset Framing](prepare.md#reset)
+- [Resolution](scan.md#resolution)
+- [Scale](scan.md#scale)
+- [Scan](scan.md#scan-button)
+- [Straighten](tool-rule.md)
+- [Straightening Rule](tool-rule.md)
+- [Troubleshooting](troubleshooting.md)
+- [Zoom](tool-zoom.md)

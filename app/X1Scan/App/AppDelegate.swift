@@ -8,6 +8,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     private var windowController: MainWindowController?
     private var settingsController: SettingsWindowController?
     private var scannerInfoController: ScannerInfoWindowController?
+    private var helpController: HelpWindowController?
+    /// The help's pages in the Help menu's search results (kept: AppKit holds it weakly).
+    private var helpSearch: HelpSearch?
     private var observers: [Observing] = []
     private var quitting = false
 
@@ -26,6 +29,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
             }
         })
         NSApp.mainMenu = MainMenu.make()
+        let help = HelpModel(library: HelpModel.load())
+        helpController = HelpWindowController(model: help)
+        if let library = help.library {
+            let search = HelpSearch(library: library,
+                                    open: { [weak self] in self?.showHelp(page: $0.pageID, anchor: $0.anchor) },
+                                    openAll: { [weak self] query in
+                                        self?.showHelp(page: HelpLibrary.pageIDs[0])
+                                        self?.helpController?.model.query = query
+                                    })
+            helpSearch = search
+            NSApp.registerUserInterfaceItemSearchHandler(search)
+        }
         let windowController = MainWindowController(model: model)
         self.windowController = windowController
         windowController.showWindow(nil)
@@ -107,6 +122,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         }
         settingsController?.show(.holders)
     }
+
+    /// Help > X1 Scan Help (⌘?): the help window, at its home page the first time.
+    @objc func showHelpWindow(_ sender: Any?) {
+        helpController?.showWindow(nil)
+    }
+
+    /// The help window at a page and, optionally, a section of it.
+    func showHelp(page: String, anchor: String? = nil) {
+        helpController?.show(page: page, anchor: anchor)
+    }
+
+    #if DEBUG
+    /// DebugSnapshot types into the help's search field and writes the window.
+    var helpControllerForDebug: HelpWindowController? { helpController }
+    #endif
 
     @objc func showScannerInformation(_ sender: Any?) {
         guard let model else { return }
