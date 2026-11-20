@@ -775,6 +775,9 @@ public final class AppModel {
             exposureZonesSize = nil
         }
         scanMaster = nil
+        // Another image, whatever its size (user's decision after lot 1b): ⌘Z no longer
+        // undoes a Reset made on the previous one.
+        undoManager?.removeAllActions(withTarget: self)
         // Every new preview gets the zoom of Settings > Display when its first
         // rows arrive (refreshImage). The crop rectangle is kept if the size is the same.
         startupZoomPending = true

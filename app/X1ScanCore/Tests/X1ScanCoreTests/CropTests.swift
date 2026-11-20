@@ -745,4 +745,29 @@ struct CropModeTests {
         model.escape()
         #expect(model.recipe.crop.angle == 1 && !undo.canUndo)
     }
+
+    /// User's decision after lot 1b: another preview, even of the same size
+    /// (another frame in the same holder), removes the Undo of a Reset.
+    @Test func anotherPreviewRemovesTheUndoOfReset() async throws {
+        let (model, defaults, suite) = try model()
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let undo = UndoManager()
+        undo.groupsByEvent = false
+        model.undoManager = undo
+        model.startPreview()
+        await model.session.waitUntilIdle()
+        model.refreshImage()
+        let size: (Int, Int) = (model.viewport.imageWidth, model.viewport.imageHeight)
+        model.rotateClockwise()
+        undo.beginUndoGrouping()
+        model.resetFraming(actionName: "Framing Reset")
+        undo.endUndoGrouping()
+        #expect(undo.canUndo)
+        model.startPreview()
+        await model.session.waitUntilIdle()
+        model.refreshImage()
+        let sameSize: Bool = model.viewport.imageWidth == size.0 && model.viewport.imageHeight == size.1
+        #expect(sameSize, "the same image area: the case the size check alone did not cover")
+        #expect(!undo.canUndo)
+    }
 }

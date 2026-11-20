@@ -1357,8 +1357,9 @@ the interface only: nothing sent to the scanner changes.
   back the orientation, the proportions, the fine angle and the frame (not
   turned, free, 0°, the whole image), keeps the lock and the constraint,
   and Edit > Undo (⌘Z) undoes it (Redo resets again) as long as nothing
-  else has changed the recipe and the image area is the same: a turn, a
-  frame, Esc in crop mode or the scan after the preview removes the Undo,
+  else has changed the recipe and no other image has come: a turn, a
+  frame, Esc in crop mode, a new preview (whatever its size; user's
+  decision after the push of lot 1b) or the scan removes the Undo,
   so that ⌘Z never brings back a state left in between or the frame of
   another image; in crop mode Esc still goes back to the state on entering
   the mode. This replaces lot 1's Reset, which kept the
