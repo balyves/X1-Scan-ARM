@@ -957,3 +957,9 @@ smallest size, never flipping over; Done and Return go back to the tool
 used before the crop mode, Esc puts back the recipe of the mode's start
 (a running preview or scan is stopped first), and Reset gives the whole
 image with no fine angle. Nothing sent to the scanner changed; not pushed.
+
+User's answers the same day: Reset's free proportions and Esc putting
+back the whole recipe (turns included) are confirmed; preview columns
+0-4 are to be left out of the exposure measure once part J has checked
+them on real captures; key X now works in crop mode wherever the focus
+is in the main window, except while typing in a field.

@@ -1243,7 +1243,9 @@ nothing is sent to the scanner and nothing in the image changes.
   the overlay can be tried; the range used then always reads 100 % there.
   Its scans keep the plain test pattern. Columns 0-4 of every preview are
   near the noise floor (protocol.md §10): the violet line at the left
-  edge; whether to leave them out of the measure is left for later.
+  edge. User's decision (2026-11-20): leave them out of the measure in
+  principle, but only once real captures (part J) show they are not
+  image; nothing coded until then (hypotheses.md).
 
 ## Lot 1: layout and geometry (2026-11-19)
 
@@ -1308,18 +1310,22 @@ received, on the display or on exported files.
   the side that reaches an edge stops, the other goes on along it. A new
   frame starts after a drag of 5 points and stops at the edge the same
   way (`CropGeometry.resized`).
-- **Crop mode** (user's decisions of 2026-11-20): Done and Return leave
-  it with its changes, back to the tool used before it (hand or zoom);
-  choosing another tool also keeps the changes. Esc puts back the whole
-  recipe as it was when the mode was entered (frame, angle, proportions,
-  lock, constraint, turns and mirror), unless a preview or scan is
-  running: then Esc stops it first, whatever the tool, as the Stop button
-  and the confirmations promise; while the stop is under way Esc does
-  nothing. A new image area (the scan after the preview)
-  drops the frame Esc would put back. Reset (an icon next to Done): the
-  whole image, free proportions (proposed, to be confirmed by the user)
-  and no angle; the turns, mirror, lock and constraint are kept, and Esc
-  still goes back to the state on entering the mode.
+- **Crop mode** (Crop or Straightening Rule tool; user's decisions of
+  2026-11-20, all confirmed by the user the same day): Done and Return
+  leave it with its changes, back to the tool used before it (hand or
+  zoom); choosing another tool also keeps the changes. Esc puts back the
+  whole recipe as it was when the mode was entered (frame, angle,
+  proportions, lock, constraint, turns and mirror), unless a preview or
+  scan is running: then Esc stops it first, whatever the tool, as the
+  Stop button and the confirmations promise; while the stop is under way
+  Esc does nothing. A new image area (the scan after the preview) drops
+  the frame Esc would put back. Reset (an icon next to Done): the whole
+  image, free proportions and no angle; the turns, mirror, lock and
+  constraint are kept, and Esc still goes back to the state on entering
+  the mode. Key X exchanges the frame's width and height as soon as the
+  mode is on, wherever the keyboard focus is in the main window, except
+  while text is typed in a field or a sheet is open; held down, it acts
+  once.
 - **Straightening rule**: the line's direction folded into (−90°, 90°];
   within 45° of horizontal it is made horizontal, otherwise vertical; the
   angle is added to the current one.

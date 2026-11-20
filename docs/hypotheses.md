@@ -104,7 +104,9 @@ older ones in `docs/protocol.md` §1-§11 are still to be added.
   protocol.md §10), not image. The fixtures' image reads already hold
   these columns (at most about 300-480), but the holder's edge is dark
   there too, so they do not settle it. Settle: a preview whose image is
-  bright at its left edge (clear film or an empty holder at that edge).
+  bright at its left edge (clear film or an empty holder at that edge),
+  in part J. If confirmed, the exposure measure leaves them out (user's
+  decision of 2026-11-20, not coded yet).
 
 - The exposure indicator's thresholds, clipping at 64 000 and noise floor
   at 1 024 on the 16-bit raw samples (decisions.md, "Lot 1: exposure
