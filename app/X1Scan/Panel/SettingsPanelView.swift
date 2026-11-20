@@ -5,8 +5,9 @@ import X1Image
 import X1ScanCore
 
 /// The settings panel on the right (lot 1b), top to bottom: the tab bar
-/// (Prepare, Scan, Output), the tab's sections (scrolling), and the
-/// Preview and Scan buttons, fixed. Small controls everywhere. All
+/// (Prepare, Scan, Output), the tab's sections (scrolling), the
+/// Information area (Histogram, Exposure; fixed, common to every tab), and
+/// the Preview and Scan buttons, fixed. Small controls everywhere. All
 /// sections follow the compact panel conventions
 /// (.claude/skills/compact-settings-panel/SKILL.md); a folded section shows
 /// a summary of its values next to its title.
@@ -23,12 +24,25 @@ struct SettingsPanelView: View {
                     ForEach(model.panel.layout.tab.sections, id: \.self) { section in
                         self.section(section)
                     }
-                    section(.exposure)
-                    section(.histogram)
                 }
                 .padding(.bottom, 8)
             }
+            .frame(minHeight: CompactPanelMetrics.minimumTabContentHeight)
             Divider()
+            // Information (lot 1b): the same in every tab, never scrolled; when the window
+            // is low, the tab's content gives up the room (fold these sections to gain some).
+            VStack(alignment: .leading, spacing: 0) {
+                Text(Strings.informationTitle)
+                    .font(.caption)
+                    .textCase(.uppercase)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, CompactPanelMetrics.sectionInsets.leading)
+                    .padding(.top, CompactPanelMetrics.groupSpacing)
+                    .accessibilityAddTraits(.isHeader)
+                section(.histogram)
+                section(.exposure)
+            }
+            .fixedSize(horizontal: false, vertical: true)
             VStack(spacing: 6) {
                 ActionButtons(model: model)
                 if let block = model.toolbar.previewBlock, block != .busy {

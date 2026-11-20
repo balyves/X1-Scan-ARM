@@ -364,6 +364,12 @@ enum Strings {
         }
     }
 
+    /// Small title above Histogram and Exposure, shown in capitals.
+    static var informationTitle: String {
+        String(localized: "panel.information", defaultValue: "Information",
+               comment: "Settings panel: small title of the area common to every tab (histogram, exposure); shown in capitals")
+    }
+
     static var panelTabsLabel: String {
         String(localized: "Settings Panel Tabs", comment: "VoiceOver label of the tab bar at the top of the settings panel")
     }

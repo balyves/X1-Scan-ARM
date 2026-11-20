@@ -71,6 +71,10 @@ passes every string, already translated (see Text and languages).
 - Tight spacing: `CompactPanelMetrics.rowSpacing` between rows, section
   insets from `CompactPanelMetrics.sectionInsets`. No blank lines made of
   spacers or extra padding.
+- The title of an area grouping sections (INFORMATION, above Histogram and
+  Exposure) is small: `.caption`, secondary colour, capitals by
+  `.textCase(.uppercase)` (VoiceOver reads the word), header trait, inset
+  `sectionInsets.leading`, `groupSpacing` above.
 - Numbers use `.monospacedDigit()` so that they do not jump while they
   change.
 - Explanations go in the tooltip of the row they explain

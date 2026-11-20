@@ -26,6 +26,9 @@ public enum CompactPanelMetrics {
     public static let gaugeHeight: CGFloat = 10
     /// Around the panel's tab bar: the sections' side insets, so that it lines up with their rows.
     public static let tabBarInsets = EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12)
+    /// The tab's content keeps at least this height when the window is low
+    /// (the Information area and the buttons below it do not shrink).
+    public static let minimumTabContentHeight: CGFloat = 120
     /// Height of a section's title row (callout semibold), to centre what sits on it.
     public static let titleRowHeight: CGFloat = 16
     /// Inside a section, around its rows.

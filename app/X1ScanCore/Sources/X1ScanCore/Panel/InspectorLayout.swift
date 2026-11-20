@@ -8,8 +8,8 @@ public enum PanelSection: String, Sendable, Hashable, CaseIterable, Codable {
     /// Framing (lot 1b): orientation, proportions, angle, straightening, grid.
     case framing
     case scan
-    case exposure
     case histogram
+    case exposure
     case output
 
     /// Names saved by earlier versions: `settings` (Main / Advanced tabs,

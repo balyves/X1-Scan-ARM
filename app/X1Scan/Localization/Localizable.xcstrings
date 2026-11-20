@@ -713,6 +713,24 @@
         }
       }
     },
+    "panel.information": {
+      "comment": "Settings panel: small title of the area common to every tab (histogram, exposure); shown in capitals",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Information"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Informations"
+          }
+        }
+      }
+    },
     "panel.section.framing": {
       "comment": "Panel section: orientation, proportions, angle, straightening, grid",
       "extractionState": "manual",
