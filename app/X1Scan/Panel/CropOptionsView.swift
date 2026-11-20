@@ -5,7 +5,8 @@ import X1ScanCore
 /// Crop and straighten options (lot 1): shown at the top of the panel while
 /// the Crop or Straightening Rule tool is selected, on a lightly tinted
 /// background (the user's brief: a mode, visibly apart from the settings).
-/// Done goes back to the hand.
+/// Done (Return) goes back to the tool used before; Esc cancels the
+/// changes made since.
 struct CropOptionsSection: View {
     @Bindable var model: AppModel
     @State private var customShown = false
@@ -23,9 +24,9 @@ struct CropOptionsSection: View {
                     .lineLimit(1)
                     .accessibilityAddTraits(.isHeader)
                 Spacer(minLength: 0)
-                Button(Strings.cropDone) { model.tools.selected = .hand }
+                Button(Strings.cropDone) { model.finishCrop() }
                     .buttonStyle(.borderedProminent)
-                    .help(Strings.withShortcut(Strings.cropDone, "↩"))
+                    .help(Strings.cropDoneHelp)
             }
             proportionsRow
             CompactSliderRow(value: Binding { model.recipe.crop.angle } set: { model.setCropAngle($0) },
@@ -48,6 +49,9 @@ struct CropOptionsSection: View {
         }
         .padding(CompactPanelMetrics.sectionInsets)
         .background(Color.accentColor.opacity(0.07))
+        // VoiceOver's escape gesture (and Switch Control): the same as Esc.
+        .accessibilityElement(children: .contain)
+        .accessibilityAction(.escape) { model.escape() }
     }
 
     // MARK: Proportions

@@ -129,7 +129,12 @@ public final class AppModel {
     public var scanSettings: ScanSettings {
         didSet { if let data = try? JSONEncoder().encode(scanSettings) { defaults.set(data, forKey: Keys.scanSettings) } }
     }
-    public var tools = ToolState()
+    public var tools = ToolState() {
+        didSet { trackCropMode(from: oldValue) }
+    }
+    /// While the crop options are shown (Crop or Straightening Rule tool):
+    /// the tool to go back to on Done, and the recipe Esc puts back.
+    private var cropEntry: (tool: Tool, recipe: Recipe)?
     /// The grid over the image (lot 1): display only, saved between launches.
     public var grid: GridSettings {
         didSet { if grid != oldValue, let data = try? JSONEncoder().encode(grid) { defaults.set(data, forKey: Keys.grid) } }
@@ -219,6 +224,47 @@ public final class AppModel {
         }
         recipe.crop.frame = CGRect(x: rect.minX / size.width, y: rect.minY / size.height,
                                    width: rect.width / size.width, height: rect.height / size.height)
+    }
+
+    /// Entering crop mode remembers the tool before it and the recipe;
+    /// leaving it by any means forgets them (choosing another tool keeps
+    /// the changes, like Done).
+    private func trackCropMode(from old: ToolState) {
+        if !old.showsCropOptions, tools.showsCropOptions {
+            cropEntry = (old.selected, recipe)
+        } else if old.showsCropOptions, !tools.showsCropOptions {
+            cropEntry = nil
+        }
+    }
+
+    /// Done (or Return): leaves crop mode with its changes, back to the tool used before it.
+    public func finishCrop() {
+        guard tools.showsCropOptions else { return }
+        tools.selected = cropEntry?.tool ?? .hand
+    }
+
+    /// Esc in crop mode: the whole recipe as it was when the mode was
+    /// entered (frame, angle, proportions, lock, constraint, and the turns
+    /// and mirror made meanwhile), then back
+    /// to the tool used before it.
+    public func cancelCrop() {
+        guard tools.showsCropOptions else { return }
+        if let entry = cropEntry { recipe = entry.recipe }
+        tools.selected = cropEntry?.tool ?? .hand
+    }
+
+    /// Esc: stopping a running preview or scan comes first, whatever the
+    /// tool (the Stop button's help promises it); otherwise, in crop mode,
+    /// it cancels the mode's changes. While a stop is under way, Esc does
+    /// nothing (a second Esc must not cancel the crop without a word).
+    public func escape() {
+        if toolbar.canStop {
+            stop()
+        } else if toolbar.isStopping {
+            return
+        } else if tools.showsCropOptions {
+            cancelCrop()
+        }
     }
 
     /// A corner of the frame dragged (or a new frame drawn from `fixed`),
@@ -883,6 +929,7 @@ public final class AppModel {
             // enlarged to cover the turned frame drawn on the preview; today the X1 always
             // scans FlexColor's captured window, and the frame must fit inside the area scanned.
             recipe.crop.frame = nil
+            cropEntry?.recipe.crop.frame = nil  // Esc cannot bring back a frame of the previous image
         }
         if startupZoomPending {
             // A new preview: the zoom of Settings > Display, Fit by default.

@@ -131,8 +131,9 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     }
     @objc func stopPreview(_ sender: Any?) { model.stop() }
 
-    /// Esc (and ⌘. through the menu): stop.
-    override func cancelOperation(_ sender: Any?) { model.stop() }
+    /// Esc: stops a running preview or scan; otherwise, in crop mode, cancels its changes
+    /// (`AppModel.escape`). ⌘. goes to the menu's Stop while it is enabled, and here otherwise.
+    override func cancelOperation(_ sender: Any?) { model.escape() }
 
     @objc func exportImage(_ sender: Any?) {
         Task {

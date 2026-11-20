@@ -4180,6 +4180,24 @@
           }
         }
       }
+    },
+    "Keep the changes and go back to the previous tool (↩); Esc cancels them": {
+      "comment": "Help of the Done button of the crop options",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep the changes and go back to the previous tool (↩); Esc cancels them"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Garder les changements et revenir à l’outil précédent (↩) ; Échap les annule"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

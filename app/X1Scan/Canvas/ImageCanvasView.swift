@@ -445,11 +445,11 @@ final class ImageCanvasView: NSView {
             let step = event.modifierFlags.contains(.shift) ? 1.0 : CropSettings.angleStep
             model.setCropAngle(model.recipe.crop.angle + (event.keyCode == 124 ? step : -step))
         } else if cropping, event.keyCode == 36 || event.keyCode == 76 {  // Return: Done
-            model.tools.selected = .hand
+            model.finishCrop()
         } else if let tool = Tool.forKey(first) {
             model.tools.selected = tool
-        } else if event.keyCode == 53 {  // Esc
-            model.stop()
+        } else if event.keyCode == 53 {  // Esc: stop a preview or scan first; in crop mode, cancel its changes
+            model.escape()
         } else {
             super.keyDown(with: event)
         }

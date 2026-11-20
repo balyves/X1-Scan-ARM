@@ -394,6 +394,10 @@ enum Strings {
 
     static var cropTitle: String { String(localized: "Crop and Straighten", comment: "Title of the crop options at the top of the panel") }
     static var cropDone: String { String(localized: "Done", comment: "Button: leave the crop tool") }
+    static var cropDoneHelp: String {
+        String(localized: "Keep the changes and go back to the previous tool (↩); Esc cancels them",
+               comment: "Help of the Done button of the crop options")
+    }
     static var cropProportions: String { String(localized: "Proportions", comment: "Crop options label: aspect ratio") }
     static var cropProportionsHelp: String {
         String(localized: "Proportions of the frame, width × height as named: 6×7 is 6 wide and 7 high; X exchanges them.",

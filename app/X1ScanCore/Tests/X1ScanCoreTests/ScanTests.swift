@@ -47,6 +47,23 @@ final class ScanTests {
     private static let confirmed = RealScanConfirmation(sameHolderNothingMoved: true, captureFrameUnderstood: true)
     private static let previewChecks = RealPreviewConfirmation(scannerOn: true, holderInPlace: true, flexColorClosed: true)
 
+    /// Crop mode entered on the preview, then a scan (another area): Esc
+    /// cannot bring back the preview's frame on the scan.
+    @Test func escapeAfterAScanDoesNotBringBackThePreviewFrame() async throws {
+        let model = try model()
+        model.startPreview()
+        await model.session.waitUntilIdle()
+        model.refreshImage()
+        model.setCropFrame(documentRect: CGRect(x: 100, y: 100, width: 300, height: 200))
+        model.tools.selected = .crop
+        model.startScan()
+        await model.session.waitUntilIdle()
+        model.refreshImage()
+        #expect(model.session.kind == .scan && model.recipe.crop.frame == nil)
+        model.escape()
+        #expect(model.recipe.crop.frame == nil && model.tools.selected == .hand)
+    }
+
     @Test func virtualScanDecodesAndSavesTheTIFF() async throws {
         let model = try model()
         #expect(model.toolbar.canScan && !model.toolbar.scanNeedsConfirmation)

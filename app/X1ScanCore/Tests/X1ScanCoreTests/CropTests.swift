@@ -538,3 +538,93 @@ struct CropResizeTests {
         #expect(abs(locked.width / locked.height - 3) < 1e-6 && abs(locked.width - 600) < 1e-6)
     }
 }
+
+/// Crop mode (user's tests of lot 1, 2026-11-20): Done goes back to the
+/// tool used before, Esc cancels the changes made in the mode.
+@MainActor
+struct CropModeTests {
+    private func model() throws -> (AppModel, UserDefaults, String) {
+        let suite = "X1ScanCoreTests-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        let inspector = ScannerInspector { FakeConnection(responses: [:], openError: TransportError.deviceBusy) }
+        return (AppModel(virtualScanner: { try TestFixtures.scanner() }, inspector: inspector, defaults: defaults),
+                defaults, suite)
+    }
+
+    @Test func doneGoesBackToThePreviousTool() async throws {
+        let (model, defaults, suite) = try model()
+        defer { defaults.removePersistentDomain(forName: suite) }
+        model.startPreview()
+        await model.session.waitUntilIdle()
+        model.refreshImage()
+        model.tools.selected = .zoom
+        model.tools.selected = .crop
+        model.setCropFrame(documentRect: CGRect(x: 100, y: 100, width: 300, height: 200))
+        model.tools.selected = .straighten  // the rule: still in the mode
+        model.finishCrop()
+        #expect(model.tools.selected == .zoom && !model.tools.showsCropOptions)
+        #expect(model.recipe.crop.frame != nil)  // kept
+        // Not in crop mode: nothing happens.
+        model.finishCrop()
+        model.cancelCrop()
+        model.escape()
+        #expect(model.tools.selected == .zoom && model.recipe.crop.frame != nil)
+    }
+
+    @Test func escapeCancelsTheChangesOfTheMode() async throws {
+        let (model, defaults, suite) = try model()
+        defer { defaults.removePersistentDomain(forName: suite) }
+        model.startPreview()
+        await model.session.waitUntilIdle()
+        model.refreshImage()
+        model.tools.selected = .crop
+        model.setCropFrame(documentRect: CGRect(x: 100, y: 100, width: 300, height: 200))
+        model.finishCrop()
+        let before = model.recipe
+        #expect(model.tools.selected == .hand)
+
+        model.tools.selected = .crop
+        model.setCropAngle(2.5)
+        model.setCropAspect(.ratio(width: 6, height: 7))
+        model.rotateClockwise()
+        model.setCropFrame(documentRect: CGRect(x: 10, y: 10, width: 50, height: 50))
+        #expect(model.recipe != before)
+        model.cancelCrop()
+        #expect(model.recipe == before)
+        #expect(model.tools.selected == .hand && !model.tools.showsCropOptions)
+
+        // Another tool chosen while cropping keeps the changes (like Done).
+        model.tools.selected = .crop
+        model.setCropAngle(1)
+        model.tools.selected = .zoom
+        #expect(model.recipe.crop.angle == 1)
+    }
+
+    /// Esc stops a running preview first, whatever the tool; the recipe and the mode stay.
+    @Test func escapeStopsARunningPreviewFirst() async throws {
+        let suite = "X1ScanCoreTests-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let gate = PreviewGate()
+        let inspector = ScannerInspector { FakeConnection(responses: [:], openError: TransportError.deviceBusy) }
+        let model = AppModel(virtualScanner: { try TestFixtures.scanner(pausedAt: 60, gate: gate) },
+                             inspector: inspector, defaults: defaults)
+        model.tools.selected = .crop
+        model.setCropAngle(2)
+        let before = model.recipe
+        model.startPreview()
+        await gate.waitUntilPaused()
+        #expect(model.toolbar.canStop)
+        model.escape()
+        #expect(model.session.state == .stopping)
+        #expect(model.tools.selected == .crop && model.recipe == before)
+        // A second Esc while stopping: nothing (the crop is not cancelled).
+        model.escape()
+        #expect(model.tools.selected == .crop && model.recipe == before)
+        await gate.release()
+        await model.session.waitUntilIdle()
+        // Nothing running any more: Esc now cancels the mode's changes.
+        model.escape()
+        #expect(model.tools.selected == .hand && model.recipe.crop.angle == 0)
+    }
+}
