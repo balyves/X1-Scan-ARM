@@ -80,7 +80,8 @@ scanning) depend on sequences captured from FlexColor:
 - Image Capture and Photoshop integration.
 - Linear DNG export, for raw, non-destructive editing in Lightroom.
 - ICC profile embedded at export (Adobe RGB, ProPhoto, sRGB, Display P3).
-- Densitometer in the Info palette (log10 densities next to RGB values).
+- Information area of the settings panel: RGB values under the pointer,
+  pipettes and densitometer (log10 densities next to RGB values).
 - Re-open existing 3F files with their FlexColor settings and export them to
   DNG/TIFF; settings that need a Hasselblad film profile are reported, not
   emulated (see `docs/decisions.md`).

@@ -1383,6 +1383,10 @@ the interface only: nothing sent to the scanner changes.
 - **Tooltips** (a rule for every lot from now on): every control of the
   panel, every tab and every tool has a native one-sentence tooltip, in
   English and French. Detailed help (⌥ + hover) comes later.
+- **Not in this lot**: the RGB values under the pointer in the
+  Information area come with the pipettes and the densitometer, in lot 3
+  (user's decision after the tests of lot 1b); nothing is shown for them
+  before, no inactive control.
 - **Language** (user's decision, replacing the brief's point F): the
   Language menu of Settings > General stays, with the sentence "Restart X1
   Scan to apply the language." next to it.
