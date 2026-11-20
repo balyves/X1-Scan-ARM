@@ -439,8 +439,6 @@ final class ImageCanvasView: NSView {
         let cropping = model.tools.showsCropOptions
         if first == " " {
             if !event.isARepeat { model.tools.spaceHeld = true }
-        } else if cropping, first == "x" || first == "X" {
-            model.toggleCropPortrait()  // exchange width and height of the proportions
         } else if cropping, event.keyCode == 123 || event.keyCode == 124 {  // ← →: the angle, 0.1° (⇧: 1°)
             let step = event.modifierFlags.contains(.shift) ? 1.0 : CropSettings.angleStep
             model.setCropAngle(model.recipe.crop.angle + (event.keyCode == 124 ? step : -step))
@@ -466,5 +464,20 @@ final class ImageCanvasView: NSView {
     override func flagsChanged(with event: NSEvent) {
         super.flagsChanged(with: event)
         if model.tools.effective == .zoom { window?.invalidateCursorRects(for: self) }
+    }
+}
+
+extension NSWindow {
+    /// Gives the keyboard focus back to the image area (after Return in a
+    /// field), so that Tab, the tool keys and the crop keys work again at once.
+    func focusImageCanvas() {
+        func canvas(in view: NSView) -> ImageCanvasView? {
+            if let canvas = view as? ImageCanvasView { return canvas }
+            for subview in view.subviews {
+                if let canvas = canvas(in: subview) { return canvas }
+            }
+            return nil
+        }
+        if let canvas = contentView.flatMap(canvas(in:)) { makeFirstResponder(canvas) }
     }
 }

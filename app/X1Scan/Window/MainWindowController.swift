@@ -13,6 +13,8 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     private let splitController: MainSplitViewController
     private var observers: [Observing] = []
     private var lastAlertedState: PreviewSession.State?
+    /// Key X in crop mode, wherever the keyboard focus is in the window.
+    private var cropKeyMonitor: Any?
 
     init(model: AppModel) {
         self.model = model
@@ -30,6 +32,25 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         super.init(window: window)
         window.delegate = self
         observers.append(Observing { [weak self] in self?.modelChanged() })
+        cropKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard let self, self.handlesCropKey(event) else { return event }
+            // Held down: one exchange only; the repeats are swallowed.
+            if !event.isARepeat { self.model.toggleCropPortrait() }
+            return nil
+        }
+    }
+
+    /// X exchanges the frame's width and height as soon as the crop mode is
+    /// on (Crop or Straightening Rule tool), whatever has the keyboard focus in this window (a panel control
+    /// after a choice in a menu, the canvas…), except while text is being
+    /// typed (a field's editor) or a sheet is open; other windows (the
+    /// custom ratio popover, Settings) are left alone.
+    private func handlesCropKey(_ event: NSEvent) -> Bool {
+        guard model.tools.showsCropOptions, let window, event.window === window, window.attachedSheet == nil,
+              event.modifierFlags.intersection([.command, .control, .option]).isEmpty,
+              event.charactersIgnoringModifiers?.lowercased() == "x" else { return false }
+        // A text field being edited has the window's field editor (an NSText) as first responder.
+        return !(window.firstResponder is NSText)
     }
 
     @available(*, unavailable)
@@ -48,6 +69,8 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     /// is open: there is no way to reopen it. Quitting stops a running preview
     /// first (AppDelegate.applicationShouldTerminate).
     func windowWillClose(_ notification: Notification) {
+        if let cropKeyMonitor { NSEvent.removeMonitor(cropKeyMonitor) }
+        cropKeyMonitor = nil
         DispatchQueue.main.async { NSApp.terminate(nil) }
     }
 

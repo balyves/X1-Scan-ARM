@@ -37,6 +37,9 @@ struct CropOptionsSection: View {
             CompactSliderRow(value: Binding { model.recipe.crop.angle } set: { model.setCropAngle($0) },
                              format: Self.angleFormat,
                              texts: Strings.sliderRow(label: Strings.cropAngle, unit: "°", format: Self.angleFormat))
+                // An angle typed and confirmed with Return: back to the image, so that X, ← → and
+                // Return act on the frame again at once (as after the zoom field).
+                .onSubmit { NSApp.keyWindow?.focusImageCanvas() }
             straightenRow
             let grid = Strings.gridTool
             CompactControlRow(grid) {
