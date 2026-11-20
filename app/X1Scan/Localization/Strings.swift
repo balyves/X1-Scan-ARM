@@ -431,9 +431,16 @@ enum Strings {
         String(localized: "Show clipped and noise zones", comment: "Exposure section checkbox")
     }
 
+    /// The tool column's button for the exposure zones (VoiceOver label).
+    static var exposureZonesTool: String {
+        String(localized: "Exposure Zones", comment: "Tool column button: clipped and noise zones over the preview")
+    }
+    static var exposureZonesShown: String { String(localized: "zones.shown", defaultValue: "Shown", comment: "VoiceOver value of the exposure zones button (zones, feminine plural in French)") }
+    static var exposureZonesHidden: String { String(localized: "zones.hidden", defaultValue: "Hidden", comment: "VoiceOver value of the exposure zones button (zones, feminine plural in French)") }
+
     static var exposureZonesHelp: String {
         String(localized: "On the preview: clipped pixels in red, pixels near the noise floor in violet. Display only.",
-               comment: "Tooltip of the exposure zones checkbox")
+               comment: "Tooltip of the exposure zones checkbox of the Exposure section and of the tool column's button")
     }
 
     /// Advice under the gauge; hidden in lot 1 (it will point to quality modes).

@@ -132,6 +132,24 @@
         }
       }
     },
+    "Exposure Zones": {
+      "comment": "Tool column button: clipped and noise zones over the preview",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exposure Zones"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zones d’exposition"
+          }
+        }
+      }
+    },
     "Film, holder, orientation and framing": {
       "comment": "Tooltip of the Prepare tab of the settings panel",
       "extractionState": "manual",
@@ -1481,6 +1499,42 @@
           "stringUnit": {
             "state": "translated",
             "value": "Fenêtre"
+          }
+        }
+      }
+    },
+    "zones.hidden": {
+      "comment": "VoiceOver value of the exposure zones button (zones, feminine plural in French)",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hidden"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Masquées"
+          }
+        }
+      }
+    },
+    "zones.shown": {
+      "comment": "VoiceOver value of the exposure zones button (zones, feminine plural in French)",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shown"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Affichées"
           }
         }
       }
@@ -4488,7 +4542,7 @@
       }
     },
     "On the preview: clipped pixels in red, pixels near the noise floor in violet. Display only.": {
-      "comment": "Tooltip of the exposure zones checkbox",
+      "comment": "Tooltip of the exposure zones checkbox of the Exposure section and of the tool column's button",
       "extractionState": "manual",
       "localizations": {
         "en": {
