@@ -20,6 +20,8 @@ import X1ScanCore
 ///   -X1ScanTool <tool>           select a tool: hand, zoom, crop, straighten (lot 1)
 ///   -X1ScanAngle <degrees>       fine angle, after the crop demo (lot 1)
 ///   -X1ScanTab <tab>             show a panel tab: prepare, scan, output (lot 1b)
+///   -X1ScanPanelWidth <points>   panel width (bounded to 280-480; saved like a drag)
+///   -X1ScanAspect <a>            crop proportions: free, original or W:H, e.g. 24:36
 ///   -X1ScanKeyProbe YES          click the tabs and a field, press C or R after each, print
 ///                                the keyboard focus and the tool selected, quit (KeyProbe)
 ///   -X1ScanResizeProbe YES       resize the window, move the divider, hide and show the panel,
@@ -44,6 +46,19 @@ enum DebugSnapshot {
         if arguments.bool(forKey: "X1ScanMirror") { model.mirrorHorizontally() }
         if arguments.bool(forKey: "X1ScanZones") { model.showsExposureZones = true }
         if let tab = arguments.string(forKey: "X1ScanTab").flatMap(PanelTab.init(rawValue:)) { model.panel.select(tab) }
+        if arguments.object(forKey: "X1ScanPanelWidth") != nil { model.panel.setWidth(arguments.double(forKey: "X1ScanPanelWidth")) }
+        if let aspect = arguments.string(forKey: "X1ScanAspect") {
+            let parts = aspect.split(separator: ":").compactMap { Double($0) }
+            if aspect == "free" {
+                model.setCropAspect(.free)
+            } else if aspect == "original" {
+                model.setCropAspect(.original)
+            } else if parts.count == 2, let ratio = CropAspect.custom(parts[0], parts[1]) {
+                model.setCropAspect(ratio)  // validated as the Custom… popover does
+            } else {
+                FileHandle.standardError.write(Data("X1ScanAspect: \(aspect) not understood\n".utf8))
+            }
+        }
         if let kind = arguments.string(forKey: "X1ScanGrid").flatMap(GridKind.init(rawValue:)) { model.showGrid(kind) }
         if arguments.bool(forKey: "X1ScanAutoPreview") { model.startPreview() }
         if arguments.bool(forKey: "X1ScanKeyProbe"), let window { KeyProbe.run(window: window, model: model) }
