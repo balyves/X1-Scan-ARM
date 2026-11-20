@@ -930,3 +930,9 @@ zones in violet, and a test of a custom ratio turning with the frame.
 11 commits, not pushed, wait for the user's tests of the application (on
 the virtual X1, then the real one). The order of the panel's sections is
 not changed until the new organisation of the panel is approved.
+
+## 2026-11-20: custom ratio, user's decision
+
+A custom ratio keeps the width and height typed, whatever the frame's
+direction, and turns with the frame at a quarter turn (13×18 becomes
+18×13), as lot 1 does (docs/decisions.md, "Lot 1: layout and geometry").

@@ -1283,14 +1283,16 @@ received, on the display or on exported files.
   the angle are kept.
 - **The frame follows the image** (user's decision, step F): a quarter
   turn turns the frame exactly (normalised coordinates) and exchanges a
-  named ratio (6×7 becomes 7×6; the image's own proportions turn with it);
-  a mirror mirrors the frame and changes the sign of the fine angle; the
+  named or custom ratio (6×7 becomes 7×6; the image's own proportions turn
+  with it); a mirror mirrors the frame and changes the sign of the fine angle; the
   frame then covers the same source pixels.
 - **Proportions** (user's decision): width × height as named (6×7: 6 wide,
   7 high), X exchanges them; a ratio chosen in the menu (Original
   included) takes the direction of the frame, or without a frame of the
   image (an upright frame stays upright); a custom ratio keeps the width
-  and height typed.
+  and height typed, whatever the frame's direction, and is exchanged by a
+  quarter turn like a named ratio (13×18 becomes 18×13; user's decision of
+  2026-11-20).
 - **Straightening rule**: the line's direction folded into (−90°, 90°];
   within 45° of horizontal it is made horizontal, otherwise vertical; the
   angle is added to the current one.
