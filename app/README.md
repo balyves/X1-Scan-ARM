@@ -51,7 +51,7 @@ real scanner.
 | ⌘+ / ⌘− | Zoom in / out (next step) |
 | ⌘I | Scanner Information |
 | ⌘, | Settings |
-| H, Z, C, R | Hand, zoom, crop, straightening rule tools |
+| H, Z, C, R | Hand, zoom, crop, straightening rule tools (wherever the focus is in the window, except while typing in a field) |
 | ⌘[ / ⌘] | Rotate 90° counterclockwise / clockwise |
 | ⌘' | Show / hide the grid |
 | X (crop) | Swap width and height of the proportions |

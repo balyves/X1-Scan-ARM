@@ -33,24 +33,35 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         window.delegate = self
         observers.append(Observing { [weak self] in self?.modelChanged() })
         cropKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            guard let self, self.handlesCropKey(event) else { return event }
-            // Held down: one exchange only; the repeats are swallowed.
-            if !event.isARepeat { self.model.toggleCropPortrait() }
+            guard let self, let key = self.windowKey(event) else { return event }
+            // Held down: one action only; the repeats are swallowed.
+            guard !event.isARepeat else { return nil }
+            if key == "x" {
+                self.model.toggleCropPortrait()
+            } else if let tool = Tool.forKey(key) {
+                self.model.tools.selected = tool
+            }
             return nil
         }
     }
 
-    /// X exchanges the frame's width and height as soon as the crop mode is
-    /// on (Crop or Straightening Rule tool), whatever has the keyboard focus in this window (a panel control
-    /// after a choice in a menu, the canvas…), except while text is being
-    /// typed (a field's editor) or a sheet is open; other windows (the
-    /// custom ratio popover, Settings) are left alone.
-    private func handlesCropKey(_ event: NSEvent) -> Bool {
-        guard model.tools.showsCropOptions, let window, event.window === window, window.attachedSheet == nil,
+    /// Single keys handled by the window, whatever has the keyboard focus in
+    /// it (a tab, a menu or a checkbox of the panel after a click, the
+    /// canvas…), except while text is being typed (a field's editor) or a
+    /// sheet is open; other windows (the custom ratio popover, Settings) are
+    /// left alone:
+    /// - the tool keys H, Z, C, R (lot 1b: from any tab, C and R open
+    ///   Prepare > Framing; before, they reached only a focused canvas);
+    /// - X, as soon as the crop mode is on (Crop or Straightening Rule
+    ///   tool): exchanges the frame's width and height.
+    private func windowKey(_ event: NSEvent) -> Character? {
+        guard let window, event.window === window, window.attachedSheet == nil,
               event.modifierFlags.intersection([.command, .control, .option]).isEmpty,
-              event.charactersIgnoringModifiers?.lowercased() == "x" else { return false }
+              let characters = event.charactersIgnoringModifiers?.lowercased(), characters.count == 1,
+              let key = characters.first else { return nil }
+        guard key == "x" ? model.tools.showsCropOptions : Tool.forKey(key) != nil else { return nil }
         // A text field being edited has the window's field editor (an NSText) as first responder.
-        return !(window.firstResponder is NSText)
+        return window.firstResponder is NSText ? nil : key
     }
 
     @available(*, unavailable)

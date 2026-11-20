@@ -44,6 +44,12 @@ struct PanelTabBar: NSViewRepresentable {
             let tabs = PanelTab.visible
             guard tabs.indices.contains(sender.selectedSegment) else { return }
             selection.wrappedValue = tabs[sender.selectedSegment]
+            // A tab clicked with the mouse: the keyboard goes back to the image (a field being
+            // edited is left), so that the canvas keys (Space, ← →, Return, Esc) work at once.
+            // Chosen from the keyboard or with VoiceOver, the focus stays in the tab bar.
+            if let type = NSApp.currentEvent?.type, type == .leftMouseDown || type == .leftMouseUp {
+                sender.window?.focusImageCanvas()
+            }
         }
     }
 }

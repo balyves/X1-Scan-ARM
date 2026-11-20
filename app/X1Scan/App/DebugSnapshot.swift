@@ -20,6 +20,8 @@ import X1ScanCore
 ///   -X1ScanTool <tool>           select a tool: hand, zoom, crop, straighten (lot 1)
 ///   -X1ScanAngle <degrees>       fine angle, after the crop demo (lot 1)
 ///   -X1ScanTab <tab>             show a panel tab: prepare, scan, output (lot 1b)
+///   -X1ScanKeyProbe YES          click the tabs and a field, press C or R after each, print
+///                                the keyboard focus and the tool selected, quit (KeyProbe)
 ///   -X1ScanResizeProbe YES       resize the window, move the divider, hide and show the panel,
 ///                                print the sizes, put the window frame and panel layout back, quit
 /// The snapshot also writes each Settings pane, Scanner Information and the
@@ -44,6 +46,7 @@ enum DebugSnapshot {
         if let tab = arguments.string(forKey: "X1ScanTab").flatMap(PanelTab.init(rawValue:)) { model.panel.select(tab) }
         if let kind = arguments.string(forKey: "X1ScanGrid").flatMap(GridKind.init(rawValue:)) { model.showGrid(kind) }
         if arguments.bool(forKey: "X1ScanAutoPreview") { model.startPreview() }
+        if arguments.bool(forKey: "X1ScanKeyProbe"), let window { KeyProbe.run(window: window, model: model) }
         if arguments.bool(forKey: "X1ScanResizeProbe"), let window {
             Task { @MainActor in
                 try? await Task.sleep(for: .seconds(1))

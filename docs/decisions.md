@@ -1352,7 +1352,13 @@ the interface only: nothing sent to the scanner changes.
   is Framing everywhere; the tool keeps its name (Crop, « Recadrage » in
   French). Choosing the Crop tool or the rule (C, R) shows Prepare with
   Framing unfolded; in crop mode the section is lightly tinted and its
-  title row carries Reset and Done (Done, Return and Esc unchanged).
+  title row carries Reset and Done (Done, Return and Esc unchanged). The
+  tool keys H, Z, C, R work wherever the keyboard focus is in the main
+  window (a tab or a control of the panel after a click), except while
+  text is typed in a field, as X does; a tab clicked with the mouse gives
+  the focus back to the image (from the keyboard or VoiceOver it stays in
+  the tab bar) (user's tests of lot 1b: C and R did nothing once a panel
+  control had the focus).
   Folded: "6×7 · −1° · 90°" (proportions, fine angle and turns when not
   zero, mirror).
 - **Scan**: resolution, scale, input, output. **Output**: unchanged.

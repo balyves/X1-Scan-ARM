@@ -430,6 +430,9 @@ final class ImageCanvasView: NSView {
 
     // MARK: Keyboard
 
+    /// The tool keys (H, Z, C, R) and X are handled by the window, wherever
+    /// the focus is (`MainWindowController.windowKey(_:)`); the canvas
+    /// handles Space, the arrows, Return and Esc.
     override func keyDown(with event: NSEvent) {
         guard event.modifierFlags.intersection([.command, .control, .option]).isEmpty,
               let characters = event.charactersIgnoringModifiers, let first = characters.first else {
@@ -444,8 +447,6 @@ final class ImageCanvasView: NSView {
             model.setCropAngle(CropSettings.nudgedAngle(model.recipe.crop.angle, by: event.keyCode == 124 ? step : -step))
         } else if cropping, event.keyCode == 36 || event.keyCode == 76 {  // Return: Done
             model.finishCrop()
-        } else if let tool = Tool.forKey(first) {
-            model.tools.selected = tool
         } else if event.keyCode == 53 {  // Esc: stop a preview or scan first; in crop mode, cancel its changes
             model.escape()
         } else {
