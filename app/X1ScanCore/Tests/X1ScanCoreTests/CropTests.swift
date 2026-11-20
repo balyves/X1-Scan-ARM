@@ -392,3 +392,149 @@ struct CropFollowsOrientationModelTests {
         #expect(abs(typed.width / typed.height - 13.0 / 18) < 1e-6)
     }
 }
+
+/// A corner dragged past the image edge or past the fixed corner (user's
+/// tests of lot 1, 2026-11-20): it stops at the edge and at the smallest
+/// frame, and never flips over to the other side.
+@MainActor
+struct CropResizeTests {
+    private let image = CGSize(width: 600, height: 400)
+    private let downRight = CGVector(dx: 1, dy: 1)
+
+    @Test func insideTheImageTheCornerFollowsThePointer() {
+        let rect = CropGeometry.resized(fixed: CGPoint(x: 100, y: 100), to: CGPoint(x: 300, y: 250),
+                                        direction: downRight, ratio: nil, minimumSide: 10, imageSize: image, angle: 0)
+        #expect(rect == CGRect(x: 100, y: 100, width: 200, height: 150))
+    }
+
+    @Test func stopsAtTheEdgeFree() {
+        // Past the right edge only: the width stops at the edge, the height follows the pointer.
+        let rect = CropGeometry.resized(fixed: CGPoint(x: 100, y: 100), to: CGPoint(x: 900, y: 250),
+                                        direction: downRight, ratio: nil, minimumSide: 10, imageSize: image, angle: 0)
+        #expect(abs(rect.maxX - 600) < 1e-6 && abs(rect.maxY - 250) < 1e-6)
+        #expect(rect.minX == 100 && rect.minY == 100)
+        // Past both edges: the bottom right corner of the image.
+        let corner = CropGeometry.resized(fixed: CGPoint(x: 100, y: 100), to: CGPoint(x: 2000, y: 2000),
+                                          direction: downRight, ratio: nil, minimumSide: 10, imageSize: image, angle: 0)
+        #expect(abs(corner.maxX - 600) < 1e-6 && abs(corner.maxY - 400) < 1e-6 && corner.origin == CGPoint(x: 100, y: 100))
+    }
+
+    @Test func stopsAtTheEdgeWithProportions() {
+        // 1:1 from (100, 100): the bottom edge (300 left) stops it, the fixed corner does not move.
+        let rect = CropGeometry.resized(fixed: CGPoint(x: 100, y: 100), to: CGPoint(x: 900, y: 900),
+                                        direction: downRight, ratio: 1, minimumSide: 10, imageSize: image, angle: 0)
+        #expect(rect.origin == CGPoint(x: 100, y: 100))
+        #expect(abs(rect.width - 300) < 1e-6 && abs(rect.height - 300) < 1e-6)
+    }
+
+    @Test func neverFlipsOverTheFixedCorner() {
+        // The bottom right corner pulled up and left, past the fixed top left corner.
+        let rect = CropGeometry.resized(fixed: CGPoint(x: 300, y: 200), to: CGPoint(x: 50, y: 20),
+                                        direction: downRight, ratio: nil, minimumSide: 24, imageSize: image, angle: 0)
+        #expect(rect == CGRect(x: 300, y: 200, width: 24, height: 24))
+        // With proportions 6×7 (upright): the shorter side, the width, is the minimum.
+        let ratio = 6.0 / 7
+        let upright = CropGeometry.resized(fixed: CGPoint(x: 300, y: 200), to: CGPoint(x: 50, y: 20),
+                                           direction: downRight, ratio: ratio, minimumSide: 24, imageSize: image, angle: 0)
+        #expect(upright.origin == CGPoint(x: 300, y: 200))
+        #expect(abs(upright.width - 24) < 1e-9 && abs(upright.height - 28) < 1e-9)
+        // The top left corner dragged (fixed bottom right) past it to the bottom right: stays above and left.
+        let other = CropGeometry.resized(fixed: CGPoint(x: 300, y: 200), to: CGPoint(x: 500, y: 350),
+                                         direction: CGVector(dx: -1, dy: -1), ratio: nil, minimumSide: 24,
+                                         imageSize: image, angle: 0)
+        #expect(other == CGRect(x: 276, y: 176, width: 24, height: 24))
+    }
+
+    @Test func turnedImageStopsWithoutEmptyCorners() {
+        for angle in [2.0, -7.5, 20] {
+            for ratio in [nil, 1.5, 6.0 / 7] as [Double?] {
+                let rect = CropGeometry.resized(fixed: CGPoint(x: 250, y: 150), to: CGPoint(x: 5000, y: 5000),
+                                                direction: downRight, ratio: ratio, minimumSide: 10,
+                                                imageSize: image, angle: angle)
+                #expect(CropGeometry.fits(rect, imageSize: image, angle: angle), "\(angle)°")
+                #expect(rect.origin == CGPoint(x: 250, y: 150))
+                // As large as it can be: 1 % larger no longer fits.
+                let larger = CGRect(x: rect.minX, y: rect.minY, width: rect.width * 1.01, height: rect.height * 1.01)
+                #expect(!CropGeometry.fits(larger, imageSize: image, angle: angle))
+                if let ratio { #expect(abs(rect.width / rect.height - ratio) < 1e-9) }
+            }
+        }
+    }
+
+    @Test func newFrameFromAnEmptyCornerFollowsThePointer() {
+        // At 20°, (5, 5) is in an empty corner of the turned image: the frame starts at the
+        // nearest place inside and still grows with the pointer.
+        let first = CropGeometry.resized(fixed: CGPoint(x: 5, y: 5), to: CGPoint(x: 300, y: 300),
+                                         direction: downRight, ratio: nil, minimumSide: 24, imageSize: image, angle: 20)
+        let second = CropGeometry.resized(fixed: CGPoint(x: 5, y: 5), to: CGPoint(x: 400, y: 330),
+                                          direction: downRight, ratio: nil, minimumSide: 24, imageSize: image, angle: 20)
+        for rect in [first, second] { #expect(CropGeometry.fits(rect, imageSize: image, angle: 20)) }
+        #expect(first.origin == second.origin)
+        #expect(second.width > first.width && first.width > 100)
+        #expect(abs(first.maxX - 300) < 1e-6 && abs(first.maxY - 300) < 1e-6)
+        // Off the image altogether (a click beside it): the same.
+        let outside = CropGeometry.resized(fixed: CGPoint(x: -50, y: 100), to: CGPoint(x: 200, y: 200),
+                                           direction: downRight, ratio: nil, minimumSide: 24, imageSize: image, angle: 0)
+        // (within the 1e-6 tolerance of `fits`)
+        #expect(abs(outside.minX) < 1e-5 && outside.minY == 100 && abs(outside.maxX - 200) < 1e-5 && outside.height == 100)
+    }
+
+    @Test func lessRoomThanTheMinimumKeepsTheFixedCorner() {
+        // 10 points from the right edge, minimum 24: the frame is 10 wide, from the fixed corner.
+        let free = CropGeometry.resized(fixed: CGPoint(x: 590, y: 100), to: CGPoint(x: 591, y: 101),
+                                        direction: downRight, ratio: nil, minimumSide: 24, imageSize: image, angle: 0)
+        #expect(free.origin == CGPoint(x: 590, y: 100))
+        #expect(abs(free.width - 10) < 1e-5 && abs(free.height - 10) < 1e-5)
+        // A thin image and proportions 1:3: the long side would leave the image; the frame is
+        // as large as fits from the fixed corner, proportions kept.
+        let thin = CGSize(width: 600, height: 40)
+        let tall = CropGeometry.resized(fixed: CGPoint(x: 10, y: 0), to: CGPoint(x: 11, y: 1),
+                                        direction: downRight, ratio: 1.0 / 3, minimumSide: 24, imageSize: thin, angle: 0)
+        #expect(tall.origin == CGPoint(x: 10, y: 0))
+        #expect(CropGeometry.fits(tall, imageSize: thin, angle: 0))
+        #expect(abs(tall.height - 40) < 1e-6 && abs(tall.width / tall.height - 1.0 / 3) < 1e-9)
+    }
+
+    @Test func modelKeepsTheFixedCorner() async throws {
+        let suite = "X1ScanCoreTests-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let inspector = ScannerInspector { FakeConnection(responses: [:], openError: TransportError.deviceBusy) }
+        let model = AppModel(virtualScanner: { try TestFixtures.scanner() }, inspector: inspector, defaults: defaults)
+        model.startPreview()
+        await model.session.waitUntilIdle()
+        model.refreshImage()
+        let size = model.viewport.documentSize
+        // Dragged far past the bottom right of the image: the frame ends at the image's corner.
+        model.resizeCropFrame(fixed: CGPoint(x: 100, y: 100), to: CGPoint(x: size.width * 3, y: size.height * 3),
+                              direction: CGVector(dx: 1, dy: 1), minimumSide: 24)
+        let frame = try #require(model.cropFrameInDocument)
+        #expect(abs(frame.minX - 100) < 1e-6 && abs(frame.minY - 100) < 1e-6)
+        #expect(abs(frame.maxX - size.width) < 1e-6 && abs(frame.maxY - size.height) < 1e-6)
+        // Then pulled back past the fixed corner: the smallest frame, still from (100, 100).
+        model.resizeCropFrame(fixed: CGPoint(x: 100, y: 100), to: CGPoint(x: 0, y: 0),
+                              direction: CGVector(dx: 1, dy: 1), minimumSide: 24)
+        let smallest = try #require(model.cropFrameInDocument)
+        #expect(abs(smallest.minX - 100) < 1e-6 && abs(smallest.minY - 100) < 1e-6)
+        #expect(abs(smallest.width - 24) < 1e-6 && abs(smallest.height - 24) < 1e-6)
+
+        // Constraint off, with an angle: empty corners allowed, but the frame stops at the image itself.
+        model.setCropConstrained(false)
+        model.setCropAngle(10)
+        model.resizeCropFrame(fixed: CGPoint(x: 100, y: 100), to: CGPoint(x: size.width * 3, y: size.height * 3),
+                              direction: CGVector(dx: 1, dy: 1), minimumSide: 24)
+        let unconstrained = try #require(model.cropFrameInDocument)
+        #expect(abs(unconstrained.maxX - size.width) < 1e-6 && abs(unconstrained.maxY - size.height) < 1e-6)
+        #expect(abs(unconstrained.minX - 100) < 1e-6 && abs(unconstrained.minY - 100) < 1e-6)
+
+        // Lock: the frame's own proportions, kept while the corner is dragged.
+        model.setCropAngle(0)
+        model.setCropConstrained(true)
+        model.setCropFrame(documentRect: CGRect(x: 100, y: 100, width: 300, height: 100))
+        model.setCropLocked(true)
+        model.resizeCropFrame(fixed: CGPoint(x: 100, y: 100), to: CGPoint(x: 700, y: 150),
+                              direction: CGVector(dx: 1, dy: 1), minimumSide: 24)
+        let locked = try #require(model.cropFrameInDocument)
+        #expect(abs(locked.width / locked.height - 3) < 1e-6 && abs(locked.width - 600) < 1e-6)
+    }
+}

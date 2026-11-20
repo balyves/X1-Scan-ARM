@@ -221,6 +221,22 @@ public final class AppModel {
                                    width: rect.width / size.width, height: rect.height / size.height)
     }
 
+    /// A corner of the frame dragged (or a new frame drawn from `fixed`),
+    /// displayed document coordinates: the frame keeps its side of `fixed`
+    /// (`direction`), is at least `minimumSide` where there is room, and
+    /// stops at the edge of the image (the turned image with the constraint
+    /// on), never flipping over or moving its fixed corner
+    /// (`CropGeometry.resized`).
+    public func resizeCropFrame(fixed: CGPoint, to point: CGPoint, direction: CGVector, minimumSide: Double) {
+        let size = cropSpace
+        guard size.width > 0, size.height > 0 else { return }
+        // With the constraint off, the frame may show empty corners but stays on the image itself.
+        let rect = CropGeometry.resized(fixed: fixed, to: point, direction: direction, ratio: cropRatio,
+                                        minimumSide: minimumSide, imageSize: size,
+                                        angle: recipe.crop.constrained ? recipe.crop.angle : 0)
+        setCropFrame(documentRect: rect)
+    }
+
     /// The fine angle (degrees, clockwise; ±45°, steps of 0.1°).
     public func setCropAngle(_ angle: Double) {
         recipe.crop.angle = angle

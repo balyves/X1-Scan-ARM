@@ -246,6 +246,72 @@ public enum CropGeometry {
         return centred.insetBy(dx: centred.width * (1 - low) / 2, dy: centred.height * (1 - low) / 2)
     }
 
+    /// A corner dragged to `point` while the opposite corner `fixed` stays
+    /// put; `imageSize` and `angle` give the region the frame must fit in
+    /// (the image turned by `angle`; 0 for the image itself).
+    ///
+    /// - The frame keeps the side of `fixed` given by `direction` (the signs
+    ///   of the dragged corner minus `fixed`): a corner pulled past `fixed`
+    ///   stops at the smallest frame instead of flipping over.
+    /// - Each side is at least `minimumSide` (the shorter side, with
+    ///   proportions), unless the room left from `fixed` is smaller: then
+    ///   the largest frame that fits there.
+    /// - Where the frame asked for does not fit, it grows only as far as it
+    ///   still fits: with proportions, both sides together; free, both
+    ///   together, then the width alone, then the height alone (along the
+    ///   edge reached).
+    /// - A `fixed` point outside the region (a new frame started in an empty
+    ///   corner of the turned image, or off the image) is first brought to
+    ///   the nearest place inside it.
+    public static func resized(fixed: CGPoint, to point: CGPoint, direction: CGVector, ratio: Double?,
+                               minimumSide: Double, imageSize: CGSize, angle: Double) -> CGRect {
+        func fits(_ rect: CGRect) -> Bool { Self.fits(rect, imageSize: imageSize, angle: angle) }
+        var fixed = fixed
+        if !fits(CGRect(origin: fixed, size: .zero)) {
+            fixed = constrained(CGRect(origin: fixed, size: .zero), imageSize: imageSize, angle: angle).origin
+        }
+        let sx: Double = direction.dx < 0 ? -1 : 1, sy: Double = direction.dy < 0 ? -1 : 1
+        func rect(_ width: Double, _ height: Double) -> CGRect {
+            CGRect(x: sx > 0 ? fixed.x : fixed.x - width, y: sy > 0 ? fixed.y : fixed.y - height,
+                   width: width, height: height)
+        }
+        /// The largest t in 0...1 for which `make(t)` fits; `make(0)` fits.
+        func largest(_ make: (Double) -> CGRect) -> Double {
+            if fits(make(1)) { return 1 }
+            var low = 0.0, high = 1.0
+            for _ in 0..<50 {
+                let middle = (low + high) / 2
+                if fits(make(middle)) { low = middle } else { high = middle }
+            }
+            return low
+        }
+        let ratio = ratio.flatMap { $0 > 0 && $0.isFinite ? $0 : nil }
+        var minWidth = minimumSide, minHeight = minimumSide
+        if let ratio { (minWidth, minHeight) = ratio >= 1 ? (minimumSide * ratio, minimumSide) : (minimumSide, minimumSide / ratio) }
+        // Less room than the minimum from `fixed`: the largest frame that fits there.
+        let room = largest { rect(minWidth * $0, minHeight * $0) }
+        minWidth *= room
+        minHeight *= room
+
+        var width = max(sx * (point.x - fixed.x), 0), height = max(sy * (point.y - fixed.y), 0)
+        if let ratio {
+            if width / max(height, 1e-12) > ratio { height = width / ratio } else { width = height * ratio }
+            if width < minWidth { width = minWidth; height = minHeight }
+        } else {
+            width = max(width, minWidth)
+            height = max(height, minHeight)
+        }
+        let t = largest { rect(minWidth + (width - minWidth) * $0, minHeight + (height - minHeight) * $0) }
+        var fitWidth = minWidth + (width - minWidth) * t, fitHeight = minHeight + (height - minHeight) * t
+        if ratio == nil {
+            let w = largest { rect(fitWidth + (width - fitWidth) * $0, fitHeight) }
+            fitWidth += (width - fitWidth) * w
+            let h = largest { rect(fitWidth, fitHeight + (height - fitHeight) * $0) }
+            fitHeight += (height - fitHeight) * h
+        }
+        return rect(fitWidth, fitHeight)
+    }
+
     /// `frame` changed to `ratio` (width / height), same centre, same area
     /// as far as possible.
     public static func reshaped(_ frame: CGRect, ratio: Double) -> CGRect {

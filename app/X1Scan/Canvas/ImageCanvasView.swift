@@ -49,8 +49,10 @@ final class ImageCanvasView: NSView {
         case draw(from: CGPoint)
         /// The frame moved, from where the drag started.
         case move(from: CGPoint, frame: CGRect)
-        /// A corner dragged; the opposite one stays.
-        case resize(fixed: CGPoint)
+        /// A corner handle dragged; the opposite one stays, and the frame
+        /// stays on the side of it given by `direction` (it never flips over).
+        /// A new frame (`draw`) takes instead the side the pointer is on.
+        case resize(fixed: CGPoint, direction: CGVector)
     }
 
     init(model: AppModel) {
@@ -349,23 +351,18 @@ final class ImageCanvasView: NSView {
         guard let frame = model.cropFrameInDocument, model.tools.showsCropOptions else { return .draw(from: point) }
         let reach = 8 * screenPoint(model.viewport)
         let all = corners(of: frame)
-        if let index = all.firstIndex(where: { hypot($0.x - point.x, $0.y - point.y) <= reach }) {
-            return .resize(fixed: all[3 - index])  // the diagonally opposite corner
+        // The nearest corner within reach (on a small frame the reaches overlap).
+        let distances = all.map { hypot($0.x - point.x, $0.y - point.y) }
+        if let index = distances.indices.min(by: { distances[$0] < distances[$1] }), distances[index] <= reach {
+            let fixed = all[3 - index]  // the diagonally opposite corner
+            return .resize(fixed: fixed, direction: CGVector(dx: all[index].x - fixed.x, dy: all[index].y - fixed.y))
         }
         if frame.contains(point) { return .move(from: point, frame: frame) }
         return .draw(from: point)
     }
 
-    /// The rectangle from `anchor` to `point`, with the proportions the crop keeps.
-    private func spanned(from anchor: CGPoint, to point: CGPoint) -> CGRect {
-        var width = abs(point.x - anchor.x), height = abs(point.y - anchor.y)
-        if let ratio = model.cropRatio, ratio > 0 {
-            if width / max(height, 1e-9) > ratio { height = width / ratio } else { width = height * ratio }
-        }
-        let x = point.x >= anchor.x ? anchor.x : anchor.x - width
-        let y = point.y >= anchor.y ? anchor.y : anchor.y - height
-        return CGRect(x: x, y: y, width: width, height: height)
-    }
+    /// Smallest side of a frame resized or drawn: the handles must stay apart.
+    private var minimumCropSide: CGFloat { 24 * screenPoint(model.viewport) }
 
     override func mouseDragged(with event: NSEvent) {
         model.pointer = pixel(for: event)
@@ -382,14 +379,17 @@ final class ImageCanvasView: NSView {
             let point = convert(event.locationInWindow, from: nil)
             switch cropDrag {
             case .draw(let anchor):
-                let rect = spanned(from: anchor, to: point)
-                if rect.width >= 2 * screenPoint(model.viewport), rect.height >= 2 * screenPoint(model.viewport) {
-                    model.setCropFrame(documentRect: rect)
+                // A new frame takes the side the pointer is on. Nothing replaces the frame until the
+                // pointer has gone 5 points: a click that shakes a little draws nothing.
+                if hypot(point.x - anchor.x, point.y - anchor.y) >= 5 * screenPoint(model.viewport) {
+                    model.resizeCropFrame(fixed: anchor, to: point,
+                                          direction: CGVector(dx: point.x - anchor.x, dy: point.y - anchor.y),
+                                          minimumSide: minimumCropSide)
                 }
             case .move(let start, let frame):
                 model.setCropFrame(documentRect: frame.offsetBy(dx: point.x - start.x, dy: point.y - start.y))
-            case .resize(let fixed):
-                model.setCropFrame(documentRect: spanned(from: fixed, to: point))
+            case .resize(let fixed, let direction):
+                model.resizeCropFrame(fixed: fixed, to: point, direction: direction, minimumSide: minimumCropSide)
             case nil:
                 break
             }
