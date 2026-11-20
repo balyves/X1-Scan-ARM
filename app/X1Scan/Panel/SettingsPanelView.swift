@@ -112,22 +112,16 @@ private struct EscapeAction: ViewModifier {
 private struct OriginalSection: View {
     @Bindable var model: AppModel
 
-    /// Tooltip of both rows: saved, but not sent to the scanner yet.
-    private static var notYet: String {
-        String(localized: "Saved; applied to the scanner with real scans (a later step).",
-               comment: "Tooltip of the Film and Holder rows of the settings panel")
-    }
-
     var body: some View {
         let film = String(localized: "Film", comment: "Panel label: film type")
         let holder = String(localized: "Holder", comment: "Panel label: film holder")
-        CompactControlRow(film, help: Self.notYet) {
-            CompactPopUp(film, help: Self.notYet, selection: $model.scanSettings.filmType,
+        CompactControlRow(film, help: Strings.filmHelp) {
+            CompactPopUp(film, help: Strings.filmHelp, selection: $model.scanSettings.filmType,
                          items: FilmType.allCases.map { .init(Strings.filmType($0), $0) })
         }
-        CompactControlRow(holder, help: Self.notYet) {
+        CompactControlRow(holder, help: Strings.holderHelp) {
             HStack(spacing: CompactPanelMetrics.columnSpacing) {
-                CompactPopUp(holder, help: Self.notYet,
+                CompactPopUp(holder, help: Strings.holderHelp,
                              selection: Binding { model.selectedHolder?.id } set: { model.scanSettings.holderID = $0 },
                              sections: [
                                 [.init(String(localized: "Not specified", comment: "Holder placeholder"), nil)],
@@ -164,12 +158,12 @@ private struct ScanSection: View {
                 format: Self.resolutionFormat,
                 texts: Strings.sliderRow(label: String(localized: "Resolution", comment: "Panel label"),
                                          unit: String(localized: "ppi", comment: "Unit: pixels per inch"),
-                                         format: Self.resolutionFormat))
+                                         format: Self.resolutionFormat, help: Strings.resolutionHelp))
             CompactSliderRow(
                 value: Binding(rounding: $model.scanSettings.scalePercent),
                 format: Self.scaleFormat,
                 texts: Strings.sliderRow(label: String(localized: "Scale", comment: "Panel label"),
-                                         unit: "%", format: Self.scaleFormat))
+                                         unit: "%", format: Self.scaleFormat, help: Strings.scaleHelp))
             CompactInfoRow(String(localized: "Input", comment: "Panel label: input size"),
                            value: pixels(model.inputPixelSize), help: Self.sizesNote)
             CompactInfoRow(String(localized: "Output", comment: "Panel label: output size"),
@@ -216,13 +210,13 @@ private struct OutputSection: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        CompactControlRow(compression) {
-            CompactPopUp(compression, selection: $model.exportSettings.compression,
+        CompactControlRow(compression, help: Strings.compressionHelp) {
+            CompactPopUp(compression, help: Strings.compressionHelp, selection: $model.exportSettings.compression,
                          items: TIFFCompression.allCases.map { .init(Strings.compression($0), $0) })
         }
-        CompactControlRow(name) {
+        CompactControlRow(name, help: Strings.nameTemplateHelp) {
             HStack(spacing: CompactPanelMetrics.columnSpacing) {
-                CompactPopUp(name, selection: $model.exportSettings.nameTemplate,
+                CompactPopUp(name, help: Strings.nameTemplateHelp, selection: $model.exportSettings.nameTemplate,
                              items: templates.map { .init($0, $0) })
                 // Same small button as the holder row: the menu keeps the room.
                 Button {
@@ -248,19 +242,20 @@ private struct OutputSection: View {
         let folderName = model.exportSettings.folder.map {
             FileManager.default.displayName(atPath: $0.path(percentEncoded: false))  // localized ("Bureau")
         } ?? String(localized: "None", comment: "No export folder chosen")
-        CompactControlRow(folderLabel) {
+        CompactControlRow(folderLabel, help: Strings.folderHelp) {
             HStack(spacing: CompactPanelMetrics.columnSpacing) {
                 Text(folderName)
                     .lineLimit(1)
                     .truncationMode(.middle)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .help(model.exportSettings.folder?.path(percentEncoded: false) ?? "")
+                    .help(model.exportSettings.folder?.path(percentEncoded: false) ?? Strings.folderHelp)
                     // The row's visible label is hidden from VoiceOver: name the value here.
                     .accessibilityLabel(folderLabel)
                     .accessibilityValue(folderName)
                 Button(String(localized: "Choose…", comment: "Button")) {
                     ExportFolderPanel.choose(for: NSApp.keyWindow, model: model)
                 }
+                .help(Strings.chooseFolderHelp)
             }
         }
         CompactDetailRow {
@@ -280,6 +275,7 @@ private struct OutputSection: View {
                     }
                     .buttonStyle(.link)
                     .font(.caption)
+                    .help(Strings.showInFinderHelp)
                 }
             }
         case .failure(let error):

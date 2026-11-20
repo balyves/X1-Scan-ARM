@@ -43,7 +43,7 @@ struct ToolColumnView: View {
             ToolIcon(symbol: symbol, highlighted: selected)
         }
         .buttonStyle(.plain)
-        .help("\(Strings.toolName(tool)) (\(tool.key.uppercased()))")
+        .help(Strings.toolHelp(tool))
         .accessibilityLabel(Strings.toolName(tool))
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
@@ -75,7 +75,7 @@ struct ToolColumnView: View {
             ToolIcon(symbol: "grid", highlighted: shown)
         }
         .buttonStyle(.plain)
-        .help(Strings.withShortcut(Strings.gridTool, "⌘'"))
+        .help(Strings.gridButtonHelp)
         .accessibilityLabel(Strings.gridTool)
         .accessibilityValue(shown ? Strings.gridKind(model.grid.kind) : Strings.gridHidden)
         .accessibilityAddTraits(shown ? .isSelected : [])

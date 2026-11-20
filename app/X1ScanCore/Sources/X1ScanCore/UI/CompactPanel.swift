@@ -256,12 +256,15 @@ public struct CompactSliderRow: View {
         public var resetAction: String
         /// Tooltip of the label; it says what the double-click restores.
         public var resetHelp: String
+        /// Tooltip (and VoiceOver hint) of the slider and the field: what the number is.
+        public var help: String?
 
-        public init(label: String, unit: String, resetAction: String, resetHelp: String) {
+        public init(label: String, unit: String, resetAction: String, resetHelp: String, help: String? = nil) {
             self.label = label
             self.unit = unit
             self.resetAction = resetAction
             self.resetHelp = resetHelp
+            self.help = help
         }
     }
 
@@ -302,6 +305,7 @@ public struct CompactSliderRow: View {
             .labelsHidden()
             .accessibilityValue(spokenValue)
             .accessibilityAction(named: texts.resetAction, reset)
+            .modifier(OptionalHelp(text: texts.help))
             TextField(text: Binding(get: { field.text }, set: { field.edit($0) }), prompt: nil) {
                 Text(texts.label)
             }
@@ -314,6 +318,7 @@ public struct CompactSliderRow: View {
             .onSubmit(commit)
             .accessibilityValue(spokenValue)
             .accessibilityAction(named: texts.resetAction, reset)
+            .modifier(OptionalHelp(text: texts.help))
             Text(texts.unit)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)

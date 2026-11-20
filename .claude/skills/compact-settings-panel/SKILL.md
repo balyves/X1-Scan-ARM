@@ -77,6 +77,12 @@ passes every string, already translated (see Text and languages).
   `sectionInsets.leading`, `groupSpacing` above.
 - Numbers use `.monospacedDigit()` so that they do not jump while they
   change.
+- Every control of the panel, every tab and every tool of the tool column
+  has a simple tooltip (lot 1b, a rule for every lot): native, one
+  sentence, in the String Catalog with its French translation; a row's
+  label gets the same tooltip as its control (`CompactControlRow(help:)`),
+  a slider row its own (`Strings.sliderRow(help:)`). Detailed help (⌥ +
+  hover) comes later.
 - Explanations go in the tooltip of the row they explain
   (`CompactInfoRow(_:value:help:)`, `.help(_:)` on a control), not as notes
   under the rows. The only text left in the panel is what the user must see

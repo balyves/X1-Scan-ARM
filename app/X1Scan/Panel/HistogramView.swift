@@ -34,10 +34,12 @@ struct HistogramView: View {
             }
             .frame(height: 90)
             .accessibilityLabel(Text("RGB histogram", comment: "Accessibility"))
+            .help(Strings.histogramHelp)
 
             HStack {
                 Toggle(String(localized: "Logarithmic", comment: "Histogram option"), isOn: $logarithmic)
                     .toggleStyle(.checkbox)
+                    .help(Strings.logarithmicHelp)
                 Spacer()
                 if model.histogram.pixelCount > 0 {
                     Text("\(model.histogram.pixelCount) pixels", comment: "Histogram pixel count")

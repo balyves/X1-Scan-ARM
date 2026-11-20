@@ -23,13 +23,14 @@ struct FramingSection: View {
         proportionsRow
         CompactSliderRow(value: Binding { model.recipe.crop.angle } set: { model.setCropAngle($0) },
                          format: Self.angleFormat,
-                         texts: Strings.sliderRow(label: Strings.cropAngle, unit: "°", format: Self.angleFormat))
+                         texts: Strings.sliderRow(label: Strings.cropAngle, unit: "°", format: Self.angleFormat,
+                                                  help: Strings.angleHelp))
             // An angle typed and confirmed with Return: back to the image, so that X, ← → and
             // Return act on the frame again at once (as after the zoom field).
             .onSubmit { if model.tools.showsCropOptions { NSApp.keyWindow?.focusImageCanvas() } }
         straightenRow
         let grid = Strings.gridTool
-        CompactControlRow(grid) {
+        CompactControlRow(grid, help: Strings.cropGridHelp) {
             CompactPopUp(grid, help: Strings.cropGridHelp,
                          selection: Binding { model.cropGridKind } set: { model.cropGridKind = $0 },
                          sections: [[.init(Strings.cropGridNone, nil)],
@@ -48,7 +49,7 @@ struct FramingSection: View {
     /// the grid button's menu and Image > Grid.
     private var tintRow: some View {
         let label = Strings.gridTint
-        return CompactControlRow(label) {
+        return CompactControlRow(label, help: Strings.gridTintHelp) {
             HStack(spacing: CompactPanelMetrics.columnSpacing) {
                 CompactPopUp(Strings.gridColorMenu, help: Strings.gridColorHelp,
                              selection: Binding { model.grid.color } set: { model.grid.color = $0 },
@@ -88,7 +89,7 @@ struct FramingSection: View {
         if case .ratio(let width, let height) = choice, !presets.contains(where: { $0.value == choice }) {
             presets.append(.init(Strings.ratio(width, height), .ratio(width, height)))  // a custom ratio in use
         }
-        return CompactControlRow(label) {
+        return CompactControlRow(label, help: Strings.cropProportionsHelp) {
             HStack(spacing: CompactPanelMetrics.columnSpacing) {
                 CompactPopUp(label, help: Strings.cropProportionsHelp,
                              selection: Binding { choice } set: { choose($0) },
@@ -130,9 +131,11 @@ struct FramingSection: View {
             Text(Strings.cropCustomTitle).font(.callout.weight(.semibold))
             HStack(spacing: CompactPanelMetrics.columnSpacing) {
                 TextField(Strings.cropCustomWidth, text: $customWidth)
+                    .help(Strings.cropCustomWidthHelp)
                     .frame(width: CompactPanelMetrics.fieldWidth)
                 Text(verbatim: "×")
                 TextField(Strings.cropCustomHeight, text: $customHeight)
+                    .help(Strings.cropCustomHeightHelp)
                     .frame(width: CompactPanelMetrics.fieldWidth)
             }
             .textFieldStyle(.roundedBorder)
@@ -167,7 +170,7 @@ struct FramingSection: View {
     private var straightenRow: some View {
         let label = Strings.cropStraighten
         let ruleSelected = model.tools.selected == .straighten
-        return CompactControlRow(label) {
+        return CompactControlRow(label, help: Strings.straightenRowHelp) {
             HStack(spacing: CompactPanelMetrics.columnSpacing) {
                 Button(Strings.cropRule) {
                     model.tools.selected = ruleSelected ? .crop : .straighten
@@ -213,7 +216,7 @@ private struct OrientationRow: View {
     var body: some View {
         let label = String(localized: "Orientation", comment: "Panel label: turns and mirror of the image")
         let orientation = model.recipe.orientation
-        CompactControlRow(label) {
+        CompactControlRow(label, help: Strings.orientationHelp) {
             HStack(spacing: CompactPanelMetrics.columnSpacing) {
                 button("rotate.left", Strings.withShortcut(Strings.rotateCounterclockwise, "⌘[")) {
                     model.rotateCounterclockwise()

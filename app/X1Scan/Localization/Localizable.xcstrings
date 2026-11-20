@@ -66,6 +66,42 @@
         }
       }
     },
+    "Choose the folder where Export writes the files.": {
+      "comment": "Tooltip of the Choose… button of the Folder row",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose the folder where Export writes the files."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisir le dossier où Exporter enregistre les fichiers."
+          }
+        }
+      }
+    },
+    "Click: show or hide (⌘') · Right click: kind, colour, opacity": {
+      "comment": "Tooltip of the Grid button of the tool column",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Click: show or hide (⌘') · Right click: kind, colour, opacity"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clic : afficher ou masquer (⌘') · Clic droit : type, couleur, opacité"
+          }
+        }
+      }
+    },
     "Code licence (MIT)": {
       "comment": "About panel: heading above the MIT licence text",
       "extractionState": "manual",
@@ -74,6 +110,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "Licence du code (MIT)"
+          }
+        }
+      }
+    },
+    "Colour and opacity of the grid lines; display only.": {
+      "comment": "Tooltip of the Tint label of the Framing section",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Colour and opacity of the grid lines; display only."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couleur et opacité des lignes de la grille ; affichage seulement."
           }
         }
       }
@@ -114,6 +168,24 @@
         }
       }
     },
+    "Crop: draw and adjust the frame, in Prepare › Framing (C)": {
+      "comment": "Tooltip of the Crop tool",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crop: draw and adjust the frame, in Prepare › Framing (C)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recadrage : tracer et ajuster le cadre, dans Préparer › Cadrage (C)"
+          }
+        }
+      }
+    },
     "Develop Tab": {
       "comment": "View menu item (not shown yet)",
       "extractionState": "manual",
@@ -150,6 +222,24 @@
         }
       }
     },
+    "Film holder in the scanner; saved, applied to the scanner with real scans later.": {
+      "comment": "Tooltip of the Holder menu of the settings panel",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Film holder in the scanner; saved, applied to the scanner with real scans later."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Porte-film dans le scanner ; enregistré, appliqué au scanner lors des numérisations réelles, plus tard."
+          }
+        }
+      }
+    },
     "Film, holder, orientation and framing": {
       "comment": "Tooltip of the Prepare tab of the settings panel",
       "extractionState": "manual",
@@ -168,6 +258,42 @@
         }
       }
     },
+    "Fine rotation of the image in degrees; ← → in crop mode, ⇧ for 5°.": {
+      "comment": "Tooltip of the Angle slider and field of the Framing section",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fine rotation of the image in degrees; ← → in crop mode, ⇧ for 5°."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rotation fine de l’image en degrés ; ← → en mode Recadrage, ⇧ pour 5°."
+          }
+        }
+      }
+    },
+    "Folder where Export saves the files.": {
+      "comment": "Tooltip of the Folder row of the settings panel",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Folder where Export saves the files."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dossier où Exporter enregistre les fichiers."
+          }
+        }
+      }
+    },
     "Format, name and folder of the exported file": {
       "comment": "Tooltip of the Output tab of the settings panel",
       "extractionState": "manual",
@@ -182,6 +308,42 @@
           "stringUnit": {
             "state": "translated",
             "value": "Format, nom et dossier du fichier exporté"
+          }
+        }
+      }
+    },
+    "Hand: move the image (H, or hold Space)": {
+      "comment": "Tooltip of the Hand tool",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hand: move the image (H, or hold Space)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Main : déplacer l’image (H, ou maintenir Espace)"
+          }
+        }
+      }
+    },
+    "Height of the ratio (18 in 13 × 18)": {
+      "comment": "Tooltip of the height field of the custom proportions",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Height of the ratio (18 in 13 × 18)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hauteur du rapport (18 dans 13 × 18)"
           }
         }
       }
@@ -589,6 +751,42 @@
         }
       }
     },
+    "Keeps the frame entirely inside the turned image, with no empty corners.": {
+      "comment": "Tooltip of the constrain checkbox",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keeps the frame entirely inside the turned image, with no empty corners."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Garde le cadre entièrement dans l’image tournée, sans coins vides."
+          }
+        }
+      }
+    },
+    "Levels of red, green and blue in the image shown, inside the crop frame if there is one.": {
+      "comment": "Tooltip of the histogram",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Levels of red, green and blue in the image shown, inside the crop frame if there is one."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Niveaux de rouge, vert et bleu de l’image affichée, dans le cadre s’il y en a un."
+          }
+        }
+      }
+    },
     "Logarithmic": {
       "extractionState": "manual",
       "localizations": {
@@ -596,6 +794,42 @@
           "stringUnit": {
             "state": "translated",
             "value": "Logarithmique"
+          }
+        }
+      }
+    },
+    "Logarithmic scale: shows small counts next to large peaks.": {
+      "comment": "Tooltip of the histogram's Logarithmic checkbox",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Logarithmic scale: shows small counts next to large peaks."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Échelle logarithmique : rend visibles les petites quantités à côté des grands pics."
+          }
+        }
+      }
+    },
+    "Lossless compression of the TIFF file.": {
+      "comment": "Tooltip of the Compression menu of the settings panel",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lossless compression of the TIFF file."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compression sans perte du fichier TIFF."
           }
         }
       }
@@ -945,6 +1179,24 @@
         }
       }
     },
+    "Quarter turns and mirror of the image, for the display and the export.": {
+      "comment": "Tooltip of the Orientation label of the Framing section",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quarter turns and mirror of the image, for the display and the export."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quarts de tour et miroir de l’image, pour l’affichage et l’export."
+          }
+        }
+      }
+    },
     "Quit %@": {
       "extractionState": "manual",
       "localizations": {
@@ -1062,6 +1314,24 @@
         }
       }
     },
+    "Scan resolution in pixels per inch; saved, the scan stays at 2 000 ppi for now.": {
+      "comment": "Tooltip of the Resolution slider and field of the settings panel",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scan resolution in pixels per inch; saved, the scan stays at 2 000 ppi for now."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Résolution du scan en pixels par pouce ; enregistrée, le scan reste à 2 000 ppp pour l’instant."
+          }
+        }
+      }
+    },
     "Scan Tab": {
       "comment": "View menu item: show the Scan tab of the settings panel",
       "extractionState": "manual",
@@ -1175,6 +1445,42 @@
         }
       }
     },
+    "Show the exported file in the Finder.": {
+      "comment": "Tooltip of the Show in Finder link after an export",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show the exported file in the Finder."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher le fichier exporté dans le Finder."
+          }
+        }
+      }
+    },
+    "Size of the output relative to the input, in percent; saved, applied in a later step.": {
+      "comment": "Tooltip of the Scale slider and field of the settings panel",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Size of the output relative to the input, in percent; saved, applied in a later step."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Taille de la sortie par rapport à l’entrée, en pour cent ; enregistrée, appliquée à une étape ultérieure."
+          }
+        }
+      }
+    },
     "Starting": {
       "extractionState": "manual",
       "localizations": {
@@ -1226,6 +1532,60 @@
           "stringUnit": {
             "state": "translated",
             "value": "Arrêt en cours…"
+          }
+        }
+      }
+    },
+    "Straighten the image with the rule (R); from the frame's edges in a later version.": {
+      "comment": "Tooltip of the Straighten label of the Framing section",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Straighten the image with the rule (R); from the frame's edges in a later version."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Redresser l’image avec la règle (R) ; à partir des bords de la vue dans une version ultérieure."
+          }
+        }
+      }
+    },
+    "Straightening Rule: draw a line along what should be horizontal or vertical (R)": {
+      "comment": "Tooltip of the Straightening Rule tool",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Straightening Rule: draw a line along what should be horizontal or vertical (R)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Règle de redressement : tracer une ligne le long de ce qui doit être horizontal ou vertical (R)"
+          }
+        }
+      }
+    },
+    "Template of the file name; {roll}, {frame}… are replaced on export.": {
+      "comment": "Tooltip of the Name menu of the settings panel; {roll} and {frame} are tokens, not translated",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Template of the file name; {roll}, {frame}… are replaced on export."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modèle du nom de fichier ; {roll}, {frame}… sont remplacés à l’export."
           }
         }
       }
@@ -1365,18 +1725,19 @@
       }
     },
     "tool.crop": {
+      "comment": "Tool: framing rectangle",
       "extractionState": "manual",
       "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cadrage"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Crop"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recadrage"
           }
         }
       }
@@ -1422,6 +1783,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "Outils"
+          }
+        }
+      }
+    },
+    "Type of film in the holder; saved, applied to the scanner with real scans later.": {
+      "comment": "Tooltip of the Film menu of the settings panel",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Type of film in the holder; saved, applied to the scanner with real scans later."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Type de film dans le porte-film ; enregistré, appliqué au scanner lors des numérisations réelles, plus tard."
           }
         }
       }
@@ -1488,6 +1867,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "X1 virtuel"
+          }
+        }
+      }
+    },
+    "Width of the ratio (13 in 13 × 18)": {
+      "comment": "Tooltip of the width field of the custom proportions",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Width of the ratio (13 in 13 × 18)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Largeur du rapport (13 dans 13 × 18)"
           }
         }
       }
@@ -2080,6 +2477,24 @@
         }
       }
     },
+    "Zoom: click to zoom in, ⌥-click to zoom out (Z)": {
+      "comment": "Tooltip of the Zoom tool (magnifier)",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom: click to zoom in, ⌥-click to zoom out (Z)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loupe : clic pour agrandir, ⌥-clic pour réduire (Z)"
+          }
+        }
+      }
+    },
     "≈ %@ before compression": {
       "extractionState": "manual",
       "localizations": {
@@ -2208,18 +2623,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Non précisé"
-          }
-        }
-      }
-    },
-    "Saved; applied to the scanner with real scans (a later step).": {
-      "comment": "Tooltip of the Film and Holder rows of the settings panel",
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Enregistré ; appliqué au scanner avec les vrais scans (étape suivante)."
           }
         }
       }
@@ -4321,24 +4724,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Contraindre à l'image"
-          }
-        }
-      }
-    },
-    "No empty corners: the frame stays inside the turned image, within the area scanned.": {
-      "comment": "Tooltip of the constrain checkbox",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No empty corners: the frame stays inside the turned image, within the area scanned."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pas de coins vides : le cadre reste dans l'image tournée, à l'intérieur de la zone scannée."
           }
         }
       }

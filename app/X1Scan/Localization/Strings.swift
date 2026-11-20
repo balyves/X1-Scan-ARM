@@ -11,7 +11,8 @@ import X1ScanCore
 enum Strings {
     /// Texts of a compact slider row: label and unit as given, the reset
     /// action, and a tooltip with the default value and its unit.
-    static func sliderRow(label: String, unit: String, format: CompactValueFormat) -> CompactSliderRow.Texts {
+    static func sliderRow(label: String, unit: String, format: CompactValueFormat,
+                          help: String? = nil) -> CompactSliderRow.Texts {
         let defaultValue = format.text(for: format.defaultValue, locale: .current)
         // No-break space: the value and its unit stay on one line.
         let defaultText = unit.isEmpty ? defaultValue : "\(defaultValue)\u{00A0}\(unit)"
@@ -20,7 +21,8 @@ enum Strings {
             unit: unit,
             resetAction: String(localized: "Reset to Default", comment: "VoiceOver action of a panel slider row"),
             resetHelp: String(localized: "Double-click to reset to \(defaultText)",
-                              comment: "Tooltip of a panel slider row label; the default value with its unit"))
+                              comment: "Tooltip of a panel slider row label; the default value with its unit"),
+            help: help)
     }
 
     /// VoiceOver values of a foldable panel title.
@@ -446,6 +448,84 @@ enum Strings {
     /// Advice under the gauge; hidden in lot 1 (it will point to quality modes).
     static func exposureAdvice(_ reading: ExposureReading) -> String? { nil }
 
+    // MARK: Tooltips (lot 1b): one sentence for each control of the panel and each tool
+
+    static var filmHelp: String {
+        String(localized: "Type of film in the holder; saved, applied to the scanner with real scans later.",
+               comment: "Tooltip of the Film menu of the settings panel")
+    }
+    static var holderHelp: String {
+        String(localized: "Film holder in the scanner; saved, applied to the scanner with real scans later.",
+               comment: "Tooltip of the Holder menu of the settings panel")
+    }
+    static var resolutionHelp: String {
+        String(localized: "Scan resolution in pixels per inch; saved, the scan stays at 2 000 ppi for now.",
+               comment: "Tooltip of the Resolution slider and field of the settings panel")
+    }
+    static var scaleHelp: String {
+        String(localized: "Size of the output relative to the input, in percent; saved, applied in a later step.",
+               comment: "Tooltip of the Scale slider and field of the settings panel")
+    }
+    static var angleHelp: String {
+        String(localized: "Fine rotation of the image in degrees; ← → in crop mode, ⇧ for 5°.",
+               comment: "Tooltip of the Angle slider and field of the Framing section")
+    }
+    static var orientationHelp: String {
+        String(localized: "Quarter turns and mirror of the image, for the display and the export.",
+               comment: "Tooltip of the Orientation label of the Framing section")
+    }
+    static var straightenRowHelp: String {
+        String(localized: "Straighten the image with the rule (R); from the frame's edges in a later version.",
+               comment: "Tooltip of the Straighten label of the Framing section")
+    }
+    static var gridTintHelp: String {
+        String(localized: "Colour and opacity of the grid lines; display only.", comment: "Tooltip of the Tint label of the Framing section")
+    }
+    static var cropCustomWidthHelp: String {
+        String(localized: "Width of the ratio (13 in 13 × 18)", comment: "Tooltip of the width field of the custom proportions")
+    }
+    static var cropCustomHeightHelp: String {
+        String(localized: "Height of the ratio (18 in 13 × 18)", comment: "Tooltip of the height field of the custom proportions")
+    }
+    static var folderHelp: String {
+        String(localized: "Folder where Export saves the files.", comment: "Tooltip of the Folder row of the settings panel")
+    }
+    static var compressionHelp: String {
+        String(localized: "Lossless compression of the TIFF file.", comment: "Tooltip of the Compression menu of the settings panel")
+    }
+    static var nameTemplateHelp: String {
+        String(localized: "Template of the file name; {roll}, {frame}… are replaced on export.",
+               comment: "Tooltip of the Name menu of the settings panel; {roll} and {frame} are tokens, not translated")
+    }
+    static var chooseFolderHelp: String {
+        String(localized: "Choose the folder where Export writes the files.", comment: "Tooltip of the Choose… button of the Folder row")
+    }
+    static var showInFinderHelp: String {
+        String(localized: "Show the exported file in the Finder.", comment: "Tooltip of the Show in Finder link after an export")
+    }
+    static var histogramHelp: String {
+        String(localized: "Levels of red, green and blue in the image shown, inside the crop frame if there is one.",
+               comment: "Tooltip of the histogram")
+    }
+    static var logarithmicHelp: String {
+        String(localized: "Logarithmic scale: shows small counts next to large peaks.", comment: "Tooltip of the histogram's Logarithmic checkbox")
+    }
+    static var gridButtonHelp: String {
+        String(localized: "Click: show or hide (⌘') · Right click: kind, colour, opacity",
+               comment: "Tooltip of the Grid button of the tool column")
+    }
+
+    /// Tooltip of a tool of the column, with its key.
+    static func toolHelp(_ tool: Tool) -> String {
+        switch tool {
+        case .hand: String(localized: "Hand: move the image (H, or hold Space)", comment: "Tooltip of the Hand tool")
+        case .zoom: String(localized: "Zoom: click to zoom in, ⌥-click to zoom out (Z)", comment: "Tooltip of the Zoom tool (magnifier)")
+        case .crop: String(localized: "Crop: draw and adjust the frame, in Prepare › Framing (C)", comment: "Tooltip of the Crop tool")
+        case .straighten: String(localized: "Straightening Rule: draw a line along what should be horizontal or vertical (R)",
+                                 comment: "Tooltip of the Straightening Rule tool")
+        }
+    }
+
     // MARK: Framing: crop and straighten (lot 1, lot 1b)
 
     /// An angle in degrees with a true minus sign: whole degrees ("−1°"),
@@ -503,7 +583,7 @@ enum Strings {
         String(localized: "Constrain to image", comment: "Crop options checkbox")
     }
     static var cropConstrainHelp: String {
-        String(localized: "No empty corners: the frame stays inside the turned image, within the area scanned.", comment: "Tooltip of the constrain checkbox")
+        String(localized: "Keeps the frame entirely inside the turned image, with no empty corners.", comment: "Tooltip of the constrain checkbox")
     }
     static var exportHelp: String {
         String(localized: "Export the image shown, turned, straightened and cropped, with its recipe (⇧⌘E). A saved scan is never replaced: its versions are named _v1, _v2…",
