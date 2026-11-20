@@ -290,8 +290,13 @@ public struct CompactSliderRow: View {
                 .help(texts.resetHelp)
                 .accessibilityHidden(true)  // the slider and the field carry the label
             // The slider moves a position (0...1), linear or logarithmic; the field keeps the exact value.
+            // A click on the knob without moving it sends its own position: ignored, so that a value
+            // finer than the step (the rule's tenths on a slider of whole degrees) is kept.
             Slider(value: Binding(get: { format.sliderPosition(for: value) },
-                                  set: { value = format.value(forSliderPosition: $0) }), in: 0...1) {
+                                  set: { position in
+                                      guard abs(position - format.sliderPosition(for: value)) > 1e-9 else { return }
+                                      value = format.value(forSliderPosition: position)
+                                  }), in: 0...1) {
                 Text(texts.label)
             }
             .labelsHidden()

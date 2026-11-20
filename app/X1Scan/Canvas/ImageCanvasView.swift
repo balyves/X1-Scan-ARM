@@ -439,9 +439,9 @@ final class ImageCanvasView: NSView {
         let cropping = model.tools.showsCropOptions
         if first == " " {
             if !event.isARepeat { model.tools.spaceHeld = true }
-        } else if cropping, event.keyCode == 123 || event.keyCode == 124 {  // ← →: the angle, 0.1° (⇧: 1°)
-            let step = event.modifierFlags.contains(.shift) ? 1.0 : CropSettings.angleStep
-            model.setCropAngle(model.recipe.crop.angle + (event.keyCode == 124 ? step : -step))
+        } else if cropping, event.keyCode == 123 || event.keyCode == 124 {  // ← →: the angle, 1° (⇧: 5°), whole degrees
+            let step = event.modifierFlags.contains(.shift) ? CropSettings.angleLargeStep : CropSettings.angleStep
+            model.setCropAngle(CropSettings.nudgedAngle(model.recipe.crop.angle, by: event.keyCode == 124 ? step : -step))
         } else if cropping, event.keyCode == 36 || event.keyCode == 76 {  // Return: Done
             model.finishCrop()
         } else if let tool = Tool.forKey(first) {

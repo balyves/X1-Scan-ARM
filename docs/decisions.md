@@ -1331,3 +1331,16 @@ received, on the display or on exported files.
   angle is added to the current one.
 - **Not in this lot**: Auto (edges) is shown disabled; corrections, film
   types, presets, DNG, ICC profiles, quality modes are left out.
+
+## Lot 1b: panel tabs, Information area, tool column (2026-11-20)
+
+User's brief of 2026-11-20 and decisions on the plan. A reorganisation of
+the interface only: nothing sent to the scanner changes.
+
+- **Fine angle** (user's decision): the slider, the typed field and the
+  arrow keys move by whole degrees (−45° to 45°); ⇧ + arrow moves 5°. An
+  arrow moves at most its step and lands on a whole degree (from −1.3°,
+  → gives −1° and ← gives −2°; ⇧ → gives 3°). The straightening rule
+  keeps the angle it measures to the tenth: the recipe keeps tenths, and
+  the field, the summary and the rule's label show whole degrees, or a
+  tenth when the rule measured one ("−1.3°").

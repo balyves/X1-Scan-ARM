@@ -20,13 +20,18 @@ public struct CompactValueFormat: Sendable, Hashable {
     public let step: Double?
     public let fractionDigits: Int
     public let sliderScale: SliderScale
+    /// Digits of a value finer than the step, set elsewhere (the
+    /// straightening rule's −1.3° on a slider of whole degrees): shown so,
+    /// never typed (typed values keep the step). Nil: always `fractionDigits`.
+    public let finerFractionDigits: Int?
 
     public init(range: ClosedRange<Double>, defaultValue: Double, step: Double? = nil, fractionDigits: Int = 0,
-                sliderScale: SliderScale = .linear) {
+                sliderScale: SliderScale = .linear, finerFractionDigits: Int? = nil) {
         precondition(range.lowerBound.isFinite && range.upperBound.isFinite, "the range must be finite")
         precondition(range.contains(defaultValue), "default value outside the range")
         precondition(step.map { $0 > 0 } ?? true, "step must be positive")
         precondition(fractionDigits >= 0)
+        precondition(finerFractionDigits.map { $0 > fractionDigits } ?? true, "finer digits must be more digits")
         precondition(sliderScale == .linear || range.lowerBound > 0, "a logarithmic slider needs a positive range")
         if let step {
             // The step must be shown exactly with these digits (0.25 needs two).
@@ -38,6 +43,7 @@ public struct CompactValueFormat: Sendable, Hashable {
         self.step = step
         self.fractionDigits = fractionDigits
         self.sliderScale = sliderScale
+        self.finerFractionDigits = finerFractionDigits
     }
 
     /// An integer setting: step 1, no decimals.
@@ -46,9 +52,11 @@ public struct CompactValueFormat: Sendable, Hashable {
                   defaultValue: Double(defaultValue), step: 1, fractionDigits: 0, sliderScale: sliderScale)
     }
 
-    /// Where `value` sits on the slider, 0...1.
+    /// Where `value` sits on the slider, 0...1: the exact value, within the
+    /// range but not on the step (a value set elsewhere, finer than the
+    /// step, keeps its place).
     public func sliderPosition(for value: Double) -> Double {
-        let value = clamped(value)
+        let value = value.isFinite ? min(max(value, range.lowerBound), range.upperBound) : defaultValue
         let span: Double
         let offset: Double
         switch sliderScale {
@@ -86,10 +94,21 @@ public struct CompactValueFormat: Sendable, Hashable {
         return min(max(result, range.lowerBound), range.upperBound)
     }
 
-    /// The value as shown in the field: the locale's decimal separator, no grouping.
+    /// The value as shown in the field: the locale's decimal separator, no
+    /// grouping. A value finer than the step keeps `finerFractionDigits`.
     public func text(for value: Double, locale: Locale) -> String {
-        clamped(value).formatted(.number
-            .precision(.fractionLength(fractionDigits))
+        var shown = clamped(value)
+        var digits = fractionDigits
+        if let finer = finerFractionDigits, value.isFinite {
+            let scale = pow(10, Double(finer))
+            let fine = min(max((value * scale).rounded() / scale, range.lowerBound), range.upperBound)
+            if abs(fine - shown) > 0.5 / scale {
+                shown = fine
+                digits = finer
+            }
+        }
+        return shown.formatted(.number
+            .precision(.fractionLength(digits))
             .grouping(.never)
             .locale(locale))
     }

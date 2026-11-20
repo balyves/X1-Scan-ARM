@@ -448,9 +448,10 @@ enum Strings {
 
     // MARK: Framing: crop and straighten (lot 1, lot 1b)
 
-    /// An angle in degrees with one decimal and a true minus sign: "−1.3°".
+    /// An angle in degrees with a true minus sign: whole degrees ("−1°"),
+    /// or tenths when the straightening rule measured them ("−1.3°", lot 1b).
     static func angle(_ degrees: Double) -> String {
-        let text = abs(degrees).formatted(.number.precision(.fractionLength(1)).grouping(.never))
+        let text = abs(degrees).formatted(.number.precision(.fractionLength(0...1)).grouping(.never))
         return (degrees < -0.05 ? "\u{2212}" : "") + text + "°"
     }
 

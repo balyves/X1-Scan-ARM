@@ -21,6 +21,20 @@ struct CompactValueFormatTests {
         #expect(format.clamped(.infinity) == 5)
     }
 
+    /// Lot 1b: the angle moves by whole degrees, but shows the rule's tenths.
+    @Test func finerValuesSetElsewhereKeepTheirDigits() {
+        let format = CompactValueFormat(range: -45...45, defaultValue: 0, step: 1, fractionDigits: 0,
+                                        finerFractionDigits: 1)
+        #expect(format.text(for: -1, locale: english) == "-1")
+        #expect(format.text(for: -1.3, locale: french) == "-1,3", "a tenth from the rule is shown")
+        #expect(format.text(for: 2.04, locale: english) == "2", "below a tenth: the whole degree")
+        #expect(format.value(parsing: "-1,3") == -1, "typed values keep the step")
+        #expect(format.value(forSliderPosition: 0.5) == 0 && format.value(forSliderPosition: 0.51) == 1)
+        #expect(abs(format.sliderPosition(for: -1.3) - 43.7 / 90) < 1e-12, "the knob at the exact value")
+        let plain = CompactValueFormat(range: -45...45, defaultValue: 0, step: 1)
+        #expect(plain.text(for: -1.3, locale: english) == "-1", "without finer digits: the step")
+    }
+
     @Test func stepNeverPushesAboveTheUpperBound() {
         // 0...10 with step 3: 9 is the last step inside the range.
         let format = CompactValueFormat(range: 0...10, defaultValue: 0, step: 3)

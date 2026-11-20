@@ -58,8 +58,13 @@ public struct CropSettings: Sendable, Hashable, Codable {
     public var constrained = true
 
     public static let angleRange: ClosedRange<Double> = -45...45
-    /// Step of the slider and of the arrow keys.
-    public static let angleStep = 0.1
+    /// Precision of the angle kept in the recipe: the straightening rule
+    /// measures to the tenth (user's decision of 2026-11-20, lot 1b).
+    public static let angleResolution = 0.1
+    /// Step of the slider, the field and the arrow keys (lot 1b): whole degrees.
+    public static let angleStep = 1.0
+    /// Shift + arrow.
+    public static let angleLargeStep = 5.0
 
     public init() {}
 
@@ -166,8 +171,18 @@ public struct CropSettings: Sendable, Hashable, Codable {
     public static func clampedAngle(_ value: Double) -> Double {
         guard value.isFinite else { return 0 }
         // Tenths, divided rather than multiplied: 0.3, not 0.30000000000000004, in the recipe.
-        let rounded = (value / angleStep).rounded() / (1 / angleStep)
+        let rounded = (value / angleResolution).rounded() / (1 / angleResolution)
         return min(max(rounded, angleRange.lowerBound), angleRange.upperBound)
+    }
+
+    /// An arrow key (lot 1b): at most `delta` degrees in its direction,
+    /// landing on a whole degree. From −1.3°, → gives −1° and ← gives −2°;
+    /// from a whole degree, exactly `delta`.
+    public static func nudgedAngle(_ angle: Double, by delta: Double) -> Double {
+        let target = angle + delta
+        // A tiny margin: −1 + 1 computed as −1.1102e-16 still lands on 0.
+        let whole = delta > 0 ? (target + 1e-9).rounded(.down) : (target - 1e-9).rounded(.up)
+        return clampedAngle(whole) + 0  // + 0: never −0 in the recipe
     }
 
     /// Nothing to do: no angle, no frame.

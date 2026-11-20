@@ -55,7 +55,7 @@ real scanner.
 | ⌘[ / ⌘] | Rotate 90° counterclockwise / clockwise |
 | ⌘' | Show / hide the grid |
 | X (crop) | Swap width and height of the proportions |
-| ← / → (crop) | Angle −/+ 0.1° (⇧: 1°) |
+| ← / → (crop) | Angle −/+ 1°, to the next whole degree (⇧: 5°) |
 | Return (crop) | Done |
 | Space (held) | Hand, temporarily |
 | Option-click (zoom tool) | Zoom out |

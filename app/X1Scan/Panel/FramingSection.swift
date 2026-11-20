@@ -15,7 +15,8 @@ struct FramingSection: View {
     @State private var customHeight = ""
 
     private static let angleFormat = CompactValueFormat(
-        range: CropSettings.angleRange, defaultValue: 0, step: CropSettings.angleStep, fractionDigits: 1)
+        range: CropSettings.angleRange, defaultValue: 0, step: CropSettings.angleStep, fractionDigits: 0,
+        finerFractionDigits: 1)  // whole degrees; the rule's tenths are shown, not typed (lot 1b)
 
     var body: some View {
         OrientationRow(model: model)
