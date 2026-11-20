@@ -111,6 +111,12 @@ Scope: **Flextight X1 only**. Other Flextight / Imacon models are out of scope.
    - anything else, and any change to these rules (`CLAUDE.md`, the
      subagents' instructions in `.claude/agents/`): the user's approval
      before push.
+
+   After every push (whoever decided it), find the CI run of the pushed
+   commit (`gh run list --commit <sha>`), follow it to its end (`gh run
+   watch <id> --exit-status`) and give its result in the report (user's
+   decision of 2026-11-20); a failure is analysed (`gh run view <id>
+   --log-failed`) and its cause reported.
 7. **Review before every commit**: run the `x1-reviewer` subagent
    (`.claude/agents/x1-reviewer.md`) on the changes, and show the user its
    full report together with `git status` and the diff summary. Fix or
@@ -123,13 +129,21 @@ Scope: **Flextight X1 only**. Other Flextight / Imacon models are out of scope.
    (`tools/git-hooks`, install with `git config core.hooksPath
    tools/git-hooks`) and the X1Kit CI workflow are additional checks, not a
    substitute.
+8. **Swift for the CI** (user's decision of 2026-11-20): the CI builds
+   with an older Xcode than the development Macs (macOS 26 Tahoe): Xcode
+   26.5 (Swift 6.3), pinned in `.github/workflows/x1kit.yml`, against
+   Xcode 27 (Swift 6.4) locally. Its type checker gives up on long
+   expressions that build fine locally. Write long expressions, in tests especially (closures building
+   arrays, literals mixing conversions and arithmetic), with typed
+   intermediate variables and typed closure parameters.
 
 ## Reports to the user
 
 Every report has a fixed form:
 
 1. **Décisions qui vous attendent**: numbered, first (or "aucune").
-2. **État**: commit (hash) or not, pushed or not, X1 touched or not.
+2. **État**: commit (hash) or not, pushed or not (and after a push, the
+   CI result), X1 touched or not.
 3. **Détail**: short.
 
 No wide tables (they are cut in the terminal): lists instead.
