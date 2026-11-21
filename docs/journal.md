@@ -1010,3 +1010,9 @@ unclear to the user, to be explained and redone):
   passes today, so no photograph is to be added before that changes.
 - Tool column: Grid and Exposure Zones moved up, right under Crop and
   Rule (the flexible space removed); their order is still to be decided.
+- Help: a Hardware and Connection page (Apple adapters with model and
+  part numbers, the FireWire 800 cable, ASFireWire as a third-party
+  project in beta, linked to its repository and website), and the icon of
+  each tool and icon button next to its name, drawn when the page is shown
+  from the interface's own table (`AppIcon`); no image of a system symbol
+  in the repository.

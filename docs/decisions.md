@@ -1469,6 +1469,22 @@ From the user's brief of 2026-11-20 and the answers to its plan (points 1,
   the scanner give the X1's state. X1 Scan needs macOS 26.
 - **Rule** (CLAUDE.md, "Built-in help"): every batch that adds or changes
   a feature updates its help pages in both languages; x1-ui checks it.
+- **Icons** (user's request of 2026-11-21): a page shows the icon of each
+  tool and icon button next to its name, written `{icon:<key>}`. The keys
+  and the symbols come from one table, `AppIcon` (X1ScanCore), which the
+  interface uses too; a test checks that the application names none of
+  these symbols itself, and that every icon of the table appears in both
+  languages. The application draws them when a page is shown (system
+  symbols through AppKit, the swap-proportions icon through its own view)
+  into a `data:` PNG used as a CSS mask of the text's colour, so that it
+  follows light and dark mode. No exported image of a system symbol is in
+  the repository. Text-only buttons (Preview, Scan, Done) have no icon.
+- **Hardware page** (2026-11-21): `hardware.md` gives the connection chain
+  with Apple's model and part numbers (A1790 / MMEL2, A1463 / MD464, both
+  no longer sold new) and links to ASFireWire, described only as its own
+  repository does (restores FireWire on macOS 26 Tahoe with DriverKit;
+  install guide on its website), as a third-party project in beta. The
+  help's links may be `https` web addresses (opened in the browser).
 
 ## Lot A: error catalogue (2026-11-20)
 

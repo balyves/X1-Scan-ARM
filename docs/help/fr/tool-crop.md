@@ -1,4 +1,4 @@
-# Recadrage
+# {icon:crop} Recadrage
 
 Le Recadrage trace et ajuste le cadre de l’image.
 

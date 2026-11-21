@@ -13,7 +13,7 @@ The Prepare tab (⌥⌘1) describes the original and the framing of the image.
 
 - Choose the holder that is in the scanner.
 - Only the holders ticked in Settings › Holders appear.
-- The button on the right opens Settings › Holders. You can add a custom holder there.
+- The {icon:more} button on the right opens Settings › Holders. You can add a custom holder there.
 
 ## Framing {#framing}
 
@@ -22,15 +22,15 @@ Framing changes the display and the export. It never changes what the scanner sc
 ### Orientation {#orientation}
 
 - The small frame on the left shows the state: turned or not, mirrored or not.
-- Rotate 90° Counterclockwise (⌘[), Rotate 90° Clockwise (⌘]) and Flip Horizontal.
+- {icon:rotate-left} Rotate 90° Counterclockwise (⌘[), {icon:rotate-right} Rotate 90° Clockwise (⌘]) and {icon:mirror} Flip Horizontal.
 - The same commands are in the Image menu.
 - The frame and the angle follow the image.
 
 ### Proportions {#proportions}
 
 - Free, Original (those of the image), common formats, or Custom….
-- The button next to it swaps width and height (key X while cropping).
-- The lock keeps the proportions: the frame keeps its shape while it is resized.
+- The {icon:swap-proportions} button next to it swaps width and height (key X while cropping).
+- The lock {icon:lock-open} keeps the proportions; closed {icon:lock-closed}, they are locked: the frame keeps its shape while it is resized.
 
 ### Angle {#angle}
 
@@ -53,7 +53,7 @@ Framing changes the display and the export. It never changes what the scanner sc
 
 ### Reset Framing {#reset}
 
-- The button on the Framing title row puts the orientation, proportions, angle and frame back to the original.
+- The {icon:reset} button on the Framing title row puts the orientation, proportions, angle and frame back to the original.
 - Edit › Undo (⌘Z) cancels it, as long as nothing else has changed.
 
 ### Done {#done}

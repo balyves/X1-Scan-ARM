@@ -8,6 +8,7 @@ Cette aide décrit l’application telle qu’elle est aujourd’hui.
 ## Pour commencer {#start}
 
 - [Premier scan pas à pas](first-scan.md)
+- [Matériel et connexion](hardware.md)
 - [Mode découverte](discovery.md)
 - [Raccourcis clavier](shortcuts.md)
 - [Dépannage](troubleshooting.md)
@@ -21,18 +22,20 @@ Cette aide décrit l’application telle qu’elle est aujourd’hui.
 
 ## Les outils {#tools}
 
-- [Main](tool-hand.md)
-- [Loupe](tool-zoom.md)
-- [Recadrage](tool-crop.md)
-- [Règle de redressement](tool-rule.md)
-- [Grille](tool-grid.md)
-- [Zones d’exposition](tool-exposure-zones.md)
+- {icon:hand} [Main](tool-hand.md)
+- {icon:zoom} [Loupe](tool-zoom.md)
+- {icon:crop} [Recadrage](tool-crop.md)
+- {icon:rule} [Règle de redressement](tool-rule.md)
+- {icon:grid} [Grille](tool-grid.md)
+- {icon:exposure-zones} [Zones d’exposition](tool-exposure-zones.md)
 
 ## Index {#functions}
 
 - [À propos et licences](about.md)
+- [Adaptateurs et câble](hardware.md#chain)
 - [Angle](prepare.md#angle)
 - [Aperçu](first-scan.md#preview)
+- [ASFireWire](hardware.md#asfirewire)
 - [Cadrage](prepare.md#framing)
 - [Compression](output.md#compression)
 - [Contraindre à l’image](prepare.md#constrain)
@@ -47,6 +50,7 @@ Cette aide décrit l’application telle qu’elle est aujourd’hui.
 - [Histogramme](information.md#histogram)
 - [Loupe](tool-zoom.md)
 - [Main](tool-hand.md)
+- [Matériel et connexion](hardware.md)
 - [Mode découverte](discovery.md)
 - [Nom de fichier](output.md#name)
 - [Numériser](scan.md#scan-button)

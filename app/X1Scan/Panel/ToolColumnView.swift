@@ -13,11 +13,11 @@ struct ToolColumnView: View {
 
     var body: some View {
         VStack(spacing: 6) {
-            tool(.hand, "hand.raised")
-            tool(.zoom, "plus.magnifyingglass")
+            tool(.hand)
+            tool(.zoom)
             separator
-            tool(.crop, "crop")
-            tool(.straighten, "ruler")
+            tool(.crop)
+            tool(.straighten)
             separator
             gridButton
             zonesButton
@@ -36,12 +36,12 @@ struct ToolColumnView: View {
             .accessibilityHidden(true)
     }
 
-    private func tool(_ tool: Tool, _ symbol: String) -> some View {
+    private func tool(_ tool: Tool) -> some View {
         let selected = model.tools.effective == tool
         return Button {
             model.tools.selected = tool
         } label: {
-            ToolIcon(symbol: symbol, highlighted: selected)
+            ToolIcon(icon: .tool(tool), highlighted: selected)
         }
         .buttonStyle(.plain)
         .help(Strings.tooltip(.tool(tool)))
@@ -57,8 +57,7 @@ struct ToolColumnView: View {
         return Button {
             model.showsExposureZones.toggle()
         } label: {
-            // Half hatched, echoing the hatched noise zone of the exposure gauge: a display, not a warning.
-            ToolIcon(symbol: "circle.lefthalf.striped.horizontal", highlighted: shown)
+            ToolIcon(icon: .exposureZones, highlighted: shown)
         }
         .buttonStyle(.plain)
         .disabled(model.exposure == nil)
@@ -74,7 +73,7 @@ struct ToolColumnView: View {
         return Button {
             model.toggleGrid()
         } label: {
-            ToolIcon(symbol: "grid", highlighted: shown)
+            ToolIcon(icon: .grid, highlighted: shown)
         }
         .buttonStyle(.plain)
         .help(Strings.tooltip(.gridButton))
@@ -113,12 +112,12 @@ struct ToolColumnView: View {
 /// A button of the column: its symbol, tinted with a light background when
 /// the tool is selected or the display it shows is on; dimmed when disabled.
 private struct ToolIcon: View {
-    let symbol: String
+    let icon: AppIcon
     let highlighted: Bool
     @Environment(\.isEnabled) private var isEnabled
 
     var body: some View {
-        Image(systemName: symbol)
+        Image(icon)
             .font(.system(size: 14))
             .frame(width: 28, height: 28)
             .contentShape(.rect)

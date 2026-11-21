@@ -27,7 +27,7 @@ public struct HelpLibrary: Sendable {
     /// Every page, in both languages, with the same file name (tests check it).
     /// The first one is the home page.
     public static let pageIDs: [String] = [
-        "index", "first-scan", "prepare", "scan", "output", "information",
+        "index", "first-scan", "hardware", "prepare", "scan", "output", "information",
         "tool-hand", "tool-zoom", "tool-crop", "tool-rule", "tool-grid", "tool-exposure-zones",
         "shortcuts", "troubleshooting", "discovery", "about",
     ]
@@ -132,7 +132,7 @@ public struct HelpLibrary: Sendable {
 
     /// The whole HTML document of a page, in the system's light or dark
     /// appearance (CSS `prefers-color-scheme`).
-    public func html(for pageID: String) -> String? {
+    public func html(for pageID: String, iconURL: (AppIcon) -> String? = { _ in nil }) -> String? {
         guard let page = page(pageID) else { return nil }
         return """
         <!doctype html>
@@ -140,7 +140,7 @@ public struct HelpLibrary: Sendable {
         <meta name="color-scheme" content="light dark">
         <title>\(HelpMarkdown.escape(page.title))</title>
         <style>\(Self.stylesheet)</style></head>
-        <body>\(HelpMarkdown.html(page.markdown))</body></html>
+        <body>\(HelpMarkdown.html(page.markdown, iconURL: iconURL))</body></html>
         """
     }
 
@@ -161,6 +161,10 @@ public struct HelpLibrary: Sendable {
     code { font: 12px ui-monospace, Menlo, monospace; background: -apple-system-quaternary-label; padding: 1px 4px; border-radius: 4px; }
     blockquote { margin: 10px 0; padding: 4px 12px; border-left: 3px solid -apple-system-separator; color: -apple-system-secondary-label; }
     :target { scroll-margin-top: 12px; }
+    .icon { display: inline-block; width: 1.15em; height: 1.15em; vertical-align: -0.2em; margin: 0 0.15em;
+            background-color: currentColor; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center;
+            -webkit-mask-size: contain; }
+    .icon[data-icon="swap-proportions"] { width: 2.4em; }
     """
 }
 

@@ -111,7 +111,7 @@ struct HelpView: View {
             sidebar
                 .navigationSplitViewColumnWidth(min: 180, ideal: 220, max: 320)
         } detail: {
-            if let library = model.library, let html = library.html(for: model.pageID) {
+            if let library = model.library, let html = library.html(for: model.pageID, iconURL: { HelpIcons.dataURL($0) }) {
                 HelpWebView(html: html, anchor: model.anchor, revision: model.revision,
                             follow: { model.follow($0) }, anchorShown: { model.anchorShown() })
             } else {

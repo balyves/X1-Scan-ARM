@@ -10,7 +10,7 @@ Cette page suit le chemin complet, du branchement au fichier enregistré.
 État du X1 : **éteint**.
 
 - Le X1 a une prise FireWire 800.
-- Sur un Mac sans FireWire, il faut deux adaptateurs Apple : Thunderbolt 3 (USB-C) vers Thunderbolt 2, puis Thunderbolt vers FireWire 800.
+- Sur un Mac sans FireWire, il faut deux adaptateurs Apple : Thunderbolt 3 (USB-C) vers Thunderbolt 2, puis Thunderbolt vers FireWire 800. Leurs références : [Matériel et connexion](hardware.md#chain).
 - Les adaptateurs USB vers FireWire ne fonctionnent pas.
 - Si le câble vient d’un autre Mac, éteignez puis rallumez le X1 après le branchement.
 
@@ -19,8 +19,8 @@ Cette page suit le chemin complet, du branchement au fichier enregistré.
 État du X1 : **indifférent**.
 
 - macOS 26 Tahoe n’a plus de pilote FireWire.
-- Le pilote ASFireWire (DriverKit) le remplace.
-- Installez-le en suivant ses instructions, puis autorisez-le dans Réglages Système.
+- ASFireWire, un pilote tiers en version bêta, rétablit FireWire : voir [Matériel et connexion](hardware.md#asfirewire).
+- Installez-le en suivant le guide de son site.
 - X1 Scan demande macOS 26 Tahoe.
 
 ## 3. Allumer le X1 et vérifier {#check}

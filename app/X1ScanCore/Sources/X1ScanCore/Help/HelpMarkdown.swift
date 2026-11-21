@@ -5,7 +5,9 @@ import Foundation
 /// turned into HTML when a page is shown (docs/decisions.md, "Built-in
 /// help"): headings `#` to `###` with an optional `{#anchor}`, paragraphs,
 /// `- ` and `1. ` lists, `> ` notes, `**bold**`, `*italic*`, `` `code` ``
-/// and `[text](target)` links. Anything else is shown as plain text.
+/// and `[text](target)` links, and `{icon:<key>}`, the icon of a tool or a
+/// button (`AppIcon`), drawn when the page is shown. Anything else is shown
+/// as plain text.
 public enum HelpMarkdown {
     /// One block of a page.
     public enum Block: Sendable, Hashable {
@@ -138,8 +140,51 @@ public enum HelpMarkdown {
             rest = rest[rest.index(after: end)...]
         }
         out += rest
-        return out.replacingOccurrences(of: "**", with: "").replacingOccurrences(of: "`", with: "")
+        return removingIcons(out).replacingOccurrences(of: "**", with: "").replacingOccurrences(of: "`", with: "")
             .replacingOccurrences(of: "*", with: "")
+    }
+
+    // MARK: Icons
+
+    static let iconPrefix = "{icon:"
+
+    /// The icon keys written in `markdown` (`{icon:hand}` → "hand"), known or not, in order.
+    public static func iconKeys(_ markdown: String) -> [String] {
+        var keys: [String] = []
+        var rest = Substring(markdown)
+        while let open = rest.range(of: iconPrefix), let close = rest[open.upperBound...].firstIndex(of: "}") {
+            keys.append(String(rest[open.upperBound..<close]))
+            rest = rest[rest.index(after: close)...]
+        }
+        return keys
+    }
+
+    /// `text` with every `{icon:…}` replaced by `replacement(key)`; spaces
+    /// left at the start and doubled are removed when an icon is dropped.
+    static func replacingIcons(_ text: String, _ replacement: (String) -> String) -> String {
+        var out = ""
+        var rest = Substring(text)
+        while let open = rest.range(of: iconPrefix), let close = rest[open.upperBound...].firstIndex(of: "}") {
+            out += rest[..<open.lowerBound]
+            out += replacement(String(rest[open.upperBound..<close]))
+            rest = rest[rest.index(after: close)...]
+        }
+        return out + rest
+    }
+
+    static func removingIcons(_ text: String) -> String {
+        guard text.contains(iconPrefix) else { return text }
+        return replacingIcons(text) { _ in "" }.split(separator: " ", omittingEmptySubsequences: true)
+            .joined(separator: " ")
+    }
+
+    /// The HTML of one icon: a mask of the text's colour (`.icon` in the
+    /// stylesheet), hidden from VoiceOver since its name is next to it.
+    /// Nothing for an unknown key or an icon that cannot be drawn.
+    static func iconHTML(_ key: String, url: (AppIcon) -> String?) -> String {
+        guard let icon = AppIcon(rawValue: key), let source = url(icon) else { return "" }
+        return "<span class=\"icon\" data-icon=\"\(escape(key))\" aria-hidden=\"true\" "
+            + "style=\"-webkit-mask-image: url('\(escape(source))')\"></span>"
     }
 
     // MARK: HTML
@@ -147,8 +192,13 @@ public enum HelpMarkdown {
     /// The HTML of `markdown`'s blocks (no `<html>` around them). Links to
     /// another page keep their target (`crop.md#frame`): the help window
     /// opens them itself.
-    public static func html(_ markdown: String) -> String {
-        blocks(markdown).map { block -> String in
+    /// `iconURL`: the picture of an icon (a `data:` URL), drawn by the
+    /// application; without it, icons are left out.
+    public static func html(_ markdown: String, iconURL: (AppIcon) -> String? = { _ in nil }) -> String {
+        func inline(_ text: String) -> String {
+            replacingIcons(Self.inline(text)) { iconHTML($0, url: iconURL) }
+        }
+        return blocks(markdown).map { block -> String in
             switch block {
             case .heading(let level, let text, let anchor):
                 let id = anchor.map { " id=\"\(escape($0))\"" } ?? ""

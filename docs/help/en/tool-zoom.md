@@ -1,4 +1,4 @@
-# Zoom
+# {icon:zoom} Zoom
 
 The Zoom tool enlarges or reduces the image.
 

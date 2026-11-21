@@ -1,4 +1,4 @@
-# Main
+# {icon:hand} Main
 
 La Main déplace l’image dans la fenêtre.
 

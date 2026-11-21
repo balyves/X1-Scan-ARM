@@ -1,4 +1,4 @@
-# Hand
+# {icon:hand} Hand
 
 The Hand moves the image in the window.
 

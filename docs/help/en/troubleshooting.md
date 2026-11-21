@@ -12,7 +12,7 @@ The “Details” part of a message holds the technical text. “Copy Details”
 
 - The Mac sees the X1 only when it is on, connected and recognised by the FireWire driver.
 - On macOS 26 Tahoe, this driver is ASFireWire. Without it, the X1 stays invisible, even when on.
-- USB to FireWire adapters do not work. See [Connect the X1](first-scan.md#connect).
+- USB to FireWire adapters do not work. See [Hardware and connection](hardware.md).
 - Without a scanner, you can try the application in [discovery mode](discovery.md).
 
 ### The X1 is busy {#scanner-busy}

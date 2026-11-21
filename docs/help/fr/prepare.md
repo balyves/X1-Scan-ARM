@@ -13,7 +13,7 @@ L’onglet Préparer (⌥⌘1) décrit l’original et le cadrage de l’image.
 
 - Choisissez le porte-film qui est dans le scanner.
 - Seuls les porte-films cochés dans Réglages › Porte-films apparaissent.
-- Le bouton à droite ouvre Réglages › Porte-films. Vous pouvez y ajouter un porte-film personnalisé.
+- Le bouton {icon:more} à droite ouvre Réglages › Porte-films. Vous pouvez y ajouter un porte-film personnalisé.
 
 ## Cadrage {#framing}
 
@@ -22,15 +22,15 @@ Le cadrage change l’affichage et l’export. Il ne change jamais ce que le sca
 ### Orientation {#orientation}
 
 - Le petit cadre à gauche montre l’état : tournée ou non, en miroir ou non.
-- Rotation 90° antihoraire (⌘[), rotation 90° horaire (⌘]) et miroir horizontal.
+- {icon:rotate-left} Rotation 90° antihoraire (⌘[), {icon:rotate-right} rotation 90° horaire (⌘]) et {icon:mirror} miroir horizontal.
 - Les mêmes commandes sont dans le menu Image.
 - Le cadre et l’angle suivent l’image.
 
 ### Proportions {#proportions}
 
 - Libre, Original (celles de l’image), des formats courants, ou Personnalisé….
-- Le bouton à côté inverse largeur et hauteur (touche X en recadrage).
-- Le cadenas verrouille les proportions : le cadre garde sa forme quand on le redimensionne.
+- Le bouton {icon:swap-proportions} à côté inverse largeur et hauteur (touche X en recadrage).
+- Le cadenas {icon:lock-open} verrouille les proportions ; fermé {icon:lock-closed}, elles sont verrouillées : le cadre garde sa forme quand on le redimensionne.
 
 ### Angle {#angle}
 
@@ -53,7 +53,7 @@ Le cadrage change l’affichage et l’export. Il ne change jamais ce que le sca
 
 ### Réinitialiser le cadrage {#reset}
 
-- Le bouton sur la ligne de titre de Cadrage remet l’orientation, les proportions, l’angle et le cadre à l’état d’origine.
+- Le bouton {icon:reset} sur la ligne de titre de Cadrage remet l’orientation, les proportions, l’angle et le cadre à l’état d’origine.
 - Édition › Annuler (⌘Z) le défait, tant que rien d’autre n’a changé.
 
 ### Terminé {#done}

@@ -106,7 +106,7 @@ struct FramingSection: View {
                 .accessibilityLabel(Strings.cropSwap)
                 .accessibilityValue(model.recipe.crop.portrait ? Strings.cropSwapped : Strings.cropAsNamed)
                 Toggle(isOn: Binding { model.recipe.crop.locked } set: { model.setCropLocked($0) }) {
-                    Image(systemName: model.recipe.crop.locked ? "lock.fill" : "lock.open")
+                    Image(model.recipe.crop.locked ? AppIcon.lockClosed : .lockOpen)
                 }
                 .toggleStyle(.button)
                 .buttonStyle(.borderless)
@@ -198,7 +198,7 @@ struct FramingHeaderButtons: View {
     @Bindable var model: AppModel
 
     var body: some View {
-        Button { reset() } label: { Image(systemName: "arrow.counterclockwise") }
+        Button { reset() } label: { Image(AppIcon.reset) }
             .buttonStyle(.bordered)
             .disabled(model.framingIsReset)
             .help(Strings.tooltip(.reset))
@@ -234,13 +234,13 @@ private struct OrientationRow: View {
                     .accessibilityLabel(label)
                     .accessibilityValue(Strings.orientationDescription(orientation))
                     .padding(.trailing, CompactPanelMetrics.groupSpacing - CompactPanelMetrics.columnSpacing)
-                button("rotate.left", Strings.rotateCounterclockwise, help: Strings.tooltip(.rotateCounterclockwise)) {
+                button(.rotateLeft, Strings.rotateCounterclockwise, help: Strings.tooltip(.rotateCounterclockwise)) {
                     model.rotateCounterclockwise()
                 }
-                button("rotate.right", Strings.rotateClockwise, help: Strings.tooltip(.rotateClockwise)) {
+                button(.rotateRight, Strings.rotateClockwise, help: Strings.tooltip(.rotateClockwise)) {
                     model.rotateClockwise()
                 }
-                button("arrow.left.and.right.righttriangle.left.righttriangle.right", Strings.mirrorHorizontally,
+                button(.mirror, Strings.mirrorHorizontally,
                        help: Strings.mirrorHorizontally) {
                     model.mirrorHorizontally()
                 }
@@ -250,13 +250,13 @@ private struct OrientationRow: View {
     }
 
     /// `label` for VoiceOver, `help` (with the shortcut) for the tooltip.
-    private func button(_ symbol: String, _ label: String, help: String, action: @escaping () -> Void) -> some View {
+    private func button(_ icon: AppIcon, _ label: String, help: String, action: @escaping () -> Void) -> some View {
         Button {
             action()
             // VoiceOver hears the new state without going to the glyph.
             AccessibilityNotification.Announcement(Strings.orientationDescription(model.recipe.orientation)).post()
         } label: {
-            Image(systemName: symbol)
+            Image(icon)
         }
         .help(help)
         .accessibilityLabel(label)

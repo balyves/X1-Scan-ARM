@@ -15,7 +15,7 @@ L’onglet Sortie (⌥⌘3) règle le fichier exporté.
 
 - Un modèle de nom, avec des éléments comme {roll} (pellicule), {frame} (vue), la date ou un numéro.
 - Le nom du prochain fichier s’affiche dessous.
-- Le bouton à droite ouvre Réglages › Exporter pour modifier les modèles.
+- Le bouton {icon:more} à droite ouvre Réglages › Exporter pour modifier les modèles.
 
 ## Dossier {#folder}
 

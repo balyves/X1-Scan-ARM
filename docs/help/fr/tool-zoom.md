@@ -1,4 +1,4 @@
-# Loupe
+# {icon:zoom} Loupe
 
 La Loupe agrandit ou réduit l’image.
 

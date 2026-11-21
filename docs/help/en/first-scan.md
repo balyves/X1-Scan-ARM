@@ -10,7 +10,7 @@ Every step that involves the scanner gives the state the X1 must be in.
 X1: **off**.
 
 - The X1 has a FireWire 800 port.
-- On a Mac without FireWire, you need two Apple adapters: Thunderbolt 3 (USB-C) to Thunderbolt 2, then Thunderbolt to FireWire 800.
+- On a Mac without FireWire, you need two Apple adapters: Thunderbolt 3 (USB-C) to Thunderbolt 2, then Thunderbolt to FireWire 800. Their references: [Hardware and connection](hardware.md#chain).
 - USB to FireWire adapters do not work.
 - If the cable comes from another Mac, switch the X1 off and on after connecting it.
 
@@ -19,8 +19,8 @@ X1: **off**.
 X1: **either**.
 
 - macOS 26 Tahoe no longer has a FireWire driver.
-- The ASFireWire driver (DriverKit) replaces it.
-- Install it as its instructions say, then allow it in System Settings.
+- ASFireWire, a third-party driver in beta, restores FireWire: see [Hardware and connection](hardware.md#asfirewire).
+- Install it by following the guide on its website.
 - X1 Scan needs macOS 26 Tahoe.
 
 ## 3. Switch the X1 on and check {#check}

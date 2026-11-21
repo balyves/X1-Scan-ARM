@@ -1,4 +1,4 @@
-# Crop
+# {icon:crop} Crop
 
 The Crop tool draws and adjusts the frame of the image.
 

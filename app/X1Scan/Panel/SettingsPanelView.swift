@@ -130,7 +130,7 @@ private struct OriginalSection: View {
                 Button {
                     NSApp.sendAction(#selector(AppDelegate.showHolderSettings(_:)), to: nil, from: nil)
                 } label: {
-                    Image(systemName: "ellipsis.circle")
+                    Image(AppIcon.more)
                 }
                 .buttonStyle(.borderless)
                 .help(Text("Choose the holders shown here (Settings > Holders)", comment: "Tooltip"))
@@ -222,7 +222,7 @@ private struct OutputSection: View {
                 Button {
                     NSApp.sendAction(#selector(AppDelegate.showExportSettings(_:)), to: nil, from: nil)
                 } label: {
-                    Image(systemName: "ellipsis.circle")
+                    Image(AppIcon.more)
                 }
                 .buttonStyle(.borderless)
                 .help(Text("Edit the name templates (Settings > Export)", comment: "Tooltip of the … button next to the name template menu"))

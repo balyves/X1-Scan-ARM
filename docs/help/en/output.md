@@ -15,7 +15,7 @@ The Output tab (⌥⌘3) sets the exported file.
 
 - A name template, with parts such as {roll}, {frame}, the date or a number.
 - The name of the next file is shown below it.
-- The button on the right opens Settings › Export to edit the templates.
+- The {icon:more} button on the right opens Settings › Export to edit the templates.
 
 ## Folder {#folder}
 

@@ -1,4 +1,4 @@
-# Straightening Rule
+# {icon:rule} Straightening Rule
 
 The Rule straightens a tilted image.
 

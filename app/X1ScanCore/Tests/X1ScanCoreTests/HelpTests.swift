@@ -45,12 +45,17 @@ struct HelpTests {
         }
     }
 
-    /// Every link of every page leads to a page that exists, and to an anchor of it.
+    /// Every link of every page leads to a page that exists, and to an anchor
+    /// of it; or it is a web address in https, opened in the browser.
     @Test func everyInternalLinkLeadsToAPage() throws {
         for language in HelpLibrary.languages {
             let library = try Self.library(language)
             for page in library.pages {
                 for link in HelpMarkdown.links(page.markdown) {
+                    if link.target.contains(":") {
+                        #expect(link.target.hasPrefix("https://"), "\(language)/\(page.id): \(link.target)")
+                        continue
+                    }
                     let place = HelpLibrary.resolve(link.target, from: page.id)
                     let target = try #require(place, "\(language)/\(page.id): link \(link.target) is not a help page")
                     let destination = try #require(library.page(target.page),
@@ -242,5 +247,79 @@ struct HelpTests {
         #expect(html.contains("color-scheme: light dark") && html.contains("-apple-system-label"))
         #expect(html.contains("<html lang=\"fr\">"))
         #expect(try Self.library("fr").html(for: "missing") == nil)
+    }
+
+    // MARK: Icons
+
+    /// `app/X1Scan`, from this file.
+    static let appSources: URL = URL(filePath: #filePath)
+        .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        .deletingLastPathComponent().appending(path: "X1Scan")
+
+    /// Every `{icon:…}` of the pages names an icon of the table, and every
+    /// icon of the table is shown in the help, in both languages.
+    @Test func iconsOfThePagesComeFromTheTable() throws {
+        for language in HelpLibrary.languages {
+            let library = try Self.library(language)
+            var used: Set<String> = []
+            for page in library.pages {
+                for key in HelpMarkdown.iconKeys(page.markdown) {
+                    #expect(AppIcon(rawValue: key) != nil, "\(language)/\(page.id): unknown icon \(key)")
+                    used.insert(key)
+                }
+            }
+            let all: Set<String> = Set(AppIcon.allCases.map(\.rawValue))
+            #expect(used == all, "\(language): icons not shown \(all.subtracting(used).sorted())")
+        }
+    }
+
+    /// Each tool's page shows its icon in its title, next to its name; the
+    /// title (window list, search) keeps the name only.
+    @Test func eachToolPageShowsItsIcon() throws {
+        let pages: [(id: String, icon: AppIcon)] = [
+            ("tool-hand", .tool(.hand)), ("tool-zoom", .tool(.zoom)), ("tool-crop", .tool(.crop)),
+            ("tool-rule", .tool(.straighten)), ("tool-grid", .grid), ("tool-exposure-zones", .exposureZones),
+        ]
+        for language in HelpLibrary.languages {
+            let library = try Self.library(language)
+            for (id, icon) in pages {
+                let page = try #require(library.page(id))
+                let first: String = page.markdown.components(separatedBy: .newlines).first ?? ""
+                #expect(first.hasPrefix("# {icon:\(icon.rawValue)} "), "\(language)/\(id)")
+                #expect(!page.title.contains("{"), "\(language)/\(id): \(page.title)")
+            }
+        }
+    }
+
+    /// The icon becomes a mask of the text's colour, from the picture the
+    /// application draws; without a picture, or for an unknown key, nothing.
+    @Test func iconsAreDrawnWhenThePageIsShown() {
+        let url: (AppIcon) -> String? = { $0 == .hand ? "data:image/png;base64,AAAA" : nil }
+        let html: String = HelpMarkdown.html("# {icon:hand} Hand\n\n- {icon:zoom} Zoom {icon:nothing}", iconURL: url)
+        #expect(html.contains("<h1><span class=\"icon\" data-icon=\"hand\" aria-hidden=\"true\" "
+            + "style=\"-webkit-mask-image: url('data:image/png;base64,AAAA')\"></span> Hand</h1>"))
+        #expect(html.contains("<li> Zoom </li>"))
+        #expect(!HelpMarkdown.html("{icon:hand} A").contains("span"), "no picture, no icon")
+        #expect(HelpMarkdown.plainText("{icon:hand} Hand") == "Hand")
+        #expect(HelpMarkdown.plainText("Total {roll}") == "Total {roll}", "other braces are text")
+        #expect(HelpMarkdown.iconKeys("a {icon:hand} b {icon:grid}") == ["hand", "grid"])
+    }
+
+    /// One source for the symbols: the application names none of the
+    /// table's system symbols itself, it goes through `AppIcon`.
+    @Test func theApplicationUsesTheIconTable() throws {
+        let names: [String] = AppIcon.allCases.compactMap(\.symbolName)
+        let enumerator = try #require(FileManager.default.enumerator(at: Self.appSources, includingPropertiesForKeys: nil))
+        var checked = 0
+        for case let url as URL in enumerator where url.pathExtension == "swift" {
+            let text: String = try String(contentsOf: url, encoding: .utf8)
+            checked += 1
+            for name in names {
+                for call in ["systemName: \"\(name)\"", "systemSymbolName: \"\(name)\""] {
+                    #expect(!text.contains(call), "\(url.lastPathComponent) names \(name) itself")
+                }
+            }
+        }
+        #expect(checked > 10)
     }
 }

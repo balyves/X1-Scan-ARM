@@ -8,6 +8,7 @@ This help describes the application as it is today.
 ## Getting started {#start}
 
 - [Your first scan, step by step](first-scan.md)
+- [Hardware and connection](hardware.md)
 - [Discovery mode](discovery.md)
 - [Keyboard shortcuts](shortcuts.md)
 - [Troubleshooting](troubleshooting.md)
@@ -21,17 +22,19 @@ This help describes the application as it is today.
 
 ## The tools {#tools}
 
-- [Hand](tool-hand.md)
-- [Zoom](tool-zoom.md)
-- [Crop](tool-crop.md)
-- [Straightening Rule](tool-rule.md)
-- [Grid](tool-grid.md)
-- [Exposure Zones](tool-exposure-zones.md)
+- {icon:hand} [Hand](tool-hand.md)
+- {icon:zoom} [Zoom](tool-zoom.md)
+- {icon:crop} [Crop](tool-crop.md)
+- {icon:rule} [Straightening Rule](tool-rule.md)
+- {icon:grid} [Grid](tool-grid.md)
+- {icon:exposure-zones} [Exposure Zones](tool-exposure-zones.md)
 
 ## Index {#functions}
 
 - [About and licences](about.md)
+- [Adapters and cable](hardware.md#chain)
 - [Angle](prepare.md#angle)
+- [ASFireWire](hardware.md#asfirewire)
 - [Compression](output.md#compression)
 - [Constrain to image](prepare.md#constrain)
 - [Crop](tool-crop.md)
@@ -46,6 +49,7 @@ This help describes the application as it is today.
 - [Framing](prepare.md#framing)
 - [Grid](tool-grid.md)
 - [Hand](tool-hand.md)
+- [Hardware and connection](hardware.md)
 - [Histogram](information.md#histogram)
 - [Holder](prepare.md#holder)
 - [Keyboard shortcuts](shortcuts.md)

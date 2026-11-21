@@ -1,4 +1,4 @@
-# Règle de redressement
+# {icon:rule} Règle de redressement
 
 La Règle redresse une image penchée.
 
