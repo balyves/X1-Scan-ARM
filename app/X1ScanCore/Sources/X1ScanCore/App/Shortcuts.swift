@@ -100,8 +100,8 @@ public struct KeyShortcut: Sendable, Hashable {
 
 /// The shortcuts of the functions that have a tooltip: the one source for
 /// the menus, the window's and the canvas's key handling, and the tooltips
-/// (`ShortcutTooltip`). Shortcuts of menu items without a tooltip (zoom,
-/// Hide Settings Panel…) stay in the menu.
+/// (`ShortcutTooltip`). Shortcuts of menu items without a tooltip (zoom…)
+/// stay in the menu; Hide Settings Panel's is in the divider's tooltip.
 public enum AppShortcut: Sendable, Hashable {
     case tool(Tool)
     /// The hand while the space bar is held.
@@ -259,6 +259,7 @@ public enum ShortcutTooltip: String, Sendable, CaseIterable {
     case prepareTab, scanTab, outputTab
     case rotateCounterclockwise, rotateClockwise, gridButton
     case previewVirtual, previewReal, stopPreview, stopScan, export, reset
+    case panelDivider
 
     public var key: String {
         switch self {
@@ -283,6 +284,7 @@ public enum ShortcutTooltip: String, Sendable, CaseIterable {
         case .stopScan: "Stop the scan"
         case .export: "Export the image shown, turned, straightened and cropped, with its recipe. A saved scan is never replaced: its versions are named _v1, _v2…"
         case .reset: "Reset the orientation, proportions, angle and frame to the original; Edit › Undo cancels it"
+        case .panelDivider: "Drag to resize the settings panel, or to the right to hide it; drag it back to the left to show it again"
         }
     }
 
@@ -305,6 +307,7 @@ public enum ShortcutTooltip: String, Sendable, CaseIterable {
         case .stopPreview, .stopScan: [.stop, .escape]
         case .export: [.export]
         case .reset: [.undo]
+        case .panelDivider: [.toggleSettingsPanel]
         }
     }
 

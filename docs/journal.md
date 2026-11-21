@@ -1016,3 +1016,8 @@ unclear to the user, to be explained and redone):
   each tool and icon button next to its name, drawn when the page is shown
   from the interface's own table (`AppIcon`); no image of a system symbol
   in the repository.
+- Settings panel: dragging the divider to the right edge hides it, the
+  tool column staying; ⌥⌘P does the same; a drag from the edge, ⌥⌘P or
+  ⌥⌘1 to ⌥⌘3 show it again, at its width. Saved, and the same in full
+  screen (synthetic drags, `-X1ScanDragProbe`). Scanner > Scan added so
+  that the scan stays at hand; the divider has a tooltip.

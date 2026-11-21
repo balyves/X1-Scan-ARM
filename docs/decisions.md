@@ -345,7 +345,22 @@ Recorded on 2026-11-14. Nothing here changes what is sent to a scanner.
   are one split view item: they resize together (280-480 pt for the panel,
   300 at first launch, then remembered; 260-640 until 2026-11-16, narrowed
   for the compact panel)
-  and hide together with one command, View > Hide Settings Panel (⌥⌘P).
+  and hid together with one command, View > Hide Settings Panel (⌥⌘P),
+  until 2026-11-21. Since then (user's request), hiding keeps the tool
+  column: the item narrows to it (minimum = maximum = the column's width,
+  never collapsed), and the panel is hidden by ⌥⌘P or by dragging the
+  divider past half the panel's smallest width (less 20 pt) towards the
+  right edge; it comes back with ⌥⌘P, ⌥⌘1 to ⌥⌘3, or the divider (which
+  stays on the left of the tool column) dragged back past half the
+  smallest width plus 20 pt, so that a hesitating drag does not flicker. A drag that hides the panel keeps the width it had when the drag
+  began (a `NSSplitView` subclass tells when its tracking begins and
+  ends). The state is saved (`InspectorLayout.isHidden`), and full screen
+  behaves the same (checked with synthetic drags, `-X1ScanDragProbe`).
+  `NSSplitViewController` declares `splitView(_:constrainSplitPosition:
+  ofSubviewAt:)` for Swift but does not implement it: the override never
+  calls super (it crashed). With the panel hidden, Preview and Scan stay
+  in the Scanner menu (Scanner > Scan added, no shortcut yet). The divider
+  has a tooltip (`ShortcutTooltip.panelDivider`, ending with ⌥⌘P).
   The item has a holding priority of 260, just above the image area's 250:
   at 750 it was above the divider drag and froze the panel at its minimum
   width. On macOS 26 the split view's `subviews` also hold the divider view,

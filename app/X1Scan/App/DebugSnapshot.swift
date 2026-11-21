@@ -26,6 +26,10 @@ import X1ScanCore
 ///   -X1ScanAspect <a>            crop proportions: free, original or W:H, e.g. 24:36
 ///   -X1ScanKeyProbe YES          click the tabs and a field, press C or R after each, print
 ///                                the keyboard focus and the tool selected, quit (KeyProbe)
+///   -X1ScanDragProbe YES         drag the divider with synthetic mouse events: to the right edge
+///                                (settings panel hidden, tool column kept), back, ⌥⌘P's and a
+///                                tab's commands; -X1ScanDragProbeFullScreen YES in full screen;
+///                                print the states, put the layout back, quit
 ///   -X1ScanResizeProbe YES       resize the window, move the divider, hide and show the panel,
 ///                                print the sizes, put the window frame and panel layout back, quit
 ///   -X1ScanHelpSnapshot <path>   open the help window, write it (<path>, sidebar) and its page
@@ -94,6 +98,13 @@ enum DebugSnapshot {
         if let kind = arguments.string(forKey: "X1ScanGrid").flatMap(GridKind.init(rawValue:)) { model.showGrid(kind) }
         if arguments.bool(forKey: "X1ScanAutoPreview") { model.startPreview() }
         if arguments.bool(forKey: "X1ScanKeyProbe"), let window { KeyProbe.run(window: window, model: model) }
+        if arguments.bool(forKey: "X1ScanDragProbe"), let window {
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1))
+                await dragProbe(window: window, model: model, fullScreen: arguments.bool(forKey: "X1ScanDragProbeFullScreen"))
+                NSApp.terminate(nil)
+            }
+        }
         if arguments.bool(forKey: "X1ScanResizeProbe"), let window {
             Task { @MainActor in
                 try? await Task.sleep(for: .seconds(1))
@@ -203,6 +214,71 @@ enum DebugSnapshot {
             }
             NSApp.terminate(nil)
         }
+    }
+
+    /// Drags the divider with synthetic mouse events (as a user would): to
+    /// the right edge (the settings panel hides, the tool column stays), then
+    /// from the edge back (it shows again), then ⌥⌘P's command and a tab's;
+    /// optionally in full screen. Reports on stderr; puts back the layout.
+    private static func dragProbe(window: NSWindow, model: AppModel, fullScreen: Bool) async {
+        guard let split = (window.contentViewController as? NSSplitViewController)?.splitView else { return }
+        let savedLayout = model.panel.layout
+        let savedFrame = window.frame
+        if model.panel.layout.isHidden {
+            model.panel.toggleHidden()
+            try? await Task.sleep(for: .milliseconds(500))
+        }
+        if fullScreen {
+            window.toggleFullScreen(nil)
+            try? await Task.sleep(for: .seconds(2))
+        }
+        func report(_ label: String) {
+            let widths = split.arrangedSubviews.map { Int($0.frame.width.rounded()) }
+            FileHandle.standardError.write(Data("PROBE \(label): hidden=\(model.panel.layout.isHidden) width=\(Int(model.panel.layout.width)) panes=\(widths) fullScreen=\(window.styleMask.contains(.fullScreen))\n".utf8))
+        }
+        func drag(toX x: CGFloat) async {
+            let dividerX = split.arrangedSubviews[0].frame.maxX + split.dividerThickness / 2
+            let y = split.bounds.midY
+            let start = split.convert(NSPoint(x: dividerX, y: y), to: nil)
+            let end = split.convert(NSPoint(x: x, y: y), to: nil)
+            func event(_ type: NSEvent.EventType, _ point: NSPoint) -> NSEvent? {
+                NSEvent.mouseEvent(with: type, location: point, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+                                   windowNumber: window.windowNumber, context: nil, eventNumber: 0, clickCount: 1, pressure: 1)
+            }
+            // The split view's tracking loop takes the drags and the release from the queue.
+            for step in 1...10 {
+                let point = NSPoint(x: start.x + (end.x - start.x) * CGFloat(step) / 10, y: start.y)
+                if let moved = event(.leftMouseDragged, point) { NSApp.postEvent(moved, atStart: false) }
+            }
+            if let up = event(.leftMouseUp, end) { NSApp.postEvent(up, atStart: false) }
+            if let down = event(.leftMouseDown, start) { window.sendEvent(down) }
+            try? await Task.sleep(for: .milliseconds(500))
+        }
+        report("start")
+        await drag(toX: split.bounds.width - 120)
+        report("drag to 120 from the edge (past the threshold: hidden, width kept)")
+        await drag(toX: split.bounds.width - 400)
+        report("drag from the edge to 400 (shown)")
+        await drag(toX: split.bounds.width - 300)
+        report("drag to 300 (shown, narrower)")
+        await drag(toX: split.bounds.width - 2)
+        report("drag to the edge (hidden, the width of before the drag kept)")
+        model.panel.toggleHidden()
+        try? await Task.sleep(for: .milliseconds(500))
+        report("toggle (shown at the kept width)")
+        model.panel.toggleHidden()
+        try? await Task.sleep(for: .milliseconds(500))
+        report("toggle (hidden)")
+        model.panel.select(.output)
+        model.panel.layout.isHidden = false
+        try? await Task.sleep(for: .milliseconds(500))
+        report("tab (shown)")
+        if fullScreen {
+            window.toggleFullScreen(nil)
+            try? await Task.sleep(for: .seconds(2))
+        }
+        model.panel.layout = savedLayout
+        window.setFrame(savedFrame, display: false)
     }
 
     /// The help window at a page (and a search), then quit.

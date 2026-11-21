@@ -61,7 +61,7 @@ Cette page suit le chemin complet, du branchement au fichier enregistré.
 État du X1 : **allumé**, rien n’a bougé depuis l’aperçu. FlexColor : **fermé**.
 
 - Choisissez d’abord un [dossier d’export](output.md#folder) : la numérisation y est enregistrée.
-- Cliquez sur « Numériser » en bas du panneau.
+- Cliquez sur « Numériser » en bas du panneau, ou choisissez Scanner › Numériser.
 - La barre du bas indique la mise au point, puis les lignes de l’image.
 
 ## 8. Enregistrer {#save}

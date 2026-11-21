@@ -20,6 +20,14 @@ Cette aide décrit l’application telle qu’elle est aujourd’hui.
 - [Sortie](output.md)
 - [Informations : Histogramme et Exposition](information.md)
 
+### Masquer le panneau {#hide-panel}
+
+- Faites glisser le trait vertical à gauche de la colonne d’outils vers le bord droit de la fenêtre : le panneau se masque et le trait s’arrête contre la colonne d’outils (onglets, Informations, boutons Aperçu et Numériser). La colonne d’outils reste visible, l’image prend toute la largeur.
+- Aussi : Présentation › Masquer le panneau de réglages (⌥⌘P).
+- Pour le réafficher : faites glisser vers la gauche le trait à gauche de la colonne d’outils, choisissez Présentation › Afficher le panneau de réglages (⌥⌘P), ou un onglet (⌥⌘1 à ⌥⌘3).
+- Panneau masqué, l’aperçu et la numérisation restent dans le menu Scanner : Aperçu (⌘R) et Numériser.
+- Le panneau garde sa largeur, et l’application se souvient s’il est masqué. Cela marche aussi en plein écran.
+
 ## Les outils {#tools}
 
 - {icon:hand} [Main](tool-hand.md)
@@ -50,6 +58,7 @@ Cette aide décrit l’application telle qu’elle est aujourd’hui.
 - [Histogramme](information.md#histogram)
 - [Loupe](tool-zoom.md)
 - [Main](tool-hand.md)
+- [Masquer le panneau](index.md#hide-panel)
 - [Matériel et connexion](hardware.md)
 - [Mode découverte](discovery.md)
 - [Nom de fichier](output.md#name)

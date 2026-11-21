@@ -61,7 +61,7 @@ X1: **either** (nothing is sent to the scanner).
 X1: **on**, nothing moved since the preview. FlexColor: **closed**.
 
 - First choose an [export folder](output.md#folder): the scan is saved there.
-- Click “Scan” at the bottom of the panel.
+- Click “Scan” at the bottom of the panel, or choose Scanner › Scan.
 - The bottom bar shows the focusing, then the image lines.
 
 ## 8. Save {#save}

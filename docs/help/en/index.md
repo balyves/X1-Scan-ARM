@@ -20,6 +20,14 @@ This help describes the application as it is today.
 - [Output](output.md)
 - [Information: Histogram and Exposure](information.md)
 
+### Hiding the panel {#hide-panel}
+
+- Drag the vertical line on the left of the tool column towards the right edge of the window: the panel hides and the line stops against the tool column (tabs, Information, Preview and Scan buttons). The tool column stays, and the image takes the whole width.
+- Also: View › Hide Settings Panel (⌥⌘P).
+- To show it again: drag the line on the left of the tool column to the left, choose View › Show Settings Panel (⌥⌘P), or a tab (⌥⌘1 to ⌥⌘3).
+- With the panel hidden, preview and scan stay in the Scanner menu: Preview (⌘R) and Scan.
+- The panel keeps its width, and the application remembers whether it is hidden. This also works in full screen.
+
 ## The tools {#tools}
 
 - {icon:hand} [Hand](tool-hand.md)
@@ -50,6 +58,7 @@ This help describes the application as it is today.
 - [Grid](tool-grid.md)
 - [Hand](tool-hand.md)
 - [Hardware and connection](hardware.md)
+- [Hide the panel](index.md#hide-panel)
 - [Histogram](information.md#histogram)
 - [Holder](prepare.md#holder)
 - [Keyboard shortcuts](shortcuts.md)

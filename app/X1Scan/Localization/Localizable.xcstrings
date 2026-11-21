@@ -7164,6 +7164,24 @@
           }
         }
       }
+    },
+    "Drag to resize the settings panel, or to the right to hide it; drag it back to the left to show it again": {
+      "comment": "Tooltip of the line between the image and the tool column; the app adds its shortcut in parentheses",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag to resize the settings panel, or to the right to hide it; drag it back to the left to show it again"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Faites glisser pour régler la largeur du panneau de réglages, ou vers la droite pour le masquer ; faites-le glisser vers la gauche pour le réafficher"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

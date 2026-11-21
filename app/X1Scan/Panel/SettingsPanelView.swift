@@ -328,7 +328,7 @@ private struct ActionButtons: View {
             Button {
                 NSApp.sendAction(#selector(MainWindowController.startScan(_:)), to: nil, from: nil)
             } label: {
-                Text("Scan", comment: "Toolbar button").frame(maxWidth: .infinity)
+                Text("Scan", comment: "Menu item and panel button").frame(maxWidth: .infinity)
             }
             .disabled(!toolbar.canScan)
             .tint(toolbar.canScan ? nil : .gray)  // a disabled prominent button stays tinted in dark mode

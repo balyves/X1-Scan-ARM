@@ -19,7 +19,7 @@ The Scan tab (⌥⌘2) sets the resolution and the scale, and shows the sizes.
 
 ## Scan {#scan-button}
 
-- The “Scan” button is at the bottom of the panel, next to “Preview”.
+- The “Scan” button is at the bottom of the panel, next to “Preview”. Also: Scanner › Scan.
 - An [export folder](output.md#folder) is needed first.
 - Today the scan replays FlexColor’s 2 000 ppi scan, with its frame. The panel’s frame does not change the area scanned.
 - “Stop” (⌘. or Esc) stops it.
