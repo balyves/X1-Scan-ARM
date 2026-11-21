@@ -198,11 +198,13 @@ enum MainMenu {
 
     private static func scannerMenu() -> NSMenu {
         let menu = NSMenu(title: String(localized: "Scanner", comment: "Menu"))
-        menu.addItem(item(String(localized: "Preview", comment: "Menu item and toolbar button"),
+        // "…": on the real X1 a confirmation opens first (user's decision of 2026-11-21).
+        menu.addItem(item(String(localized: "Preview…", comment: "Menu item (Scanner menu); the panel's button is Preview"),
                           #selector(MainWindowController.startPreview(_:)), shortcut: .preview))
         // The same action as the panel's Scan button (confirmation first on the real X1), so
-        // that it stays at hand with the settings panel hidden. No shortcut yet (user's decision).
-        menu.addItem(item(String(localized: "Scan", comment: "Menu item and panel button"), #selector(MainWindowController.startScan(_:))))
+        // that it stays at hand with the settings panel hidden; ⇧⌘R (user's decision of 2026-11-21).
+        menu.addItem(item(String(localized: "Scan…", comment: "Menu item (Scanner menu); the panel's button is Scan"),
+                          #selector(MainWindowController.startScan(_:)), shortcut: .scan))
         menu.addItem(item(String(localized: "Stop", comment: "Menu item and toolbar button"),
                           #selector(MainWindowController.stopPreview(_:)), shortcut: .stop))
         // The source is chosen in Settings > Scanner; Read Identity is in Scanner Information.

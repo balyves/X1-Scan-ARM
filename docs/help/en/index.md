@@ -25,7 +25,7 @@ This help describes the application as it is today.
 - Drag the vertical line on the left of the tool column towards the right edge of the window: the panel hides and the line stops against the tool column (tabs, Information, Preview and Scan buttons). The tool column stays, and the image takes the whole width.
 - Also: View › Hide Settings Panel (⌥⌘P).
 - To show it again: drag the line on the left of the tool column to the left, choose View › Show Settings Panel (⌥⌘P), or a tab (⌥⌘1 to ⌥⌘3).
-- With the panel hidden, preview and scan stay in the Scanner menu: Preview (⌘R) and Scan.
+- With the panel hidden, preview and scan stay in the Scanner menu: Preview… (⌘R) and Scan… (⇧⌘R).
 - The panel keeps its width, and the application remembers whether it is hidden. This also works in full screen.
 
 ## The tools {#tools}

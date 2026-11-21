@@ -317,7 +317,7 @@ private struct ActionButtons: View {
                     // Through the window: on the real X1 it asks for the confirmation first.
                     NSApp.sendAction(#selector(MainWindowController.startPreview(_:)), to: nil, from: nil)
                 } label: {
-                    Text("Preview", comment: "Menu item and toolbar button").frame(maxWidth: .infinity)
+                    Text("Preview", comment: "Panel button; the menu item is Preview…").frame(maxWidth: .infinity)
                 }
                 .disabled(!toolbar.canPreview)
                 .tint(toolbar.canPreview ? nil : .gray)  // a disabled prominent button stays tinted in dark mode
@@ -328,14 +328,13 @@ private struct ActionButtons: View {
             Button {
                 NSApp.sendAction(#selector(MainWindowController.startScan(_:)), to: nil, from: nil)
             } label: {
-                Text("Scan", comment: "Menu item and panel button").frame(maxWidth: .infinity)
+                Text("Scan", comment: "Panel button; the menu item is Scan…").frame(maxWidth: .infinity)
             }
             .disabled(!toolbar.canScan)
             .tint(toolbar.canScan ? nil : .gray)  // a disabled prominent button stays tinted in dark mode
             .help(toolbar.scanBlock.map(Strings.scanBlock)
                   ?? (toolbar.scanNeedsConfirmation
-                      ? String(localized: "Run FlexColor's captured 2 000 ppi scan on the real X1", comment: "Tooltip")
-                      : String(localized: "Run FlexColor's captured 2 000 ppi scan on the virtual X1", comment: "Tooltip")))
+                      ? Strings.tooltip(.scanReal) : Strings.tooltip(.scanVirtual)))
         }
         .controlSize(.large)
         .buttonStyle(.borderedProminent)

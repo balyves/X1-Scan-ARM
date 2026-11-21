@@ -137,6 +137,11 @@ struct HelpTests {
         #expect(Set(AppShortcut.menuOnly) == Set(expected.keys))
         let displays: [String] = AppShortcut.helpTable.compactMap { $0.shortcut?.display() }
         #expect(Set(displays).count == displays.count, "two functions share a shortcut")
+        // Scanner > Scan… (user's decision of 2026-11-21), next to Preview… (⌘R).
+        #expect(AppShortcut.scan.shortcut?.display() == "⇧⌘R" && AppShortcut.preview.shortcut?.display() == "⌘R")
+        #expect(AppShortcut.scan.helpGroup == .scanner)
+        let scanTip: String = ShortcutTooltip.scanReal.text("Scan", names: .english)
+        #expect(scanTip == "Scan (⇧⌘R)")
     }
 
     /// Shortcuts written in the other pages are those of the table, in the

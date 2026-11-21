@@ -116,6 +116,7 @@ public enum AppShortcut: Sendable, Hashable {
     case rotateClockwise
     case toggleGrid
     case preview
+    case scan
     case stop
     case export
     case undo
@@ -150,6 +151,7 @@ public enum AppShortcut: Sendable, Hashable {
         case .rotateClockwise: KeyShortcut("]", .command)
         case .toggleGrid: KeyShortcut("'", .command)
         case .preview: KeyShortcut("r", .command)
+        case .scan: KeyShortcut("r", [.shift, .command])
         case .stop: KeyShortcut(".", .command)
         case .export: KeyShortcut("e", [.shift, .command])
         case .undo: KeyShortcut("z", .command)
@@ -171,7 +173,7 @@ public enum AppShortcut: Sendable, Hashable {
         Tool.allCases.map(AppShortcut.tool)
             + [.temporaryHand, .swapProportions, .done, .escape, .angle, .angleLarge]
             + PanelTab.visible.map(AppShortcut.panelTab)
-            + [.rotateCounterclockwise, .rotateClockwise, .toggleGrid, .preview, .stop, .export, .undo]
+            + [.rotateCounterclockwise, .rotateClockwise, .toggleGrid, .preview, .scan, .stop, .export, .undo]
     }
 
     /// The menu shortcuts without a tooltip (lot A).
@@ -195,7 +197,7 @@ public enum AppShortcut: Sendable, Hashable {
         case .rotateCounterclockwise, .rotateClockwise, .toggleGrid: .image
         case .zoomToFit, .zoomToFill, .actualSize, .zoomIn, .zoomOut: .view
         case .panelTab, .toggleSettingsPanel: .panel
-        case .preview, .stop: .scanner
+        case .preview, .scan, .stop: .scanner
         case .export, .scannerInformation, .settings, .help: .application
         }
     }
@@ -258,7 +260,7 @@ public enum ShortcutTooltip: String, Sendable, CaseIterable {
     case ruleButton, straightenRow, swapProportions, done, angle
     case prepareTab, scanTab, outputTab
     case rotateCounterclockwise, rotateClockwise, gridButton
-    case previewVirtual, previewReal, stopPreview, stopScan, export, reset
+    case previewVirtual, previewReal, scanVirtual, scanReal, stopPreview, stopScan, export, reset
     case panelDivider
 
     public var key: String {
@@ -280,6 +282,8 @@ public enum ShortcutTooltip: String, Sendable, CaseIterable {
         case .gridButton: "Click: show or hide · Right click: kind, colour, opacity"
         case .previewVirtual: "Run a preview on the virtual X1"
         case .previewReal: "Run FlexColor's captured preview on the real X1"
+        case .scanVirtual: "Run FlexColor's captured 2 000 ppi scan on the virtual X1"
+        case .scanReal: "Run FlexColor's captured 2 000 ppi scan on the real X1"
         case .stopPreview: "Stop the preview"
         case .stopScan: "Stop the scan"
         case .export: "Export the image shown, turned, straightened and cropped, with its recipe. A saved scan is never replaced: its versions are named _v1, _v2…"
@@ -304,6 +308,7 @@ public enum ShortcutTooltip: String, Sendable, CaseIterable {
         case .rotateClockwise: [.rotateClockwise]
         case .gridButton: [.toggleGrid]
         case .previewVirtual, .previewReal: [.preview]
+        case .scanVirtual, .scanReal: [.scan]
         case .stopPreview, .stopScan: [.stop, .escape]
         case .export: [.export]
         case .reset: [.undo]

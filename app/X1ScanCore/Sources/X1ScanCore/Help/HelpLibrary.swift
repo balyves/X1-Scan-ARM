@@ -171,7 +171,8 @@ public struct HelpLibrary: Sendable {
 /// The page of keyboard shortcuts, made from the same table as the menus
 /// and the tooltips (`AppShortcut.helpTable`): never written by hand.
 public enum HelpShortcuts {
-    /// One `##` heading per group, then one line per shortcut: `- **⌘R** — Preview`.
+    /// One `##` heading per group, with an anchor (`{#keys-scanner}`, the
+    /// same in every language), then one line per shortcut: `- **⌘R** — Preview`.
     public static func markdown(groupTitle: (AppShortcut.HelpGroup) -> String,
                                 label: (AppShortcut) -> String,
                                 names: KeyShortcut.KeyNames) -> String {
@@ -180,7 +181,8 @@ public enum HelpShortcuts {
                 guard let keys = shortcut.shortcut?.display(names: names) else { return nil }
                 return "- **\(keys)** — \(label(shortcut))"
             }
-            return lines.isEmpty ? nil : "## \(groupTitle(group))\n\n" + lines.joined(separator: "\n")
+            return lines.isEmpty ? nil
+                : "## \(groupTitle(group)) {#keys-\(group)}\n\n" + lines.joined(separator: "\n")
         }.joined(separator: "\n\n")
     }
 }

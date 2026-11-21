@@ -37,7 +37,8 @@ extension Strings {
         case .rotateCounterclockwise: rotateCounterclockwise
         case .rotateClockwise: rotateClockwise
         case .toggleGrid: String(localized: "help.shortcut.grid", defaultValue: "Show or hide the grid", comment: "Help, Keyboard Shortcuts page")
-        case .preview: String(localized: "Preview", comment: "Menu item and toolbar button")
+        case .preview: String(localized: "Preview…", comment: "Menu item (Scanner menu); the panel's button is Preview")
+        case .scan: String(localized: "Scan…", comment: "Menu item (Scanner menu); the panel's button is Scan")
         case .stop: String(localized: "Stop", comment: "Menu item and toolbar button")
         case .export: String(localized: "Export…", comment: "Menu item")
         case .undo: String(localized: "Undo", comment: "Menu item")

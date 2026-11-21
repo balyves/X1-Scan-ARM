@@ -1021,3 +1021,7 @@ unclear to the user, to be explained and redone):
   ⌥⌘1 to ⌥⌘3 show it again, at its width. Saved, and the same in full
   screen (synthetic drags, `-X1ScanDragProbe`). Scanner > Scan added so
   that the scan stays at hand; the divider has a tooltip.
+- User's answers: test 3 passes; ⌥⌘P hiding the panel alone is kept;
+  Scanner > Scan… takes ⇧⌘R and the Scanner menu reads "Preview…" and
+  "Scan…"; the two sample images are planned later, before the
+  photograph is added.

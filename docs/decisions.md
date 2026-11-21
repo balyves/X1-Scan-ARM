@@ -359,8 +359,13 @@ Recorded on 2026-11-14. Nothing here changes what is sent to a scanner.
   `NSSplitViewController` declares `splitView(_:constrainSplitPosition:
   ofSubviewAt:)` for Swift but does not implement it: the override never
   calls super (it crashed). With the panel hidden, Preview and Scan stay
-  in the Scanner menu (Scanner > Scan added, no shortcut yet). The divider
-  has a tooltip (`ShortcutTooltip.panelDivider`, ending with ⌥⌘P).
+  in the Scanner menu (Scanner > Scan added). The divider has a tooltip
+  (`ShortcutTooltip.panelDivider`, ending with ⌥⌘P). User's answers the
+  same day: ⌥⌘P hiding the panel alone is confirmed; Scan takes ⇧⌘R
+  (`AppShortcut.scan`, in the Scan button's tooltip and on the Keyboard
+  Shortcuts page); the Scanner menu items read "Preview…" and "Scan…",
+  since a confirmation opens first on the real X1 (the panel's buttons
+  keep "Preview" and "Scan").
   The item has a holding priority of 260, just above the image area's 250:
   at 750 it was above the divider drag and froze the panel at its minimum
   width. On macOS 26 the split view's `subviews` also hold the divider view,

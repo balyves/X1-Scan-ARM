@@ -80,7 +80,7 @@ struct ShortcutTests {
             #expect(window == shortcut || canvas == shortcut, "\(key.display()) shown for \(shortcut) but not handled as it")
         }
         // Every shortcut shown is handled somewhere: by the window or the canvas, or by a menu item.
-        let menuItems: [AppShortcut] = [.rotateCounterclockwise, .rotateClockwise, .toggleGrid, .preview, .stop, .export, .undo]
+        let menuItems: [AppShortcut] = [.rotateCounterclockwise, .rotateClockwise, .toggleGrid, .preview, .scan, .stop, .export, .undo]
         let tabItems: [AppShortcut] = PanelTab.visible.map(AppShortcut.panelTab)
         let menus: Set<AppShortcut> = Set(menuItems + tabItems)
         for shortcut in AppShortcut.all {

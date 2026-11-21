@@ -43,7 +43,7 @@ X1: **on**. FlexColor: **closed**.
 
 X1: **on**, holder in place. FlexColor: **closed**.
 
-- Click “Preview” at the bottom of the panel, or choose Scanner › Preview (⌘R).
+- Click “Preview” at the bottom of the panel, or choose Scanner › Preview… (⌘R).
 - The image builds up line by line.
 - “Stop” (⌘. or Esc) stops the preview at any time.
 - After the preview, the [exposure](information.md#exposure) is measured.
@@ -61,7 +61,7 @@ X1: **either** (nothing is sent to the scanner).
 X1: **on**, nothing moved since the preview. FlexColor: **closed**.
 
 - First choose an [export folder](output.md#folder): the scan is saved there.
-- Click “Scan” at the bottom of the panel, or choose Scanner › Scan.
+- Click “Scan” at the bottom of the panel, or choose Scanner › Scan… (⇧⌘R).
 - The bottom bar shows the focusing, then the image lines.
 
 ## 8. Save {#save}

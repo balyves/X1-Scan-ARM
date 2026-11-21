@@ -1173,7 +1173,8 @@
             "value": "Aperçu"
           }
         }
-      }
+      },
+      "comment": "Panel button; the menu item is Preview…"
     },
     "Preview complete": {
       "extractionState": "manual",
@@ -1442,7 +1443,8 @@
             "value": "Numériser"
           }
         }
-      }
+      },
+      "comment": "Panel button; the menu item is Scan…"
     },
     "Scan resolution in pixels per inch; saved, the scan stays at 2 000 ppi for now.": {
       "comment": "Tooltip of the Resolution slider and field of the settings panel",
@@ -3770,25 +3772,37 @@
       }
     },
     "Run FlexColor's captured 2 000 ppi scan on the real X1": {
-      "comment": "Tooltip",
+      "comment": "Tooltip of the Scan button; the app adds its shortcut in parentheses",
       "extractionState": "manual",
       "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Run FlexColor's captured 2 000 ppi scan on the real X1"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Lancer la numérisation capturée de FlexColor (2 000 ppi) sur le X1 réel"
+            "value": "Lancer la numérisation capturée de FlexColor à 2 000 ppp sur le X1 réel"
           }
         }
       }
     },
     "Run FlexColor's captured 2 000 ppi scan on the virtual X1": {
-      "comment": "Tooltip",
+      "comment": "Tooltip of the Scan button; the app adds its shortcut in parentheses",
       "extractionState": "manual",
       "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Run FlexColor's captured 2 000 ppi scan on the virtual X1"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Lancer la numérisation capturée de FlexColor (2 000 ppi) sur le X1 virtuel"
+            "value": "Lancer la numérisation capturée de FlexColor à 2 000 ppp sur le X1 virtuel"
           }
         }
       }
@@ -7179,6 +7193,42 @@
           "stringUnit": {
             "state": "translated",
             "value": "Faites glisser pour régler la largeur du panneau de réglages, ou vers la droite pour le masquer ; faites-le glisser vers la gauche pour le réafficher"
+          }
+        }
+      }
+    },
+    "Preview…": {
+      "comment": "Menu item (Scanner menu); the panel's button is Preview",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preview…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aperçu…"
+          }
+        }
+      }
+    },
+    "Scan…": {
+      "comment": "Menu item (Scanner menu); the panel's button is Scan",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scan…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Numériser…"
           }
         }
       }
