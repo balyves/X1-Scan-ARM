@@ -38,6 +38,14 @@ Scope: **Flextight X1 only**. Other Flextight / Imacon models are out of scope.
    `app/X1Scan/Icon/`; everywhere else, write "the icon's copyright
    holder" (docs/decisions.md, "Application icon"). Check before every
    commit.
+
+   Screenshots of the interface show only X1 Scan's own windows, never the
+   whole screen nor the whole menu bar: other windows and status icons may
+   show the user's private data (user's decision of 2026-11-21). Prefer
+   the debug snapshots on the virtual X1 (`-StartupSource virtual`; serial
+   always masked); a `screencapture -o -l <window id>` capture must not
+   show an unmasked serial, a client's film or a private path. Written
+   outside the repository (`~/X1-captures/ui/<date>/`).
 3. **Licence**: the project is MIT, except the application icon
    (`app/X1Scan/Icon/`, `LICENSE-ICON`; docs/decisions.md, "Application
    icon"). `LICENSE` stays the standard MIT text, unchanged except its
