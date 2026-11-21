@@ -992,3 +992,19 @@ sequences, guards, runner and transport commands are untouched; X1Kit
 gained only `cx1_find`, `ScannerPresence`, a TIFF description for samples
 and a film from an image for the simulator. Tried in the application on
 the virtual X1 only (debug snapshots); the X1 was not touched.
+
+## 2026-11-21: lot A follow-up (application, virtual X1)
+
+From the user's tests of lot A (tests 1, 2, 5 and 6 passed; test 4, X1
+busy, left for the next session with the X1; test 3, "No X1 found",
+unclear to the user, to be explained and redone):
+
+- Discovery mode: two tests try each `!discoveryMode` guard alone (real
+  source, every hidden setting and check on; discovery mode set through a
+  test-only hook that keeps the source), and the same call without it
+  reaches the simulated X1. Removing any one of the five guards makes
+  one of them fail (checked by hand). README roadmap: the sample photograph will
+  need two images (user's decision), the preview's pixels being drawn 1:3
+  (a [hypothesis], "Pixel aspect") and the decoded scan's square; found
+  on the way: `SampleFilm` gives one film with `rowsPerColumn` 1 to both
+  passes today, so no photograph is to be added before that changes.

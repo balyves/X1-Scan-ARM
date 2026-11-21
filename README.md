@@ -75,6 +75,19 @@ Planned for lot 3 of the application (`docs/decisions.md`, "Lot 1b"): RGB
 values under the pointer in the settings panel's Information area, with
 the pipettes and the densitometer (log10 densities next to RGB values).
 
+Discovery mode's sample photograph (`app/X1Scan/Sample/`, not added yet):
+two images of the same film, one for the preview and one for the scan
+(user's decision of 2026-11-21, `docs/decisions.md`, "Lot A: discovery
+mode"). The preview's pixels are drawn three
+times taller than wide (1:3, a [hypothesis] until real scans are
+captured: `PreviewGeometry.pixelAspectRatio`, `docs/decisions.md`, "Pixel
+aspect"); the decoded scan's pixels are square, its raw lines being 3/5
+of a column (`ScanDecoding.linesPerOutputLine`). Each image then becomes
+its own film (`SampleFilm.film(from:rowsPerColumn:)`: 3 for the preview,
+3/5 for the scan). Today one film, with `rowsPerColumn` 1, is given to
+both: a photograph added now would come out stretched in the preview and
+flattened in the scan.
+
 Future ideas, not scheduled, in no particular order. Those that drive the
 scanner (holder detection, HDR, averaging, all openings, guided calibration,
 Image Capture and Photoshop integration, strip thumbnails and batch

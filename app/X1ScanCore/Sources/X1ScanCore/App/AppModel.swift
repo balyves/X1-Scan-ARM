@@ -161,6 +161,13 @@ public final class AppModel {
         Task { await detectScanner() }
     }
 
+    /// Tests only (`@testable`): discovery mode on or off while the source
+    /// stays as it is, so that each `!discoveryMode` guard can be tried alone
+    /// with the real source. The application never calls it.
+    func setDiscoveryModeKeepingSourceForTesting(_ on: Bool) {
+        discoveryMode = on
+    }
+
     /// The presence check, for the real source outside discovery mode: at
     /// launch, and when leaving discovery mode.
     public func detectScanner() async {

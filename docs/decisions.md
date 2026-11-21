@@ -1527,3 +1527,11 @@ From the user's brief of 2026-11-20 and the answers to its plan (points 1,
   with its licence in `LICENSE-SAMPLE` (as `LICENSE-ICON`); `SampleFilm`
   then makes the virtual X1's film from it (`SyntheticFilm(transmission:)`,
   simulator only). No photograph is in the repository (tested).
+  User's decision of 2026-11-21: **two images** of the same film, one for
+  the preview and one for the scan. Each becomes its own film through
+  `SampleFilm.film(from:rowsPerColumn:)`: 3 for the preview (its pixels are
+  drawn 1:3, "Pixel aspect", a [hypothesis]), 3/5 for the scan (raw lines
+  of 3/5 of a column, `ScanDecoding.linesPerOutputLine`, so that the decoded
+  scan's pixels are square). Today `SampleFilm` reads one image with
+  `rowsPerColumn` 1 and gives it to both passes: no photograph is added
+  before that changes (README roadmap).

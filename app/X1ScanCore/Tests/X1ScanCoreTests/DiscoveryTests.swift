@@ -77,6 +77,100 @@ final class DiscoveryTests {
         #expect(spy.realAccesses == 0)
     }
 
+    /// A model whose real X1 is simulated behind the guards (as in ScanTests),
+    /// counting every connection, read and presence check.
+    private func guardedModel(spy: Spy, gate: DispatchSemaphore? = nil) throws -> AppModel {
+        let suite = "X1ScanCoreTests-\(UUID().uuidString)"
+        suites.append(suite)
+        let defaults = UserDefaults(suiteName: suite)!
+        defaults.set(true, forKey: "EnableRealPreview")
+        defaults.set(true, forKey: "EnableRealScan")
+        defaults.set(StartupSource.real.rawValue, forKey: "StartupSource")
+        let scanner = try TestFixtures.scanner()
+        let model = AppModel(virtualScanner: { scanner }, inspector: ScannerInspector {
+            spy.hit("inspector")
+            return FakeConnection(responses: [:], openError: TransportError.deviceBusy)
+        }, defaults: defaults, realConnection: { sequence in
+            if sequence.expected.contains(where: { $0.cdb == [0x1B, 0x00, 0x08, 0x06, 0x01, 0x00] }) {
+                spy.hit("scan")
+                return GuardedScanConnection(sequence: sequence, scanner: scanner)
+            }
+            spy.hit("preview")
+            return GuardedSimulatedConnection(sequence: sequence, scanner: scanner)
+        }, captureFolder: try temporaryDirectory(), presence: {
+            spy.hit("presence")
+            gate?.wait()
+            return spy.present
+        })
+        model.exportSettings = ExportSettings(folder: try temporaryDirectory(), nameTemplate: "Scan-{n}")
+        return model
+    }
+
+    /// Each `!discoveryMode` guard alone: the real source, every hidden setting
+    /// and every check on, so that discovery mode is the only thing that
+    /// refuses; and the same call, discovery mode off, does reach the
+    /// (simulated) real X1, which shows the guard is what stopped it.
+    @Test func eachDiscoveryGuardAlone() async throws {
+        let spy = Spy()
+        let model = try guardedModel(spy: spy)
+        #expect(model.source == .real)
+
+        // detectScanner, first guard.
+        model.setDiscoveryModeKeepingSourceForTesting(true)
+        #expect(model.discoveryMode && model.source == .real)
+        await model.detectScanner()
+        #expect(spy.count("presence") == 0 && model.detection == .notChecked)
+        model.setDiscoveryModeKeepingSourceForTesting(false)
+        await model.detectScanner()
+        #expect(spy.count("presence") == 1 && model.detection == .found)
+
+        // readRealScanner.
+        model.setDiscoveryModeKeepingSourceForTesting(true)
+        await model.readRealScanner()
+        #expect(spy.count("inspector") == 0 && model.realStatus == .notRead)
+        model.setDiscoveryModeKeepingSourceForTesting(false)
+        await model.readRealScanner()
+        #expect(spy.count("inspector") == 1)
+
+        // startRealPreview.
+        model.setDiscoveryModeKeepingSourceForTesting(true)
+        #expect(model.startRealPreview(allPreview) == .failure(.notAllowed))
+        #expect(spy.count("preview") == 0)
+        model.setDiscoveryModeKeepingSourceForTesting(false)
+        _ = try model.startRealPreview(allPreview).get()
+        await model.session.waitUntilIdle()
+        #expect(spy.count("preview") == 1 && model.session.state == .finished)
+        #expect(model.toolbar.canScan, "a complete real preview: only discovery mode can refuse the scan now")
+
+        // startRealScan.
+        model.setDiscoveryModeKeepingSourceForTesting(true)
+        #expect(model.startRealScan(allScan) == .failure(.notAllowed))
+        #expect(spy.count("scan") == 0)
+        model.setDiscoveryModeKeepingSourceForTesting(false)
+        _ = try model.startRealScan(allScan).get()
+        await model.session.waitUntilIdle()
+        #expect(spy.count("scan") == 1 && model.session.state == .finished)
+    }
+
+    /// detectScanner's second guard: discovery mode entered while the
+    /// presence check runs; its result does not apply.
+    @Test func presenceResultIgnoredWhenDiscoveryStartsMeanwhile() async throws {
+        for enterMeanwhile in [true, false] {
+            let spy = Spy()
+            let gate = DispatchSemaphore(value: 0)
+            let model = try guardedModel(spy: spy, gate: gate)
+            defer { gate.signal() }  // never leaves the check waiting, even if a wait below throws
+            let check = Task { await model.detectScanner() }
+            try await waitUntil { spy.count("presence") == 1 }
+            #expect(model.detection == .checking)
+            if enterMeanwhile { model.setDiscoveryModeKeepingSourceForTesting(true) }
+            gate.signal()
+            await check.value
+            let expected: AppModel.Detection = enterMeanwhile ? .notChecked : .found
+            #expect(model.detection == expected)
+        }
+    }
+
     /// The source of before comes back, without being saved; the real X1 is looked for again.
     @Test func leavingLooksForTheScannerAgain() async throws {
         let spy = Spy()
