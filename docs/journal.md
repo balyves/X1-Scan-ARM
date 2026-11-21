@@ -1008,3 +1008,5 @@ unclear to the user, to be explained and redone):
   (a [hypothesis], "Pixel aspect") and the decoded scan's square; found
   on the way: `SampleFilm` gives one film with `rowsPerColumn` 1 to both
   passes today, so no photograph is to be added before that changes.
+- Tool column: Grid and Exposure Zones moved up, right under Crop and
+  Rule (the flexible space removed); their order is still to be decided.

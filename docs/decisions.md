@@ -1378,11 +1378,13 @@ the interface only: nothing sent to the scanner changes.
 - **Information** (common to every tab, not scrolling): Histogram then
   Exposure, each foldable; when the window is low, the tab's content
   scrolls (minimum height kept).
-- **Tool column**: Hand and Zoom, a line, Crop and Rule; at the bottom,
-  after a line, Grid (click: show or hide; right click: kind, colour,
-  opacity) and Exposure Zones (the Exposure section's checkbox, the same
-  setting; a neutral icon, a half-hatched circle, not a warning sign:
-  user's decision). The pipettes and the densitometer come with lot 3.
+- **Tool column**: Hand and Zoom, a line, Crop and Rule, a line, Grid
+  (click: show or hide; right click: kind, colour, opacity) and Exposure
+  Zones (the Exposure section's checkbox, the same setting; a neutral
+  icon, a half-hatched circle, not a warning sign: user's decision). The
+  pipettes and the densitometer come with lot 3. Until 2026-11-21 Grid
+  and Exposure Zones were at the bottom; moved up at the user's request,
+  order still to be decided.
 - **Tooltips** (a rule for every lot from now on): every control of the
   panel, every tab and every tool has a native one-sentence tooltip, in
   English and French. Detailed help (⌥ + hover) comes later. A function

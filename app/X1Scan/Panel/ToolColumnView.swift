@@ -3,9 +3,10 @@ import SwiftUI
 import X1ScanCore
 
 /// The narrow tool bar between the image and the settings panel (lot 1b),
-/// in groups separated by a thin line: Navigate (hand, zoom), Frame (crop,
-/// rule; they open Prepare > Framing), then at the bottom Show (grid,
-/// exposure zones). Only tools that work are shown (the pipettes and the
+/// in groups separated by a thin line, from the top: Navigate (hand, zoom),
+/// Frame (crop, rule; they open Prepare > Framing), then Show (grid,
+/// exposure zones) right under Frame (user's request of 2026-11-21; the
+/// order may change). Only tools that work are shown (the pipettes and the
 /// densitometer come with lot 3).
 struct ToolColumnView: View {
     @Bindable var model: AppModel
@@ -17,10 +18,10 @@ struct ToolColumnView: View {
             separator
             tool(.crop, "crop")
             tool(.straighten, "ruler")
-            Spacer()
             separator
             gridButton
             zonesButton
+            Spacer(minLength: 0)
         }
         .padding(.vertical, 10)
         .frame(width: 36)
