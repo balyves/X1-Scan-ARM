@@ -834,10 +834,17 @@ struct CropModeTests {
         #expect(spaced.ruleLine != nil, "Space's temporary hand keeps it (user's decision of 2026-11-25)")
         spaced.tools.spaceHeld = false
         #expect(spaced.ruleLine != nil)
+        let angleBefore: Double = spaced.recipe.crop.angle
         spaced.beginRule(at: CGPoint(x: 10, y: 10))
         spaced.tools.spaceHeld = true
-        #expect(spaced.ruleLine == nil, "a line still being drawn goes when Space is pressed")
+        spaced.dragRule(to: CGPoint(x: 200, y: 14))
+        #expect(spaced.ruleLine?.applied == nil && spaced.ruleLine != nil, "a line being drawn stays when Space is pressed")
+        spaced.finishRule()  // the canvas finishes the drag with the tool it started with
         spaced.tools.spaceHeld = false
+        #expect(spaced.ruleLine?.applied != nil, "and is applied at the release")
+        let expected: Double = try #require(Straighten.correction(from: CGPoint(x: 10, y: 10), to: CGPoint(x: 200, y: 14))).angle
+        let spacedAngle: Double = CropSettings.clampedAngle(angleBefore + expected)
+        #expect(abs(spaced.recipe.crop.angle - spacedAngle) < 0.051, "the image turned by the line")
         let (switched, d6, s6) = try await modelWithRule()
         defer { d6.removePersistentDomain(forName: s6) }
         switched.tools.spaceHeld = true

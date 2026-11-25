@@ -39,6 +39,15 @@ final class ImageCanvasView: NSView {
     private var trackingArea: NSTrackingArea?
     private var dragStart: (point: NSPoint, origin: NSPoint)?
     private var cropDrag: CropDrag?
+    /// The tool a drag started with: it keeps it to the release, even if Space is
+    /// pressed or released meanwhile (session of 2026-11-25: Space during the rule's
+    /// line removed it).
+    private var drag: (tool: Tool, selected: Tool)?
+    /// The tool the mouse acts with: the drag's, unless another tool was chosen meanwhile.
+    private var actingTool: Tool {
+        if let drag, drag.selected == model.tools.selected { return drag.tool }
+        return model.tools.effective
+    }
     private var appliedTool: Tool?
 
     /// What a drag with the crop tool does.
@@ -288,14 +297,14 @@ final class ImageCanvasView: NSView {
     // MARK: Cursor and tracking
 
     private func updateCursor() {
-        let tool = model.tools.effective
+        let tool = actingTool
         guard tool != appliedTool else { return }
         appliedTool = tool
         window?.invalidateCursorRects(for: self)
     }
 
     private var toolCursor: NSCursor {
-        switch model.tools.effective {
+        switch actingTool {
         case .hand: dragStart == nil ? .openHand : .closedHand
         case .zoom: NSEvent.modifierFlags.contains(.option) ? .zoomOut : .zoomIn
         case .crop, .straighten: .crosshair
@@ -332,6 +341,7 @@ final class ImageCanvasView: NSView {
     override func mouseDown(with event: NSEvent) {
         window?.makeFirstResponder(self)
         let point = convert(event.locationInWindow, from: nil)
+        drag = (model.tools.effective, model.tools.selected)
         switch model.tools.effective {
         case .hand:
             guard let clip = enclosingScrollView?.contentView else { return }
@@ -367,7 +377,7 @@ final class ImageCanvasView: NSView {
 
     override func mouseDragged(with event: NSEvent) {
         model.pointer = pixel(for: event)
-        switch model.tools.effective {
+        switch actingTool {
         case .hand:
             guard let (start, origin) = dragStart, let scrollView = enclosingScrollView else { return }
             // Window points to document points: divide by the magnification. The document is flipped.
@@ -405,7 +415,9 @@ final class ImageCanvasView: NSView {
         dragStart = nil
         cropDrag = nil
         // The rule turns the image: the line drawn is then horizontal (or vertical).
-        if model.tools.effective == .straighten { model.finishRule() }
+        if actingTool == .straighten { model.finishRule() }
+        drag = nil
+        updateCursor()
         window?.invalidateCursorRects(for: self)
     }
 
