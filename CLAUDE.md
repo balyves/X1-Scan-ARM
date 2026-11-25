@@ -133,7 +133,10 @@ Scope: **Flextight X1 only**. Other Flextight / Imacon models are out of scope.
    pass, or give it to the user); at most two for code that talks to the
    scanner (points still open after the second pass go to the user, and
    nothing is pushed until the user decides). For interface changes,
-   run the `x1-ui` subagent as well and show its opinion. The pre-commit hook
+   run the `x1-ui` subagent as well and show its opinion. Exception (user's
+   decision of 2026-11-25): an interface fix that touches no file talking
+   to the scanner (rule 6's list) gets one `x1-ui` pass and no
+   `x1-reviewer` pass; the rule 2 check before the commit is still due. The pre-commit hook
    (`tools/git-hooks`, install with `git config core.hooksPath
    tools/git-hooks`) and the X1Kit CI workflow are additional checks, not a
    substitute.
