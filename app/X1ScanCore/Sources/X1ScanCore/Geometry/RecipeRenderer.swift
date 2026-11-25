@@ -15,8 +15,10 @@ public enum RecipeRenderer {
         let physical = CGSize(width: Double(turned.width) * pixelSize.width, height: Double(turned.height) * pixelSize.height)
         var crop = recipe.crop
         crop.frame = crop.effectiveFrame(imageSize: physical)
-        guard !crop.isIdentity else { return turned }
-        // Then the fine angle (Lanczos-3) and the crop.
+        // A file has square pixels (session of 2026-11-25): a preview's 1 × 3
+        // pixels are resampled even without a frame or an angle.
+        guard !crop.isIdentity || pixelSize.width != pixelSize.height else { return turned }
+        // Then the fine angle and the crop (Lanczos-3), or the crop alone in whole pixels.
         return Resample.apply(crop, to: turned, pixelSize: pixelSize)
     }
 
@@ -32,9 +34,11 @@ public enum RecipeRenderer {
         let turned = recipe.orientation.orientedSize(width: width, height: height)
         let pixelSize = orientedPixelSize(pixelAspectRatio: pixelAspectRatio, orientation: recipe.orientation)
         let physical = CGSize(width: Double(turned.width) * pixelSize.width, height: Double(turned.height) * pixelSize.height)
-        guard let frame = recipe.crop.effectiveFrame(imageSize: physical)?.intersection(CGRect(x: 0, y: 0, width: 1, height: 1)),
-              !frame.isNull, frame.width > 0, frame.height > 0 else { return turned }
-        if recipe.crop.angle == 0 {
+        let unit = CGRect(x: 0, y: 0, width: 1, height: 1)
+        let square = pixelSize.width == pixelSize.height
+        let effective = recipe.crop.effectiveFrame(imageSize: physical) ?? (square ? nil : unit)
+        guard let frame = effective?.intersection(unit), !frame.isNull, frame.width > 0, frame.height > 0 else { return turned }
+        if recipe.crop.angle == 0 && square {
             let cropped = Resample.croppedBounds(width: turned.width, height: turned.height, normalized: frame)
             return (cropped.x1 - cropped.x0, cropped.y1 - cropped.y0)
         }

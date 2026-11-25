@@ -30,6 +30,16 @@ public struct PreviewImage: Sendable, Equatable {
         self.raw = raw
     }
 
+    /// Test helper: a preview stopped after the rows of `corrected`.
+    init(width: Int, expectedHeight: Int, receivedRows corrected: [UInt16]) {
+        precondition(corrected.count.isMultiple(of: width * 3) && corrected.count / (width * 3) <= expectedHeight)
+        self.width = width
+        self.expectedHeight = expectedHeight
+        height = corrected.count / (width * 3)
+        self.corrected = corrected
+        raw = corrected
+    }
+
     /// Copies `rows` (just completed) from the decoder.
     mutating func append(rows: Range<Int>, from decoder: IncrementalPreviewDecoder) {
         guard !rows.isEmpty else { return }
@@ -46,5 +56,15 @@ public struct PreviewImage: Sendable, Equatable {
     /// The corrected image, as exported.
     public var exportImage: RGB16Image {
         RGB16Image(width: width, height: height, samples: corrected)
+    }
+
+    /// The corrected image at its expected height, the rows not received
+    /// black: the area the screen shows and the crop frame is drawn on, for
+    /// rendering a recipe (session of 2026-11-25: a frame drawn on a stopped
+    /// preview took the received rows for the whole image).
+    public var fullHeightExportImage: RGB16Image {
+        guard height < expectedHeight else { return exportImage }
+        return RGB16Image(width: width, height: expectedHeight,
+                          samples: corrected + [UInt16](repeating: 0, count: (expectedHeight - height) * width * 3))
     }
 }

@@ -26,6 +26,10 @@ L’onglet Sortie (⌥⌘3) règle le fichier exporté.
 ## Exporter {#export}
 
 - Fichier › Exporter… (⇧⌘E) écrit l’image affichée, tournée, redressée et recadrée.
+- Le fichier a des pixels carrés.
+- Les pixels de l’aperçu sont plus hauts que larges : ils sont rééchantillonnés.
+- Le cadre garde ses proportions : un cadre 6×6 donne un fichier carré.
+- Depuis un aperçu interrompu, les lignes pas encore reçues sont noires.
 - Une recette (`.x1recipe.json`) est écrite à côté.
 - Une numérisation enregistrée n’est jamais remplacée : ses versions s’appellent _v1, _v2…
 - Un fichier existant n’est jamais écrasé.

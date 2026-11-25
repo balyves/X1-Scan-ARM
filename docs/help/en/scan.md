@@ -15,7 +15,7 @@ The Scan tab (⌥⌘2) sets the resolution and the scale, and shows the sizes.
 ## Input and Output {#sizes}
 
 - Input: the pixels of the image under the frame, or of the whole image.
-- Output: the size of the file an export would write.
+- Output: the size of the file an export would write, in square pixels (see [Export](output.md#export)).
 
 ## Scan {#scan-button}
 

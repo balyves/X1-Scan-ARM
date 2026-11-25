@@ -313,12 +313,6 @@ public enum ExportService {
         return data
     }()
 
-    /// Uncompressed pixel bytes of the exported image (bottom bar estimate).
-    public static func estimatedBytes(for image: PreviewImage?, settings: ExportSettings) -> Int? {
-        guard let image, image.width > 0, image.expectedHeight > 0 else { return nil }
-        return settings.format.pixelBytes(width: image.width, height: image.expectedHeight)
-    }
-
     /// `value` in decimal, with leading zeros up to `digits` digits.
     static func padded(_ value: Int, _ digits: Int) -> String {
         let text = String(value)
@@ -371,7 +365,8 @@ public enum ExportService {
             ?? fileName(settings: settings, date: date, suffix: sample?.suffix ?? "", exists: taken)
         let url = folder.appending(path: name)
         let pixels = if let recipe, applyRecipe {
-            RecipeRenderer.render(image.exportImage, pixelAspectRatio: pixelAspectRatio, recipe: recipe)
+            // The frame is normalised in the whole image, rows not yet received included.
+            RecipeRenderer.render(image.fullHeightExportImage, pixelAspectRatio: pixelAspectRatio, recipe: recipe)
         } else {
             image.exportImage
         }

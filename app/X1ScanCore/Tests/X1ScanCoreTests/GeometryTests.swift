@@ -245,3 +245,97 @@ struct GridModelTests {
         }
     }
 }
+
+/// Session of 2026-11-25 (X1-12.tif, 1 038 × 75 px for a 6×6 frame): the
+/// preview's 1 × 3 pixels are made square in the file, and the frame keeps
+/// its proportions there.
+@MainActor
+struct SquarePixelExportTests {
+    /// A preview of 60 × 20 pixels of 1 × 3: physically 60 × 60.
+    private func preview() -> PreviewImage {
+        let image = indexImage(width: 60, height: 20)
+        return PreviewImage(width: image.width, corrected: image.samples, raw: image.samples)
+    }
+
+    private func sixBySix(_ frame: CGRect, quarterTurns: Int = 0) -> Recipe {
+        var crop = CropSettings()
+        crop.aspect = .ratio(width: 6, height: 6)
+        crop.frame = frame
+        return Recipe(orientation: Orientation(quarterTurns: quarterTurns), crop: crop)
+    }
+
+    @Test(arguments: [0, 1])
+    func aSixBySixFrameOnAPreviewExportsSquare(quarterTurns: Int) throws {
+        let folder = try temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        // Half the width and half the height of a physically square image: a square frame.
+        let recipe = sixBySix(CGRect(x: 0.2, y: 0.3, width: 0.5, height: 0.5), quarterTurns: quarterTurns)
+        let url = try ExportService.export(preview(), settings: ExportSettings(folder: folder, nameTemplate: "p"),
+                                           recipe: recipe, applyRecipe: true, pixelAspectRatio: 3)
+        let size = try tiffSize(url)
+        #expect(size.width == 30 && size.height == 30, "square: \(size.width) × \(size.height)")
+        let announced = RecipeRenderer.outputSize(width: 60, height: 20, pixelAspectRatio: 3, recipe: recipe)
+        #expect(announced.width == size.width && announced.height == size.height, "the size the panel announces")
+    }
+
+    @Test func aPreviewWithoutFrameGetsSquarePixels() throws {
+        let rendered = RecipeRenderer.render(preview().exportImage, pixelAspectRatio: 3, recipe: Recipe())
+        #expect(rendered.width == 60 && rendered.height == 60)
+        #expect(RecipeRenderer.outputSize(width: 60, height: 20, pixelAspectRatio: 3, recipe: Recipe()) == (60, 60))
+        // A flat image stays flat: the rows are resampled, not stretched with empty rows.
+        let flat = RGB16Image(width: 6, height: 2, samples: [UInt16](repeating: 1_000, count: 36))
+        #expect(RecipeRenderer.render(flat, pixelAspectRatio: 3, recipe: Recipe()).samples.allSatisfy { $0 == 1_000 })
+    }
+
+    @Test func aScanKeepsItsPixelsWithoutAngle() {
+        let scan = indexImage(width: 6, height: 4)
+        var recipe = Recipe()
+        #expect(RecipeRenderer.render(scan, pixelAspectRatio: 1, recipe: recipe) == scan, "square pixels: nothing to do")
+        recipe.crop.frame = CGRect(x: 0.5, y: 0.5, width: 0.5, height: 0.5)
+        let cropped = RecipeRenderer.render(scan, pixelAspectRatio: 1, recipe: recipe)
+        #expect(cropped.width == 3 && cropped.height == 2)
+        #expect(reds(cropped) == [[15, 16, 17], [21, 22, 23]], "whole pixels, not resampled")
+    }
+
+    /// X1-12.tif: a frame drawn on a stopped preview (177 rows of 817) was
+    /// cut from the rows received as if they were the whole image.
+    @Test func aStoppedPreviewKeepsTheFrameWhereItWasDrawn() throws {
+        let folder = try temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let received = [UInt16](repeating: 4_000, count: 60 * 5 * 3)  // 5 rows of 20
+        let stopped = PreviewImage(width: 60, expectedHeight: 20, receivedRows: received)
+        // The top quarter of the area (rows 0-4, all received), square: 15 × 15 physical.
+        let top = sixBySix(CGRect(x: 0, y: 0, width: 0.25, height: 0.25))
+        let url = try ExportService.export(stopped, settings: ExportSettings(folder: folder, nameTemplate: "s"),
+                                           recipe: top, applyRecipe: true, pixelAspectRatio: 3)
+        let size = try tiffSize(url)
+        #expect(size.width == 15 && size.height == 15)
+        // Rows not received are black, as the screen leaves them empty.
+        let image = stopped.fullHeightExportImage
+        #expect(image.height == 20 && image.samples[60 * 5 * 3] == 0 && image.samples[60 * 5 * 3 - 1] == 4_000)
+    }
+
+    /// The whole chain: a virtual preview (pixels of 1 × 3), 6×6 chosen, Export.
+    @Test func exportFromTheModelIsSquare() async throws {
+        let suite = "X1ScanCoreTests-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let folder = try temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let inspector = ScannerInspector { FakeConnection(responses: [:], openError: TransportError.deviceBusy) }
+        let model = AppModel(virtualScanner: { try TestFixtures.scanner() }, inspector: inspector, defaults: defaults)
+        model.exportSettings = ExportSettings(folder: folder, nameTemplate: "X1-{n}")
+        model.startPreview()
+        await model.session.waitUntilIdle()
+        model.refreshImage()
+        #expect(model.viewport.pixelAspectRatio == 3)
+        model.setCropAspect(.ratio(width: 6, height: 6))
+        let url = try await model.export().get()
+        let size = try tiffSize(url)
+        #expect(abs(size.width - size.height) <= 1, "6×6: \(size.width) × \(size.height)")
+        let announced = try #require(model.exportPixelSize)
+        #expect(announced.width == size.width && announced.height == size.height)
+        #expect(model.estimatedExportBytes == model.exportSettings.format.pixelBytes(width: size.width, height: size.height),
+                "the bottom bar's estimate is that file's")
+    }
+}

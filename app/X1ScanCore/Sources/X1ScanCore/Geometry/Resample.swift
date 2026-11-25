@@ -6,10 +6,12 @@ import X1Image
 /// Fine rotation and crop of an oriented image, for Export (lot 1). The
 /// samples are read as they are and summed in floating point (Double).
 ///
-/// Without an angle the crop takes whole pixels: no resampling, the pixels
-/// keep their shape. With an angle the image is resampled with a Lanczos-3
-/// kernel, in floating point, onto square pixels the size of the source
-/// pixel's shorter side (a preview's 1 × 3 pixels give 3 times more rows).
+/// Square pixels without an angle (a scan): the crop takes whole pixels, no
+/// resampling. With an angle, or pixels that are not square (a preview's
+/// 1 × 3, session of 2026-11-25: a file always has square pixels), the
+/// image is resampled with a Lanczos-3 kernel, in floating point, onto
+/// square pixels the size of the source pixel's shorter side (a preview's
+/// 1 × 3 pixels give 3 times more rows).
 public enum Resample {
     /// Lanczos kernel radius, in source pixels.
     public static let radius = 3
@@ -22,7 +24,7 @@ public enum Resample {
         let unit = CGRect(x: 0, y: 0, width: 1, height: 1)
         let normalized = (crop.frame ?? unit).intersection(unit)
         guard !normalized.isNull, normalized.width > 0, normalized.height > 0 else { return image }
-        if crop.angle == 0 { return cropped(image, to: normalized) }
+        if crop.angle == 0 && pixelSize.width == pixelSize.height { return cropped(image, to: normalized) }
         let frame = CGRect(x: normalized.minX * physical.width, y: normalized.minY * physical.height,
                            width: normalized.width * physical.width, height: normalized.height * physical.height)
         let step = min(pixelSize.width, pixelSize.height)

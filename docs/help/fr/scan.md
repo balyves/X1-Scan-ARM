@@ -15,7 +15,7 @@ L’onglet Scan (⌥⌘2) règle la résolution et l’échelle, et montre les t
 ## Entrée et Sortie {#sizes}
 
 - Entrée : les pixels de l’image sous le cadre, ou de toute l’image.
-- Sortie : la taille du fichier que l’export écrirait.
+- Sortie : la taille du fichier que l’export écrirait, en pixels carrés (voir [Exporter](output.md#export)).
 
 ## Numériser {#scan-button}
 

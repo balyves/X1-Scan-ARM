@@ -1053,8 +1053,9 @@ public final class AppModel {
     }
 
     /// Uncompressed size of the file an export would write now (bottom bar).
+    /// The pixels Export writes: turned, cropped, square (session of 2026-11-25).
     public var estimatedExportBytes: Int? {
-        ExportService.estimatedBytes(for: session.image, settings: exportSettings)
+        exportPixelSize.map { exportSettings.format.pixelBytes(width: $0.width, height: $0.height) }
     }
 
     /// Input size of the panel: the source pixels under the crop frame, or the whole image.

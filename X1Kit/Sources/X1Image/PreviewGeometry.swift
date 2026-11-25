@@ -8,8 +8,10 @@ public enum PreviewGeometry {
     /// FlexColor's preview geometry is reproduced with 3). To be adjusted with
     /// captures of real scans.
     ///
-    /// This is the only place the value is set in Swift. It is used for
-    /// display only: decoded and exported images keep the scanner's pixels.
+    /// This is the only place the value is set in Swift. It is used for the
+    /// display and for exported files, resampled to square pixels
+    /// (`RecipeRenderer`, session of 2026-11-25); decoded images and the
+    /// scan's master keep the scanner's pixels.
     /// (`tools/decode/decode_preview.py` has its own `--aspect` option, default 3.)
     public static let pixelAspectRatio: Double = 3
 }

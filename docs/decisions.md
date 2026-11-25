@@ -155,8 +155,11 @@ Recorded on 2026-11-12.
 - **Pixel aspect [hypothesis]**: preview pixels are drawn 3 times taller than
   wide. The factor is one documented parameter,
   `X1Image.PreviewGeometry.pixelAspectRatio`, to be adjusted with captures of
-  real scans. It is display only: decoded and exported images keep the
-  scanner's pixels. Scans are shown with square pixels
+  real scans. It is used for the display and, since 2026-11-25 (user's
+  request), for exported files: Export resamples a preview to square
+  pixels (`RecipeRenderer`, "Rendering" below), so the factor, still a
+  [hypothesis], now sets the geometry written in every exported preview;
+  decoded images and the scan's master keep the scanner's pixels. Scans are shown with square pixels
   (`X1Image.ScanDecoding.pixelAspectRatio` = 1): the decoder resamples their
   lines by 3/5, and FlexColor's TIFF is 2 000 ppi both ways (protocol.md
   §10; journal, 2026-11-18, first real scan).
@@ -1297,12 +1300,17 @@ received, on the display or on exported files.
   both free, never replacing the master; for a preview, the name template
   as before.
 - **Rendering** (`RecipeRenderer`): quarter turns and mirror are exact
-  permutations. Without a fine angle the crop takes whole pixels (no
-  resampling; a preview keeps its 1 × 3 pixels). With an angle: Lanczos-3,
-  in floating point, onto square pixels the size of the source pixel's
-  shorter side (user's decision: a preview gets 3 times more rows), then
-  the crop. With the constraint on, the frame is kept inside the turned
-  image, also when a recipe is read from a file.
+  permutations. A scan without a fine angle: the crop takes whole pixels
+  (no resampling). With an angle, or for a preview (its 1 × 3 pixels,
+  even without angle or frame: user's request of 2026-11-25, X1-12.tif
+  was 1 038 × 75 px for a 6×6 frame): Lanczos-3, in floating point, onto
+  square pixels the size of the source pixel's shorter side (user's
+  decision: a preview gets 3 times more rows), then the crop. The frame
+  is normalised in the whole preview area, rows not received included: a
+  stopped preview is rendered at its expected height, the missing rows
+  black (as the screen leaves them empty). The bottom bar's size estimate
+  is that of the file written. With the constraint on, the frame is kept
+  inside the turned image, also when a recipe is read from a file.
 - **The scanned area is not changed.** The X1 still scans FlexColor's
   captured window; the turned frame must fit in the area scanned. Enlarging
   the scan window to cover a turned frame waits for the window calculator

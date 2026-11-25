@@ -120,9 +120,12 @@ struct ResampleTests {
     @Test func noAngleCropsWholePixels() {
         var crop = CropSettings()
         crop.frame = CGRect(x: 0.25, y: 0.5, width: 0.5, height: 0.5)
-        let out = Resample.apply(crop, to: gradient(width: 8, height: 4), pixelSize: CGSize(width: 1, height: 3))
-        #expect(out.width == 4 && out.height == 2, "no resampling: the pixels keep their shape")
+        let out = Resample.apply(crop, to: gradient(width: 8, height: 4), pixelSize: CGSize(width: 1, height: 1))
+        #expect(out.width == 4 && out.height == 2, "square pixels: no resampling")
         #expect(Array(out.samples[0..<3]) == [2_000, 2_000, 30_000])
+        // Pixels of 1 × 3 (a preview) are made square, even without an angle (session of 2026-11-25).
+        let tall = Resample.apply(crop, to: gradient(width: 8, height: 4), pixelSize: CGSize(width: 1, height: 3))
+        #expect(tall.width == 4 && tall.height == 6)
     }
 
     @Test func tinyAngleStaysCloseToTheSource() {
@@ -195,10 +198,11 @@ struct RecipeCropTests {
 
     @Test func outputSizeFollowsTheRecipe() {
         var recipe = Recipe(orientation: Orientation(quarterTurns: 1))
-        // Preview 100 × 20 pixels of 1 × 3: turned, 20 × 100 pixels of 3 × 1 (physical 60 × 100).
-        #expect(RecipeRenderer.outputSize(width: 100, height: 20, pixelAspectRatio: 3, recipe: recipe) == (20, 100))
+        // Preview 100 × 20 pixels of 1 × 3: turned, 20 × 100 pixels of 3 × 1 (physical 60 × 100),
+        // written with square pixels (session of 2026-11-25).
+        #expect(RecipeRenderer.outputSize(width: 100, height: 20, pixelAspectRatio: 3, recipe: recipe) == (60, 100))
         recipe.crop.frame = CGRect(x: 0, y: 0, width: 0.5, height: 0.5)
-        #expect(RecipeRenderer.outputSize(width: 100, height: 20, pixelAspectRatio: 3, recipe: recipe) == (10, 50))
+        #expect(RecipeRenderer.outputSize(width: 100, height: 20, pixelAspectRatio: 3, recipe: recipe) == (30, 50))
         recipe.crop.constrained = false
         recipe.crop.angle = 1
         // With an angle: square pixels of the shorter side, 30 × 50.

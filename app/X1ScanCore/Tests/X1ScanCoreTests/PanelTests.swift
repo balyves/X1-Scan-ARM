@@ -191,7 +191,6 @@ struct ExportFormatTests {
             let decoded = try #require(CGImageSourceCreateImageAtIndex(source, 0, nil))
             #expect(decoded.width == 4 && decoded.height == 3 && decoded.bitsPerComponent == format.bitsPerSample)
             #expect((decoded.colorSpace?.model == .monochrome) == format.isGray)
-            #expect(ExportService.estimatedBytes(for: image, settings: settings) == format.pixelBytes(width: 4, height: 3))
         }
     }
 }
