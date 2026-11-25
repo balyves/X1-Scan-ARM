@@ -10,7 +10,7 @@ L’onglet Scan (⌥⌘2) règle la résolution et l’échelle, et montre les t
 ## Échelle {#scale}
 
 - La taille de la sortie par rapport à l’entrée, en pour cent.
-- Elle est enregistrée. Elle sera appliquée dans une étape ultérieure.
+- Elle est enregistrée. Elle sera appliquée dans une étape ultérieure ; d’ici là, la taille de Sortie n’en tient pas compte.
 
 ## Entrée et Sortie {#sizes}
 

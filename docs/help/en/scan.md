@@ -10,7 +10,7 @@ The Scan tab (⌥⌘2) sets the resolution and the scale, and shows the sizes.
 ## Scale {#scale}
 
 - The size of the output relative to the input, in percent.
-- It is saved. It will be applied in a later step.
+- It is saved. It will be applied in a later step; until then the Output size does not include it.
 
 ## Input and Output {#sizes}
 

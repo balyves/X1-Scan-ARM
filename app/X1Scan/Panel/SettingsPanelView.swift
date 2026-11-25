@@ -167,11 +167,9 @@ private struct ScanSection: View {
             CompactInfoRow(String(localized: "Input", comment: "Panel label: input size"),
                            value: pixels(model.inputPixelSize), help: Self.sizesNote)
             CompactInfoRow(String(localized: "Output", comment: "Panel label: output size"),
-                           value: pixels(model.exportPixelSize.map { size in
-                               // The exported file: turned, straightened and cropped.
-                               let scale = Double(model.scanSettings.scalePercent) / 100
-                               return (Int((Double(size.width) * scale).rounded()), Int((Double(size.height) * scale).rounded()))
-                           }))
+                           // The exported file: turned, straightened and cropped. Without the scale, which
+                           // Export does not apply yet (user's decision of 2026-11-25).
+                           value: pixels(model.exportPixelSize))
                 .help(Self.sizesNote)  // tooltip only: VoiceOver gets the hint once, on Input
         }
     }
