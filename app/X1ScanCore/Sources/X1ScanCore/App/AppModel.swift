@@ -210,7 +210,10 @@ public final class AppModel {
         didSet { if let data = try? JSONEncoder().encode(scanSettings) { defaults.set(data, forKey: Keys.scanSettings) } }
     }
     public var tools = ToolState() {
-        didSet { trackCropMode(from: oldValue) }
+        didSet {
+            trackCropMode(from: oldValue)
+            if tools.effective != .straighten, ruleLine != nil { ruleLine = nil }  // the rule's line goes with its tool
+        }
     }
     /// While the crop options are shown (Crop or Straightening Rule tool):
     /// the tool to go back to on Done, and the recipe Esc puts back.
@@ -234,6 +237,10 @@ public final class AppModel {
             if !applyingUndoableChange, recipe != oldValue { undoManager?.removeAllActions(withTarget: self) }
             viewport.orientation = recipe.orientation
             viewport.angle = recipe.crop.angle
+            // The rule's line measured the image as it was: a turn or another angle removes it.
+            if !applyingRule, recipe.orientation != oldValue.orientation || recipe.crop.angle != oldValue.crop.angle {
+                ruleLine = nil
+            }
             if recipe.crop != oldValue.crop || recipe.orientation != oldValue.orientation {
                 let region = histogramRegion
                 if region != lastHistogramRegion { refreshHistogram() }
@@ -340,6 +347,7 @@ public final class AppModel {
     public func cancelCrop() {
         guard tools.showsCropOptions else { return }
         if let entry = cropEntry { recipe = entry.recipe }
+        ruleLine = nil
         tools.selected = cropEntry?.tool ?? .hand
     }
 
@@ -375,6 +383,7 @@ public final class AppModel {
     /// nothing to reset.
     @discardableResult
     public func resetFraming(actionName: String? = nil) -> Bool {
+        ruleLine = nil
         guard !framingIsReset else { return false }
         var reset = recipe
         reset.orientation = Orientation()
@@ -466,6 +475,52 @@ public final class AppModel {
         // The line is measured on the image as shown, already turned by the current angle.
         setCropAngle(recipe.crop.angle + correction.angle)
         return (recipe.crop.angle, correction.axis)
+    }
+
+    // MARK: The straightening rule's line (session of 2026-11-25)
+
+    /// The line of the straightening rule shown over the image (display
+    /// coordinates): while it is drawn, then with what it applied. It goes
+    /// with what made it: another tool (Space's hand included), Esc, Reset,
+    /// a turn or an angle changed by other means, another preview (user's request of 2026-11-25:
+    /// no click needed to remove it).
+    public struct RuleLine: Sendable, Hashable {
+        public var start: CGPoint
+        public var end: CGPoint
+        /// After the release: the angle and axis applied; nil while drawn.
+        public var applied: Applied?
+
+        public struct Applied: Sendable, Hashable {
+            public var angle: Double
+            public var axis: Straighten.Axis
+        }
+    }
+
+    public private(set) var ruleLine: RuleLine?
+    /// Set while the rule applies its angle: that change keeps the line.
+    @ObservationIgnored private var applyingRule = false
+
+    /// A rule started at `point` (display coordinates), with the rule tool only.
+    public func beginRule(at point: CGPoint) {
+        guard tools.effective == .straighten, session.image != nil else { return }
+        ruleLine = RuleLine(start: point, end: point)
+    }
+
+    /// The rule's end follows the pointer.
+    public func dragRule(to point: CGPoint) {
+        guard var line = ruleLine, line.applied == nil else { return }
+        line.end = point
+        ruleLine = line
+    }
+
+    /// The rule released: the image turns so that the line becomes
+    /// horizontal or vertical; a line too short is removed.
+    public func finishRule() {
+        guard let line = ruleLine, line.applied == nil else { return }
+        applyingRule = true
+        defer { applyingRule = false }
+        let applied = straighten(from: line.start, to: line.end)
+        ruleLine = applied.map { RuleLine(start: line.start, end: line.end, applied: .init(angle: $0.angle, axis: $0.axis)) }
     }
 
     private func applyCropRatio() {
@@ -862,6 +917,7 @@ public final class AppModel {
         // Another image, whatever its size (user's decision after lot 1b): ⌘Z no longer
         // undoes a Reset made on the previous one.
         undoManager?.removeAllActions(withTarget: self)
+        ruleLine = nil  // drawn on the previous image
         // Every new preview gets the zoom of Settings > Display when its first
         // rows arrive (refreshImage). The crop rectangle is kept if the size is the same.
         startupZoomPending = true

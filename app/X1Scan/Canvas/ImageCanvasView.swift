@@ -39,8 +39,6 @@ final class ImageCanvasView: NSView {
     private var trackingArea: NSTrackingArea?
     private var dragStart: (point: NSPoint, origin: NSPoint)?
     private var cropDrag: CropDrag?
-    /// The rule drawn: its ends (display coordinates) and the result, until the next one.
-    private var ruler: (start: CGPoint, end: CGPoint, label: String?)?
     private var appliedTool: Tool?
 
     /// What a drag with the crop tool does.
@@ -199,7 +197,8 @@ final class ImageCanvasView: NSView {
 
     /// The rule: a dashed line in the crop frame's colour and its result ("−1.3° · horizontal") next to its end.
     private func updateRuler(_ viewport: Viewport) {
-        guard let ruler, model.tools.selected == .straighten else {
+        // The model's line: it goes with its tool, Esc, Reset, a turn… (`AppModel.ruleLine`).
+        guard let ruler = model.ruleLine else {
             rulerLayer.isHidden = true
             rulerEdgeLayer.isHidden = true
             rulerLabel.isHidden = true
@@ -219,7 +218,12 @@ final class ImageCanvasView: NSView {
         rulerEdgeLayer.path = path
         rulerEdgeLayer.lineWidth = 4 * point
         rulerEdgeLayer.isHidden = false
-        guard let label = ruler.label else {
+        // While drawn: the angle the rule would give; released: the angle applied.
+        let result = ruler.applied.map { (angle: $0.angle, axis: $0.axis) }
+            ?? Straighten.correction(from: ruler.start, to: ruler.end).map {
+                (angle: CropSettings.clampedAngle(model.recipe.crop.angle + $0.angle), axis: $0.axis)
+            }
+        guard let label = result.map({ Strings.straightenLabel(angle: $0.angle, axis: $0.axis) }) else {
             rulerLabel.isHidden = true
             return
         }
@@ -287,7 +291,6 @@ final class ImageCanvasView: NSView {
         let tool = model.tools.effective
         guard tool != appliedTool else { return }
         appliedTool = tool
-        if tool != .straighten { ruler = nil }  // the rule's result goes with its tool
         window?.invalidateCursorRects(for: self)
     }
 
@@ -340,9 +343,7 @@ final class ImageCanvasView: NSView {
             guard model.session.image != nil else { return }
             cropDrag = cropDrag(startingAt: point)
         case .straighten:
-            guard model.session.image != nil else { return }
-            ruler = (point, point, nil)
-            updateLayers()
+            model.beginRule(at: point)
         }
     }
 
@@ -394,13 +395,7 @@ final class ImageCanvasView: NSView {
                 break
             }
         case .straighten:
-            guard let start = ruler?.start else { return }
-            let end = convert(event.locationInWindow, from: nil)
-            let label = Straighten.correction(from: start, to: end).map {
-                Strings.straightenLabel(angle: CropSettings.clampedAngle(model.recipe.crop.angle + $0.angle), axis: $0.axis)
-            }
-            ruler = (start, end, label)
-            updateLayers()
+            model.dragRule(to: convert(event.locationInWindow, from: nil))
         case .zoom:
             break
         }
@@ -409,15 +404,8 @@ final class ImageCanvasView: NSView {
     override func mouseUp(with event: NSEvent) {
         dragStart = nil
         cropDrag = nil
-        if model.tools.effective == .straighten, let ruler {
-            // The rule turns the image: the line drawn is then horizontal (or vertical).
-            if let applied = model.straighten(from: ruler.start, to: ruler.end) {
-                self.ruler = (ruler.start, ruler.end, Strings.straightenLabel(angle: applied.angle, axis: applied.axis))
-            } else {
-                self.ruler = nil
-            }
-            updateLayers()
-        }
+        // The rule turns the image: the line drawn is then horizontal (or vertical).
+        if model.tools.effective == .straighten { model.finishRule() }
         window?.invalidateCursorRects(for: self)
     }
 

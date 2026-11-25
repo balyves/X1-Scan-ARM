@@ -200,7 +200,7 @@ struct FramingHeaderButtons: View {
     var body: some View {
         Button { reset() } label: { Image(AppIcon.reset) }
             .buttonStyle(.bordered)
-            .disabled(model.framingIsReset)
+            .disabled(model.framingIsReset && model.ruleLine == nil)  // Reset also removes the rule's line
             .help(Strings.tooltip(.reset))
             .accessibilityLabel(Strings.framingReset)
         if model.tools.showsCropOptions {

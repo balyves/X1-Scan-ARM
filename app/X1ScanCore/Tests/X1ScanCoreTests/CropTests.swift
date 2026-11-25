@@ -770,4 +770,89 @@ struct CropModeTests {
         #expect(sameSize, "the same image area: the case the size check alone did not cover")
         #expect(!undo.canUndo)
     }
+
+    /// A rule drawn and released on a preview: the line and the angle it applied.
+    private func modelWithRule() async throws -> (AppModel, UserDefaults, String) {
+        let (model, defaults, suite) = try model()
+        model.startPreview()
+        await model.session.waitUntilIdle()
+        model.refreshImage()
+        model.tools.selected = .straighten
+        model.beginRule(at: CGPoint(x: 100, y: 100))
+        model.dragRule(to: CGPoint(x: 300, y: 110))
+        #expect(model.ruleLine?.applied == nil, "drawn, not applied yet")
+        model.finishRule()
+        let applied = try #require(model.ruleLine?.applied)
+        #expect(applied.axis == .horizontal && applied.angle == model.recipe.crop.angle && applied.angle != 0)
+        return (model, defaults, suite)
+    }
+
+    /// Session of 2026-11-25: Esc removes the rule's line with the rest, no click needed.
+    @Test func escapeRemovesTheRuleLine() async throws {
+        let (model, defaults, suite) = try await modelWithRule()
+        defer { defaults.removePersistentDomain(forName: suite) }
+        model.escape()
+        #expect(model.ruleLine == nil && model.recipe.crop.angle == 0)
+    }
+
+    /// Session of 2026-11-25: Reset removes the rule's line, the rule tool staying selected.
+    @Test func resetRemovesTheRuleLine() async throws {
+        let (model, defaults, suite) = try await modelWithRule()
+        defer { defaults.removePersistentDomain(forName: suite) }
+        model.resetFraming()
+        #expect(model.tools.selected == .straighten, "the tool stays")
+        #expect(model.ruleLine == nil)
+    }
+
+    /// The line also goes with its tool (Space's hand too), a turn, another angle, a new preview, and stays otherwise.
+    @Test func theRuleLineGoesWithWhatMadeIt() async throws {
+        let (model, defaults, suite) = try await modelWithRule()
+        defer { defaults.removePersistentDomain(forName: suite) }
+        model.setCropAspect(.ratio(width: 6, height: 7))
+        #expect(model.ruleLine != nil, "proportions chosen: the line still matches the image")
+        model.tools.selected = .crop
+        #expect(model.ruleLine == nil, "another tool")
+        let (turned, d2, s2) = try await modelWithRule()
+        defer { d2.removePersistentDomain(forName: s2) }
+        turned.rotateClockwise()
+        #expect(turned.ruleLine == nil, "a quarter turn")
+        let (angled, d3, s3) = try await modelWithRule()
+        defer { d3.removePersistentDomain(forName: s3) }
+        angled.setCropAngle(5)
+        #expect(angled.ruleLine == nil, "another angle")
+        // A short click: no line left, nothing applied.
+        angled.beginRule(at: CGPoint(x: 10, y: 10))
+        angled.finishRule()
+        #expect(angled.ruleLine == nil && angled.recipe.crop.angle == 5)
+        let (spaced, d4, s4) = try await modelWithRule()
+        defer { d4.removePersistentDomain(forName: s4) }
+        spaced.tools.spaceHeld = true
+        #expect(spaced.ruleLine == nil, "Space's hand")
+        let (renewed, d5, s5) = try await modelWithRule()
+        defer { d5.removePersistentDomain(forName: s5) }
+        renewed.startPreview()
+        await renewed.session.waitUntilIdle()
+        #expect(renewed.ruleLine == nil, "a new preview")
+    }
+
+    /// A rule that brings the angle back to exactly 0: Reset has nothing to
+    /// reset, and still removes the line (the case only its own line covers).
+    @Test func resetRemovesARuleLineThatLeftNothingToReset() async throws {
+        let (model, defaults, suite) = try model()
+        defer { defaults.removePersistentDomain(forName: suite) }
+        model.startPreview()
+        await model.session.waitUntilIdle()
+        model.refreshImage()
+        model.setCropAngle(-2)
+        model.tools.selected = .straighten
+        // A line leaning 2° anticlockwise: the rule turns the image by +2°, back to 0°.
+        let dy: Double = -200 * tan(2 * Double.pi / 180)
+        model.beginRule(at: CGPoint(x: 100, y: 100))
+        model.dragRule(to: CGPoint(x: 300, y: 100 + dy))
+        model.finishRule()
+        #expect(model.recipe.crop.angle == 0 && model.ruleLine != nil && model.framingIsReset)
+        #expect(!model.resetFraming())
+        #expect(model.ruleLine == nil)
+    }
+
 }
