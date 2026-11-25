@@ -1643,6 +1643,19 @@ or ⚠, a link to its help page and, where useful, a download link.
   an X1 but with both, the "No X1 found" alert, which gets a "Check
   Installation…" button (lot 2). Never the alert and the assistant
   together. Also from Help › Check Installation… (lot 2).
-- **Lot 2** (not started): the window, the menu item, the alert's button,
-  the live update when a device is plugged or unplugged (a registry
-  iterator invalidated during a read is read again), the help text.
+- **Lot 2** (window): Help › Check Installation…, the "No X1 found"
+  message's "Check Installation…" button (it closes the message first),
+  and at launch (or on leaving discovery mode, which checks again) when
+  the adapter or the driver is missing (`AppModel.launchPresentation`, computed with the presence check; the
+  installation is read only when no X1 is found). The message is not
+  shown while the window is open (checked again when a waiting sheet
+  appears), and opening the window closes the message: never both. Each line: ✓ or ⚠ (VoiceOver: "OK" / "To check"),
+  what was seen, a Help link (hardware.md#chain, #asfirewire,
+  troubleshooting.md#no-scanner), and for the driver its two links. Live
+  update: `InstallationMonitor` reads the registry again every 2 s while
+  the window is open, off the main actor, and stops when it closes (a
+  registry search is cheap; matching notifications would need more code
+  for the same result). A registry iterator invalidated during a read
+  (a device plugged in) is read again, three times at most. Help:
+  hardware.md#installation, and a line in troubleshooting.md#no-scanner.
+  Debug snapshot: `-X1ScanInstallationSnapshot` on invented registries.

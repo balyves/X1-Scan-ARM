@@ -9,6 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     private var settingsController: SettingsWindowController?
     private var scannerInfoController: ScannerInfoWindowController?
     private var helpController: HelpWindowController?
+    private var installationController: InstallationCheckWindowController?
     /// The help's pages in the Help menu's search results (kept: AppKit holds it weakly).
     private var helpSearch: HelpSearch?
     private var observers: [Observing] = []
@@ -141,6 +142,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     /// DebugSnapshot types into the help's search field and writes the window.
     var helpControllerForDebug: HelpWindowController? { helpController }
     #endif
+
+    /// Help > Check Installation…, the "No X1 found" message's button, and the
+    /// launch when the adapter or the driver is missing. Never with the
+    /// message: a "No X1 found" sheet still open is closed first.
+    @objc func showInstallationCheck(_ sender: Any?) {
+        windowController?.closeNoScannerMessage()
+        if installationController == nil { installationController = InstallationCheckWindowController() }
+        installationController?.showWindow(nil)
+    }
+
+    /// The installation check is on screen (the "No X1 found" message then waits).
+    var installationCheckShown: Bool { installationController?.isShown ?? false }
 
     @objc func showScannerInformation(_ sender: Any?) {
         guard let model else { return }

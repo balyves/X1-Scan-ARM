@@ -138,6 +138,14 @@ public final class AppModel {
     /// The presence check: the I/O Registry only, nothing opened or sent
     /// (`ScannerPresence`); replaced in tests.
     private let presence: @Sendable () -> Bool
+    /// The installation check's registry snapshot (read only), at launch
+    /// when no X1 is found; replaced in tests.
+    private let installation: @Sendable () -> InstallationSnapshot
+    /// What the launch shows when no X1 is found (user's decisions of
+    /// 2026-11-25): the installation check when the adapter or the driver is
+    /// missing, otherwise the "No X1 found" message; never both. Set with
+    /// `detection`.
+    public private(set) var launchPresentation: InstallationCheck.LaunchPresentation = .nothing
 
     /// File > Try Without a Scanner, or the "No X1 found" message.
     public func enterDiscovery(sampleSuffix: String) {
@@ -173,12 +181,22 @@ public final class AppModel {
     public func detectScanner() async {
         guard !discoveryMode, source == .real, detection != .checking else { return }
         detection = .checking
-        let presence = presence
-        let found = await Task.detached(priority: .userInitiated) { presence() }.value
+        let presence = presence, installation = installation
+        let (found, snapshot) = await Task.detached(priority: .userInitiated) { () -> (Bool, InstallationSnapshot?) in
+            let found = presence()
+            // The installation is read only when no X1 is found: with one, the chain works.
+            return (found, found ? nil : installation())
+        }.value
         // Discovery mode entered meanwhile: the result does not apply.
         guard !discoveryMode, source == .real else {
             detection = .notChecked
             return
+        }
+        if var snapshot {
+            snapshot.scannerDescription = nil  // as the presence check found it
+            launchPresentation = InstallationCheck.launchPresentation(for: InstallationCheck.evaluate(snapshot))
+        } else {
+            launchPresentation = .nothing
         }
         detection = found ? .found : .notFound
     }
@@ -656,9 +674,11 @@ public final class AppModel {
                     IOKitTransport(capturedSequence: $0)
                 },
                 captureFolder: URL = FileManager.default.homeDirectoryForCurrentUser.appending(path: "X1-captures"),
-                presence: @escaping @Sendable () -> Bool = { ScannerPresence.isScannerPresent }) {
+                presence: @escaping @Sendable () -> Bool = { ScannerPresence.isScannerPresent },
+                installation: @escaping @Sendable () -> InstallationSnapshot = { InstallationRegistry.snapshot() }) {
         self.defaults = defaults
         self.presence = presence
+        self.installation = installation
         self.inspector = inspector
         self.realConnection = realConnection
         self.captureFolder = captureFolder

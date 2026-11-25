@@ -800,3 +800,94 @@ enum Strings {
         }
     }
 }
+
+// MARK: Installation check (assistant, lot 2)
+
+extension Strings {
+    static var checkInstallation: String {
+        String(localized: "Check Installation…", comment: "Help menu item and button of the No X1 found message: opens the installation check")
+    }
+    static var installationTitle: String {
+        String(localized: "Check Installation", comment: "Installation check: window title")
+    }
+    static var installationIntro: String {
+        String(localized: "X1 Scan only reads the list of the Mac’s devices. Nothing is sent to the scanner.",
+               comment: "Installation check: first line of the window")
+    }
+    static func installationItem(_ item: InstallationCheck.Item) -> String {
+        switch item {
+        case .macOS: "macOS"
+        case .adapter: String(localized: "Thunderbolt to FireWire adapter", comment: "Installation check: line title")
+        case .driver: String(localized: "ASFireWire driver", comment: "Installation check: line title")
+        case .scanner: String(localized: "Flextight X1", comment: "Installation check: line title")
+        }
+    }
+    /// The line's text under its title.
+    static func installationState(_ line: InstallationCheck.Line, snapshot: InstallationSnapshot?) -> String {
+        switch (line.item, line.state) {
+        case (.macOS, .ok):
+            let version = snapshot.map { "\($0.system.major).\($0.system.minor)" } ?? ""
+            return String(localized: "macOS \(version), supported.", comment: "Installation check: the macOS line, fine (version number)")
+        case (.adapter, .ok):
+            return String(localized: "A FireWire controller is connected.", comment: "Installation check: the adapter line, fine")
+        case (.driver, .ok):
+            return String(localized: "A driver is active on the FireWire controller.", comment: "Installation check: the driver line, fine")
+        case (.scanner, .ok):
+            return String(localized: "The Mac sees the X1.", comment: "Installation check: the X1 line, fine")
+        case (_, .warning(let warning)):
+            return installationWarning(warning)
+        }
+    }
+    private static func installationWarning(_ warning: InstallationCheck.Warning) -> String {
+        switch warning {
+        case .systemTooOld:
+            String(localized: "macOS 26 Tahoe or later is needed.", comment: "Installation check: the macOS line, warning")
+        case .adapterNotFound:
+            String(localized: "No FireWire controller found. From the Mac: Apple adapters A1790 (MMEL2), then A1463 (MD464). Second-hand only.",
+                   comment: "Installation check: the adapter line, warning (Apple model numbers and part numbers, not translated)")
+        case .driverNeedsAdapter:
+            String(localized: "To check once the adapter is plugged in.", comment: "Installation check: the driver line without an adapter")
+        case .driverNotActive:
+            String(localized: "The adapter is there but no driver is active. Install ASFireWire, a third-party project in beta.",
+                   comment: "Installation check: the driver line, warning")
+        case .scannerNotFound:
+            String(localized: "No X1 found. Switch it on and check the FireWire cable.", comment: "Installation check: the X1 line, warning")
+        }
+    }
+    /// VoiceOver: the state symbol's label.
+    static func installationStateLabel(_ state: InstallationCheck.State) -> String {
+        state.isOK ? String(localized: "installation.ok", defaultValue: "OK", comment: "Installation check: VoiceOver label of the check mark")
+            : String(localized: "To check", comment: "Installation check: VoiceOver label of the warning sign")
+    }
+    static var installationHelp: String {
+        String(localized: "installation.help", defaultValue: "Help", comment: "Installation check: link to the line's help page")
+    }
+    /// VoiceOver: each line's Help link says which help it opens.
+    static func installationHelpLabel(_ item: InstallationCheck.Item) -> String {
+        let title = installationItem(item)
+        return String(localized: "Help: \(title)", comment: "Installation check: VoiceOver label of a line's Help link (line title)")
+    }
+    static var installationReading: String {
+        String(localized: "Reading the list of devices", comment: "Installation check: VoiceOver label of the progress indicator")
+    }
+    static var installationHelpTooltip: String {
+        String(localized: "Opens the help page of this line", comment: "Installation check: tooltip of a line's Help link")
+    }
+    static var installationGitHub: String {
+        String(localized: "ASFireWire on GitHub", comment: "Installation check: link to the driver's repository")
+    }
+    static var installationWebsite: String {
+        String(localized: "ASFireWire website", comment: "Installation check: link to the driver's website (www.asfw.net)")
+    }
+    static var installationLimits: String {
+        String(localized: "Cannot tell an X1 switched off from a cable unplugged. A driver installed but not allowed yet may not show.",
+               comment: "Installation check: what it cannot tell, under the lines")
+    }
+    static func installationChecked(_ date: Date) -> String {
+        let time = date.formatted(date: .omitted, time: .standard)
+        return String(localized: "Checked at \(time), again every 2 seconds.", comment: "Installation check: time of the last reading")
+    }
+    static var installationCheckAgain: String {
+        String(localized: "Check Again", comment: "Installation check: button")
+    }
+}

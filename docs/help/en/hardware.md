@@ -25,6 +25,19 @@ The X1 has a FireWire 800 port (9-pin). A recent Mac has neither FireWire nor Th
 - Website, with the installation guide: [www.asfw.net](https://www.asfw.net/).
 - Install it by following the guide on its website.
 
+## Checking the installation {#installation}
+
+X1: **either** (nothing is sent to the scanner). FlexColor: **either**.
+
+- Choose Help › Check Installation….
+- One line per element: macOS, the Thunderbolt to FireWire adapter, the ASFireWire driver, the X1.
+- ✓: the element is in place. ⚠: it is missing, or to be checked. Each line has a link to its help.
+- The window updates by itself every 2 seconds: plug in the adapter or switch the X1 on, and the line changes.
+- X1 Scan only reads the list of the Mac’s devices. It does not open the scanner.
+- While the driver is not active, its line gives ASFireWire’s links.
+- At launch, and on leaving discovery mode, the window opens by itself if the adapter or the driver is missing.
+- It cannot tell an X1 switched off from a cable unplugged. A driver installed but not allowed yet may not show.
+
 ## Checking the connection {#check}
 
 X1: **on**. FlexColor: **closed**.

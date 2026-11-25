@@ -34,6 +34,9 @@ import X1ScanCore
 ///                                print the states, put the layout back, quit
 ///   -X1ScanResizeProbe YES       resize the window, move the divider, hide and show the panel,
 ///                                print the sizes, put the window frame and panel layout back, quit
+///   -X1ScanInstallationSnapshot <path>  write the installation check's view, quit; with
+///                                -X1ScanInstallationCase none, nodriver, ok (invented) or real;
+///                                -X1ScanDark YES in dark mode
 ///   -X1ScanHelpSnapshot <path>   open the help window, write it (<path>, sidebar) and its page
 ///                                (<path>-page.png, `WKWebView.takeSnapshot`), quit (lot A)
 ///   -X1ScanHelpPage <id[#anchor]> the help page to open (default: index)
@@ -68,6 +71,10 @@ enum DebugSnapshot {
             render(AnyView(IssueView(issue: issue, actions: actions, detailsShown: arguments.bool(forKey: "X1ScanIssueDetails"),
                                      help: {}).background(Color(nsColor: .windowBackgroundColor))), to: path)
             NSApp.terminate(nil)
+            return
+        }
+        if let path = arguments.string(forKey: "X1ScanInstallationSnapshot") {
+            installationSnapshot(to: path, case: arguments.string(forKey: "X1ScanInstallationCase") ?? "none")
             return
         }
         if let path = arguments.string(forKey: "X1ScanHelpSnapshot") {
@@ -282,6 +289,27 @@ enum DebugSnapshot {
         }
         model.panel.layout = savedLayout
         window.setFrame(savedFrame, display: false)
+    }
+
+    /// The installation check's view on an invented registry (none: nothing
+    /// plugged in; nodriver: the adapter without a driver; ok: everything),
+    /// or this Mac's (real, read only), then quit.
+    private static func installationSnapshot(to path: String, case name: String) {
+        Task { @MainActor in
+            if UserDefaults.standard.bool(forKey: "X1ScanDark") { NSApp.appearance = NSAppearance(named: .darkAqua) }
+            let tahoe = InstallationSnapshot.SystemVersion(major: 26, minor: 1, patch: 0)
+            let driver = FireWireController(drivers: [Driver(className: "IOUserService", userClass: "ExampleDriver")])
+            let invented: InstallationSnapshot? = switch name {
+            case "nodriver": InstallationSnapshot(system: tahoe, controllers: [FireWireController(drivers: [])], scannerDescription: nil)
+            case "ok": InstallationSnapshot(system: tahoe, controllers: [driver], scannerDescription: "Example scanner")
+            case "real": nil
+            default: InstallationSnapshot(system: tahoe, controllers: [], scannerDescription: nil)
+            }
+            let monitor = invented.map { snapshot in InstallationMonitor(read: { snapshot }) } ?? InstallationMonitor()
+            await monitor.refresh()
+            render(AnyView(InstallationCheckView(monitor: monitor).background(Color(nsColor: .windowBackgroundColor))), to: path)
+            NSApp.terminate(nil)
+        }
     }
 
     /// The help window at a page (and a search), then quit.

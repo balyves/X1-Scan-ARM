@@ -13,6 +13,7 @@ Le volet « Détails » d’un message contient le texte technique. « Copier le
 - Le Mac ne voit le X1 que s’il est allumé, relié et reconnu par le pilote FireWire.
 - Sur macOS 26 Tahoe, ce pilote est ASFireWire. Sans lui, le X1 reste invisible, même allumé.
 - Les adaptateurs USB vers FireWire ne fonctionnent pas. Voir [Matériel et connexion](hardware.md).
+- Le bouton « Vérifier l’installation… » du message montre ce qui manque : voir [Vérifier l’installation](hardware.md#installation).
 - Sans scanner, vous pouvez essayer l’application en [mode découverte](discovery.md).
 
 ### Le X1 est occupé {#scanner-busy}

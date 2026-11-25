@@ -22,6 +22,7 @@ enum MainMenu {
         // macOS adds the search field above; HelpSearch puts the help's pages in its results.
         help.addItem(item(String(localized: "X1 Scan Help", comment: "Menu item: opens the built-in help (Help menu); also its line on the help's Keyboard Shortcuts page"),
                           #selector(AppDelegate.showHelpWindow(_:)), shortcut: .help))
+        help.addItem(item(Strings.checkInstallation, #selector(AppDelegate.showInstallationCheck(_:))))
         menu.addItem(submenu(help))
         NSApp.helpMenu = help
         return menu

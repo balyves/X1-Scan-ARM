@@ -125,7 +125,11 @@ struct IssueAction: Identifiable {
 @MainActor
 enum IssueSheet {
     /// `extra`: actions beside OK (each closes the sheet first).
-    static func present(_ issue: UserIssue, on window: NSWindow, extra: [(String, @MainActor () -> Void)] = []) {
+    /// `withdrawn`: asked when the sheet really appears (sheets wait for each
+    /// other); true closes it at once (the "No X1 found" message once the
+    /// installation check is open).
+    static func present(_ issue: UserIssue, on window: NSWindow, extra: [(String, @MainActor () -> Void)] = [],
+                        withdrawn: (@MainActor () -> Bool)? = nil) {
         let sheet = NSWindow(contentRect: .zero, styleMask: [.titled], backing: .buffered, defer: true)
         let close: @MainActor () -> Void = { [weak window, weak sheet] in
             if let sheet { window?.endSheet(sheet) }
@@ -140,10 +144,18 @@ enum IssueSheet {
         let view = IssueView(issue: issue, actions: actions, help: {
             (NSApp.delegate as? AppDelegate)?.showHelp(page: IssueID.helpPage, anchor: issue.id.helpAnchor)
         }, close: close)
-        let hosting = NSHostingController(rootView: view)
+        let hosting = NSHostingController(rootView: AnyView(view.onAppear {
+            if withdrawn?() ?? false { close() }
+        }))
         hosting.sizingOptions = [.preferredContentSize]
         sheet.contentViewController = hosting
         sheet.title = Strings.issueTexts(issue).title  // read by VoiceOver
+        sheet.identifier = identifier(of: issue.id)
         window.beginSheet(sheet)
+    }
+
+    /// The sheet's window identifier: tells which message is shown.
+    static func identifier(of id: IssueID) -> NSUserInterfaceItemIdentifier {
+        NSUserInterfaceItemIdentifier("issue.\(id)")
     }
 }

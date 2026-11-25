@@ -111,7 +111,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         let detection = model.detection
         if detection != lastDetection {
             lastDetection = detection
-            if detection == .notFound { Task { @MainActor in self.showNoScannerFound() } }
+            if detection == .notFound { Task { @MainActor in self.showLaunchPresentation() } }
         }
         let state = model.session.state
         if state != lastAlertedState {
@@ -229,12 +229,34 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
 
     /// The presence check found no X1 (real source, at launch or after
     /// discovery mode): "No X1 found", which also offers discovery mode.
+    /// No X1 at launch, or on leaving discovery mode (user's decisions of
+    /// 2026-11-25): the installation check when the adapter or the driver is
+    /// missing, otherwise "No X1 found"; never both (`AppModel.launchPresentation`).
+    private func showLaunchPresentation() {
+        switch model.launchPresentation {
+        case .assistant: (NSApp.delegate as? AppDelegate)?.showInstallationCheck(nil)
+        case .noScannerAlert, .nothing: showNoScannerFound()
+        }
+    }
+
     func showNoScannerFound() {
+        // Never with the installation check: it already says what is missing.
+        guard !((NSApp.delegate as? AppDelegate)?.installationCheckShown ?? false) else { return }
         let issue = UserIssue(.noScanner, details: Strings.noScannerAtLaunchDetails)
         let enter: @MainActor () -> Void = { [weak self] in
             self?.model.enterDiscovery(sampleSuffix: Strings.discoverySuffix)
         }
-        showIssue(issue, extra: [(Strings.enterDiscovery, enter)])
+        let check: @MainActor () -> Void = { (NSApp.delegate as? AppDelegate)?.showInstallationCheck(nil) }
+        guard let window else { return }
+        // Checked again when the sheet appears: it may wait behind another one.
+        IssueSheet.present(issue, on: window, extra: [(Strings.checkInstallation, check), (Strings.enterDiscovery, enter)],
+                           withdrawn: { (NSApp.delegate as? AppDelegate)?.installationCheckShown ?? false })
+    }
+
+    /// Closes the "No X1 found" message if it is the sheet shown.
+    func closeNoScannerMessage() {
+        guard let window, let sheet = window.attachedSheet, sheet.identifier == IssueSheet.identifier(of: .noScanner) else { return }
+        window.endSheet(sheet)
     }
 
     /// Esc: stops a running preview or scan; otherwise, in crop mode, cancels its changes

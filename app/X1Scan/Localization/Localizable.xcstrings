@@ -49,6 +49,186 @@
         }
       }
     },
+    "A FireWire controller is connected.": {
+      "comment": "Installation check: the adapter line, fine",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A FireWire controller is connected."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un contrôleur FireWire est branché."
+          }
+        }
+      }
+    },
+    "A driver is active on the FireWire controller.": {
+      "comment": "Installation check: the driver line, fine",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A driver is active on the FireWire controller."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un pilote est actif sur le contrôleur FireWire."
+          }
+        }
+      }
+    },
+    "ASFireWire driver": {
+      "comment": "Installation check: line title",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ASFireWire driver"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pilote ASFireWire"
+          }
+        }
+      }
+    },
+    "ASFireWire on GitHub": {
+      "comment": "Installation check: link to the driver's repository",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ASFireWire on GitHub"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ASFireWire sur GitHub"
+          }
+        }
+      }
+    },
+    "ASFireWire website": {
+      "comment": "Installation check: link to the driver's website (www.asfw.net)",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ASFireWire website"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Site d’ASFireWire"
+          }
+        }
+      }
+    },
+    "Cannot tell an X1 switched off from a cable unplugged. A driver installed but not allowed yet may not show.": {
+      "comment": "Installation check: what it cannot tell, under the lines",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cannot tell an X1 switched off from a cable unplugged. A driver installed but not allowed yet may not show."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ne distingue pas un X1 éteint d’un câble débranché. Un pilote installé mais pas encore autorisé peut ne pas apparaître."
+          }
+        }
+      }
+    },
+    "Check Again": {
+      "comment": "Installation check: button",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check Again"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifier à nouveau"
+          }
+        }
+      }
+    },
+    "Check Installation": {
+      "comment": "Installation check: window title",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check Installation"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifier l’installation"
+          }
+        }
+      }
+    },
+    "Check Installation…": {
+      "comment": "Help menu item and button of the No X1 found message: opens the installation check",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check Installation…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifier l’installation…"
+          }
+        }
+      }
+    },
+    "Checked at %@, again every 2 seconds.": {
+      "comment": "Installation check: time of the last reading",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Checked at %@, again every 2 seconds."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifié à %@, puis toutes les 2 secondes."
+          }
+        }
+      }
+    },
     "Choose the folder where Export writes the files.": {
       "comment": "Tooltip of the Choose… button of the Folder row",
       "extractionState": "manual",
@@ -259,6 +439,24 @@
         }
       }
     },
+    "Flextight X1": {
+      "comment": "Installation check: line title",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Flextight X1"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Flextight X1"
+          }
+        }
+      }
+    },
     "Folder where Export saves the files.": {
       "comment": "Tooltip of the Folder row of the settings panel",
       "extractionState": "manual",
@@ -345,6 +543,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "Hauteur du rapport (18 dans 13 × 18)"
+          }
+        }
+      }
+    },
+    "Help: %@": {
+      "comment": "Installation check: VoiceOver label of a line's Help link (line title)",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Help: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aide : %@"
           }
         }
       }
@@ -788,6 +1004,186 @@
         }
       }
     },
+    "No FireWire controller found. From the Mac: Apple adapters A1790 (MMEL2), then A1463 (MD464). Second-hand only.": {
+      "comment": "Installation check: the adapter line, warning (Apple model numbers and part numbers, not translated)",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No FireWire controller found. From the Mac: Apple adapters A1790 (MMEL2), then A1463 (MD464). Second-hand only."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun contrôleur FireWire trouvé. Depuis le Mac : adaptateurs Apple A1790 (MMEL2), puis A1463 (MD464). D’occasion seulement."
+          }
+        }
+      }
+    },
+    "No X1 found. Switch it on and check the FireWire cable.": {
+      "comment": "Installation check: the X1 line, warning",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No X1 found. Switch it on and check the FireWire cable."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun X1 trouvé. Allumez-le et vérifiez le câble FireWire."
+          }
+        }
+      }
+    },
+    "Opens the help page of this line": {
+      "comment": "Installation check: tooltip of a line's Help link",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opens the help page of this line"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvre la page d’aide de cette ligne"
+          }
+        }
+      }
+    },
+    "Reading the list of devices": {
+      "comment": "Installation check: VoiceOver label of the progress indicator",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reading the list of devices"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lecture de la liste des appareils"
+          }
+        }
+      }
+    },
+    "The Mac sees the X1.": {
+      "comment": "Installation check: the X1 line, fine",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The Mac sees the X1."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le Mac voit le X1."
+          }
+        }
+      }
+    },
+    "The adapter is there but no driver is active. Install ASFireWire, a third-party project in beta.": {
+      "comment": "Installation check: the driver line, warning",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The adapter is there but no driver is active. Install ASFireWire, a third-party project in beta."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’adaptateur est là, mais aucun pilote n’est actif. Installez ASFireWire, un projet tiers en bêta."
+          }
+        }
+      }
+    },
+    "Thunderbolt to FireWire adapter": {
+      "comment": "Installation check: line title",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thunderbolt to FireWire adapter"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adaptateur Thunderbolt vers FireWire"
+          }
+        }
+      }
+    },
+    "To check": {
+      "comment": "Installation check: VoiceOver label of the warning sign",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To check"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À vérifier"
+          }
+        }
+      }
+    },
+    "To check once the adapter is plugged in.": {
+      "comment": "Installation check: the driver line without an adapter",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To check once the adapter is plugged in."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À vérifier une fois l’adaptateur branché."
+          }
+        }
+      }
+    },
+    "X1 Scan only reads the list of the Mac’s devices. Nothing is sent to the scanner.": {
+      "comment": "Installation check: first line of the window",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "X1 Scan only reads the list of the Mac’s devices. Nothing is sent to the scanner."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "X1 Scan lit seulement la liste des appareils du Mac. Rien n’est envoyé au scanner."
+          }
+        }
+      }
+    },
     "framing.scanFrameNotApplied": {
       "comment": "Framing section while a scan is shown: the frame drawn on the preview is neither shown nor exported",
       "extractionState": "manual",
@@ -802,6 +1198,42 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cadre non appliqué : le scan couvre une zone fixe tant que le calculateur n’est pas branché"
+          }
+        }
+      }
+    },
+    "installation.help": {
+      "comment": "Installation check: link to the line's help page",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Help"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aide"
+          }
+        }
+      }
+    },
+    "installation.ok": {
+      "comment": "Installation check: VoiceOver label of the check mark",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
           }
         }
       }
@@ -943,6 +1375,42 @@
           "stringUnit": {
             "state": "translated",
             "value": "Placer dans le Dock"
+          }
+        }
+      }
+    },
+    "macOS %@, supported.": {
+      "comment": "Installation check: the macOS line, fine (version number)",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS %@, supported."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS %@, pris en charge."
+          }
+        }
+      }
+    },
+    "macOS 26 Tahoe or later is needed.": {
+      "comment": "Installation check: the macOS line, warning",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS 26 Tahoe or later is needed."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS 26 Tahoe ou plus récent est nécessaire."
           }
         }
       }

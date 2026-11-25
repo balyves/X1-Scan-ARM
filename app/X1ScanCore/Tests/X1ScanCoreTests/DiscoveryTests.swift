@@ -45,6 +45,9 @@ final class DiscoveryTests {
         }, captureFolder: try temporaryDirectory(), presence: {
             spy.hit("presence")
             return spy.present
+        }, installation: {
+            // Invented: never this Mac's registry in tests.
+            InstallationSnapshot(system: .init(major: 26, minor: 1, patch: 0), controllers: [], scannerDescription: nil)
         })
         if let folder { model.exportSettings.folder = folder }
         return model

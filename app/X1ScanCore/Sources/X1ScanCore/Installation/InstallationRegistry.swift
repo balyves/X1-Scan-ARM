@@ -19,10 +19,24 @@ public enum InstallationRegistry {
     }
 
     /// The PCI devices of class IEEE 1394, with the drivers attached to them.
+    /// A registry changed during the reading (a device plugged in) invalidates
+    /// the iterator: the reading is made again, three times at most, then the
+    /// last one is kept as it is (what it found is still there).
     static func fireWireControllers() -> [FireWireController] {
+        var last: [FireWireController] = []
+        for _ in 0..<3 {
+            let reading = readFireWireControllers()
+            if reading.complete { return reading.controllers }
+            last = reading.controllers
+        }
+        return last
+    }
+
+    /// `complete` is false when the registry changed during the reading.
+    private static func readFireWireControllers() -> (controllers: [FireWireController], complete: Bool) {
         var iterator: io_iterator_t = 0
         guard IOServiceGetMatchingServices(kIOMainPortDefault, IOServiceMatching("IOPCIDevice"), &iterator) == KERN_SUCCESS else {
-            return []
+            return ([], true)
         }
         defer { IOObjectRelease(iterator) }
         var controllers: [FireWireController] = []
@@ -31,7 +45,7 @@ public enum InstallationRegistry {
             guard let code = dataProperty("class-code", of: device), FireWireController.isFireWire(classCode: code) else { continue }
             controllers.append(FireWireController(drivers: drivers(under: device, depth: 2)))
         }
-        return controllers
+        return (controllers, IOIteratorIsValid(iterator) != 0)
     }
 
     /// The entries attached under `entry` in the service plane, `depth` levels

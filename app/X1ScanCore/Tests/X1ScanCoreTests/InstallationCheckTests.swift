@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import Foundation
 import Testing
+import X1Transport
 @testable import X1ScanCore
 
 /// The installation check's detection (assistant, lot 1), on invented
@@ -133,5 +134,89 @@ struct InstallationCheckTests {
         let result = InstallationCheck.evaluate(InstallationRegistry.snapshot())
         #expect(result.count == 4)
         #expect(state(.macOS, in: result) == .ok)
+    }
+}
+
+/// Lot 2: the window's monitor and the launch, on invented snapshots.
+@MainActor
+struct InstallationLaunchTests {
+    private static let tahoe = InstallationSnapshot.SystemVersion(major: 26, minor: 1, patch: 0)
+    private static let withDriver = FireWireController(drivers: [Driver(className: "IOUserService", userClass: "ExampleFireWireDriver")])
+
+    /// Snapshots handed out one after the other (the last one stays).
+    final class Sequence: @unchecked Sendable {
+        private let lock = NSLock()
+        private var snapshots: [InstallationSnapshot]
+        private(set) var reads = 0
+        init(_ snapshots: [InstallationSnapshot]) { self.snapshots = snapshots }
+        func next() -> InstallationSnapshot {
+            lock.lock()
+            defer { lock.unlock() }
+            reads += 1
+            return snapshots.count > 1 ? snapshots.removeFirst() : snapshots[0]
+        }
+    }
+
+    private static func snapshot(_ controllers: [FireWireController], scanner: String? = nil) -> InstallationSnapshot {
+        InstallationSnapshot(system: tahoe, controllers: controllers, scannerDescription: scanner)
+    }
+
+    @Test func refreshReadsAndEvaluates() async {
+        let sequence = Sequence([Self.snapshot([])])
+        let monitor = InstallationMonitor(read: { sequence.next() })
+        #expect(monitor.lines.isEmpty && monitor.lastChecked == nil)
+        let now = Date(timeIntervalSince1970: 1_000)
+        await monitor.refresh(now: now)
+        let adapter: InstallationCheck.State? = monitor.lines.first { (line: InstallationCheck.Line) -> Bool in line.item == .adapter }?.state
+        #expect(adapter == .warning(.adapterNotFound))
+        #expect(monitor.lastChecked == now && monitor.snapshot?.system.major == 26)
+    }
+
+    /// While watched, a change in the registry (the adapter plugged in) shows by itself.
+    @Test func watchingFollowsTheRegistry() async throws {
+        let sequence = Sequence([Self.snapshot([]), Self.snapshot([Self.withDriver], scanner: "Imacon Flextight")])
+        let monitor = InstallationMonitor(interval: .milliseconds(20), read: { sequence.next() })
+        monitor.startWatching()
+        #expect(monitor.isWatching)
+        for _ in 0..<200 where !monitor.lines.allSatisfy({ (line: InstallationCheck.Line) -> Bool in line.state.isOK }) || monitor.lines.isEmpty {
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        #expect(!monitor.lines.isEmpty && monitor.lines.allSatisfy { (line: InstallationCheck.Line) -> Bool in line.state.isOK })
+        monitor.stopWatching()
+        #expect(!monitor.isWatching)
+        let readsWhenStopped: Int = sequence.reads
+        try await Task.sleep(for: .milliseconds(100))
+        #expect(sequence.reads <= readsWhenStopped + 1, "no reading after the window is closed")
+    }
+
+    private func model(present: Bool, installation: InstallationSnapshot, reads: Sequence) throws -> AppModel {
+        let suite = "X1ScanCoreTests-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defaults.set(StartupSource.real.rawValue, forKey: "StartupSource")
+        let scanner = try TestFixtures.scanner()
+        return AppModel(virtualScanner: { scanner }, inspector: ScannerInspector {
+            FakeConnection(responses: [:], openError: TransportError.deviceBusy)
+        }, defaults: defaults, captureFolder: try temporaryDirectory(), presence: { present }, installation: {
+            _ = reads.next()
+            return installation
+        })
+    }
+
+    /// At launch (user's decisions of 2026-11-25): the assistant when the adapter
+    /// or the driver is missing, otherwise the message; nothing read with an X1.
+    @Test func launchPresentation() async throws {
+        let none = Sequence([Self.snapshot([])])
+        let noAdapter = try model(present: false, installation: Self.snapshot([]), reads: none)
+        await noAdapter.detectScanner()
+        #expect(noAdapter.detection == .notFound && noAdapter.launchPresentation == .assistant)
+        let ready = Sequence([Self.snapshot([Self.withDriver])])
+        let x1Off = try model(present: false, installation: Self.snapshot([Self.withDriver]), reads: ready)
+        await x1Off.detectScanner()
+        #expect(x1Off.detection == .notFound && x1Off.launchPresentation == .noScannerAlert)
+        let unread = Sequence([Self.snapshot([])])
+        let found = try model(present: true, installation: Self.snapshot([]), reads: unread)
+        await found.detectScanner()
+        #expect(found.detection == .found && found.launchPresentation == .nothing)
+        #expect(unread.reads == 0, "with an X1 found, the installation is not read")
     }
 }

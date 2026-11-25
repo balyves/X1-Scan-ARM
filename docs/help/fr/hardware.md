@@ -25,6 +25,19 @@ Le X1 a une prise FireWire 800 (9 broches). Un Mac récent n’a ni FireWire ni 
 - Site, avec le guide d’installation : [www.asfw.net](https://www.asfw.net/).
 - Installez-le en suivant le guide de son site.
 
+## Vérifier l’installation {#installation}
+
+État du X1 : **indifférent** (rien n’est envoyé au scanner). FlexColor : **indifférent**.
+
+- Choisissez Aide › Vérifier l’installation….
+- Une ligne par élément : macOS, l’adaptateur Thunderbolt vers FireWire, le pilote ASFireWire, le X1.
+- ✓ : l’élément est en place. ⚠ : il manque, ou il est à vérifier. Chaque ligne a un lien vers son aide.
+- La fenêtre se met à jour toute seule, toutes les 2 secondes : branchez l’adaptateur ou allumez le X1, la ligne change.
+- X1 Scan lit seulement la liste des appareils du Mac. Il n’ouvre pas le scanner.
+- Tant que le pilote n’est pas actif, sa ligne donne les liens d’ASFireWire.
+- Au lancement, et en quittant le mode découverte, la fenêtre s’ouvre d’elle-même si l’adaptateur ou le pilote manque.
+- Elle ne distingue pas un X1 éteint d’un câble débranché. Un pilote installé mais pas encore autorisé peut ne pas apparaître.
+
 ## Vérifier la connexion {#check}
 
 État du X1 : **allumé**. FlexColor : **fermé**.
