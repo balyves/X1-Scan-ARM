@@ -215,8 +215,10 @@ available; ask.
   `swift test`; `Geometry/`: the recipe, orientation, crop, straightening
   and Lanczos rendering of exported files, on pixels already received,
   never sent to the scanner; `Issues/`: the error catalogue, presentation
-  only; `Discovery/`: discovery mode's sample film). `X1Scan/Help/`: the help
-  window; `X1Scan/Issues/`: the error messages; `X1Scan/Discovery/`: the
+  only; `Discovery/`: discovery mode's sample film; `Installation/`: the
+  installation check's detection, from the I/O Registry read only, no
+  device opened, no command; docs/decisions.md, "Installation check").
+  `X1Scan/Help/`: the help window; `X1Scan/Issues/`: the error messages; `X1Scan/Discovery/`: the
   banner; `X1Scan/Sample/`: the place of discovery mode's future photograph
   (README only). Discovery mode runs on the virtual X1 and opens no
   transport to a real X1; the presence check (`ScannerPresence`,
