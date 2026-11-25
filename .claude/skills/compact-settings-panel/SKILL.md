@@ -33,9 +33,15 @@ and the Preview and Scan buttons.
   panel (one button for chevron and title, content not indented).
   `CompactSection` uses it with the header trait, and gives its content the
   same style without it.
-- `CompactSliderRow(value:format:texts:)`: a number on one row. `texts`
-  comes from `Strings.sliderRow(label:unit:format:)`; for an `Int` setting,
-  `value` is `Binding(rounding: $model.…)`.
+- `CompactSliderRow(value:format:texts:typingResetToken:afterSubmit:)`: a
+  number on one row. `texts` comes from `Strings.sliderRow(label:unit:format:)`;
+  for an `Int` setting, `value` is `Binding(rounding: $model.…)`.
+  `typingResetToken` (optional): when it changes, a value typed and not
+  confirmed is dropped (the Angle row passes `AppModel.framingRestores`:
+  Reset, and Esc in crop mode). `afterSubmit` (optional): run after Return applied the
+  value and the field let go of the keyboard (the Angle row gives the
+  keyboard back to the image); a plain `.onSubmit` around the row cannot
+  move the keyboard away, the field's focus state takes it back.
 - `CompactInfoRow(label, value:help:)`: a read-only value on one row.
 - `CompactControlRow(label, help:) { … }`: a choice or an action on one row,
   the control across the whole control column.
@@ -143,9 +149,16 @@ passes every string, already translated (see Text and languages).
   (`CompactValueFormat(…, sliderScale: .logarithmic)`): equal ratios take
   equal lengths. The field always shows and accepts the exact value.
 - The field accepts what people type: comma or full stop as decimal
-  separator, spaces and apostrophes ignored. Return or leaving the field
+  separator, spaces and apostrophes ignored, the unit the row shows typed
+  at the end ("3°", "50 %", "2400 ppi"; "ppp" in French; any other unit,
+  or a unit inside the number, is refused), and a minus written −
+  (U+2212) or – (U+2013). Return (or Enter) or leaving the field
   applies the value, and so does folding the section or changing tab while
-  typing; a text that is not a number shows the current value again.
+  typing; a text that is not a number shows the current value again (with
+  `afterSubmit`, Return then beeps and the field keeps the keyboard). On
+  rows that pass `typingResetToken` (today the Angle row), an action that
+  restores the settings (Reset, Esc in crop mode) drops a value typed and
+  not confirmed.
   Clicking into the field without typing never changes the value. Values are clamped to the range and the step. The field shows the
   locale's decimal separator, without grouping.
 - A double-click on the label restores the default value. The label's
