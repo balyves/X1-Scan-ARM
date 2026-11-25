@@ -212,7 +212,10 @@ public final class AppModel {
     public var tools = ToolState() {
         didSet {
             trackCropMode(from: oldValue)
-            if tools.effective != .straighten, ruleLine != nil { ruleLine = nil }  // the rule's line goes with its tool
+            // The rule's line goes with its tool; Space's temporary hand keeps it (user's decision of 2026-11-25).
+            if tools.selected != .straighten, ruleLine != nil { ruleLine = nil }
+            // A line still being drawn when Space is pressed is dropped; the hand moves the image from the next click.
+            if tools.spaceHeld, let line = ruleLine, line.applied == nil { ruleLine = nil }
         }
     }
     /// While the crop options are shown (Crop or Straightening Rule tool):
@@ -492,7 +495,8 @@ public final class AppModel {
 
     /// The line of the straightening rule shown over the image (display
     /// coordinates): while it is drawn, then with what it applied. It goes
-    /// with what made it: another tool (Space's hand included), Esc, Reset,
+    /// with what made it: another tool (not Space's temporary hand, except for a
+    /// line still being drawn), Esc, Reset,
     /// a turn or an angle changed by other means, another preview (user's request of 2026-11-25:
     /// no click needed to remove it).
     public struct RuleLine: Sendable, Hashable {

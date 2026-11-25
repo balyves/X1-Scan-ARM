@@ -808,7 +808,7 @@ struct CropModeTests {
         #expect(model.ruleLine == nil)
     }
 
-    /// The line also goes with its tool (Space's hand too), a turn, another angle, a new preview, and stays otherwise.
+    /// The line also goes with its tool, a turn, another angle, a new preview, and stays otherwise (Space's hand too).
     @Test func theRuleLineGoesWithWhatMadeIt() async throws {
         let (model, defaults, suite) = try await modelWithRule()
         defer { defaults.removePersistentDomain(forName: suite) }
@@ -831,7 +831,18 @@ struct CropModeTests {
         let (spaced, d4, s4) = try await modelWithRule()
         defer { d4.removePersistentDomain(forName: s4) }
         spaced.tools.spaceHeld = true
-        #expect(spaced.ruleLine == nil, "Space's hand")
+        #expect(spaced.ruleLine != nil, "Space's temporary hand keeps it (user's decision of 2026-11-25)")
+        spaced.tools.spaceHeld = false
+        #expect(spaced.ruleLine != nil)
+        spaced.beginRule(at: CGPoint(x: 10, y: 10))
+        spaced.tools.spaceHeld = true
+        #expect(spaced.ruleLine == nil, "a line still being drawn goes when Space is pressed")
+        spaced.tools.spaceHeld = false
+        let (switched, d6, s6) = try await modelWithRule()
+        defer { d6.removePersistentDomain(forName: s6) }
+        switched.tools.spaceHeld = true
+        switched.tools.selected = .crop
+        #expect(switched.ruleLine == nil, "another tool chosen while Space is held")
         let (renewed, d5, s5) = try await modelWithRule()
         defer { d5.removePersistentDomain(forName: s5) }
         renewed.startPreview()
