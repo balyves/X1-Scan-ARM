@@ -291,9 +291,26 @@ public final class AppModel {
     /// (upright; the image turns under it by the fine angle); nil: the whole image.
     public var cropFrameInDocument: CGRect? {
         let size = cropSpace
-        guard let frame = recipe.crop.effectiveFrame(imageSize: size), size.width > 0, size.height > 0 else { return nil }
+        guard let frame = appliedRecipe.crop.effectiveFrame(imageSize: size), size.width > 0, size.height > 0 else { return nil }
         return CGRect(x: frame.minX * size.width, y: frame.minY * size.height,
                       width: frame.width * size.width, height: frame.height * size.height)
+    }
+
+    /// False while a scan is shown (user's decision of 2026-11-25): the X1
+    /// scans FlexColor's captured window, a fixed area, until the window
+    /// calculator is connected, so the frame drawn on the preview cannot match
+    /// it. Neither drawn on the scan nor applied by Export; orientation and
+    /// angle still are.
+    public var frameAppliesToImage: Bool { !(session.kind == .scan && session.image != nil) }
+
+    /// The recipe as shown and exported: on a scan, without the frame and with
+    /// free proportions (the constraint then only keeps the corners filled).
+    public var appliedRecipe: Recipe {
+        guard !frameAppliesToImage else { return recipe }
+        var applied = recipe
+        applied.crop.frame = nil
+        applied.crop.aspect = .free
+        return applied
     }
 
     /// Width over height the frame must keep while it is drawn or resized:
@@ -307,6 +324,8 @@ public final class AppModel {
     /// A frame drawn, moved or resized (displayed document coordinates);
     /// nil removes it. With the constraint on it is kept inside the turned image.
     public func setCropFrame(documentRect: CGRect?, constrain: Bool = true) {
+        // No frame drawn on a scan (frameAppliesToImage).
+        guard frameAppliesToImage || documentRect == nil else { return }
         let size = cropSpace
         guard var rect = documentRect?.standardized, size.width > 0, size.height > 0, rect.width > 0, rect.height > 0 else {
             recipe.crop.frame = nil
@@ -537,6 +556,7 @@ public final class AppModel {
     }
 
     private func applyCropRatio() {
+        guard frameAppliesToImage else { return }  // proportions kept for the next preview, no frame on a scan
         let size = cropSpace
         guard let ratio = recipe.crop.ratio(imageSize: size), size.width > 0 else { return }
         if let frame = cropFrameInDocument, recipe.crop.frame != nil {
@@ -917,8 +937,9 @@ public final class AppModel {
         if exportSettings.needsRollValidation { exportSettings.validateRoll() }
         var settings = exportSettings
         settings.format = .rgb16
-        // The master: the decoded scan, never turned or cropped, and the recipe beside it.
-        let recipe = recipe
+        // The master: the decoded scan, never turned or cropped, and the recipe beside it
+        // (as applied to the scan: without the preview's frame).
+        let recipe = appliedRecipe
         let result = Result { () throws(ExportError) -> URL in
             try ExportService.export(session.image, settings: settings, date: date, resolution: ScanScript.resolution,
                                      recipe: recipe, sample: sampleMark)
@@ -1014,7 +1035,7 @@ public final class AppModel {
         // a version of the scan's master, or a preview named by the template.
         let master = session.kind == .scan ? scanMaster : nil
         let resolution = session.kind == .scan ? ScanScript.resolution : 72
-        let image = session.image, settings = exportSettings, recipe = recipe, sample = sampleMark
+        let image = session.image, settings = exportSettings, recipe = appliedRecipe, sample = sampleMark
         let aspect = viewport.pixelAspectRatio
         isExporting = true
         let result = await Task.detached(priority: .userInitiated) {
@@ -1096,7 +1117,7 @@ public final class AppModel {
     public var exportPixelSize: (width: Int, height: Int)? {
         guard let image = session.image else { return nil }
         return RecipeRenderer.outputSize(width: image.width, height: image.expectedHeight,
-                                         pixelAspectRatio: viewport.pixelAspectRatio, recipe: recipe)
+                                         pixelAspectRatio: viewport.pixelAspectRatio, recipe: appliedRecipe)
     }
 
     /// The name the next export would get.

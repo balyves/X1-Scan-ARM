@@ -163,7 +163,8 @@ final class ImageCanvasView: NSView {
 
     /// The frame: dashed outside crop mode; in crop mode solid, with handles, the rest darkened.
     private func updateCrop(_ viewport: Viewport) {
-        let editing = model.tools.showsCropOptions && model.session.image != nil
+        // On a scan the frame cannot be edited (frameAppliesToImage): no handles.
+        let editing = model.tools.showsCropOptions && model.session.image != nil && model.frameAppliesToImage
         guard let frame = model.cropFrameInDocument, model.session.image != nil else {
             cropLayer.isHidden = true
             shadeLayer.isHidden = true

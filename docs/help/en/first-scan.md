@@ -53,7 +53,7 @@ X1: **on**, holder in place. FlexColor: **closed**.
 X1: **either** (nothing is sent to the scanner).
 
 - Turn the image if needed: [Orientation](prepare.md#orientation).
-- Draw the frame with the [Crop](tool-crop.md) tool.
+- Draw the frame with the [Crop](tool-crop.md) tool. For now the frame applies to the preview only, not to the scan: see [Framing](prepare.md#framing).
 - Straighten with the [Straightening Rule](tool-rule.md).
 
 ## 7. Scan {#scan}
@@ -69,4 +69,4 @@ X1: **on**, nothing moved since the preview. FlexColor: **closed**.
 X1: **either**.
 
 - At the end, the scan is saved as it is in the export folder, with its recipe.
-- Choose File › Export… (⇧⌘E) to write a turned, straightened and cropped version: see [Output](output.md).
+- Choose File › Export… (⇧⌘E) to write a turned and straightened version (the frame is not applied to a scan for now): see [Output](output.md).

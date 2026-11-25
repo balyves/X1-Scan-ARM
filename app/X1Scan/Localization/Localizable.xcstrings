@@ -788,6 +788,24 @@
         }
       }
     },
+    "framing.scanFrameNotApplied": {
+      "comment": "Framing section while a scan is shown: the frame drawn on the preview is neither shown nor exported",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Frame not applied: the scan covers a fixed area until the window calculator is connected"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cadre non appliqué : le scan couvre une zone fixe tant que le calculateur n’est pas branché"
+          }
+        }
+      }
+    },
     "key.escape": {
       "comment": "Name of the Escape key in a tooltip's shortcut",
       "extractionState": "manual",

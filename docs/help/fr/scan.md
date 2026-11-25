@@ -21,6 +21,6 @@ L’onglet Scan (⌥⌘2) règle la résolution et l’échelle, et montre les t
 
 - Le bouton « Numériser » est en bas du panneau, à côté d’« Aperçu ». Aussi : Scanner › Numériser… (⇧⌘R).
 - Il faut d’abord un [dossier d’export](output.md#folder).
-- Aujourd’hui, la numérisation rejoue celle de FlexColor à 2 000 ppp, avec son cadre. Le cadre du panneau ne change pas la zone numérisée.
+- Aujourd’hui, la numérisation rejoue celle de FlexColor à 2 000 ppp, avec son cadre. Le cadre du panneau ne change pas la zone numérisée, et n’est pas appliqué au scan reçu : voir [Cadrage](prepare.md#framing).
 - « Arrêter » (⌘. ou Échap) l’interrompt.
 - À la fin, le fichier TIFF 16 bits est enregistré dans le dossier d’export, avec sa recette.

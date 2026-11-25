@@ -9,3 +9,4 @@ Le Recadrage trace et ajuste le cadre de l’image.
 - ← et → tournent l’image finement. Avec Maj, par pas de 5°.
 - Retour (« Terminé ») garde les changements. Échap les annule.
 - Le cadre change l’affichage, l’histogramme et l’export. Il ne change pas la zone numérisée.
+- Sur un scan, aucun cadre ne peut être tracé pour l’instant : voir [Cadrage](prepare.md#framing).

@@ -1320,6 +1320,15 @@ received, on the display or on exported files.
   captured window; the turned frame must fit in the area scanned. Enlarging
   the scan window to cover a turned frame waits for the window calculator
   to be validated by captures (TODO in `AppModel.refreshImage`).
+  Meanwhile the frame is not applied to a scan (user's decision of
+  2026-11-25, X1-14: its master is the captured area, about 0.77 cm
+  square, whatever the frame): on a scan, `AppModel.appliedRecipe` has
+  no frame and free proportions; the frame is neither drawn nor made
+  there, Export applies the orientation and the angle only, the recipe
+  beside the master is the one applied, and the Framing section says
+  "Frame not applied: the scan covers a fixed area until the window
+  calculator is connected". The proportions chosen stay in the recipe
+  for the next preview.
 - **Display**: the image layers turn with the recipe (layer transforms,
   never resampled pixels); the grid (thirds, fine, centre cross) and the
   crop frame are overlays, never scanned or exported. The frame drawn on a

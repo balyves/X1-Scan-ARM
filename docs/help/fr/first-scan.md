@@ -53,7 +53,7 @@ Cette page suit le chemin complet, du branchement au fichier enregistré.
 État du X1 : **indifférent** (rien n’est envoyé au scanner).
 
 - Tournez l’image si besoin : [Orientation](prepare.md#orientation).
-- Tracez le cadre avec l’outil [Recadrage](tool-crop.md).
+- Tracez le cadre avec l’outil [Recadrage](tool-crop.md). Pour l’instant, le cadre ne vaut que pour l’aperçu, pas pour le scan : voir [Cadrage](prepare.md#framing).
 - Redressez avec la [Règle de redressement](tool-rule.md).
 
 ## 7. Numériser {#scan}
@@ -69,4 +69,4 @@ Cette page suit le chemin complet, du branchement au fichier enregistré.
 État du X1 : **indifférent**.
 
 - À la fin, la numérisation est enregistrée telle quelle dans le dossier d’export, avec sa recette.
-- Choisissez Fichier › Exporter… (⇧⌘E) pour écrire une version tournée, redressée et recadrée : voir [Sortie](output.md).
+- Choisissez Fichier › Exporter… (⇧⌘E) pour écrire une version tournée et redressée (le cadre n’est pas appliqué à un scan pour l’instant) : voir [Sortie](output.md).

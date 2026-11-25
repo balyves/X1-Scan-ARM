@@ -29,6 +29,7 @@ L’onglet Sortie (⌥⌘3) règle le fichier exporté.
 - Le fichier a des pixels carrés.
 - Les pixels de l’aperçu sont plus hauts que larges : ils sont rééchantillonnés.
 - Le cadre garde ses proportions : un cadre 6×6 donne un fichier carré.
+- Sur un scan, le cadre n’est pas appliqué pour l’instant : Exporter tourne et redresse le scan entier. Voir [Cadrage](prepare.md#framing).
 - Exporter est grisé après un aperçu arrêté ou en échec, même si toutes ses lignes étaient arrivées. Refaites un aperçu.
 - Une recette (`.x1recipe.json`) est écrite à côté.
 - Une numérisation enregistrée n’est jamais remplacée : ses versions s’appellent _v1, _v2…

@@ -462,6 +462,12 @@ enum Strings {
         String(localized: "export.incompletePreview", defaultValue: "Incomplete preview: make a new preview",
                comment: "Tooltip of the disabled Export: the last preview was stopped or failed")
     }
+    /// Framing section while a scan is shown (user's decision of 2026-11-25).
+    static var scanFrameNotApplied: String {
+        String(localized: "framing.scanFrameNotApplied",
+               defaultValue: "Frame not applied: the scan covers a fixed area until the window calculator is connected",
+               comment: "Framing section while a scan is shown: the frame drawn on the preview is neither shown nor exported")
+    }
     static var chooseFolderHelp: String {
         String(localized: "Choose the folder where Export writes the files.", comment: "Tooltip of the Choose… button of the Folder row")
     }
@@ -627,7 +633,7 @@ enum Strings {
         let settings = model.scanSettings
         switch section {
         case .framing:
-            return framingSummary(model.recipe)
+            return framingSummary(model.appliedRecipe)  // on a scan: without the proportions, not applied
         case .original:
             let film = filmType(settings.filmType)
             guard let holder = model.selectedHolder else { return film }

@@ -19,6 +19,8 @@ The Prepare tab (⌥⌘1) describes the original and the framing of the image.
 
 Framing changes the display and the export. It never changes what the scanner scans.
 
+On a scan, the frame is not applied: the scan always covers the same fixed area for now. The orientation and the angle are applied; the frame drawn on the preview is not shown and not exported. A message in the Framing section says so.
+
 ### Orientation {#orientation}
 
 - The small frame on the left shows the state: turned or not, mirrored or not.

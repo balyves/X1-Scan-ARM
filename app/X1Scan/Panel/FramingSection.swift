@@ -19,6 +19,15 @@ struct FramingSection: View {
         finerFractionDigits: 1)  // whole degrees; the rule's tenths are shown, not typed (lot 1b)
 
     var body: some View {
+        if !model.frameAppliesToImage {
+            // A scan: its area is fixed, the preview's frame is neither shown nor exported.
+            CompactDetailRow {
+                Text(Strings.scanFrameNotApplied)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
         OrientationRow(model: model)
         proportionsRow
         CompactSliderRow(value: Binding { model.recipe.crop.angle } set: { model.setCropAngle($0) },

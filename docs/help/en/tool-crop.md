@@ -9,3 +9,4 @@ The Crop tool draws and adjusts the frame of the image.
 - ← and → turn the image finely. With Shift, by steps of 5°.
 - Return (“Done”) keeps the changes. Esc cancels them.
 - The frame changes the display, the histogram and the export. It does not change the area scanned.
+- On a scan, no frame can be drawn for now: see [Framing](prepare.md#framing).

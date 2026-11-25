@@ -64,6 +64,38 @@ final class ScanTests {
         #expect(model.recipe.crop.frame == nil && model.tools.selected == .hand)
     }
 
+    /// On a scan (a fixed area until the window calculator is connected; user's
+    /// decision of 2026-11-25): no frame shown, made or exported; orientation and
+    /// angle still apply, and the recipe beside the master has no frame.
+    @Test func theFrameIsNotAppliedToTheScan() async throws {
+        let model = try model()
+        model.startPreview()
+        await model.session.waitUntilIdle()
+        model.refreshImage()
+        model.setCropAspect(.ratio(width: 6, height: 6))
+        #expect(model.frameAppliesToImage && model.cropFrameInDocument != nil, "a 6×6 frame on the preview")
+        model.startScan()
+        await model.session.waitUntilIdle()
+        model.refreshImage()
+        let image = try #require(model.session.image)
+        #expect(model.session.kind == .scan && !model.frameAppliesToImage)
+        #expect(model.cropFrameInDocument == nil && model.cropRect == nil, "no frame drawn on the scan")
+        model.setCropAspect(.ratio(width: 6, height: 6))
+        model.setCropFrame(documentRect: CGRect(x: 10, y: 10, width: 100, height: 100))
+        #expect(model.recipe.crop.frame == nil, "no frame made on the scan")
+        #expect(model.recipe.crop.aspect == .ratio(width: 6, height: 6), "the proportions are kept for the next preview")
+        let size = try #require(model.exportPixelSize)
+        #expect(size.width == image.width && size.height == image.expectedHeight, "the whole scan")
+        let master = try #require(try model.lastScanSave?.get())
+        let saved = try Recipe.decode(from: Data(contentsOf: Recipe.fileURL(forImage: master)))
+        #expect(saved.crop.frame == nil && saved.crop.aspect == .free, "the master's recipe: as applied to the scan")
+        model.rotateClockwise()
+        let turned = try #require(model.exportPixelSize)
+        #expect(turned.width == image.expectedHeight && turned.height == image.width, "the orientation still applies")
+        let version = try await model.export().get()
+        #expect(version.lastPathComponent.contains("_v1"))
+    }
+
     /// Lot 1b: Reset on the preview, then the scan (another area): ⌘Z cannot
     /// bring back the preview's recipe (its frame) on the scan.
     @Test func undoOfResetDoesNotReachTheScan() async throws {

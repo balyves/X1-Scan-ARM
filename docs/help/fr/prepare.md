@@ -19,6 +19,8 @@ L’onglet Préparer (⌥⌘1) décrit l’original et le cadrage de l’image.
 
 Le cadrage change l’affichage et l’export. Il ne change jamais ce que le scanner numérise.
 
+Sur un scan, le cadre n’est pas appliqué : pour l’instant, le scan couvre toujours la même zone fixe. L’orientation et l’angle sont appliqués ; le cadre tracé sur l’aperçu n’est ni affiché ni exporté. Un message le rappelle dans la section Cadrage.
+
 ### Orientation {#orientation}
 
 - Le petit cadre à gauche montre l’état : tournée ou non, en miroir ou non.
