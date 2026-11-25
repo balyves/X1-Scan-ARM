@@ -57,14 +57,4 @@ public struct PreviewImage: Sendable, Equatable {
     public var exportImage: RGB16Image {
         RGB16Image(width: width, height: height, samples: corrected)
     }
-
-    /// The corrected image at its expected height, the rows not received
-    /// black: the area the screen shows and the crop frame is drawn on, for
-    /// rendering a recipe (session of 2026-11-25: a frame drawn on a stopped
-    /// preview took the received rows for the whole image).
-    public var fullHeightExportImage: RGB16Image {
-        guard height < expectedHeight else { return exportImage }
-        return RGB16Image(width: width, height: expectedHeight,
-                          samples: corrected + [UInt16](repeating: 0, count: (expectedHeight - height) * width * 3))
-    }
 }

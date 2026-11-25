@@ -297,22 +297,24 @@ struct SquarePixelExportTests {
         #expect(reds(cropped) == [[15, 16, 17], [21, 22, 23]], "whole pixels, not resampled")
     }
 
-    /// X1-12.tif: a frame drawn on a stopped preview (177 rows of 817) was
-    /// cut from the rows received as if they were the whole image.
-    @Test func aStoppedPreviewKeepsTheFrameWhereItWasDrawn() throws {
+    /// User's decision of 2026-11-25 (X1-12.tif came from a stopped preview):
+    /// an incomplete image is never exported, and Export says why.
+    @Test func aStoppedPreviewIsNotExported() throws {
         let folder = try temporaryDirectory()
         defer { try? FileManager.default.removeItem(at: folder) }
         let received = [UInt16](repeating: 4_000, count: 60 * 5 * 3)  // 5 rows of 20
         let stopped = PreviewImage(width: 60, expectedHeight: 20, receivedRows: received)
-        // The top quarter of the area (rows 0-4, all received), square: 15 × 15 physical.
-        let top = sixBySix(CGRect(x: 0, y: 0, width: 0.25, height: 0.25))
-        let url = try ExportService.export(stopped, settings: ExportSettings(folder: folder, nameTemplate: "s"),
-                                           recipe: top, applyRecipe: true, pixelAspectRatio: 3)
-        let size = try tiffSize(url)
-        #expect(size.width == 15 && size.height == 15)
-        // Rows not received are black, as the screen leaves them empty.
-        let image = stopped.fullHeightExportImage
-        #expect(image.height == 20 && image.samples[60 * 5 * 3] == 0 && image.samples[60 * 5 * 3 - 1] == 4_000)
+        #expect(throws: ExportError.noImage) {
+            try ExportService.export(stopped, settings: ExportSettings(folder: folder, nameTemplate: "s"),
+                                     recipe: Recipe(), applyRecipe: true, pixelAspectRatio: 3)
+        }
+        #expect(try FileManager.default.contentsOfDirectory(atPath: folder.path).isEmpty, "nothing written")
+        let toolbar = ToolbarState(source: .virtual, session: .stopped(.stoppedAndReady), virtualAvailable: true,
+                                   hasImage: true, hasExportFolder: true, imageIsComplete: false)
+        #expect(!toolbar.canExport && toolbar.exportNeedsCompleteImage)
+        let complete = ToolbarState(source: .virtual, session: .finished, virtualAvailable: true,
+                                    hasImage: true, hasExportFolder: true)
+        #expect(complete.canExport && !complete.exportNeedsCompleteImage)
     }
 
     /// The whole chain: a virtual preview (pixels of 1 × 3), 6×6 chosen, Export.

@@ -27,6 +27,9 @@ public struct ToolbarState: Sendable, Hashable {
     /// True while the stop sequence runs: Stop is shown, but pressing it again does nothing.
     public var isStopping: Bool
     public var canExport: Bool
+    /// The image shown is incomplete (a preview stopped before its end; a
+    /// stopped scan has no image): Export is disabled (user's decision of 2026-11-25).
+    public let exportNeedsCompleteImage: Bool
 
     public enum ScanBlock: Sendable, Hashable {
         /// A preview or scan is running or stopping.
@@ -56,7 +59,7 @@ public struct ToolbarState: Sendable, Hashable {
     public init(source: ScannerSourceKind, session: PreviewSession.State, virtualAvailable: Bool,
                 hasImage: Bool, hasExportFolder: Bool, realPreviewEnabled: Bool = false,
                 scanAvailable: Bool = false, scanHasExportFolder: Bool = true, realScanEnabled: Bool = false,
-                realScanReady: Bool = false) {
+                realScanReady: Bool = false, imageIsComplete: Bool = true) {
         let busy = session == .running || session == .stopping
         previewNeedsConfirmation = source == .real && realPreviewEnabled
         if busy {
@@ -70,7 +73,8 @@ public struct ToolbarState: Sendable, Hashable {
         }
         canStop = session == .running
         isStopping = session == .stopping
-        canExport = !busy && hasImage && hasExportFolder
+        exportNeedsCompleteImage = !busy && hasImage && !imageIsComplete
+        canExport = !busy && hasImage && imageIsComplete && hasExportFolder
         scanNeedsConfirmation = source == .real
         if busy {
             scanBlock = .busy

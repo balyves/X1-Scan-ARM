@@ -7232,6 +7232,24 @@
           }
         }
       }
+    },
+    "export.incompletePreview": {
+      "comment": "Tooltip of the disabled Export: the preview stopped before its end",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Incomplete preview: make a new preview"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aperçu incomplet : refaites un aperçu"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

@@ -456,6 +456,12 @@ enum Strings {
         String(localized: "Template of the file name; {roll}, {frame}… are replaced on export.",
                comment: "Tooltip of the Name menu of the settings panel; {roll} and {frame} are tokens, not translated")
     }
+    /// Tooltip of Export (button and menu item) when the preview shown is
+    /// incomplete. A stopped scan has no image: only a preview can be incomplete.
+    static var exportIncomplete: String {
+        String(localized: "export.incompletePreview", defaultValue: "Incomplete preview: make a new preview",
+               comment: "Tooltip of the disabled Export: the preview stopped before its end")
+    }
     static var chooseFolderHelp: String {
         String(localized: "Choose the folder where Export writes the files.", comment: "Tooltip of the Choose… button of the Folder row")
     }

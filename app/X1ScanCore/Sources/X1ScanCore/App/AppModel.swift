@@ -695,7 +695,8 @@ public final class AppModel {
                      realPreviewEnabled: realPreviewEnabled, scanAvailable: virtualScanner?.scanFixture != nil,
                      scanHasExportFolder: exportSettings.folder != nil,
                      realScanEnabled: realScanEnabled,
-                     realScanReady: realPreviewCompletedThisLaunch && !realPreviewNeedsPowerCycle)
+                     realScanReady: realPreviewCompletedThisLaunch && !realPreviewNeedsPowerCycle,
+                     imageIsComplete: session.image?.isComplete ?? true)
         if isExporting { state.canExport = false }  // one export at a time
         return state
     }

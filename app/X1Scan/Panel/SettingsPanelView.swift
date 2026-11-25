@@ -263,7 +263,7 @@ private struct OutputSection: View {
                 Task { await model.export() }
             }
                 .disabled(!model.toolbar.canExport)
-                .help(Strings.tooltip(.export))
+                .help(model.toolbar.exportNeedsCompleteImage ? Strings.exportIncomplete : Strings.tooltip(.export))
         }
         switch model.lastExport {
         case .success(let url):

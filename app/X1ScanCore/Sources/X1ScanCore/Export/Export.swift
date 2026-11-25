@@ -354,7 +354,8 @@ public enum ExportService {
                               pixelAspectRatio: Double = 1, versionOf master: URL? = nil, sample: SampleMark? = nil,
                               fileManager: FileManager = .default) throws(ExportError) -> URL {
         guard let folder = master?.deletingLastPathComponent() ?? settings.folder else { throw .noFolder }
-        guard let image, image.height > 0 else { throw .noImage }
+        // An incomplete image is never exported (user's decision of 2026-11-25; Export is disabled then).
+        guard let image, image.height > 0, image.isComplete else { throw .noImage }
         var isDirectory: ObjCBool = false
         guard fileManager.fileExists(atPath: folder.path, isDirectory: &isDirectory), isDirectory.boolValue else {
             throw .folderMissing(folder.path)
@@ -365,8 +366,7 @@ public enum ExportService {
             ?? fileName(settings: settings, date: date, suffix: sample?.suffix ?? "", exists: taken)
         let url = folder.appending(path: name)
         let pixels = if let recipe, applyRecipe {
-            // The frame is normalised in the whole image, rows not yet received included.
-            RecipeRenderer.render(image.fullHeightExportImage, pixelAspectRatio: pixelAspectRatio, recipe: recipe)
+            RecipeRenderer.render(image.exportImage, pixelAspectRatio: pixelAspectRatio, recipe: recipe)
         } else {
             image.exportImage
         }

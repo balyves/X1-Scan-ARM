@@ -116,6 +116,9 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
             menuItem.title = model.panel.layout.isHidden
                 ? String(localized: "Show Settings Panel", comment: "Menu item")
                 : String(localized: "Hide Settings Panel", comment: "Menu item")
+        case #selector(exportImage(_:)):
+            // Incomplete image: disabled, and the item says why (user's decision of 2026-11-25).
+            menuItem.toolTip = model.toolbar.exportNeedsCompleteImage ? Strings.exportIncomplete : nil
         default: break
         }
         return validate(menuItem.action)
