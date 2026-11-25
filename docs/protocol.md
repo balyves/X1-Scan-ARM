@@ -770,6 +770,13 @@ a value, the runner would stop there (tolerance 256 around 14 219),
 before the window with target 9 000 **[confirmed]** (script). The cold sequence of 2026-11-16 stays the
 only one (user's decision, 2026-11-18).
 
+**2026-11-25, after the recalibration** (journal): our cold sequence's
+read gave 13 579 (−640 against 14 219: the runner stopped there, before
+SCAN) and, after a power cycle, 13 963 (−256, accepted) **[confirmed]**;
+the first page 0x20 read was 8 203 both times **[confirmed]**. That
+this read moved down with the recalibration and varies between cold
+starts: **[hypothesis]** (hypotheses.md, Calibration).
+
 **First session of a FlexColor run** (2026-11-18 afternoon, ten runs,
 `tests/fixtures/scan-windows-2026-11-18.json`). Its calibration windows,
 before the holder code is read (§13), take a ratio and offsets 54 / 58 that

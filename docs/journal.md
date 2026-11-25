@@ -1025,3 +1025,54 @@ unclear to the user, to be explained and redone):
   Scanner > Scan… takes ⇧⌘R and the Scanner menu reads "Preview…" and
   "Scan…"; the two sample images are planned later, before the
   photograph is added.
+
+## 2026-11-25: real X1 session after lots 1 and 1b (real preview and scan)
+
+The user's session on the real X1 (development Mac, ASFireWire; logs and
+files outside the repository):
+
+- **Cold preview stopped by the position guard.** The first preview
+  after power-on took the cold sequence and stopped at the first checked
+  page 0x20 read (after `F0 00 00 01 01 01`, step 47): 13 579 measured,
+  14 219 expected, tolerance 256 (−640). Before SCAN, as designed. The X1
+  was switched off and on; the next cold preview read 13 963 twice
+  (−256, accepted: |difference| ≤ 256) and completed. In both, the first
+  page 0x20 read gave 8 203, the power-on value: the same start, the
+  difference appears after the move. Before: 14 027 to 14 219 (2026-11-16
+  to 18). These are the first cold reads since the recalibration of
+  2026-11-20. The expected value comes from the capture of 2026-11-16
+  only: nothing is changed (no code, no guard); open line in
+  `hypotheses.md` (Calibration), protocol.md §12, a range to be proposed
+  to the user. decisions.md ("14 027 to 14 219 in every capture and every
+  real preview so far") is left for the user (a safety section).
+- Two warm previews: one complete, one stopped by the user on purpose
+  (stop sequence ended ready). The 2 000 ppi scan completed; the position
+  read before the focus step was 16 843, the same as essai-N.
+- **Fixes from the session** (application only, nothing sent to the
+  scanner changes):
+  - the straightening rule's line stayed after Esc or Reset: it now
+    lives in the model and goes with them, without a click;
+  - X1-12.tif, exported from the stopped preview with a 6×6 frame, was
+    1 038 × 75 px: the frame (normalised on the whole preview area, as on
+    screen) was applied to the 177 rows received out of 817, and without
+    an angle the preview's 1 × 3 pixels were kept. Export now always
+    writes square pixels (Lanczos-3) and renders a stopped preview at its
+    expected height, the missing rows black. The scan's export with a
+    turned recipe (X1-13: 270°, −45°) was checked: 503 × 411 px, square
+    pixels, the size announced by the panel;
+  - Reset "did not work" on the real preview: an angle typed in the
+    field and not confirmed stayed in it and was applied when the field
+    lost the focus, after Reset (reproduced with `-X1ScanAngleProbe`:
+    4° back after Reset). Reset and Esc now drop such a value;
+  - the Angle field: Return (and the keypad's Enter) applies the value
+    and gives the keyboard back to the image, in and out of crop mode; a
+    text that is not a number beeps and keeps the field; the unit the row
+    shows ("3°") and a minus written − or – are understood. Synthetic
+    Return and Enter applied the value in every case tried on the virtual
+    X1, but the probe found the keyboard taken back by the field after the
+    move to the image (the field's focus state), at first only sometimes:
+    the likely cause of "Return does not validate", not confirmed on the
+    user's side.
+- **Proposal to the user, not applied**: the cold sequence's first
+  checked position (see above). Nothing is changed before several cold
+  starts are captured.
