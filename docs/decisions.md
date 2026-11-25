@@ -1310,8 +1310,8 @@ received, on the display or on exported files.
   was 1 038 × 75 px for a 6×6 frame): Lanczos-3, in floating point, onto
   square pixels the size of the source pixel's shorter side (user's
   decision: a preview gets 3 times more rows), then the crop. An
-  incomplete preview (stopped before its end; a stopped scan has no
-  image) is not exported: Export is disabled and its tooltip says "Incomplete preview:
+  incomplete preview (stopped or failed, even after its last row; a
+  stopped scan has no image) is not exported: Export is disabled and its tooltip says "Incomplete preview:
   make a new preview" (user's decision of 2026-11-25, X1-12.tif came from
   a stopped preview). The bottom bar's size estimate
   is that of the file written. With the constraint on, the frame is kept

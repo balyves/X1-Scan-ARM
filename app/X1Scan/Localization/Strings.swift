@@ -460,7 +460,7 @@ enum Strings {
     /// incomplete. A stopped scan has no image: only a preview can be incomplete.
     static var exportIncomplete: String {
         String(localized: "export.incompletePreview", defaultValue: "Incomplete preview: make a new preview",
-               comment: "Tooltip of the disabled Export: the preview stopped before its end")
+               comment: "Tooltip of the disabled Export: the last preview was stopped or failed")
     }
     static var chooseFolderHelp: String {
         String(localized: "Choose the folder where Export writes the files.", comment: "Tooltip of the Choose… button of the Folder row")

@@ -687,6 +687,18 @@ public final class AppModel {
 
     // MARK: Derived state
 
+    /// True without an image (`ToolbarState` checks `hasImage` apart). With one:
+    /// the image shown has all its rows and its run ended normally. A preview
+    /// stopped (Esc) or failed is incomplete even when all its rows had arrived
+    /// (session of 2026-11-25: the virtual X1's preview stopped after its last
+    /// row could still be exported); no image counts as complete here.
+    public var imageIsComplete: Bool {
+        switch session.state {
+        case .stopped, .failed: return session.image == nil
+        default: return session.image?.isComplete ?? true
+        }
+    }
+
     public var toolbar: ToolbarState {
         var state = ToolbarState(source: source, session: session.state, virtualAvailable: virtualScanner != nil,
                      hasImage: (session.image?.height ?? 0) > 0, hasExportFolder: exportSettings.folder != nil,
@@ -694,7 +706,7 @@ public final class AppModel {
                      scanHasExportFolder: exportSettings.folder != nil,
                      realScanEnabled: realScanEnabled,
                      realScanReady: realPreviewCompletedThisLaunch && !realPreviewNeedsPowerCycle,
-                     imageIsComplete: session.image?.isComplete ?? true)
+                     imageIsComplete: imageIsComplete)
         if isExporting { state.canExport = false }  // one export at a time
         return state
     }
@@ -995,6 +1007,7 @@ public final class AppModel {
     /// actor (a scan with a fine angle takes a while to resample).
     @discardableResult
     public func export(date: Date = Date()) async -> Result<URL, ExportError> {
+        guard imageIsComplete else { return .failure(.noImage) }  // Export is disabled then
         // Exporting right after typing a new roll name counts as validating it.
         if exportSettings.needsRollValidation { exportSettings.validateRoll() }
         // The recipe applied to the image shown, written as a new file with its recipe:

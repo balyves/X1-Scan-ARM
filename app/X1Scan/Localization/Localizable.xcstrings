@@ -7234,7 +7234,7 @@
       }
     },
     "export.incompletePreview": {
-      "comment": "Tooltip of the disabled Export: the preview stopped before its end",
+      "comment": "Tooltip of the disabled Export: the last preview was stopped or failed",
       "extractionState": "manual",
       "localizations": {
         "en": {

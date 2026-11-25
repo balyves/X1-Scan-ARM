@@ -29,7 +29,7 @@ The Output tab (⌥⌘3) sets the exported file.
 - The file has square pixels.
 - A preview’s pixels are taller than wide: they are resampled.
 - The frame keeps its proportions: a 6×6 frame gives a square file.
-- Export is disabled while the preview is incomplete (stopped before its end). Make a new preview.
+- Export is disabled after a preview that was stopped or failed, even if all its rows had arrived. Make a new preview.
 - A recipe (`.x1recipe.json`) is written next to it.
 - A saved scan is never replaced: its versions are named _v1, _v2…
 - An existing file is never overwritten.

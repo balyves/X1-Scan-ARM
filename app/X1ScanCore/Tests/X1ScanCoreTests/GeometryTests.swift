@@ -4,6 +4,7 @@ import Foundation
 import ImageIO
 import Testing
 import X1Image
+import X1Preview
 import X1Transport
 @testable import X1ScanCore
 
@@ -315,6 +316,42 @@ struct SquarePixelExportTests {
         let complete = ToolbarState(source: .virtual, session: .finished, virtualAvailable: true,
                                     hasImage: true, hasExportFolder: true)
         #expect(complete.canExport && !complete.exportNeedsCompleteImage)
+    }
+
+    /// A preview stopped by Esc after its last image row (session of 2026-11-25:
+    /// Export stayed enabled): all rows are there, yet it is not exported.
+    @Test func aPreviewStoppedAfterItsLastRowIsNotExported() async throws {
+        let suite = "X1ScanCoreTests-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let folder = try temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let script: [PreviewStep] = PreviewScript.flexColor4813
+        let lastImage: Int = try #require(script.lastIndex { (step: PreviewStep) -> Bool in step.kind == .read(.image) })
+        let afterImage: Int = script[...lastImage].filter { (step: PreviewStep) -> Bool in
+            !SimulatedX1.pollingOpcodes.contains(step.command.opcode)
+        }.count
+        let gate = PreviewGate()
+        let inspector = ScannerInspector { FakeConnection(responses: [:], openError: TransportError.deviceBusy) }
+        let model = AppModel(virtualScanner: { try TestFixtures.scanner(pausedAt: afterImage, gate: gate) },
+                             inspector: inspector, defaults: defaults)
+        model.exportSettings = ExportSettings(folder: folder, nameTemplate: "X1-{n}")
+        model.startPreview()
+        await gate.waitUntilPaused()
+        for _ in 0..<10_000 where !(model.session.image?.isComplete ?? false) { await Task.yield() }
+        #expect(model.session.image?.isComplete == true, "all rows received before Esc")
+        model.escape()
+        await gate.release()
+        await model.session.waitUntilIdle()
+        guard case .stopped = model.session.state else {
+            Issue.record("stopped expected, got \(model.session.state)")
+            return
+        }
+        #expect(!model.imageIsComplete)
+        #expect(!model.toolbar.canExport && model.toolbar.exportNeedsCompleteImage)
+        let result = await model.export()
+        #expect(throws: ExportError.noImage) { try result.get() }
+        #expect(try FileManager.default.contentsOfDirectory(atPath: folder.path).isEmpty, "nothing written")
     }
 
     /// The whole chain: a virtual preview (pixels of 1 × 3), 6×6 chosen, Export.
