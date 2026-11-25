@@ -1079,3 +1079,11 @@ files outside the repository):
   behaviour goes into the compact-settings-panel skill; an interface fix
   that touches no file talking to the scanner gets one x1-ui pass, no
   x1-reviewer (CLAUDE.md rule 7).
+- Later the same day: the frame is not applied to a scan (fixed area
+  until the window calculator is connected); Space gives the temporary
+  hand with the pointer over the image, whatever the focus. Installation
+  check, lot 1 (detection only, registry read only; docs/decisions.md,
+  "Installation check"): two new [hypothesis] lines in docs/hypotheses.md
+  (the adapter's controller as a 1394 PCI device; a DriverKit driver on it
+  is ASFireWire), to settle with an `ioreg` listing at the next session
+  with the X1, kept outside the repository.

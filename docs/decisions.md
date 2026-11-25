@@ -1605,3 +1605,44 @@ From the user's brief of 2026-11-20 and the answers to its plan (points 1,
   scan's pixels are square). Today `SampleFilm` reads one image with
   `rowsPerColumn` 1 and gives it to both passes: no photograph is added
   before that changes (README roadmap).
+
+## Installation check (assistant, 2026-11-25, lot 1: detection)
+
+User's decisions of 2026-11-25: an assistant for macOS 26 Tahoe only for
+now (macOS 15 on hold, macOS 14 not planned), one line per element with ✓
+or ⚠, a link to its help page and, where useful, a download link.
+
+- **Lines**: macOS (26 or later), the Thunderbolt to FireWire adapter, the
+  ASFireWire driver, the X1. Links: ASFireWire's repository and website
+  (a third-party project in beta, docs/help/*/hardware.md); for the
+  adapters no purchase link, the references A1790 / MMEL2 and
+  A1463 / MD464, "no longer sold new, second-hand".
+- **Registry only** (`InstallationRegistry`): matching, properties and
+  children of registry entries; no device is opened, no command is sent.
+  `InstallationCheckTests` checks the reader's source for the calls that
+  would open a device or send a command. The X1 line reuses
+  `ScannerPresence.find()` (lot A).
+- **Detection** (`InstallationCheck.evaluate`, pure, tested on invented
+  snapshots; no real registry listing in the repository):
+  - adapter: a PCI device of class IEEE 1394 (`class-code` 0x0C00xx;
+    [hypothesis], docs/hypotheses.md);
+  - driver: a DriverKit driver on that controller ([hypothesis]: it is
+    ASFireWire; no class or bundle name assumed until a listing is read,
+    docs/hypotheses.md); without an adapter it cannot be checked;
+  - X1: a scanner seen in the registry. An X1 seen means the chain
+    works: the adapter and driver lines are then fine whatever the
+    registry shows (otherwise a wrong hypothesis would open the assistant
+    at every launch of a working installation).
+- **Not told reliably** (said as such by the assistant): Apple's adapter
+  from another FireWire device on Thunderbolt; a driver installed but not
+  allowed yet (not checked: [hypothesis], a listing of that state may show
+  something); an X1 off, a missing cable and a broken chain (the same
+  absence); an X1 opened by another program (FlexColor).
+- **At launch** (`InstallationCheck.launchPresentation`): the assistant
+  opens by itself only when the adapter or the driver is missing; without
+  an X1 but with both, the "No X1 found" alert, which gets a "Check
+  Installation…" button (lot 2). Never the alert and the assistant
+  together. Also from Help › Check Installation… (lot 2).
+- **Lot 2** (not started): the window, the menu item, the alert's button,
+  the live update when a device is plugged or unplugged (a registry
+  iterator invalidated during a read is read again), the help text.

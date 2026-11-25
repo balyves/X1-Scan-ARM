@@ -127,3 +127,16 @@ older ones in `docs/protocol.md` §1-§11 are still to be added.
   indicator"), are round guesses. Missing: measured levels. Settle: dark
   frames (lamp off or an opaque holder) for the noise floor, an
   over-exposed frame (empty holder, about 58 000) for the clipping level.
+
+## Installation check (assistant, lot 1)
+
+- On macOS 26 Tahoe, a DriverKit driver attached to the IEEE 1394
+  controller (`IOUserClass` or `IOUserServerName` on an entry under it) is
+  ASFireWire, active (`FireWireController.hasDriverKitDriver`). Missing:
+  the registry of a Mac with the adapter, ASFireWire and the X1 (class and
+  bundle names). Settle: `ioreg -l -w0` on that Mac, X1 on and connected,
+  read only and kept outside the repository (user's decision of
+  2026-11-25); only class names are taken from it.
+- The adapter's controller has PCI class code 0x0C0010 (IEEE 1394 OHCI)
+  and is seen as an `IOPCIDevice` through Thunderbolt on Apple Silicon.
+  Missing: the same listing. Settle: the same `ioreg`.
