@@ -97,7 +97,10 @@ passes every string, already translated (see Text and languages).
   key handling) and the tooltip to `ShortcutTooltip` (its sentence without
   the shortcut, translated in the catalog), then use
   `Strings.tooltip(_:)`; a key the window or the canvas handles goes
-  through `AppShortcut.matching` (`windowKeys`, `canvasKeys`).
+  through `AppShortcut.matching` (`windowKeys`: in the main window,
+  wherever the focus is; `canvasKeys`: the canvas focused; `pointerKeys`:
+  the pointer over the image, whatever the focus, like Space's temporary
+  hand). None acts while text is typed in a field or a sheet is open.
   `ShortcutTests` checks the mentions, that each handled key is recognised
   from its own shortcut by that matcher, and the translations (symbol
   shortcuts and key names in parentheses; "%@" where a key is named
