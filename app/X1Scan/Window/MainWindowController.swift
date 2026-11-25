@@ -34,8 +34,10 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         window.delegate = self
         model.undoManager = window.undoManager  // Reset of the Framing section, undone by ⌘Z
         observers.append(Observing { [weak self] in self?.modelChanged() })
-        cropKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            guard let self, let shortcut = self.windowKey(event) else { return event }
+        cropKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .keyUp]) { [weak self] event in
+            guard let self else { return event }
+            if self.pointerKey(event) { return nil }
+            guard event.type == .keyDown, let shortcut = self.windowKey(event) else { return event }
             // Held down: one action only; the repeats are swallowed.
             guard !event.isARepeat else { return nil }
             switch shortcut {
@@ -59,6 +61,46 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
               // A text field being edited has the window's field editor (an NSText) as first responder.
               !(window.firstResponder is NSText) else { return nil }
         return AppShortcut.matching(KeyPress(event), among: AppShortcut.windowKeys(cropping: model.tools.showsCropOptions))
+    }
+
+    /// The space bar's temporary hand (`AppShortcut.pointerKeys`): pressed
+    /// while the pointer is over the image, wherever the keyboard focus is,
+    /// except while typing in a field or with a sheet open; released anywhere.
+    /// Returns true when the event is used.
+    private func pointerKey(_ event: NSEvent) -> Bool {
+        guard let window, event.window === window,
+              KeyShortcut.Key.space.keyCodes.contains(event.keyCode) else { return false }
+        if event.type == .keyUp {
+            guard model.tools.spaceHeld else { return false }
+            model.tools.spaceHeld = false
+            return true
+        }
+        if model.tools.spaceHeld { return true }  // the key's repeats
+        // A repeat never starts it: the press went to a control while the pointer was elsewhere.
+        guard !event.isARepeat, window.attachedSheet == nil, !(window.firstResponder is NSText),
+              AppShortcut.matching(KeyPress(event), among: AppShortcut.pointerKeys) == .temporaryHand,
+              pointerIsOverImage(in: window) else { return false }
+        model.tools.spaceHeld = true
+        return true
+    }
+
+    /// The pointer is over the image area (the canvas's scroll view, uncovered).
+    private func pointerIsOverImage(in window: NSWindow) -> Bool {
+        guard let content = window.contentView else { return false }
+        // hitTest takes a point in the superview's coordinates.
+        let location = window.mouseLocationOutsideOfEventStream
+        guard let hit = content.hitTest(content.superview?.convert(location, from: nil) ?? location) else { return false }
+        var view: NSView? = hit
+        while let current = view {
+            if let scroll = current as? NSScrollView, scroll.documentView is ImageCanvasView { return true }
+            view = current.superview
+        }
+        return false
+    }
+
+    /// The window no longer gets the keys: a space bar held is released.
+    func windowDidResignKey(_ notification: Notification) {
+        if model.tools.spaceHeld { model.tools.spaceHeld = false }
     }
 
     @available(*, unavailable)

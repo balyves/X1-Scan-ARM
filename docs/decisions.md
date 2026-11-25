@@ -1440,8 +1440,8 @@ the interface only: nothing sent to the scanner changes.
   (H)"). It is taken from the source the menus and the key handling use
   (`AppShortcut`), never copied by hand. `ShortcutTests` checks that:
   - every shortcut is mentioned in a tooltip, at the end or inside it;
-  - each key the window and the canvas handle (their lists `windowKeys`
-    and `canvasKeys`) is recognised from its own shortcut by the matcher
+  - each key the window and the canvas handle (their lists `windowKeys`,
+    `canvasKeys` and `pointerKeys`) is recognised from its own shortcut by the matcher
     they both use (`AppShortcut.matching`), letters and keys without a
     letter alike, with Shift ignored except for the arrows, as before;
   - the other shortcuts are in a list of menu shortcuts, with a key
@@ -1462,6 +1462,16 @@ the interface only: nothing sent to the scanner changes.
   Not changed (user's decision): the real X1's confirmations keep their
   "(⌘. or Esc)". The Settings note "Scanner Information (⌘I)" takes its
   shortcut from `AppShortcut` since lot A ("Built-in help").
+- **Space** (user's decision of 2026-11-25): Space held gives the
+  temporary hand while the pointer is over the image, wherever the
+  keyboard focus is, except while typing in a field or with a sheet open
+  (`AppShortcut.pointerKeys`, handled by the window's key monitor);
+  elsewhere the key does what macOS does with it (a focused button or
+  checkbox). A key repeat never starts it; releasing it anywhere, or the
+  window losing the keys, ends it. A drag keeps the tool it started with
+  until the mouse button is released, so Space pressed while the rule's
+  line is drawn keeps the line. `-X1ScanAngleProbe` checks it, moving the
+  real pointer over the image then the panel and putting it back.
 - **Not in this lot**: the RGB values under the pointer in the
   Information area come with the pipettes and the densitometer, in lot 3
   (user's decision after the tests of lot 1b); nothing is shown for them

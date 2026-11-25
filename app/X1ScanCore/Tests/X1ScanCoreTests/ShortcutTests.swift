@@ -65,6 +65,7 @@ struct ShortcutTests {
     /// shortcut changes both, or this test fails.
     @Test func theKeyShownIsTheKeyHandled() throws {
         let handled: [AppShortcut] = AppShortcut.windowKeys(cropping: true) + AppShortcut.canvasKeys(cropping: true)
+            + AppShortcut.pointerKeys
         for shortcut in handled {
             let key = try #require(shortcut.shortcut, "\(shortcut) has no shortcut")
             let press: KeyPress
@@ -77,7 +78,8 @@ struct ShortcutTests {
             }
             let window: AppShortcut? = AppShortcut.matching(press, among: AppShortcut.windowKeys(cropping: true))
             let canvas: AppShortcut? = AppShortcut.matching(press, among: AppShortcut.canvasKeys(cropping: true))
-            #expect(window == shortcut || canvas == shortcut, "\(key.display()) shown for \(shortcut) but not handled as it")
+            let pointer: AppShortcut? = AppShortcut.matching(press, among: AppShortcut.pointerKeys)
+            #expect(window == shortcut || canvas == shortcut || pointer == shortcut, "\(key.display()) shown for \(shortcut) but not handled as it")
         }
         // Every shortcut shown is handled somewhere: by the window or the canvas, or by a menu item.
         let menuItems: [AppShortcut] = [.rotateCounterclockwise, .rotateClockwise, .toggleGrid, .preview, .scan, .stop, .export, .undo]
@@ -99,7 +101,7 @@ struct ShortcutTests {
         let shiftSpace = KeyPress(keyCode: 49, characters: " ", modifiers: .shift)
         let shiftReturn = KeyPress(keyCode: 36, characters: "\r", modifiers: .shift)
         #expect(AppShortcut.matching(shiftEscape, among: canvasKeys) == .escape)
-        #expect(AppShortcut.matching(shiftSpace, among: canvasKeys) == .temporaryHand)
+        #expect(AppShortcut.matching(shiftSpace, among: AppShortcut.pointerKeys) == .temporaryHand)
         #expect(AppShortcut.matching(shiftReturn, among: canvasKeys) == .done)
         let optionEscape = KeyPress(keyCode: 53, characters: "", modifiers: .option)
         #expect(AppShortcut.matching(optionEscape, among: canvasKeys) == nil, "⌥, ⌃ and ⌘ still count")

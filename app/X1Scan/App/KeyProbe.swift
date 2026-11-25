@@ -103,10 +103,8 @@ enum KeyProbe {
             model.tools.selected = .crop
             pressKey(code: 53, characters: "\u{1b}", shift: false, in: window)
             let afterEscape = model.tools.selected
-            pressKey(code: 49, characters: " ", shift: false, in: window, only: .keyDown)
-            let spaceHeld = model.tools.spaceHeld
-            pressKey(code: 49, characters: " ", shift: false, in: window, only: .keyUp)
-            lines.append("PROBE canvas keys: angle \(startAngle) -> → \(afterArrow) -> ⇧→ \(afterShiftArrow); Return -> \(afterReturn.rawValue) (zoom expected); Esc -> \(afterEscape.rawValue) (zoom expected); Space held -> \(spaceHeld), released -> \(model.tools.spaceHeld)")
+            // Space depends on the pointer's place since 2026-11-25: AngleProbe checks it.
+            lines.append("PROBE canvas keys: angle \(startAngle) -> → \(afterArrow) -> ⇧→ \(afterShiftArrow); Return -> \(afterReturn.rawValue) (zoom expected); Esc -> \(afterEscape.rawValue) (zoom expected)")
             model.panel.select(savedTab)  // the tab is saved with the panel layout: put it back
             for line in lines { FileHandle.standardError.write(Data((line + "\n").utf8)) }
             NSApp.terminate(nil)

@@ -244,11 +244,17 @@ extension AppShortcut {
         Tool.allCases.map(AppShortcut.tool) + (cropping ? [.swapProportions] : [])
     }
 
-    /// Keys the image canvas handles when it has the focus: the space bar,
-    /// Esc, and in crop mode the arrows and Return.
+    /// Keys the image canvas handles when it has the focus: Esc, and in crop
+    /// mode the arrows and Return.
     public static func canvasKeys(cropping: Bool) -> [AppShortcut] {
-        [.temporaryHand, .escape] + (cropping ? [.angle, .angleLarge, .done] : [])
+        [.escape] + (cropping ? [.angle, .angleLarge, .done] : [])
     }
+
+    /// Keys the window handles while the pointer is over the image, wherever
+    /// the keyboard focus is (except while typing in a field): the space bar's
+    /// temporary hand (user's decision of 2026-11-25). Elsewhere the key does
+    /// what macOS does with it (a focused button or checkbox, for example).
+    public static let pointerKeys: [AppShortcut] = [.temporaryHand]
 }
 
 /// A tooltip of a function with a shortcut: its sentence (the String

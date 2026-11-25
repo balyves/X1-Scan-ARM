@@ -7,7 +7,8 @@ import X1ScanCore
 /// types an angle in the Framing section's Angle field and presses Return,
 /// with each tool and during a preview, then Reset and Esc after an angle
 /// typed and not confirmed, then the rule's line with Space held after it,
-/// with the focus on the tab bar, and in the middle of the line (session of
+/// with the focus on the tab bar and the pointer over the image or the panel
+/// (the real pointer is moved, then put back), and in the middle of the line (session of
 /// 2026-11-25); prints the
 /// recipe's angle and the keyboard focus after each step, then quits.
 /// Synthesized events sent to the main window; display only: the preview
@@ -113,6 +114,8 @@ enum AngleProbe {
                 let mid = canvas.convert(NSPoint(x: visible.midX, y: visible.midY), to: nil)
                 drag(from: NSPoint(x: mid.x - 120, y: mid.y - 4), to: NSPoint(x: mid.x + 120, y: mid.y + 4), on: canvas, in: window)
                 try? await Task.sleep(for: .milliseconds(400))
+                let savedPointer = NSEvent.mouseLocation
+                movePointer(to: window.convertPoint(toScreen: mid))  // Space acts with the pointer over the image
                 let drawn = model.ruleLine.map { "\($0.applied != nil ? "applied" : "drawing")" } ?? "none"
                 pressKey(code: 49, characters: " ", in: window, only: .keyDown)
                 try? await Task.sleep(for: .milliseconds(400))
@@ -120,20 +123,27 @@ enum AngleProbe {
                 pressKey(code: 49, characters: " ", in: window, only: .keyUp)
                 try? await Task.sleep(for: .milliseconds(400))
                 lines.append("PROBE Rule then Space: line drawn \(drawn), angle \(model.recipe.crop.angle); Space held \(held.0), line \(held.1), focus \(held.2); released: line \(model.ruleLine != nil)")
-                // The same with the keyboard focus on the panel's tab bar (after a click on a tab).
+                // The keyboard focus on the panel's tab bar (after a click on a tab): Space gives the
+                // hand with the pointer over the image, not over the panel (user's decision of
+                // 2026-11-25). The real pointer is moved there for a moment, then put back.
                 drag(from: NSPoint(x: mid.x - 120, y: mid.y + 4), to: NSPoint(x: mid.x + 120, y: mid.y - 4), on: canvas, in: window)
-                if let tabs = views(NSSegmentedControl.self, in: window.contentView!).first { window.makeFirstResponder(tabs) }
-                try? await Task.sleep(for: .milliseconds(300))
-                let before = (model.ruleLine != nil, focus(), model.panel.layout.tab.rawValue)
-                pressKey(code: 49, characters: " ", in: window, only: .keyDown)
-                try? await Task.sleep(for: .milliseconds(400))
-                let during = (model.tools.spaceHeld, model.ruleLine != nil, model.panel.layout.tab.rawValue)
-                pressKey(code: 49, characters: " ", in: window, only: .keyUp)
-                try? await Task.sleep(for: .milliseconds(400))
-                lines.append("PROBE Rule then Space, focus \(before.1): line \(before.0), tab \(before.2); Space held \(during.0), line \(during.1), tab \(during.2); released: line \(model.ruleLine != nil), tab \(model.panel.layout.tab.rawValue)")
+                let tabs = views(NSSegmentedControl.self, in: window.contentView!).first
+                for (place, point) in [("image", mid), ("panel", tabs.map { $0.convert(NSPoint(x: $0.bounds.midX, y: $0.bounds.midY), to: nil) } ?? mid)] {
+                    if let tabs { window.makeFirstResponder(tabs) }
+                    movePointer(to: window.convertPoint(toScreen: point))
+                    try? await Task.sleep(for: .milliseconds(300))
+                    let before = (model.ruleLine != nil, focus())
+                    pressKey(code: 49, characters: " ", in: window, only: .keyDown)
+                    try? await Task.sleep(for: .milliseconds(400))
+                    let during = (model.tools.spaceHeld, model.ruleLine != nil)
+                    pressKey(code: 49, characters: " ", in: window, only: .keyUp)
+                    try? await Task.sleep(for: .milliseconds(400))
+                    lines.append("PROBE Space, focus \(before.1), pointer over the \(place): line \(before.0); Space held \(during.0), line \(during.1); released: held \(model.tools.spaceHeld), line \(model.ruleLine != nil), tab \(model.panel.layout.tab.rawValue)")
+                }
                 // Space pressed in the middle of the line, released after the mouse button.
                 window.makeFirstResponder(canvas)
                 model.resetFraming()
+                movePointer(to: window.convertPoint(toScreen: mid))
                 func event(_ type: NSEvent.EventType, _ point: NSPoint) -> NSEvent {
                     NSEvent.mouseEvent(with: type, location: point, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
                                        windowNumber: window.windowNumber, context: nil, eventNumber: 0, clickCount: 1, pressure: 1)!
@@ -142,12 +152,13 @@ enum AngleProbe {
                 canvas.mouseDragged(with: event(.leftMouseDragged, NSPoint(x: mid.x, y: mid.y)))
                 pressKey(code: 49, characters: " ", in: window, only: .keyDown)
                 try? await Task.sleep(for: .milliseconds(300))
-                let midDraw = model.ruleLine.map { $0.applied == nil ? "drawing" : "applied" } ?? "none"
+                let midDraw = (model.ruleLine.map { $0.applied == nil ? "drawing" : "applied" } ?? "none") + ", Space held \(model.tools.spaceHeld)"
                 canvas.mouseDragged(with: event(.leftMouseDragged, NSPoint(x: mid.x + 120, y: mid.y + 4)))
                 canvas.mouseUp(with: event(.leftMouseUp, NSPoint(x: mid.x + 120, y: mid.y + 4)))
                 let released = model.ruleLine.map { $0.applied == nil ? "drawing" : "applied" } ?? "none"
                 pressKey(code: 49, characters: " ", in: window, only: .keyUp)
                 try? await Task.sleep(for: .milliseconds(300))
+                movePointer(to: savedPointer)
                 lines.append("PROBE Space during the line: line \(midDraw); mouse released: line \(released), angle \(model.recipe.crop.angle); Space released: line \(model.ruleLine != nil)")
             } else {
                 lines.append("PROBE Rule then Space: no canvas")
@@ -190,6 +201,12 @@ enum AngleProbe {
         guard let down = event(.leftMouseDown), let up = event(.leftMouseUp) else { return }
         NSApp.postEvent(up, atStart: false)
         NSApp.sendEvent(down)
+    }
+
+    /// Moves the real pointer (screen coordinates, origin at the bottom left).
+    private static func movePointer(to point: NSPoint) {
+        let height = NSScreen.screens.first?.frame.maxY ?? 0
+        CGWarpMouseCursorPosition(CGPoint(x: point.x, y: height - point.y))
     }
 
     /// A drag on the canvas: down, two moves, up, given to the canvas itself (a window

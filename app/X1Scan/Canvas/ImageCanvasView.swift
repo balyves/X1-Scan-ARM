@@ -432,15 +432,14 @@ final class ImageCanvasView: NSView {
     // MARK: Keyboard
 
     /// The tool keys and X are handled by the window, wherever the focus is
-    /// (`MainWindowController.windowKey(_:)`); the canvas handles the space
-    /// bar, Esc, and in crop mode the arrows and Return
+    /// (`MainWindowController.windowKey(_:)`), and the space bar while the
+    /// pointer is over the image (`MainWindowController.pointerKey(_:)`); the
+    /// canvas handles Esc, and in crop mode the arrows and Return
     /// (`AppShortcut.canvasKeys`, the source of their tooltips too).
     override func keyDown(with event: NSEvent) {
         let cropping = model.tools.showsCropOptions
         let shortcut: AppShortcut? = AppShortcut.matching(KeyPress(event), among: AppShortcut.canvasKeys(cropping: cropping))
         switch shortcut {
-        case .temporaryHand:
-            if !event.isARepeat { model.tools.spaceHeld = true }
         case .angle, .angleLarge:
             // ← →: the next whole degree (⇧: the next multiple of 5°).
             let step = shortcut == .angleLarge ? CropSettings.angleLargeStep : CropSettings.angleStep
@@ -452,15 +451,8 @@ final class ImageCanvasView: NSView {
             // Stop a preview or scan first; in crop mode, cancel its changes.
             model.escape()
         default:
-            super.keyDown(with: event)
-        }
-    }
-
-    override func keyUp(with event: NSEvent) {
-        if KeyShortcut.Key.space.keyCodes.contains(event.keyCode) {
-            model.tools.spaceHeld = false
-        } else {
-            super.keyUp(with: event)
+            // The space bar with the pointer elsewhere: nothing, without the beep.
+            if !KeyShortcut.Key.space.keyCodes.contains(event.keyCode) { super.keyDown(with: event) }
         }
     }
 
