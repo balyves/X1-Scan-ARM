@@ -33,8 +33,9 @@ public struct CompactFieldState: Sendable, Hashable {
     /// Return or focus lost. Returns the typed number, clamped, or nil when
     /// nothing was typed or the text is not a number. Either way the field then
     /// shows the value that applies.
-    public mutating func commit(format: CompactValueFormat, current: Double, locale: Locale) -> Double? {
-        let typed = isEdited ? format.value(parsing: text) : nil
+    /// `unit`: the row's unit, accepted after the number.
+    public mutating func commit(format: CompactValueFormat, current: Double, locale: Locale, unit: String = "") -> Double? {
+        let typed = isEdited ? format.value(parsing: text, unit: unit) : nil
         show(format.text(for: typed ?? current, locale: locale))
         return typed
     }

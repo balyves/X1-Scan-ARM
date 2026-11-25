@@ -283,16 +283,23 @@ public struct CompactSliderRow: View {
     /// When it changes, a value typed and not confirmed is dropped and the
     /// field shows the value again (Reset, Esc; session of 2026-11-25).
     let typingResetToken: Int
+    /// Called after Return (or Enter) applied the value, once the field has
+    /// let go of the keyboard; nil: the field keeps it, as before. A plain
+    /// `.onSubmit` around the row cannot move the keyboard away: the field's
+    /// focus state takes it back (session of 2026-11-25).
+    let afterSubmit: (@MainActor () -> Void)?
 
     @State private var field = CompactFieldState()
     @FocusState private var isEditing: Bool
     @Environment(\.locale) private var locale
 
-    public init(value: Binding<Double>, format: CompactValueFormat, texts: Texts, typingResetToken: Int = 0) {
+    public init(value: Binding<Double>, format: CompactValueFormat, texts: Texts, typingResetToken: Int = 0,
+                afterSubmit: (@MainActor () -> Void)? = nil) {
         _value = value
         self.format = format
         self.texts = texts
         self.typingResetToken = typingResetToken
+        self.afterSubmit = afterSubmit
     }
 
     public var body: some View {
@@ -328,7 +335,7 @@ public struct CompactSliderRow: View {
             .monospacedDigit()
             .frame(width: CompactPanelMetrics.fieldWidth)
             .focused($isEditing)
-            .onSubmit(commit)
+            .onSubmit(submit)
             .accessibilityValue(spokenValue)
             .accessibilityAction(named: texts.resetAction, reset)
             .modifier(OptionalHelp(text: texts.help))
@@ -350,8 +357,22 @@ public struct CompactSliderRow: View {
         return texts.unit.isEmpty ? number : number + " " + texts.unit
     }
 
+    private func submit() {
+        let wasEdited = field.isEdited
+        let typed = field.commit(format: format, current: value, locale: locale, unit: texts.unit)
+        if let typed { value = typed }
+        guard let afterSubmit else { return }
+        // Not a number: the field shows the value again and keeps the keyboard, with a beep.
+        if wasEdited && typed == nil {
+            NSSound.beep()
+            return
+        }
+        isEditing = false
+        DispatchQueue.main.async { afterSubmit() }
+    }
+
     private func commit() {
-        if let typed = field.commit(format: format, current: value, locale: locale) { value = typed }
+        if let typed = field.commit(format: format, current: value, locale: locale, unit: texts.unit) { value = typed }
     }
 
     private func reset() {

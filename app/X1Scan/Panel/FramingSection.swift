@@ -25,10 +25,12 @@ struct FramingSection: View {
                          format: Self.angleFormat,
                          texts: Strings.sliderRow(label: Strings.cropAngle, unit: "°", format: Self.angleFormat,
                                                   help: Strings.tooltip(.angle)),
-                         typingResetToken: model.framingRestores)  // Reset, Esc: an angle typed and not confirmed is dropped
-            // An angle typed and confirmed with Return: back to the image, so that X, ← → and
-            // Return act on the frame again at once (as after the zoom field).
-            .onSubmit { if model.tools.showsCropOptions { NSApp.keyWindow?.focusImageCanvas() } }
+                         typingResetToken: model.framingRestores,  // Reset, Esc: an angle typed and not confirmed is dropped
+                         // An angle typed and confirmed with Return (or Enter): applied, then the keyboard
+                         // goes back to the image, in crop mode or not (session of 2026-11-25), so that no
+                         // typed value stays pending in the field and X, ← → and Return act on the frame
+                         // again at once (as after the zoom field).
+                         afterSubmit: { NSApp.keyWindow?.focusImageCanvas() })
         straightenRow
         let grid = Strings.gridTool
         CompactControlRow(grid, help: Strings.cropGridHelp) {

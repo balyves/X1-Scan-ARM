@@ -118,10 +118,21 @@ public struct CompactValueFormat: Sendable, Hashable {
     /// (`Viewport.magnification(fromTyped:)`): comma and full stop are both the
     /// decimal separator, whatever the locale ("12,5" in a locale that writes
     /// 12.5); spaces and apostrophes (thousands in some locales) are ignored.
-    public func value(parsing text: String) -> Double? {
-        let cleaned = text
+    /// Session of 2026-11-25: the unit the row shows (`unit`, as translated:
+    /// "ppi" in English, "ppp" in French), typed at the end ("3°", "50 %"), and a minus written as − (U+2212, as the help
+    /// writes it) or – (U+2013, Option-hyphen) are accepted too; any other
+    /// unit, or a unit inside the number, is not.
+    public func value(parsing text: String, unit: String = "") -> Double? {
+        var trimmed = text.trimmingCharacters(in: .whitespaces)
+        let suffix = unit.trimmingCharacters(in: .whitespaces)
+        if !suffix.isEmpty, let range = trimmed.range(of: suffix, options: [.caseInsensitive, .anchored, .backwards]) {
+            trimmed.removeSubrange(range)
+        }
+        let cleaned = trimmed
             .filter { !$0.isWhitespace && $0 != "'" && $0 != "\u{2019}" }
             .replacingOccurrences(of: ",", with: ".")
+            .replacingOccurrences(of: "\u{2212}", with: "-")
+            .replacingOccurrences(of: "\u{2013}", with: "-")
         guard !cleaned.isEmpty, let number = Double(cleaned), number.isFinite else { return nil }
         return clamped(number)
     }

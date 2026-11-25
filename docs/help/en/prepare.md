@@ -35,6 +35,8 @@ Framing changes the display and the export. It never changes what the scanner sc
 ### Angle {#angle}
 
 - Fine rotation of the image, in degrees, up to ±45°.
+- Type a value, then press Return (or Enter) to apply it. The keyboard then goes back to the image.
+- “−3” and “3°” are understood.
 - With the Crop tool or the Rule, the ← → arrows go to the next whole degree. With Shift, to the next multiple of 5°.
 
 ### Straighten {#straighten}

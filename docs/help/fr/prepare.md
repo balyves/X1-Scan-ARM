@@ -35,6 +35,8 @@ Le cadrage change l’affichage et l’export. Il ne change jamais ce que le sca
 ### Angle {#angle}
 
 - Rotation fine de l’image, en degrés, jusqu’à ±45°.
+- Tapez une valeur, puis appuyez sur Retour (ou la touche Entrée) pour l’appliquer. Le clavier revient ensuite à l’image.
+- « −3 » et « 3° » sont compris.
 - Avec le Recadrage ou la Règle, les flèches ← → vont au degré entier suivant. Avec Maj, au multiple de 5° suivant.
 
 ### Redresser {#straighten}
