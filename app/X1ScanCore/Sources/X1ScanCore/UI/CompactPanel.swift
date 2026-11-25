@@ -280,15 +280,19 @@ public struct CompactSliderRow: View {
     @Binding var value: Double
     let format: CompactValueFormat
     let texts: Texts
+    /// When it changes, a value typed and not confirmed is dropped and the
+    /// field shows the value again (Reset, Esc; session of 2026-11-25).
+    let typingResetToken: Int
 
     @State private var field = CompactFieldState()
     @FocusState private var isEditing: Bool
     @Environment(\.locale) private var locale
 
-    public init(value: Binding<Double>, format: CompactValueFormat, texts: Texts) {
+    public init(value: Binding<Double>, format: CompactValueFormat, texts: Texts, typingResetToken: Int = 0) {
         _value = value
         self.format = format
         self.texts = texts
+        self.typingResetToken = typingResetToken
     }
 
     public var body: some View {
@@ -336,6 +340,7 @@ public struct CompactSliderRow: View {
         }
         .onAppear { field.show(format.text(for: value, locale: locale)) }
         .onChange(of: value) { field.show(format.text(for: value, locale: locale)) }
+        .onChange(of: typingResetToken) { field.show(format.text(for: value, locale: locale)) }
         .onChange(of: isEditing) { _, editing in if !editing { commit() } }
         .onDisappear(perform: commit)  // section folded or tab changed while typing
     }

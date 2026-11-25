@@ -26,6 +26,8 @@ import X1ScanCore
 ///   -X1ScanAspect <a>            crop proportions: free, original or W:H, e.g. 24:36
 ///   -X1ScanKeyProbe YES          click the tabs and a field, press C or R after each, print
 ///                                the keyboard focus and the tool selected, quit (KeyProbe)
+///   -X1ScanAngleProbe YES        type angles in the Angle field: Return, Enter, Reset and Esc
+///                                with a value typed (needs -X1ScanAutoPreview YES; AngleProbe)
 ///   -X1ScanDragProbe YES         drag the divider with synthetic mouse events: to the right edge
 ///                                (settings panel hidden, tool column kept), back, ⌥⌘P's and a
 ///                                tab's commands; -X1ScanDragProbeFullScreen YES in full screen;
@@ -98,6 +100,7 @@ enum DebugSnapshot {
         if let kind = arguments.string(forKey: "X1ScanGrid").flatMap(GridKind.init(rawValue:)) { model.showGrid(kind) }
         if arguments.bool(forKey: "X1ScanAutoPreview") { model.startPreview() }
         if arguments.bool(forKey: "X1ScanKeyProbe"), let window { KeyProbe.run(window: window, model: model) }
+        if arguments.bool(forKey: "X1ScanAngleProbe"), let window { AngleProbe.run(window: window, model: model) }
         if arguments.bool(forKey: "X1ScanDragProbe"), let window {
             Task { @MainActor in
                 try? await Task.sleep(for: .seconds(1))

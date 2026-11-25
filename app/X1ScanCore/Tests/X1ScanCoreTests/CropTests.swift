@@ -859,4 +859,29 @@ struct CropModeTests {
         #expect(model.ruleLine == nil)
     }
 
+    /// Session of 2026-11-25 (Reset "did not work" on the real preview): an
+    /// angle typed in the field and not confirmed was applied when the field
+    /// lost the focus, after Reset. Reset and Esc now tell the fields to drop it.
+    @Test func resetAndEscapeTellTheFieldsToDropATypedValue() throws {
+        let (model, defaults, suite) = try model()
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let start = model.framingRestores
+        #expect(!model.resetFraming(), "nothing to reset")
+        #expect(model.framingRestores == start + 1, "a value typed and not applied is dropped all the same")
+        model.rotateClockwise()
+        #expect(model.resetFraming() && model.framingRestores == start + 2)
+        model.tools.selected = .crop
+        model.escape()
+        #expect(model.framingRestores == start + 3)
+        model.finishCrop()
+        #expect(model.framingRestores == start + 3, "Done keeps what was typed and applied")
+        // The field's side: shown again, the typed text is no longer applied on commit. The wiring
+        // (CompactSliderRow's typingResetToken) is a view: checked in the app with -X1ScanAngleProbe.
+        let format = CompactValueFormat(range: -45...45, defaultValue: 0, step: 1, fractionDigits: 0)
+        var field = CompactFieldState(showing: "0")
+        field.edit("4")
+        field.show(format.text(for: 0, locale: Locale(identifier: "fr_CH")))
+        #expect(field.commit(format: format, current: 0, locale: Locale(identifier: "fr_CH")) == nil)
+        #expect(field.text == "0")
+    }
 }

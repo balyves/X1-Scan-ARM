@@ -24,7 +24,8 @@ struct FramingSection: View {
         CompactSliderRow(value: Binding { model.recipe.crop.angle } set: { model.setCropAngle($0) },
                          format: Self.angleFormat,
                          texts: Strings.sliderRow(label: Strings.cropAngle, unit: "°", format: Self.angleFormat,
-                                                  help: Strings.tooltip(.angle)))
+                                                  help: Strings.tooltip(.angle)),
+                         typingResetToken: model.framingRestores)  // Reset, Esc: an angle typed and not confirmed is dropped
             // An angle typed and confirmed with Return: back to the image, so that X, ← → and
             // Return act on the frame again at once (as after the zoom field).
             .onSubmit { if model.tools.showsCropOptions { NSApp.keyWindow?.focusImageCanvas() } }

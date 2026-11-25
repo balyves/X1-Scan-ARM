@@ -348,8 +348,18 @@ public final class AppModel {
         guard tools.showsCropOptions else { return }
         if let entry = cropEntry { recipe = entry.recipe }
         ruleLine = nil
+        framingRestores += 1
         tools.selected = cropEntry?.tool ?? .hand
     }
+
+    /// Counts Reset and Esc in crop mode (session of 2026-11-25): the Angle
+    /// field then drops a value typed and not confirmed. Without it such a
+    /// value stayed in the field and was applied when the field lost the
+    /// focus, after Reset: Reset seemed not to work. The Esc key reaches
+    /// `escape()` with the field focused (`-X1ScanAngleProbe`). With nothing
+    /// else to reset, the Reset button is disabled: a typed angle is then
+    /// applied on Return or when the field loses the focus, as in any field.
+    public private(set) var framingRestores = 0
 
     /// Esc: stopping a running preview or scan comes first, whatever the
     /// tool (the Stop button's help promises it); otherwise, in crop mode,
@@ -384,6 +394,7 @@ public final class AppModel {
     @discardableResult
     public func resetFraming(actionName: String? = nil) -> Bool {
         ruleLine = nil
+        framingRestores += 1
         guard !framingIsReset else { return false }
         var reset = recipe
         reset.orientation = Orientation()
