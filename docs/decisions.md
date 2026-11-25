@@ -764,7 +764,11 @@ captures of 2026-11-17 (protocol.md §11). User's decisions.
   454 612 / 856 631 instead of 16 000 000 and 354 583 / 576 354) before
   that read (protocol.md §12): our cold sequence sends those of
   2026-11-16, with which that read gave 14 027 to 14 219 in every capture
-  and every real preview so far. **Only the cold
+  and every real preview up to 2026-11-18. Note of 2026-11-25 (journal):
+  two real cold previews read 13 579 (the runner stopped there, before
+  SCAN) and 13 963 (accepted), with the original calibration; the
+  tolerance is unchanged until three cold starts are captured with
+  FlexColor (user's decision, 2026-11-25). **Only the cold
   sequence of 2026-11-16** (user's decision, 2026-11-18): no second cold
   variant.
 - **Option A: the read before the window with target 25 000** (user's

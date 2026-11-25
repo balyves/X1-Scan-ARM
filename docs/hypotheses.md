@@ -93,18 +93,20 @@ older ones in `docs/protocol.md` §1-§11 are still to be added.
 ## Calibration
 
 - Values that come from the X1's calibration (positions, 54 / 58, page
-  contents) may change after the recalibration of 2026-11-20 (every
-  capture up to 2026-11-19 was made with the original one: the user's
-  statement). Settle: docs/test-session.md part J.
-- Since the recalibration of 2026-11-20, the page 0x20 read after
+  contents) may change after a recalibration (every capture up to
+  2026-11-19 was made with the original one: the user's statement; the
+  recalibration planned for 2026-11-20 had not been made on 2026-11-25:
+  the user's statement). Settle: docs/test-session.md part J.
+- With the X1's original calibration (no recalibration: the user's
+  statement of 2026-11-25), the page 0x20 read after
   `F0 00 00 01 01 01` in our cold sequence (the first checked position,
-  expected 14 219 ± 256) is lower than before and varies by at least 384
-  between cold starts: 13 579 (−640, the preview stopped there, before
+  expected 14 219 ± 256) spreads more than that window accepts: 384 on
+  the same day, 640 from 13 579 to 14 219: 13 579 (−640, the preview stopped there, before
   SCAN) then 13 963 (−256, accepted) on 2026-11-25, against 14 027 to
   14 219 from 2026-11-16 to 18; the first page 0x20 read was 8 203 (the
-  power-on value) both times. Its range, and whether the recalibration is
-  the cause, are unknown; the expected value comes from the capture of
-  2026-11-16 only. Settle: several cold
+  power-on value) both times. Its range and the cause of the spread are
+  unknown (cold start itself, temperature, holder present or not, holder
+  type at power-on: possible causes, none checked); the expected value comes from the capture of 2026-11-16 only. Settle: several cold
   starts (X1 switched off and on each time) captured with FlexColor on
   the reference Mac, and the same read logged by X1 Scan's real cold
   previews (FlexColor's own windows may differ from ours: protocol.md §12).

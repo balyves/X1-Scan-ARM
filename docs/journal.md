@@ -1039,12 +1039,12 @@ files outside the repository):
   (−256, accepted: |difference| ≤ 256) and completed. In both, the first
   page 0x20 read gave 8 203, the power-on value: the same start, the
   difference appears after the move. Before: 14 027 to 14 219 (2026-11-16
-  to 18). These are the first cold reads since the recalibration of
-  2026-11-20. The expected value comes from the capture of 2026-11-16
+  to 18). The X1 still had its original calibration (no recalibration:
+  the user's statement). The expected value comes from the capture of 2026-11-16
   only: nothing is changed (no code, no guard); open line in
-  `hypotheses.md` (Calibration), protocol.md §12, a range to be proposed
-  to the user. decisions.md ("14 027 to 14 219 in every capture and every
-  real preview so far") is left for the user (a safety section).
+  `hypotheses.md` (Calibration), protocol.md §12, a dated note in
+  decisions.md. User's decision: no change of range until three cold
+  starts are captured with FlexColor.
 - Two warm previews: one complete, one stopped by the user on purpose
   (stop sequence ended ready). The 2 000 ppi scan completed; the position
   read before the focus step was 16 843, the same as essai-N.
@@ -1073,6 +1073,9 @@ files outside the repository):
     move to the image (the field's focus state), at first only sometimes:
     the likely cause of "Return does not validate", not confirmed on the
     user's side.
-- **Proposal to the user, not applied**: the cold sequence's first
-  checked position (see above). Nothing is changed before several cold
-  starts are captured.
+- User's decisions after the report: the Rule's line stays while Space
+  is held; Export is disabled on an incomplete preview; the Output size
+  no longer applies the scale (Export does not apply it yet); the field
+  behaviour goes into the compact-settings-panel skill; an interface fix
+  that touches no file talking to the scanner gets one x1-ui pass, no
+  x1-reviewer (CLAUDE.md rule 7).

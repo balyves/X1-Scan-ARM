@@ -10,7 +10,8 @@ Multi-byte values: CDB fields are big-endian (SCSI convention). Data
 
 Every capture described here was made up to 2026-11-19, with the X1's
 original calibration (a recalibration was planned for 2026-11-20;
-docs/journal.md). Values that come from the calibration may differ after it.
+docs/journal.md; it had not been made on 2026-11-25, the user's
+statement). Values that come from the calibration may differ after one.
 
 ## 1. Transport
 
@@ -770,12 +771,14 @@ a value, the runner would stop there (tolerance 256 around 14 219),
 before the window with target 9 000 **[confirmed]** (script). The cold sequence of 2026-11-16 stays the
 only one (user's decision, 2026-11-18).
 
-**2026-11-25, after the recalibration** (journal): our cold sequence's
+**2026-11-25, original calibration** (journal; no recalibration, the
+user's statement): our cold sequence's
 read gave 13 579 (−640 against 14 219: the runner stopped there, before
 SCAN) and, after a power cycle, 13 963 (−256, accepted) **[confirmed]**;
 the first page 0x20 read was 8 203 both times **[confirmed]**. That
-this read moved down with the recalibration and varies between cold
-starts: **[hypothesis]** (hypotheses.md, Calibration).
+the spread of this read (13 579 to 14 219 so far, more than ± 256
+accepts) comes from the cold start itself, with the same calibration:
+**[hypothesis]** (hypotheses.md, Calibration).
 
 **First session of a FlexColor run** (2026-11-18 afternoon, ten runs,
 `tests/fixtures/scan-windows-2026-11-18.json`). Its calibration windows,
