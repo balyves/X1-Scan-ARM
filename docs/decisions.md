@@ -1624,11 +1624,20 @@ or ⚠, a link to its help page and, where useful, a download link.
   `ScannerPresence.find()` (lot A).
 - **Detection** (`InstallationCheck.evaluate`, pure, tested on invented
   snapshots; no real registry listing in the repository):
-  - adapter: a PCI device of class IEEE 1394 (`class-code` 0x0C00xx;
-    [hypothesis], docs/hypotheses.md);
-  - driver: a DriverKit driver on that controller ([hypothesis]: it is
-    ASFireWire; no class or bundle name assumed until a listing is read,
-    docs/hypotheses.md); without an adapter it cannot be checked;
+  - adapter: a PCI device of class IEEE 1394 (`class-code` 0x0C00xx).
+    [confirmed] 2026-11-26 on one setup (`ioreg` listing, macOS 26.6.2,
+    Apple Silicon, one adapter, kept outside the repository): the adapter's controller is an
+    `IOPCIDevice` of class code 0x0C0010 (IEEE 1394 OHCI), tunnelled
+    through Thunderbolt (`IOPCITunnelled`);
+  - driver: a DriverKit driver on that controller (`IOUserClass` or
+    `IOUserServerName` on an entry under it); without an adapter it
+    cannot be checked. [confirmed] 2026-11-26, as observed on the same
+    setup (that only ASFireWire can attach there is not tested): ASFireWire
+    shows as `ASFWDriver` (`IOUserService`) and `ASFWSCSIController`
+    (`IOUserSCSIParallelInterfaceController`), both one level under the
+    controller, `IOUserServerName` `net.asfw.driver`; the reader looks
+    two levels down. No class or bundle name is matched by the code: any
+    DriverKit driver there counts;
   - X1: a scanner seen in the registry. An X1 seen means the chain
     works: the adapter and driver lines are then fine whatever the
     registry shows (otherwise a wrong hypothesis would open the assistant
@@ -1637,7 +1646,21 @@ or ⚠, a link to its help page and, where useful, a download link.
   from another FireWire device on Thunderbolt; a driver installed but not
   allowed yet (not checked: [hypothesis], a listing of that state may show
   something); an X1 off, a missing cable and a broken chain (the same
-  absence); an X1 opened by another program (FlexColor).
+  absence); an X1 opened by another program (FlexColor). Observed
+  2026-11-26 (three listings, X1 on and connected): in the first two,
+  two entries `IOSCSIParallelInterfaceDevice@0` and `@1`, not
+  registered, under `ASFWSCSIController`, no `ASFWSBP2Nub`, no
+  `SCSITaskUserClientDevice`; in the third, an `ASFWSBP2Nub` under
+  `ASFWDriver` and a new entry `@0` (another registry id), registered,
+  with `IOSCSITargetDevice` and the logical unit under it (`Imacon` /
+  `Flextight X1`), while `@1` stayed unregistered. Whether the
+  unregistered entries belong to the X1 or exist with no device at all
+  is not known (a listing with the X1 off settles it). The X1 appeared
+  between the listings of 16:05 and 16:07, after the user checked the X1
+  and its cable; the adapter was not replugged and the driver did not
+  restart (same registry ids); the power-on time was not noted. A single
+  listing does not tell "still starting" from "unplug and plug again"
+  ([hypothesis], docs/hypotheses.md).
 - **At launch** (`InstallationCheck.launchPresentation`): the assistant
   opens by itself only when the adapter or the driver is missing; without
   an X1 but with both, the "No X1 found" alert, which gets a "Check

@@ -128,15 +128,28 @@ older ones in `docs/protocol.md` §1-§11 are still to be added.
   frames (lamp off or an opaque holder) for the noise floor, an
   over-exposed frame (empty holder, about 58 000) for the clipping level.
 
-## Installation check (assistant, lot 1)
+## Installation check (assistant)
 
-- On macOS 26 Tahoe, a DriverKit driver attached to the IEEE 1394
-  controller (`IOUserClass` or `IOUserServerName` on an entry under it) is
-  ASFireWire, active (`FireWireController.hasDriverKitDriver`). Missing:
-  the registry of a Mac with the adapter, ASFireWire and the X1 (class and
-  bundle names). Settle: `ioreg -l -w0` on that Mac, X1 on and connected,
-  read only and kept outside the repository (user's decision of
-  2026-11-25); only class names are taken from it.
-- The adapter's controller has PCI class code 0x0C0010 (IEEE 1394 OHCI)
-  and is seen as an `IOPCIDevice` through Thunderbolt on Apple Silicon.
-  Missing: the same listing. Settle: the same `ioreg`.
+- On Tahoe with ASFireWire, an X1 on and connected but not yet visible
+  (no `ASFWSBP2Nub` under `ASFWDriver`, no `SCSITaskUserClientDevice`)
+  becomes visible after some delay without unplugging the adapter; when
+  it does not, unplugging and plugging the adapter again is needed. Seen
+  once (2026-11-26): it appeared between two listings two minutes apart,
+  after the user checked the X1 and its cable, power-on time not noted;
+  the second case was never observed. Missing: listings over time in
+  both cases (how long, and whether the registry differs between them).
+  Settle: `ioreg` listings every 30 s after power-on, then after a chain
+  reset, outside the repository.
+- The unregistered `IOSCSIParallelInterfaceDevice@0` and `@1` under
+  `ASFWSCSIController` exist with no device connected (they are not
+  traces of the X1). Missing: a listing with the X1 off or its cable
+  out. Settle: that `ioreg` listing.
+- A FireWire controller is seen as soon as the adapter is plugged in,
+  with or without a device on it (`InstallationCheck.swift`). Missing: a
+  listing with the adapter plugged in and nothing on it. Settle: that
+  `ioreg` listing.
+- A driver installed but not allowed yet (System Settings) shows
+  something in the registry that the assistant could tell apart
+  (decisions.md, "Installation check"). Missing: a listing in that
+  state. Settle: `ioreg` right after installing ASFireWire, before
+  allowing it.

@@ -1087,3 +1087,29 @@ files outside the repository):
   (the adapter's controller as a 1394 PCI device; a DriverKit driver on it
   is ASFireWire), to settle with an `ioreg` listing at the next session
   with the X1, kept outside the repository.
+
+## 2026-11-26: registry listing with the X1 (installation check)
+
+Setup: MacBook Pro on macOS 26.6.2 (Apple Silicon), Thunderbolt to
+FireWire adapter, ASFireWire, X1 on and connected, FlexColor not
+involved. Three `ioreg -l -w0` listings (read only, nothing opened, no
+command; kept outside the repository; only class names, the PCI class
+code and the INQUIRY strings taken from them, no serial, GUID or path).
+
+- The two installation [hypothesis] lines of 2026-11-25 are
+  [confirmed] as observed on this setup: the adapter's controller is an
+  `IOPCIDevice` of class code 0x0C0010, tunnelled through Thunderbolt;
+  ASFireWire shows under it as DriverKit entries (`ASFWDriver`,
+  `ASFWSCSIController`, `IOUserServerName` `net.asfw.driver`), one level
+  down. That only ASFireWire can attach there is not tested
+  (docs/decisions.md, "Installation check").
+- The first two listings (16:04, 16:05) did not show the X1: two
+  unregistered entries `@0` and `@1` under `ASFWSCSIController`, no
+  SBP-2 unit, no `SCSITaskUserClientDevice`; the presence check would
+  have found nothing. The third (16:07, after the user checked the X1
+  and its cable) showed it: an `ASFWSBP2Nub` under `ASFWDriver`, a new
+  registered entry `@0` (another registry id; `@1` still unregistered),
+  then `IOSCSITargetDevice`, the logical unit (`Imacon` /
+  `Flextight X1` / `R185`, type 6) and `SCSITaskUserClientIniter`. The
+  adapter was not replugged and the driver did not restart (same
+  registry ids). What the delay was is open (docs/hypotheses.md).
