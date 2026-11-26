@@ -1113,3 +1113,43 @@ code and the INQUIRY strings taken from them, no serial, GUID or path).
   `Flextight X1` / `R185`, type 6) and `SCSITaskUserClientIniter`. The
   adapter was not replugged and the driver did not restart (same
   registry ids). What the delay was is open (docs/hypotheses.md).
+
+## 2026-11-26: X1 session (registry over time, cold starts)
+
+Same setup as the entry above (adapter A1463 / MD464 behind A1790 /
+MMEL2). Registry listings read only, kept outside the repository.
+
+- **X1 switched off** (cable in place, 16:38-16:39): the registry still
+  showed the X1 (`ASFWSBP2Nub`, `SCSITaskUserClientDevice`, `Imacon` /
+  `Flextight X1`) in two listings a few seconds apart: the presence
+  check would have reported an X1 that was off **[confirmed]** (once).
+- **After the FireWire cable was unplugged while live**: the listings
+  showed no adapter (no Thunderbolt device of the adapters, no 1394
+  controller, no ASFireWire entry) at 16:39, nor in 40 listings at 30 s
+  intervals from 16:42 to 17:01 (X1 switched on at 16:41:10, time noted
+  by the user) **[confirmed]** (once); it came back only when the chain
+  was plugged into the Mac again. Whether the cable itself or a disturbed
+  Thunderbolt link caused it is open (docs/hypotheses.md).
+- **Power-on with the chain plugged in** (X1 off, chain replugged, X1 on
+  at 17:07:52, time noted by the user): adapter, controller and
+  ASFireWire present at 17:08:10 without the X1; X1 visible at 17:08:40,
+  so between 18 s and 48 s after power-on **[confirmed]**: the delay of a
+  normal start, for reference.
+- These go to docs/hypotheses.md (Installation check): the assistant may
+  later need "unplug and plug the adapter again", and the presence check
+  can report an X1 that is off.
+- **Cold starts captured with FlexColor** (essai-K, -2, -3, X1 off and on
+  before each): the page 0x20 read after the cold calibration's
+  `F0 00 00 01 01 01` gave 14 155, 13 963, 13 963; `F0 00 00 01 01 01`
+  was sent 91 s, 21 s and 17 s after power-on (times noted by the user). Between the end of initialisation
+  and `CF 00 01 80`, FlexColor polls 0xD3 (28, 3 and 1 reads, about one
+  per second, no response value that it waits for): the time before the
+  user clicked Preview **[hypothesis]** (docs/hypotheses.md): essai-K-3
+  moved after one read, and essai-K, which reached LOG SENSE 54 s after
+  power-on, polled the most. X1 Scan sends no 0xD3 or 0xEE reads (by design,
+  `PreviewScript`); the cold fixture has 198 0xEE reads, FlexColor 88 in
+  each of today's captures.
+- **X1 Scan, real cold previews**: 13 707 (−512, stopped before SCAN; X1
+  on for more than 20 minutes) then 14 219. User's decision: the two
+  reads after that move accept 13 451 to 14 475 (docs/decisions.md,
+  "Real X1: cold calibration positions"; protocol.md §11).

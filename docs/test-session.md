@@ -796,8 +796,8 @@ safe behaviour). This part checks first, with reads and FlexColor only.
 The new captures are compared with `preview-sequence-cold.json`,
 `preview-sequence.json` and the part G and I captures of 2026-11-18/19:
 commands and data sent, the first page 0x20 read (2 048 × 3 cold), the
-positions read before each window (cold: 14 219 ± 256 after
-`F0 00 00 01 01 01`), pages 0x21-0x29, the windows' offsets 54 / 58 and
+positions read before each window (cold: 13 451 to 14 475 after
+`F0 00 00 01 01 01`, captured 14 219), pages 0x21-0x29, the windows' offsets 54 / 58 and
 the holder codes. The windows of essai-N2 are compared with those of
 essai-N in `tests/fixtures/scan-windows-2026-11-19.json`, resolution by
 resolution (3 200, 2 000, 1 000, 600 ppi; the frame is placed by hand, so

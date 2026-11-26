@@ -84,7 +84,10 @@ In the capture right after power-on (2026-11-16, same holder), 0xD3 leaves
 the page 0x28 read (seq 259); FlexColor polls it about 40 times there, then
 it reads `00 0e` again. **[confirmed]** 0xD3 may report the holder being
 inserted and drawn in, and FlexColor may have been waiting for it.
-**[hypothesis]**
+**[hypothesis]** The cold captures of 2026-11-26 weaken that reading:
+28, 3 and 1 reads before `CF 00 01 80`, with no common last value
+(`00 00`, `00 0e`, `00 0e`) **[confirmed]**; the polling may simply last
+until the user clicks Preview **[hypothesis]** (hypotheses.md).
 
 Holder reference: the X1 might report the **reference number** of the
 inserted holder: a commercial Flextight application displays "6×7
@@ -785,7 +788,8 @@ accepts) comes from the cold start itself, with the same calibration:
 FlexColor (essai-K, -2, -3; X1 switched off and on before each; logs
 outside the repository) read 14 155, 13 963 and 13 963 there
 **[confirmed]**, the first page 0x20 read being 8 203 each time; the
-first move came 91 s, 21 s and 17 s after power-on. Our cold sequence
+`F0 00 00 01 01 01` was sent 91 s, 21 s and 17 s after power-on (times
+noted by the user). Our cold sequence
 read 13 707 (−512, stopped before SCAN; X1 on for more than 20 minutes)
 then 14 219 **[confirmed]**. Since that day the two reads accept 13 451
 to 14 475 (decisions.md, "Real X1: cold calibration positions").

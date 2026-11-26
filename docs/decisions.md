@@ -1657,7 +1657,9 @@ or ⚠, a link to its help page and, where useful, a download link.
   ASFireWire driver, the X1. Links: ASFireWire's repository and website
   (a third-party project in beta, docs/help/*/hardware.md); for the
   adapters no purchase link, the references A1790 / MMEL2 and
-  A1463 / MD464, "no longer sold new, second-hand".
+  A1463 / MD464, "no longer sold new, second-hand". The registry listings
+  of 2026-11-26 were made with the A1463 / MD464 behind the A1790 /
+  MMEL2.
 - **Registry only** (`InstallationRegistry`): matching, properties and
   children of registry entries; no device is opened, no command is sent.
   `InstallationCheckTests` checks the reader's source for the calls that

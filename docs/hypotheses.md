@@ -99,17 +99,21 @@ older ones in `docs/protocol.md` §1-§11 are still to be added.
   the user's statement). Settle: docs/test-session.md part J.
 - With the X1's original calibration (no recalibration: the user's
   statement of 2026-11-25), the page 0x20 read after
-  `F0 00 00 01 01 01` in our cold sequence (the first checked position,
-  expected 14 219 ± 256) spreads more than that window accepts: 384 on
-  the same day, 640 from 13 579 to 14 219: 13 579 (−640, the preview stopped there, before
-  SCAN) then 13 963 (−256, accepted) on 2026-11-25, against 14 027 to
-  14 219 from 2026-11-16 to 18; the first page 0x20 read was 8 203 (the
-  power-on value) both times. Its range and the cause of the spread are
-  unknown (cold start itself, temperature, holder present or not, holder
-  type at power-on: possible causes, none checked); the expected value comes from the capture of 2026-11-16 only. Settle: several cold
-  starts (X1 switched off and on each time) captured with FlexColor on
-  the reference Mac, and the same read logged by X1 Scan's real cold
-  previews (FlexColor's own windows may differ from ours: protocol.md §12).
+  `F0 00 00 01 01 01` in the cold sequence spreads from 13 579 to
+  14 219: FlexColor 14 219, 14 027, then 14 155, 13 963, 13 963 (three
+  cold starts, 2026-11-26); X1 Scan 14 027 to 14 219 (2026-11-16 to 18),
+  13 579 and 13 963 (2026-11-25), 13 707 and 14 219 (2026-11-26); the
+  first page 0x20 read was 8 203 every time. Since 2026-11-26 those reads
+  accept 13 451 to 14 475 (decisions.md, "Real X1: cold calibration
+  positions"). The cause of the spread is unknown (cold start itself,
+  temperature, holder present or not, holder type at power-on, or a
+  difference between X1 Scan's run and FlexColor's, such as the 0xD3 /
+  0xEE reads or the timing between commands: possible causes, none
+  checked). Both values below 13 963 come from X1 Scan, one of them with
+  the X1 on for more than 20 minutes. Missing: whether FlexColor ever
+  reads that low, and what differs in X1 Scan's runs that do. Settle: more
+  FlexColor cold starts on the reference Mac, and X1 Scan's real cold
+  previews logged with the time since power-on.
 
 ## Application (lot 1)
 
@@ -134,12 +138,43 @@ older ones in `docs/protocol.md` §1-§11 are still to be added.
   (no `ASFWSBP2Nub` under `ASFWDriver`, no `SCSITaskUserClientDevice`)
   becomes visible after some delay without unplugging the adapter; when
   it does not, unplugging and plugging the adapter again is needed. Seen
-  once (2026-11-26): it appeared between two listings two minutes apart,
-  after the user checked the X1 and its cable, power-on time not noted;
-  the second case was never observed. Missing: listings over time in
+  once (2026-11-26): X1 on since about 16:03-16:04 (the user's
+  statement), not visible at 16:04:32 and 16:05:05, visible at 16:07:15
+  after the user checked the X1 and its cable: at least about a minute,
+  up to three or four. For reference, a normal start with the chain
+  plugged in took 18 s to 48 s (17:07:52 power-on). A case where the X1
+  stays invisible until the adapter is replugged, without a hot unplug,
+  was never observed. Missing: listings over time in
   both cases (how long, and whether the registry differs between them).
   Settle: `ioreg` listings every 30 s after power-on, then after a chain
   reset, outside the repository.
+- After the X1's FireWire cable is unplugged while the chain is live,
+  the Mac loses the adapter (no Thunderbolt device, no 1394 controller,
+  no ASFireWire entry) until the chain is plugged into the Mac again; it
+  does not come back by itself (seen once, 2026-11-26: 20 minutes of
+  listings, X1 switched on meanwhile). The assistant should then say
+  "unplug and plug the adapter again" (not coded). Missing: a second
+  occurrence, whether unplugging at the X1's end or the adapter's end
+  matters, and whether the cable or a disturbed Thunderbolt link (the
+  adapters' own Thunderbolt devices disappeared too) is the cause. Settle:
+  the same hot unplug without touching the adapters, then `ioreg`
+  listings.
+- With the X1 switched off (cable in place), ASFireWire may keep showing
+  the X1 (`ASFWSBP2Nub`, `SCSITaskUserClientDevice`, `Imacon` /
+  `Flextight X1`): the presence check then reports an X1 that is off
+  (seen once, 2026-11-26, two listings a few seconds apart; how long
+  after switching off is not known). Missing: listings over several
+  minutes after switching off. Settle: `ioreg` every 30 s after
+  switching the X1 off.
+- FlexColor's 0xD3 polling between the end of initialisation and
+  `CF 00 01 80` (28, 3 and 1 reads in the cold captures of 2026-11-26,
+  about one per second) is its idle polling until the user clicks
+  Preview, not a wait for a value from the X1 (no common last value:
+  `00 00`, `00 0e`, `00 0e`; the run that reached that point latest after
+  power-on polled the most). The older reading, a wait for the holder
+  (protocol.md §4), is weakened. Missing: a cold capture where the click
+  is deliberately delayed. Settle: that capture; the count should follow
+  the delay.
 - The unregistered `IOSCSIParallelInterfaceDevice@0` and `@1` under
   `ASFWSCSIController` exist with no device connected (they are not
   traces of the X1). Missing: a listing with the X1 off or its cable
