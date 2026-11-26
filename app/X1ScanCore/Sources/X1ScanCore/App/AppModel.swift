@@ -993,11 +993,14 @@ public final class AppModel {
     }
 
     private func makePreviewLog(_ date: Date) throws -> CaptureLog {
-        try makeLog(date, prefix: "x1scan-apercu", header: [
+        let cold: ClosedRange<Int> = PreviewScript.coldCalibrationPositions
+        let coldRange: String = "F0 00 00 01 01 01, \(cold.lowerBound) to \(cold.upperBound) (captured 14219). Every position"
+        return try makeLog(date, prefix: "x1scan-apercu", header: [
             "X1 Scan: FlexColor 4.8.13's captured preview replayed on the real X1, \(date.ISO8601Format())",
             "Sequences: right after power-on (preview-sequence-cold.json, without its page 0x28",
             "read) or after earlier use (preview-sequence.json), chosen by the first page 0x20 read.",
-            "Position tolerance \(PreviewConfiguration.defaultPositionTolerance); every position",
+            "Position tolerance \(PreviewConfiguration.defaultPositionTolerance); after the cold calibration's",
+            coldRange,
             "that differs from the capture is noted below.",
         ])
     }

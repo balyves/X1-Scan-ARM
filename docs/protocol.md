@@ -767,8 +767,9 @@ captures, 14 219 in our real preview of 2026-11-16 and 14 027 or 14 155 in
 those of 2026-11-18, never above 25 000 **[confirmed]**. It is not
 expected to meet this capture's case, which came from FlexColor's own
 windows **[hypothesis]**, strongly supported; if that read ever gave such
-a value, the runner would stop there (tolerance 256 around 14 219),
-before the window with target 9 000 **[confirmed]** (script). The cold sequence of 2026-11-16 stays the
+a value, the runner would stop there (outside 13 451 to 14 475,
+`positionOutOfColdRange`; the tolerance of 256 until 2026-11-26), before
+the window with target 9 000 **[confirmed]** (script). The cold sequence of 2026-11-16 stays the
 only one (user's decision, 2026-11-18).
 
 **2026-11-25, original calibration** (journal; no recalibration, the
@@ -779,6 +780,15 @@ the first page 0x20 read was 8 203 both times **[confirmed]**. That
 the spread of this read (13 579 to 14 219 so far, more than ± 256
 accepts) comes from the cold start itself, with the same calibration:
 **[hypothesis]** (hypotheses.md, Calibration).
+
+**2026-11-26, original calibration**: three cold starts captured with
+FlexColor (essai-K, -2, -3; X1 switched off and on before each; logs
+outside the repository) read 14 155, 13 963 and 13 963 there
+**[confirmed]**, the first page 0x20 read being 8 203 each time; the
+first move came 91 s, 21 s and 17 s after power-on. Our cold sequence
+read 13 707 (−512, stopped before SCAN; X1 on for more than 20 minutes)
+then 14 219 **[confirmed]**. Since that day the two reads accept 13 451
+to 14 475 (decisions.md, "Real X1: cold calibration positions").
 
 **First session of a FlexColor run** (2026-11-18 afternoon, ten runs,
 `tests/fixtures/scan-windows-2026-11-18.json`). Its calibration windows,

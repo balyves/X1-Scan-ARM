@@ -121,7 +121,7 @@ public enum IssueClassifier {
         case .unexpectedIdentity: .notAnX1
         case .unexpectedState: .unexpectedState
         case .stateTimeout: .stateTimeout
-        case .positionOutOfTolerance: .positionOutOfTolerance
+        case .positionOutOfTolerance, .positionOutOfColdRange: .positionOutOfTolerance
         case .positionOutOfRange: .positionOutOfRange
         case .unexpectedCarriagePosition: .carriagePosition
         case .unrecognisedStartState: .startStateUnknown

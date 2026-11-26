@@ -609,3 +609,78 @@ struct PositionGateTests {
         #expect(capture.image.count == 41)
     }
 }
+
+/// The two page 0x20 reads after the cold calibration's `F0 00 00 01 01 01`
+/// (captured 14 219) are checked against a range of their own, 13 451 to
+/// 14 475 (user's decision of 2026-11-26; docs/decisions.md, "Real X1: cold
+/// calibration positions"). Nothing sent later carries the position read.
+struct ColdCalibrationPositionTests {
+    private static let plan = PreviewScript.plan
+    private static let cold: [PreviewStep] = plan.steps(for: .cold)
+    private static let reads: [Int] = cold.indices.filter { (index: Int) -> Bool in
+        if case .positionRange = cold[index].kind { return true }
+        return false
+    }
+
+    @Test func onlyTheTwoReadsAfterTheColdMoveHaveTheRange() throws {
+        #expect(Self.reads.count == 2)
+        let expected: PreviewStep.Kind = .positionRange(capturedPosition: 14219, allowed: 13_451...14_475)
+        for index in Self.reads { #expect(Self.cold[index].kind == expected) }
+        let first: Int = try #require(Self.reads.first)
+        #expect(Self.cold[first - 1].command == X1Command.setMode(0, 1, 1, 1), "right after F0 00 00 01 01 01")
+        #expect(Self.reads[1] == first + 1)
+        let requested: Bool = Self.cold[..<first].contains { (step: PreviewStep) -> Bool in
+            PreviewRunner.requestsPosition(step.command)
+        }
+        #expect(requested, "a window with a target comes before them")
+        let warm: [PreviewStep] = Self.plan.steps(for: .warm)
+        let warmRanges: Int = warm.filter { (step: PreviewStep) -> Bool in
+            if case .positionRange = step.kind { return true }
+            return false
+        }.count
+        #expect(warmRanges == 0, "the warm sequence keeps the tolerance")
+    }
+
+    /// The window after them is the captured one (target 9 000): the runner
+    /// substitutes nothing there.
+    @Test func theNextWindowIsTheCapturedOne() throws {
+        let last: Int = try #require(Self.reads.last)
+        let next: PreviewStep = Self.cold[last + 1]
+        #expect(next.kind == .command)
+        #expect(next.command.opcode == 0x24)
+        #expect(next.command.dataOut[50...51] == [0x28, 0x23])  // 9 000
+    }
+
+    /// Values read there on the real X1 and by FlexColor: 13 579 and 13 707
+    /// stopped the cold preview with the tolerance of 256; both limits pass.
+    /// Shifts from 14 219: 13 451, 13 579, 13 707, 13 963, 14 475.
+    @Test(arguments: [-768, -640, -512, -256, 256] as [Int])
+    func withinTheRangePasses(shift: Int) async throws {
+        let first: Int = try #require(Self.reads.first)
+        let transport = FaultInjectingTransport(inner: try Fixtures.coldSimulator(), faultAtNonPollingCommand: first,
+                                                fault: .shiftMeasuredPosition(by: shift))
+        let capture = try await PreviewRunner(transport: transport, configuration: .simulator, plan: Self.plan).run()
+        #expect(capture.choice == .cold)
+        #expect(capture.image.count == 41)
+    }
+
+    /// One step outside on either side, at either read: stop, nothing more sent.
+    /// Shifts from 14 219: 13 450, 14 476; reads: the first and the second.
+    @Test(arguments: [-769, 257] as [Int], [0, 1] as [Int])
+    func outsideTheRangeStops(shift: Int, read: Int) async throws {
+        let first: Int = Self.reads[read]
+        let transport = FaultInjectingTransport(inner: try Fixtures.coldSimulator(), faultAtNonPollingCommand: first,
+                                                fault: .shiftMeasuredPosition(by: shift))
+        do {
+            _ = try await PreviewRunner(transport: transport, configuration: .simulator, plan: Self.plan).run()
+            Issue.record("the preview should have stopped")
+        } catch {
+            let measured: Int = 14_219 + shift
+            #expect(error.anomaly == .positionOutOfColdRange(expected: 14_219, measured: measured,
+                                                             allowed: 13_451...14_475))
+            #expect(error.stepIndex == first)
+            #expect(error.emergencyStop == nil)
+            #expect(await transport.commandsAfterFault.isEmpty)
+        }
+    }
+}

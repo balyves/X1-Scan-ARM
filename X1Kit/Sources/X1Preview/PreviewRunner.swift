@@ -10,10 +10,12 @@ public struct PreviewConfiguration: Sendable {
     /// Largest accepted difference between a measured position (page 0x20)
     /// and the captured one, checked only after a window that requests a
     /// position (`requestsPosition`), at a `.positionGate` read, and for the
-    /// substituted position of a `.positionWindow`. 256 (docs/decisions.md, "Position
-    /// tolerance"): the check is for gross anomalies (thousands); the largest
-    /// difference seen on a checked read is 192, in one capture, and
-    /// differences come in steps of 64.
+    /// substituted position of a `.positionWindow`; not at the `.positionRange`
+    /// reads, which have their own range. 256 (docs/decisions.md, "Position
+    /// tolerance"): the check is for gross anomalies (thousands). On the
+    /// reads it still covers, the largest difference seen in the captures is
+    /// +128 (before the window with target 25 000, 2026-11-18); differences
+    /// come in steps of 64.
     public var positionTolerance: Int
 
     public static let defaultPositionTolerance = 256
@@ -241,6 +243,17 @@ public struct PreviewRunner: Sendable {
             }
             capture.scanStatuses.append(status)
             progress?(.scanStatus(status))
+        case .positionRange(let captured, let allowed):
+            let status = try parse { try ScanStatusPage(result.data) }
+            if status.measuredPosition != captured {
+                progress?(.positionDifference(expected: captured, measured: status.measuredPosition, checked: true))
+            }
+            guard allowed.contains(status.measuredPosition) else {
+                throw PreviewAnomaly.positionOutOfColdRange(expected: captured, measured: status.measuredPosition,
+                                                            allowed: allowed)
+            }
+            capture.scanStatuses.append(status)
+            progress?(.scanStatus(status))
         case .startState(let required):
             let status = try parse { try ScanStatusPage(result.data) }
             let state: PreviewPlan.Choice? = status.showsPowerOnValues ? .cold
@@ -352,6 +365,9 @@ public enum PreviewAnomaly: Error, Hashable, CustomStringConvertible {
     case positionOutOfTolerance(expected: Int, measured: Int, tolerance: Int)
     /// Before the window of a scan's 400-line step: outside the positions accepted there.
     case positionOutOfRange(measured: Int, allowed: ClosedRange<Int>)
+    /// After the cold calibration's `F0 00 00 01 01 01`: outside
+    /// `PreviewScript.coldCalibrationPositions`.
+    case positionOutOfColdRange(expected: Int, measured: Int, allowed: ClosedRange<Int>)
     /// The read before the warm sequence's window with target 25 000 is too far
     /// from the capture: stopped before that window.
     case unexpectedCarriagePosition(captured: Int, measured: Int, tolerance: Int)
@@ -397,6 +413,9 @@ public enum PreviewAnomaly: Error, Hashable, CustomStringConvertible {
                 + "(tolerance \(tolerance)); stopped before the window with target 25 000"
         case .positionOutOfTolerance(let expected, let measured, let tolerance):
             "measured position \(measured), expected \(expected) (tolerance \(tolerance))"
+        case .positionOutOfColdRange(let expected, let measured, let allowed):
+            "measured position \(measured), expected \(expected), difference \(measured - expected) "
+                + "(accepted \(allowed.lowerBound) to \(allowed.upperBound) after the cold calibration)"
         case .positionOutOfRange(let measured, let allowed):
             "measured position \(measured) before the focus step, accepted \(allowed.lowerBound) to \(allowed.upperBound) "
                 + "(positions FlexColor measured there ± tolerance); stopped before that window"

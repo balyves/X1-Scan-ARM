@@ -16,6 +16,14 @@ public struct PreviewStep: Sendable {
         /// capture (24 523 there) FlexColor did not send that window; beyond the
         /// tolerance the preview stops before it (docs/decisions.md, "Option A").
         case positionGate(capturedPosition: Int)
+        /// Page 0x20 checked against a range of its own instead of the
+        /// tolerance: the two reads after the cold calibration's
+        /// `F0 00 00 01 01 01` (`PreviewScript.coldCalibrationPositions`;
+        /// docs/decisions.md, "Real X1: cold calibration positions"). Only
+        /// read and compared: nothing sent later carries that position.
+        /// Always checked: to be used only after a window that requests a
+        /// position (as `.scanStatus` is checked only then).
+        case positionRange(capturedPosition: Int, allowed: ClosedRange<Int>)
         /// Page 0x20, first read of the session: chooses the rest of the
         /// sequence (`PreviewPlan`). Power-on values (2 048 × 3): the cold
         /// sequence; values left by earlier use: the warm one; anything else

@@ -631,7 +631,10 @@ explicitly. It is only for runs the user has approved (CLAUDE.md, rule 4).
   sometimes sends the measured value (8 971), sometimes another one (6 443
   measured, 6 250 sent). We send the captured values. On a real scanner, the
   preview stops if a measurement differs from the captured one by more than
-  **256** since 2026-11-17 (100 before; "Position tolerance" below). Until 2026-11-16, two captures differed by 64 on the first
+  **256** since 2026-11-17 (100 before; "Position tolerance" below),
+  except the two reads after the cold calibration's `F0 00 00 01 01 01`,
+  which have their own range since 2026-11-26 ("Real X1: cold calibration
+  positions"). Until 2026-11-16, two captures differed by 64 on the first
   measurement (25 803 / 25 867) and the others were identical; on
   2026-11-17, a warm capture differed by 128 on that same read (25 739) and
   a cold one by 192 on two checked reads (below).
@@ -749,9 +752,13 @@ captures of 2026-11-17 (protocol.md §11). User's decisions.
   times with the same response.
 - **Position tolerance: 256** (user's decision). The check is meant for
   gross anomalies (differences in the thousands). The largest difference
-  seen on a checked read is 192, in one capture right after power-on (A1,
-  two reads); every other checked read of every capture matched exactly;
-  differences come in steps of 64. 256 leaves one step of margin without
+  seen on a checked read was 192 when this was decided (2026-11-17), in
+  one capture right after power-on (A1, two reads); every other checked
+  read of every capture then matched exactly; differences come in steps
+  of 64. Later, on the cold read after `F0 00 00 01 01 01` only: −256
+  (FlexColor, 2026-11-26), −640 and −256 (X1 Scan, 2026-11-25) and −512
+  (X1 Scan, 2026-11-26),
+  hence that read's own range ("Real X1: cold calibration positions"). 256 leaves one step of margin without
   losing what the check is for. Every page 0x20 read whose position differs
   from the expected one (the captured one; in a scan, after the substituted
   window, the position sent), checked or not, is written to the run's log
@@ -768,7 +775,9 @@ captures of 2026-11-17 (protocol.md §11). User's decisions.
   two real cold previews read 13 579 (the runner stopped there, before
   SCAN) and 13 963 (accepted), with the original calibration; the
   tolerance is unchanged until three cold starts are captured with
-  FlexColor (user's decision, 2026-11-25). **Only the cold
+  FlexColor (user's decision, 2026-11-25). Since 2026-11-26 those two
+  reads have a range of their own ("Real X1: cold calibration
+  positions" below). **Only the cold
   sequence of 2026-11-16** (user's decision, 2026-11-18): no second cold
   variant.
 - **Option A: the read before the window with target 25 000** (user's
@@ -800,6 +809,38 @@ captures of 2026-11-17 (protocol.md §11). User's decisions.
   during calibration still shows 2 048 × 3, so the choice would start the
   cold sequence again on a scanner left half calibrated, which no capture
   shows. After a complete preview, page 0x20 is enough.
+
+## Real X1: cold calibration positions (2026-11-26)
+
+User's decision of 2026-11-26, after three cold starts captured with
+FlexColor that day (essai-K, -2, -3; logs outside the repository).
+
+- **What**: the two page 0x20 reads right after the cold calibration's
+  `F0 00 00 01 01 01` (captured 14 219) accept 13 451 to 14 475
+  (14 219 − 768 to + 256; `PreviewScript.coldCalibrationPositions`,
+  step kind `.positionRange`) instead of the tolerance of 256. Outside
+  it the preview stops at that read, before the next window
+  (`positionOutOfColdRange`, the message of `position-out-of-tolerance`).
+  Every other checked read keeps the tolerance of 256, the warm
+  sequence included.
+- **Why**: values read there, cold, original calibration: FlexColor
+  14 219 (2026-11-16), 14 027 (2026-11-17), 14 155, 13 963, 13 963
+  (2026-11-26); X1 Scan 14 027 to 14 219 (2026-11-16 to 18), 13 579 and
+  13 963 (2026-11-25), 13 707 and 14 219 (2026-11-26). 13 579 and 13 707
+  stopped the cold preview before SCAN with the tolerance. The cause of
+  the spread is unknown (docs/hypotheses.md). One cold start of our cold
+  sequence after more than 20 minutes on read 13 707, so in our sequence
+  a short time since power-on is not needed for a low value (both low
+  values, 13 579 and 13 707, come from X1 Scan; FlexColor's lowest is
+  13 963); whether time since power-on plays any part is
+  not known ([hypothesis], docs/hypotheses.md).
+- **Only read**: no command carries that position. The window sent next
+  is the captured one (target 9 000, `Window.coldTarget9000`), then page
+  0x20 is checked against 8 971 with the tolerance, as before. Only a
+  scan's `.positionWindow` substitutes a position (section below); the
+  preview has none.
+- **Unchanged**: the guard (`CapturedSequenceGuard`), every command of
+  both sequences, the tolerance (256) everywhere else, the 0xDF waits.
 
 ## Real X1: scan (2026-11-17, step 2; simulator only so far)
 

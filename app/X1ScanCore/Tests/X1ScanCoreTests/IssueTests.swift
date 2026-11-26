@@ -70,6 +70,7 @@ struct IssueTests {
             (.unexpectedScanResponse([1, 2]), .unexpectedResponse),
             (.positionOutOfTolerance(expected: 1, measured: 500, tolerance: 256), .positionOutOfTolerance),
             (.positionOutOfRange(measured: 1, allowed: 16_395...17_227), .positionOutOfRange),
+            (.positionOutOfColdRange(expected: 14_219, measured: 13_450, allowed: 13_451...14_475), .positionOutOfTolerance),
             (.unexpectedCarriagePosition(captured: 1, measured: 2, tolerance: 0), .carriagePosition),
             (.notJustSwitchedOn(channelValues: [1]), .unexpectedResponse),
             (.unrecognisedStartState(channelValues: [1]), .startStateUnknown),

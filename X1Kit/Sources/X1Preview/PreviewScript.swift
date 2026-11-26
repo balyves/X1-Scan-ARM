@@ -31,6 +31,15 @@ public enum PreviewScript {
     /// docs/protocol.md §11).
     public static let flexColor4813Cold: [PreviewStep] = plan.steps(for: .cold)
 
+    /// Positions accepted at the two page 0x20 reads after the cold
+    /// calibration's `F0 00 00 01 01 01` (captured 14 219): 14 219 − 768 to
+    /// 14 219 + 256 (user's decision of 2026-11-26; docs/decisions.md, "Real
+    /// X1: cold calibration positions"). Read there from 13 579 to 14 219 by
+    /// X1 Scan and from 13 963 to 14 219 by FlexColor up to 2026-11-26. The
+    /// window sent next (target 9 000) is the captured one: no command
+    /// carries the position read.
+    public static let coldCalibrationPositions: ClosedRange<Int> = 13_451...14_475
+
     /// Both sequences, chosen by the first page 0x20 read of the session
     /// (docs/decisions.md, "Real X1: cold or warm sequence"). The one used on
     /// the real X1.
@@ -159,6 +168,10 @@ struct Builder {
     private mutating func status(_ captured: Int) {
         add(X1Command.modeSense(page: ScanStatusPage.page, length: ScanStatusPage.length),
             .scanStatus(capturedPosition: captured))
+    }
+    private mutating func positionRange(_ captured: Int, _ allowed: ClosedRange<Int>) {
+        add(X1Command.modeSense(page: ScanStatusPage.page, length: ScanStatusPage.length),
+            .positionRange(capturedPosition: captured, allowed: allowed))
     }
     private mutating func positionGate(_ captured: Int) {
         add(X1Command.modeSense(page: ScanStatusPage.page, length: ScanStatusPage.length),
@@ -319,8 +332,8 @@ struct Builder {
         exposure(); thenWait()
         window(Window.coldCalibrationB); thenWait()
         mode(0, 1, 1, 1); thenWait()
-        status(14219); thenWait()
-        status(14219)
+        positionRange(14219, PreviewScript.coldCalibrationPositions); thenWait()
+        positionRange(14219, PreviewScript.coldCalibrationPositions)
         window(Window.coldTarget9000); thenWait()
         calibrationLine(pixels: 7992); thenWait()
         mode(0, 0, 0, 1); thenWait()
