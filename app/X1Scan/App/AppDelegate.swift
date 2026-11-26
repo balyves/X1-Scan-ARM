@@ -16,11 +16,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     private var quitting = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        let model = AppModel(virtualScanner: {
+        let virtualScanner: () throws -> VirtualScanner = {
             // tests/fixtures, copied into the bundle's resources.
             guard let resources = Bundle.main.resourceURL else { throw CocoaError(.fileNoSuchFile) }
             return try VirtualScanner.load(fixturesDirectory: resources)
-        })
+        }
+        #if DEBUG
+        // Debug only: no X1 and an invented registry for the presence check and the
+        // installation check of the model, to try the launch and discovery mode paths
+        // without a scanner (DebugSnapshot.noScannerRegistry).
+        let model = DebugSnapshot.noScannerRegistry().map { registry in
+            AppModel(virtualScanner: virtualScanner, presence: { false }, installation: { registry })
+        } ?? AppModel(virtualScanner: virtualScanner)
+        #else
+        let model = AppModel(virtualScanner: virtualScanner)
+        #endif
         self.model = model
         observers.append(Observing {
             NSApp.appearance = switch model.settings.appearance {
@@ -154,6 +164,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 
     /// The installation check is on screen (the "No X1 found" message then waits).
     var installationCheckShown: Bool { installationController?.isShown ?? false }
+    #if DEBUG
+    var installationControllerForDebug: InstallationCheckWindowController? { installationController }
+    #endif
 
     @objc func showScannerInformation(_ sender: Any?) {
         guard let model else { return }

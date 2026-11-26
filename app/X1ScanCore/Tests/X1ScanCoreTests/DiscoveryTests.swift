@@ -22,6 +22,8 @@ final class DiscoveryTests {
         private let lock = NSLock()
         private var counts: [String: Int] = [:]
         var present = true
+        /// The invented registry: without controllers (no adapter) unless set.
+        var controllers: [FireWireController] = []
         func hit(_ name: String) { lock.withLock { counts[name, default: 0] += 1 } }
         func count(_ name: String) -> Int { lock.withLock { counts[name, default: 0] } }
         var realAccesses: Int { count("connection") + count("inspector") }
@@ -47,7 +49,7 @@ final class DiscoveryTests {
             return spy.present
         }, installation: {
             // Invented: never this Mac's registry in tests.
-            InstallationSnapshot(system: .init(major: 26, minor: 1, patch: 0), controllers: [], scannerDescription: nil)
+            InstallationSnapshot(system: .init(major: 26, minor: 1, patch: 0), controllers: spy.controllers, scannerDescription: nil)
         })
         if let folder { model.exportSettings.folder = folder }
         return model
@@ -187,6 +189,26 @@ final class DiscoveryTests {
         model.leaveDiscovery()
         #expect(!model.discoveryMode && model.source == .real)
         try await waitUntil { model.detection == .found }
+        #expect(spy.count("presence") == 2)
+        #expect(spy.realAccesses == 0, "the presence check opens nothing")
+    }
+
+    /// Leaving discovery mode without an X1 gives what the launch gives
+    /// (user's decision of 2026-11-26), from the registry read again: no
+    /// adapter at launch (the installation check), then adapter and driver
+    /// plugged in during discovery mode (the alert).
+    @Test func leavingWithoutAnX1PresentsAsAtLaunch() async throws {
+        let spy = Spy()
+        spy.present = false
+        let model = try model(spy: spy)
+        await model.detectScanner()
+        #expect(model.detection == .notFound && model.launchPresentation == .assistant)
+        model.enterDiscovery(sampleSuffix: "_sample")
+        let driver: Driver = Driver(className: "IOUserService", userClass: "ExampleDriver")
+        spy.controllers = [FireWireController(drivers: [driver])]
+        model.leaveDiscovery()
+        try await waitUntil { model.detection == .notFound }
+        #expect(model.launchPresentation == .noScannerAlert)
         #expect(spy.count("presence") == 2)
         #expect(spy.realAccesses == 0, "the presence check opens nothing")
     }

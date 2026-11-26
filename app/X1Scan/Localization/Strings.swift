@@ -855,6 +855,13 @@ extension Strings {
         }
     }
     /// VoiceOver: the state symbol's label.
+    /// VoiceOver label of a line's title: the element, then its state (both already translated).
+    static func installationRowAccessibility(_ line: InstallationCheck.Line) -> String {
+        let item: String = installationItem(line.item)
+        let state: String = installationStateLabel(line.state)
+        return item + ", " + state
+    }
+
     static func installationStateLabel(_ state: InstallationCheck.State) -> String {
         state.isOK ? String(localized: "installation.ok", defaultValue: "OK", comment: "Installation check: VoiceOver label of the check mark")
             : String(localized: "To check", comment: "Installation check: VoiceOver label of the warning sign")

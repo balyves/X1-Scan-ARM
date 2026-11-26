@@ -49,8 +49,8 @@ public enum InstallationRegistry {
     }
 
     /// The entries attached under `entry` in the service plane, `depth` levels
-    /// down ([hypothesis]: the driver is within 2 levels of the controller; to
-    /// adjust once a registry listing is read, docs/hypotheses.md).
+    /// down: ASFireWire's entries are one level under the controller
+    /// ([confirmed] on one setup, 2026-11-26); two levels leave a margin.
     private static func drivers(under entry: io_registry_entry_t, depth: Int) -> [Driver] {
         guard depth > 0 else { return [] }
         var iterator: io_iterator_t = 0

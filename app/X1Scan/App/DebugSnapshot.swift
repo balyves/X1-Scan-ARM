@@ -10,6 +10,9 @@ import X1ScanCore
 ///   -X1ScanSnapshot <path.png>   render the window into a PNG after a few seconds
 ///   -X1ScanAutoPreview YES       start a preview on the virtual X1 at launch
 ///   -X1ScanHidePanel YES         hide the settings panel
+///   -X1ScanNoScannerRegistry C   no X1, invented registry C (none, nodriver, ok) for the model
+///   -X1ScanDiscoveryRoundTrip YES  enter then leave discovery mode, print the sheet and the
+///                                installation check, quit (with -X1ScanNoScannerRegistry)
 ///   -X1ScanZoomFill YES          Fill Window instead of the startup zoom
 ///   -X1ScanOpenHistogram YES     unfold the histogram in the panel
 ///   -X1ScanQuarterTurns <n>      turn the image n quarters clockwise (lot 1)
@@ -60,6 +63,10 @@ enum DebugSnapshot {
                 FileHandle.standardError.write(Data("TOOLTIP \(tooltip.rawValue): \(Strings.tooltip(tooltip))\n".utf8))
             }
             NSApp.terminate(nil)
+            return
+        }
+        if arguments.bool(forKey: "X1ScanDiscoveryRoundTrip") {
+            discoveryRoundTrip(window: window, model: model)
             return
         }
         if let path = arguments.string(forKey: "X1ScanIssueSnapshot") {
@@ -291,20 +298,61 @@ enum DebugSnapshot {
         window.setFrame(savedFrame, display: false)
     }
 
+    /// `-X1ScanDiscoveryRoundTrip YES` (with `-X1ScanNoScannerRegistry`):
+    /// after the launch's presence check, enters discovery mode, leaves it,
+    /// and prints what is shown each time (the main window's sheet, the
+    /// installation check), then quits.
+    private static func discoveryRoundTrip(window: NSWindow?, model: AppModel) {
+        Task { @MainActor in
+            @MainActor func report(_ label: String) {
+                let sheet = window?.attachedSheet?.identifier?.rawValue ?? "none"
+                let assistant = (NSApp.delegate as? AppDelegate)?.installationCheckShown ?? false
+                FileHandle.standardError.write(Data(
+                    "ROUNDTRIP \(label): detection=\(model.detection) sheet=\(sheet) assistant=\(assistant)\n".utf8))
+            }
+            try? await Task.sleep(for: .seconds(2))
+            report("launch")
+            if let sheet = window?.attachedSheet { window?.endSheet(sheet) }
+            (NSApp.delegate as? AppDelegate)?.installationControllerForDebug?.close()
+            model.enterDiscovery(sampleSuffix: Strings.discoverySuffix)
+            try? await Task.sleep(for: .seconds(1))
+            report("discovery")
+            model.leaveDiscovery()
+            try? await Task.sleep(for: .seconds(2))
+            report("left")
+            exit(0)  // a sheet left open would hold NSApp.terminate
+        }
+    }
+
+    /// `-X1ScanNoScannerRegistry none|nodriver|ok`: the model's presence check
+    /// finds no X1 and its installation check reads this invented registry
+    /// (nothing read from the Mac's), to try the launch and the end of
+    /// discovery mode without a scanner (with `-StartupSource real`). Any
+    /// other name gives no invented registry ("real" included): the normal
+    /// presence check.
+    nonisolated static func noScannerRegistry() -> InstallationSnapshot? {
+        guard let name = UserDefaults.standard.string(forKey: "X1ScanNoScannerRegistry") else { return nil }
+        return inventedRegistry(name)
+    }
+
+    nonisolated private static func inventedRegistry(_ name: String) -> InstallationSnapshot? {
+        let tahoe = InstallationSnapshot.SystemVersion(major: 26, minor: 1, patch: 0)
+        let driver = FireWireController(drivers: [Driver(className: "IOUserService", userClass: "ExampleDriver")])
+        return switch name {
+        case "nodriver": InstallationSnapshot(system: tahoe, controllers: [FireWireController(drivers: [])], scannerDescription: nil)
+        case "ok": InstallationSnapshot(system: tahoe, controllers: [driver], scannerDescription: "Example scanner")
+        case "real": nil
+        default: InstallationSnapshot(system: tahoe, controllers: [], scannerDescription: nil)
+        }
+    }
+
     /// The installation check's view on an invented registry (none: nothing
     /// plugged in; nodriver: the adapter without a driver; ok: everything),
     /// or this Mac's (real, read only), then quit.
     private static func installationSnapshot(to path: String, case name: String) {
         Task { @MainActor in
             if UserDefaults.standard.bool(forKey: "X1ScanDark") { NSApp.appearance = NSAppearance(named: .darkAqua) }
-            let tahoe = InstallationSnapshot.SystemVersion(major: 26, minor: 1, patch: 0)
-            let driver = FireWireController(drivers: [Driver(className: "IOUserService", userClass: "ExampleDriver")])
-            let invented: InstallationSnapshot? = switch name {
-            case "nodriver": InstallationSnapshot(system: tahoe, controllers: [FireWireController(drivers: [])], scannerDescription: nil)
-            case "ok": InstallationSnapshot(system: tahoe, controllers: [driver], scannerDescription: "Example scanner")
-            case "real": nil
-            default: InstallationSnapshot(system: tahoe, controllers: [], scannerDescription: nil)
-            }
+            let invented: InstallationSnapshot? = inventedRegistry(name)
             let monitor = invented.map { snapshot in InstallationMonitor(read: { snapshot }) } ?? InstallationMonitor()
             await monitor.refresh()
             render(AnyView(InstallationCheckView(monitor: monitor).background(Color(nsColor: .windowBackgroundColor))), to: path)

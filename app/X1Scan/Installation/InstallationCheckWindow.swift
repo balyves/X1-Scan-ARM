@@ -94,7 +94,7 @@ struct InstallationCheckView: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(Strings.installationItem(line.item))
                     .fontWeight(.semibold)
-                    .accessibilityLabel("\(Strings.installationItem(line.item)), \(Strings.installationStateLabel(line.state))")
+                    .accessibilityLabel(Strings.installationRowAccessibility(line))
                     .accessibilityAddTraits(.isHeader)
                 Text(Strings.installationState(line, snapshot: monitor.snapshot))
                     .font(.callout)

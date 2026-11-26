@@ -7,12 +7,15 @@
 /// opened, no command reaches any scanner.
 ///
 /// What can be told reliably and what cannot (docs/decisions.md,
-/// "Installation check"): [hypothesis] a FireWire controller is seen as soon
-/// as the adapter is plugged in (docs/hypotheses.md), but not whether it is
-/// Apple's adapter; the driver
-/// is seen when it is active on that controller, not when it is installed
-/// and not allowed yet; an X1 switched off, a missing cable and a broken
-/// chain look the same; an X1 opened by FlexColor is not seen as such.
+/// "Installation check"): a FireWire controller is seen with the adapter
+/// plugged in ([confirmed] with an X1 on it, 2026-11-26; with nothing on it,
+/// [hypothesis], docs/hypotheses.md), but not whether it is Apple's
+/// adapter; after a hot unplug of the FireWire cable the Mac may lose the
+/// adapter until it is plugged in again ([hypothesis]); the driver is seen
+/// when it is active on that controller, not when it is installed and not
+/// allowed yet; an X1 switched off, a missing cable and a broken chain look
+/// the same, and an X1 switched off may still be seen for a while
+/// ([hypothesis]); an X1 opened by FlexColor is not seen as such.
 public enum InstallationCheck {
     /// The first macOS the application runs on (deployment target).
     public static let minimumMajorVersion = 26
@@ -106,7 +109,9 @@ public struct InstallationSnapshot: Sendable, Hashable {
 
     public var system: SystemVersion
     /// The FireWire (IEEE 1394) controllers: on a recent Mac, only the
-    /// adapter's, seen through Thunderbolt ([hypothesis], docs/hypotheses.md).
+    /// adapter's, an `IOPCIDevice` of class code 0x0C0010 tunnelled through
+    /// Thunderbolt ([confirmed] on one setup, 2026-11-26; docs/decisions.md,
+    /// "Installation check").
     public var controllers: [FireWireController]
     /// "vendor product" of the scanner found (`ScannerPresence.find()`), or nil.
     public var scannerDescription: String?
@@ -126,12 +131,13 @@ public struct FireWireController: Sendable, Hashable {
         self.drivers = drivers
     }
 
-    /// [hypothesis] A DriverKit driver on the controller is ASFireWire:
-    /// macOS 26 has no FireWire driver of its own, and ASFireWire is the
-    /// only DriverKit FireWire driver known. Its class and bundle names are
-    /// to be read from a registry listing of a Mac with the adapter, the
-    /// driver and the X1 (docs/hypotheses.md); until then no name is
-    /// assumed.
+    /// A DriverKit driver on the controller is taken as ASFireWire: macOS 26
+    /// has no FireWire driver of its own, and ASFireWire is the only DriverKit
+    /// FireWire driver known. Seen on one setup (2026-11-26, [confirmed] as
+    /// observed): `ASFWDriver` and `ASFWSCSIController`, `IOUserServerName`
+    /// `net.asfw.driver`, one level under the controller. No name is matched:
+    /// any DriverKit driver there counts (that only ASFireWire attaches there
+    /// is not tested).
     public var hasDriverKitDriver: Bool { drivers.contains(where: \.isDriverKit) }
 
     /// PCI class code (the registry's `class-code`, little endian): base

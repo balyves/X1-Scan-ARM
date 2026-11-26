@@ -103,7 +103,7 @@ struct IssueView: View {
         .background {
             // Esc closes the sheet, as Cancel would (the visible default button is OK).
             if let close {
-                Button("", action: close)
+                Button(action: close) { Text(verbatim: "") }
                     .keyboardShortcut(.cancelAction)
                     .opacity(0)
                     .frame(width: 0, height: 0)
